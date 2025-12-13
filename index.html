@@ -1277,7 +1277,7 @@
         let vendas = [];
         let vendasSalvas = [];
         let clienteAtual = null;
-        const API_BASE = 'http://localhost:' + (localStorage.getItem('apiPort') || '3001');
+        const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
         async function api(path, options = {}) {
             const url = `${API_BASE}${path}`;
             const authRaw = localStorage.getItem('authUser');
