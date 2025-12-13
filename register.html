@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #004A99;
+            --primary-dark: #003A7A;
+            --secondary: #002E6E;
+            --accent: #10B981;
+            --danger: #EF4444;
+            --bg-gradient: linear-gradient(135deg, #003A7A 0%, #004A99 50%, #00A0E4 100%);
+            --card-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            --hover-shadow: 0 25px 50px rgba(0,0,0,0.2);
+            --border-radius: 16px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Manrope', sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1F2937;
+        }
+        .card {
+            width: 100%;
+            max-width: 480px;
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: 2rem;
+            animation: fadeIn 0.6s ease-out;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 1.25rem;
+        }
+        .brand h1 {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 2.4rem;
+            color: var(--primary-dark);
+            letter-spacing: 2px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #64748B;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        .form-group { margin-bottom: 1rem; }
+        label {
+            display: block;
+            font-weight: 600;
+            color: #4B5563;
+            margin-bottom: 0.4rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 0.9rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: #FAFAFA;
+            color: #1F2937;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(0, 74, 153, 0.12);
+        }
+        .btn {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(0, 74, 153, 0.25); }
+        .link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-block;
+            text-align: center;
+            margin-top: 0.75rem;
+        }
+        .error {
+            background: #FEE2E2;
+            color: #991B1B;
+            border: 1px solid #FCA5A5;
+            padding: 0.6rem 0.8rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+            display: none;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="brand">
+            <h1>Registrar</h1>
+        </div>
+        <p class="subtitle">Crie sua conta para acessar</p>
+        <div id="errorBox" class="error"></div>
+        <div class="form-group">
+            <label for="name">Nome</label>
+            <input type="text" id="name" placeholder="Seu nome">
+        </div>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="seu@email.com">
+        </div>
+        <div class="form-group">
+            <label for="password">Senha</label>
+            <input type="password" id="password" placeholder="Digite sua senha">
+        </div>
+        <div class="form-group">
+            <label for="role">Perfil</label>
+            <select id="role">
+                <option value="user" selected>Usuário</option>
+                <!--<option value="admin">Admin</option>-->
+            </select>
+        </div>
+        <button class="btn" id="registerBtn">Criar conta</button>
+        <a class="link" href="login.html">Já tenho conta</a>
+    </div>
+    <script>
+        const API = 'http://localhost:3001';
+        function showError(msg) {
+            const eb = document.getElementById('errorBox');
+            eb.textContent = msg;
+            eb.style.display = 'block';
+            setTimeout(() => { eb.style.display = 'none'; }, 2500);
+        }
+        function isValidEmail(e) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+        }
+        document.getElementById('registerBtn').addEventListener('click', async function() {
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const role = document.getElementById('role').value;
+            if (!name || !email || !password) { showError('Preencha todos os campos'); return; }
+            if (!isValidEmail(email)) { showError('Email inválido'); return; }
+            try {
+                const res = await fetch(`${API}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password, role })
+                });
+                if (!res.ok) { showError('Erro ao registrar'); return; }
+                const user = await res.json();
+                localStorage.setItem('authUser', JSON.stringify(user));
+                window.location.href = 'index.html';
+            } catch {
+                showError('Falha de conexão');
+            }
+        });
+    </script>
+</body>
+</html>

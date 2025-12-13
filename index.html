@@ -1197,9 +1197,27 @@
         let vendas = [];
         let vendasSalvas = [];
         let clienteAtual = null;
+        const API_BASE = 'http://localhost:' + (localStorage.getItem('apiPort') || '3001');
+        async function api(path, options = {}) {
+            const url = `${API_BASE}${path}`;
+            const res = await fetch(url, {
+                headers: { 'Content-Type': 'application/json' },
+                ...options
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || ('HTTP ' + res.status));
+            }
+            return res.json();
+        }
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
+            const auth = localStorage.getItem('authUser');
+            if (!auth) {
+                window.location.href = 'login.html';
+                return;
+            }
             carregarVendasSalvas();
             
             // Enter para adicionar venda
@@ -1497,32 +1515,42 @@
             }
         }
 
-        function salvarSimulacao() {
+        async function salvarSimulacao() {
+            if (!clienteAtual) {
+                mostrarToast('Defina os dados do cliente antes de salvar', 'error');
+                return;
+            }
             if (vendas.length === 0) {
                 mostrarToast('Adicione pelo menos uma venda antes de salvar', 'error');
                 return;
             }
-
-            const totais = calcularTotais();
-            const simulacao = {
-                id: Date.now(),
-                data: new Date().toLocaleString('pt-BR'),
-                vendas: [...vendas],
-                ...totais
-            };
-
-            vendasSalvas.push(simulacao);
-            localStorage.setItem('vendasSalvas', JSON.stringify(vendasSalvas));
-            
-            atualizarSimulacoesSalvas();
-            mostrarToast('Simulação salva com sucesso!', 'success');
+            try {
+                const payload = {
+                    cliente: { name: clienteAtual.nome, cnpj: clienteAtual.cnpj, p2b: clienteAtual.p2b },
+                    vendas: vendas.map(v => ({ tipo: v.tipo, receita: v.receita, vendedor: v.vendedor }))
+                };
+                const sim = await api('/simulations', { method: 'POST', body: JSON.stringify(payload) });
+                vendasSalvas.push(sim);
+                atualizarSimulacoesSalvas();
+                vendas = [];
+                atualizarInterface();
+                mostrarToast('Simulação salva com sucesso!', 'success');
+            } catch (e) {
+                mostrarToast('Erro ao salvar no servidor', 'error');
+            }
         }
 
-        function carregarVendasSalvas() {
-            const saved = localStorage.getItem('vendasSalvas');
-            if (saved) {
-                vendasSalvas = JSON.parse(saved);
+        async function carregarVendasSalvas() {
+            try {
+                const sims = await api('/simulations', { method: 'GET' });
+                vendasSalvas = sims;
                 atualizarSimulacoesSalvas();
+            } catch (e) {
+                const saved = localStorage.getItem('vendasSalvas');
+                if (saved) {
+                    vendasSalvas = JSON.parse(saved);
+                    atualizarSimulacoesSalvas();
+                }
             }
         }
 
@@ -1793,7 +1821,7 @@
             editingVendaId = null;
         }
         
-        function salvarEditModal() {
+        async function salvarEditModal() {
             if (!editingSimulacaoId) return;
             const simIndex = vendasSalvas.findIndex(s => s.id === editingSimulacaoId);
             if (simIndex === -1) return;
@@ -1810,111 +1838,55 @@
                 const vendaIndex = sim.vendas.findIndex(v => v.id === editingVendaId);
                 if (vendaIndex !== -1) {
                     const vendaAtual = sim.vendas[vendaIndex];
-                    sim.vendas[vendaIndex] = { ...vendaAtual, p2b, receita, tipo, vendedor };
+                    try {
+                        await api(`/sales/${vendaAtual.id}`, {
+                            method: 'PUT',
+                            body: JSON.stringify({ p2b, receita, tipo, vendedor })
+                        });
+                        sim.vendas[vendaIndex] = { ...vendaAtual, p2b, receita, tipo, vendedor };
+                    } catch (e) {
+                        mostrarToast('Erro ao atualizar venda no servidor', 'error');
+                        return;
+                    }
                 }
-                // recalcular totais da simulação
-                const receitaNovos = sim.vendas.filter(v => v.tipo === 'novos').reduce((acc, v) => acc + v.receita, 0);
-                const receitaTotal = sim.vendas.reduce((acc, v) => acc + v.receita, 0);
-                const nivel = calcularNivel(receitaNovos);
-                const detalhes = sim.vendas.map(v => ({ ...v, comissao: calcularComissaoProduto(receitaNovos, v.tipo, v.receita) }));
-                const agrupados = detalhes.reduce((acc, d) => {
-                    if (!acc[d.tipo]) acc[d.tipo] = { tipo: d.tipo, receita: 0, comissao: 0, quantidade: 0 };
-                    acc[d.tipo].receita += d.receita;
-                    acc[d.tipo].comissao += d.comissao;
-                    acc[d.tipo].quantidade += 1;
-                    return acc;
-                }, {});
-                const detalhesPorTipo = Object.values(agrupados);
-                const comissaoTotal = detalhes.reduce((acc, d) => acc + d.comissao, 0);
-                vendasSalvas[simIndex] = {
-                    ...vendasSalvas[simIndex],
-                    receitaNovos,
-                    receitaTotal,
-                    nivel,
-                    detalhes,
-                    detalhesPorTipo,
-                    comissaoTotal
-                };
-                localStorage.setItem('vendasSalvas', JSON.stringify(vendasSalvas));
-                atualizarSimulacoesSalvas();
+                await carregarVendasSalvas();
                 fecharEditModal();
                 mostrarToast('Venda atualizada', 'success');
             } else {
                 // atualizar simulação inteira (modo original)
                 const sim = vendasSalvas[simIndex];
-                const nomeCliente = (sim.vendas[0]?.nome || '').toUpperCase();
-                const cnpjCliente = sim.vendas[0]?.cnpj || '';
-                const novasVendas = rows.map(row => {
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    const vendaAtual = sim.vendas[i];
+                    if (!vendaAtual) continue;
                     const p2b = parseFloat(row.querySelector('.edit-p2b').value) || 0;
                     const receita = parseFloat(row.querySelector('.edit-receita').value) || 0;
                     const tipo = row.querySelector('.edit-tipo').value;
                     const vendedor = row.querySelector('.edit-vendedor').value;
-                    return { id: Date.now() + Math.floor(Math.random()*1000), nome: nomeCliente, cnpj: cnpjCliente, p2b, receita, tipo, vendedor };
-                });
-                const receitaNovos = novasVendas.filter(v => v.tipo === 'novos').reduce((acc, v) => acc + v.receita, 0);
-                const receitaTotal = novasVendas.reduce((acc, v) => acc + v.receita, 0);
-                const nivel = calcularNivel(receitaNovos);
-                const detalhes = novasVendas.map(v => ({ ...v, comissao: calcularComissaoProduto(receitaNovos, v.tipo, v.receita) }));
-                const agrupados = detalhes.reduce((acc, d) => {
-                    if (!acc[d.tipo]) acc[d.tipo] = { tipo: d.tipo, receita: 0, comissao: 0, quantidade: 0 };
-                    acc[d.tipo].receita += d.receita;
-                    acc[d.tipo].comissao += d.comissao;
-                    acc[d.tipo].quantidade += 1;
-                    return acc;
-                }, {});
-                const detalhesPorTipo = Object.values(agrupados);
-                const comissaoTotal = detalhes.reduce((acc, d) => acc + d.comissao, 0);
-                vendasSalvas[simIndex] = {
-                    ...vendasSalvas[simIndex],
-                    vendas: novasVendas,
-                    receitaNovos,
-                    receitaTotal,
-                    nivel,
-                    detalhes,
-                    detalhesPorTipo,
-                    comissaoTotal
-                };
-                localStorage.setItem('vendasSalvas', JSON.stringify(vendasSalvas));
-                atualizarSimulacoesSalvas();
+                    try {
+                        await api(`/sales/${vendaAtual.id}`, {
+                            method: 'PUT',
+                            body: JSON.stringify({ p2b, receita, tipo, vendedor })
+                        });
+                    } catch (e) {
+                        mostrarToast('Erro ao atualizar simulação no servidor', 'error');
+                        return;
+                    }
+                }
+                await carregarVendasSalvas();
                 fecharEditModal();
                 mostrarToast('Simulação atualizada', 'success');
             }
         }
         
-        function removerVendaHistorico(vendaId) {
-            const simIndex = vendasSalvas.findIndex(s => s.vendas.some(v => v.id === vendaId));
-            if (simIndex === -1) return;
-            const sim = vendasSalvas[simIndex];
-            sim.vendas = sim.vendas.filter(v => v.id !== vendaId);
-            if (sim.vendas.length === 0) {
-                vendasSalvas.splice(simIndex, 1);
-            } else {
-                const receitaNovos = sim.vendas.filter(v => v.tipo === 'novos').reduce((acc, v) => acc + v.receita, 0);
-                const receitaTotal = sim.vendas.reduce((acc, v) => acc + v.receita, 0);
-                const nivel = calcularNivel(receitaNovos);
-                const detalhes = sim.vendas.map(v => ({ ...v, comissao: calcularComissaoProduto(receitaNovos, v.tipo, v.receita) }));
-                const agrupados = detalhes.reduce((acc, d) => {
-                    if (!acc[d.tipo]) acc[d.tipo] = { tipo: d.tipo, receita: 0, comissao: 0, quantidade: 0 };
-                    acc[d.tipo].receita += d.receita;
-                    acc[d.tipo].comissao += d.comissao;
-                    acc[d.tipo].quantidade += 1;
-                    return acc;
-                }, {});
-                const detalhesPorTipo = Object.values(agrupados);
-                const comissaoTotal = detalhes.reduce((acc, d) => acc + d.comissao, 0);
-                vendasSalvas[simIndex] = {
-                    ...vendasSalvas[simIndex],
-                    receitaNovos,
-                    receitaTotal,
-                    nivel,
-                    detalhes,
-                    detalhesPorTipo,
-                    comissaoTotal
-                };
+        async function removerVendaHistorico(vendaId) {
+            try {
+                await api(`/sales/${vendaId}`, { method: 'DELETE' });
+                await carregarVendasSalvas();
+                mostrarToast('Venda removida', 'info');
+            } catch (e) {
+                mostrarToast('Erro ao remover venda no servidor', 'error');
             }
-            localStorage.setItem('vendasSalvas', JSON.stringify(vendasSalvas));
-            atualizarSimulacoesSalvas();
-            mostrarToast('Venda removida', 'info');
         }
         
         function abrirConfirmacaoExclusao(vendaId) {
