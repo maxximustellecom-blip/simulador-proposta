@@ -239,6 +239,86 @@
             font-size: 0.85rem;
         }
         
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .filters-grid label {
+            display: block;
+            font-size: 0.8rem;
+            color: #6B7280;
+            margin-bottom: 0.25rem;
+        }
+        .filters-grid select,
+        .filters-grid input[type="text"],
+        .filters-grid input[type="date"] {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            background-color: #FFFFFF;
+            color: #374151;
+            outline: none;
+        }
+        .accordion-toggle {
+            display: flex;
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
+        .filters-grid input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(40%) sepia(20%) saturate(500%) hue-rotate(220deg);
+            cursor: pointer;
+        }
+        .filters-grid select:focus,
+        .filters-grid input[type="text"]:focus,
+        .filters-grid input[type="date"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(107,33,168,0.15);
+        }
+        .filters-grid .filters-actions {
+            display: flex;
+            align-items: end;
+        }
+        
+        @media (max-width: 768px) {
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .btn-flat {
+            background: #FFFFFF;
+            color: #374151;
+            border: 1px solid #E5E7EB;
+            box-shadow: none;
+        }
+        
+        .btn-flat:hover {
+            background: #F3F4F6;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-mini {
+            padding: 0.2rem 0.4rem;
+            font-size: 0.75rem;
+            border-radius: 6px;
+        }
+        .btn-minimal {
+            background: #FFFFFF;
+            color: #4B5563;
+            border: 1px solid #E5E7EB;
+            padding: 0.2rem 0.4rem;
+            font-size: 0.75rem;
+            border-radius: 6px;
+            box-shadow: none;
+        }
+        .btn-minimal:hover {
+            background: #F9FAFB;
+        }
+        
         .vendas-lista {
             max-height: 300px;
             overflow-y: auto;
@@ -737,7 +817,7 @@
     <div class="modal-overlay" id="editModal">
         <div class="modal">
             <div class="modal-header">
-                <div class="modal-title">Editar Simulação</div>
+                <div class="modal-title" id="editModalTitle">Editar Simulação</div>
                 <button class="btn btn-danger" onclick="fecharEditModal()">Fechar</button>
             </div>
             <div class="modal-body">
@@ -747,6 +827,31 @@
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="fecharEditModal()">Cancelar</button>
                 <button class="btn btn-success" onclick="salvarEditModal()">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="confirmDeleteModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Confirmar Exclusão</div>
+                <button class="btn btn-danger" onclick="fecharConfirmacaoExclusao()">Fechar</button>
+            </div>
+            <div class="modal-body">
+                <div class="detalhe-item">
+                    <div class="detalhe-header">
+                        <span class="detalhe-tipo venda-renovacao">Excluir venda</span>
+                        <span style="font-weight: 600; color: #4B5563;">Esta ação não pode ser desfeita</span>
+                    </div>
+                    <div class="detalhe-footer">
+                        <span style="font-size: 0.9rem; color: #6B7280;">Tem certeza que deseja excluir?</span>
+                        <span style="font-size: 0.9rem; color: #6B7280;">Confirme para prosseguir</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="fecharConfirmacaoExclusao()">Cancelar</button>
+                <button class="btn btn-danger" onclick="confirmarExclusaoVenda()">Excluir</button>
             </div>
         </div>
     </div>
@@ -900,6 +1005,33 @@
                 <span>�</span>
                 Histórico de Premiações
             </h2>
+            <div class="filters-grid">
+                <div>
+                    <label for="filtroVendedor">Vendedor</label>
+                    <select id="filtroVendedor">
+                        <option value="Todos">Todos</option>
+                        <option value="Marcelo">Marcelo</option>
+                        <option value="Diego">Diego</option>
+                        <option value="Cesar">Cesar</option>
+                        <option value="Dheovana">Dheovana</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="filtroRazao">Razão Social</label>
+                    <input type="text" id="filtroRazao" placeholder="RAZÃO SOCIAL">
+                </div>
+                <div>
+                    <label for="filtroCnpj">CNPJ</label>
+                    <input type="text" id="filtroCnpj" placeholder="00.000.000/0000-00">
+                </div>
+                <div>
+                    <label for="filtroData">Data</label>
+                    <input type="date" id="filtroData">
+                </div>
+                <div class="filters-actions">
+                    <button class="btn-minimal btn-mini" id="btnLimparFiltros">Limpar</button>
+                </div>
+            </div>
             <div id="simulacoesSalvasLista"></div>
         </div>
 
@@ -1033,6 +1165,39 @@
             if (nomeInput) {
                 nomeInput.addEventListener('input', function(e) {
                     e.target.value = (e.target.value || '').toUpperCase();
+                });
+            }
+            const filtroVendedor = document.getElementById('filtroVendedor');
+            if (filtroVendedor) {
+                filtroVendedor.addEventListener('change', atualizarSimulacoesSalvas);
+            }
+            const filtroRazao = document.getElementById('filtroRazao');
+            if (filtroRazao) {
+                filtroRazao.addEventListener('input', atualizarSimulacoesSalvas);
+            }
+            const filtroCnpj = document.getElementById('filtroCnpj');
+            if (filtroCnpj) {
+                filtroCnpj.addEventListener('input', function(e) {
+                    e.target.value = formatCNPJ(e.target.value);
+                    atualizarSimulacoesSalvas();
+                });
+            }
+            const filtroData = document.getElementById('filtroData');
+            if (filtroData) {
+                filtroData.addEventListener('change', atualizarSimulacoesSalvas);
+            }
+            const btnLimparFiltros = document.getElementById('btnLimparFiltros');
+            if (btnLimparFiltros) {
+                btnLimparFiltros.addEventListener('click', function() {
+                    const fv = document.getElementById('filtroVendedor');
+                    const fr = document.getElementById('filtroRazao');
+                    const fc = document.getElementById('filtroCnpj');
+                    const fd = document.getElementById('filtroData');
+                    if (fv) fv.value = 'Todos';
+                    if (fr) fr.value = '';
+                    if (fc) fc.value = '';
+                    if (fd) fd.value = '';
+                    atualizarSimulacoesSalvas();
                 });
             }
         });
@@ -1323,19 +1488,35 @@
             
             if (vendasSalvas.length > 0) {
                 container.classList.remove('hidden');
+                const fvEl = document.getElementById('filtroVendedor');
+                const frEl = document.getElementById('filtroRazao');
+                const fcEl = document.getElementById('filtroCnpj');
+                const fdEl = document.getElementById('filtroData');
+                const filtroVend = fvEl ? fvEl.value : 'Todos';
+                const filtroRazao = frEl ? (frEl.value || '').trim().toUpperCase() : '';
+                const filtroCnpj = fcEl ? (fcEl.value || '').replace(/\D/g, '') : '';
+                const filtroDataIso = fdEl ? (fdEl.value || '') : '';
+                const filtroDataBr = filtroDataIso ? filtroDataIso.split('-').reverse().join('/') : '';
+                const todasVendas = [];
+                vendasSalvas.forEach(sim => {
+                    sim.vendas.forEach(v => {
+                        todasVendas.push({ v, data: sim.data });
+                    });
+                });
+                const filtradas = todasVendas.filter(({ v, data }) => {
+                    if (filtroVend && filtroVend !== 'Todos' && (v.vendedor || '-') !== filtroVend) return false;
+                    if (filtroRazao && !((v.nome || '').toUpperCase().includes(filtroRazao))) return false;
+                    if (filtroCnpj && !((v.cnpj || '').replace(/\D/g, '').includes(filtroCnpj))) return false;
+                    if (filtroDataBr && !(data || '').includes(filtroDataBr)) return false;
+                    return true;
+                });
                 const gruposGlobais = {};
                 const datasPorVendedor = {};
-                vendasSalvas.forEach(sim => {
-                    const dataSim = sim.data;
-                    sim.vendas.forEach(v => {
-                        const key = v.vendedor || '-';
-                        if (!gruposGlobais[key]) gruposGlobais[key] = [];
-                        gruposGlobais[key].push(v);
-                        const prev = datasPorVendedor[key];
-                        datasPorVendedor[key] = prev ? prev : dataSim;
-                        // usa a data mais recente visualmente como a última salva
-                        datasPorVendedor[key] = dataSim;
-                    });
+                filtradas.forEach(({ v, data }) => {
+                    const key = v.vendedor || '-';
+                    if (!gruposGlobais[key]) gruposGlobais[key] = [];
+                    gruposGlobais[key].push(v);
+                    datasPorVendedor[key] = data;
                 });
                 const vendedores = Object.keys(gruposGlobais);
                 lista.innerHTML = vendedores.map(nomeVend => {
@@ -1346,6 +1527,7 @@
                     const detalhesVend = vs.map(v => ({ ...v, comissao: calcularComissaoProduto(receitaTotalVend, v.tipo, v.receita) }));
                     const comissaoVendTotal = detalhesVend.reduce((acc, d) => acc + d.comissao, 0);
                     const dataHeader = datasPorVendedor[nomeVend];
+                    const vendKey = String(nomeVend).replace(/[^a-zA-Z0-9_-]/g, '_');
                     return `
                         <div class="simulacao-salva">
                             <div class="simulacao-header">
@@ -1356,27 +1538,30 @@
                                 </div>
                             </div>
                             <div class="detalhe-item">
-                                <div class="detalhe-header">
-                                    <span class="detalhe-tipo venda-novos">
-                                        ${nomeVend}
-                                    </span>
-                                    <span style="font-weight: 700; color: ${nivelVend.cor};">
-                                        ${nivelVend.nome} (${Math.round(nivelVend.fator * 100)}%)
-                                    </span>
-                                </div>
-                                <div class="detalhe-footer">
-                                    <span style="font-size: 0.9rem; color: #6B7280;">
-                                        Novos: ${formatMoeda(receitaNovosVend)} • Total: ${formatMoeda(receitaTotalVend)} • Vendas: ${vs.length}
-                                    </span>
-                                    <span style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">
-                                        Comissão: ${formatMoeda(comissaoVendTotal)}
-                                    </span>
-                                </div>
-                                <div style="margin-top:0.75rem;">
-                                    ${detalhesVend.map((d, i) => `
-                                        <div class="detalhe-item" style="background:#fff; border-left-color:${nivelVend.cor}">
-                                            <div class="detalhe-header">
-                                                <span class="detalhe-tipo ${getTipoVendaClasse(d.tipo)}">
+                                 <div class="detalhe-header">
+                                     <span class="detalhe-tipo venda-novos">
+                                         ${nomeVend}
+                                     </span>
+                                     <span style="font-weight: 700; color: ${nivelVend.cor};">
+                                         ${nivelVend.nome} (${Math.round(nivelVend.fator * 100)}%)
+                                     </span>
+                                 </div>
+                                 <div class="detalhe-footer">
+                                     <span style="font-size: 0.9rem; color: #6B7280;">
+                                         Novos: ${formatMoeda(receitaNovosVend)} • Total: ${formatMoeda(receitaTotalVend)} • Vendas: ${vs.length}
+                                     </span>
+                                     <span style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">
+                                         Comissão: ${formatMoeda(comissaoVendTotal)}
+                                     </span>
+                                 </div>
+                                 <div class="accordion-toggle">
+                                     <button class="btn-minimal btn-mini" title="Ver produtos" onclick="toggleVendedorAccordion('${vendKey}')" id="vend-accordion-bottom-btn-${vendKey}">▸ ver produtos</button>
+                                 </div>
+                                 <div id="vend-items-${vendKey}" class="hidden" style="margin-top:0.75rem;">
+                                     ${detalhesVend.map((d, i) => `
+                                         <div class="detalhe-item" style="background:#fff; border-left-color:${nivelVend.cor}">
+                                             <div class="detalhe-header">
+                                                 <span class="detalhe-tipo ${getTipoVendaClasse(d.tipo)}">
                                                     ${i + 1}. ${getTipoVendaLabel(d.tipo)}
                                                 </span>
                                                 <span style="font-weight: 600; color: #4B5563;">
@@ -1385,11 +1570,17 @@
                                             </div>
                                             <div class="detalhe-footer">
                                                 <span style="font-size: 0.9rem; color: #6B7280;">
-                                                    Nome: ${d.nome || '-'} • CNPJ: ${d.cnpj || '-'} • P2B: ${d.p2b ?? '-'} • Vendedor: ${d.vendedor || '-'}
-                                                </span>
-                                                <span style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">
                                                     Comissão: ${formatMoeda(d.comissao)}
                                                 </span>
+                                                <div style="display:flex; gap:0.5rem;">
+                                                    <button class="btn btn-flat btn-mini" title="Editar" onclick="editarVendaHistorico(${d.id})">✏️</button>
+                                                    <button class="btn btn-flat btn-mini" title="Excluir" onclick="abrirConfirmacaoExclusao(${d.id})">🗑️</button>
+                                                </div>
+                                            </div>
+                                            <div id="venda-details-${d.id}" style="margin-top:0.5rem;">
+                                                <div style="font-size: 0.9rem; color: #6B7280;">
+                                                    Nome: ${d.nome || '-'} • CNPJ: ${d.cnpj || '-'} • P2B: ${d.p2b ?? '-'} • Vendedor: ${d.vendedor || '-'}
+                                                </div>
                                             </div>
                                         </div>
                                     `).join('')}
@@ -1414,10 +1605,15 @@
         }
         
         let editingSimulacaoId = null;
+        let editingVendaId = null;
+        let pendingDeleteVendaId = null;
         function editarSimulacaoSalva(id) {
             const sim = vendasSalvas.find(s => s.id === id);
             if (!sim) return;
             editingSimulacaoId = id;
+            editingVendaId = null;
+            const titleEl = document.getElementById('editModalTitle');
+            if (titleEl) titleEl.textContent = 'Editar Simulação';
             const lista = document.getElementById('editModalVendasLista');
             const clienteInfo = document.getElementById('editModalClienteInfo');
             const nomeCliente = (sim.vendas[0]?.nome || '').toUpperCase();
@@ -1468,54 +1664,250 @@
             document.getElementById('editModal').classList.add('show');
         }
         
+        function editarVendaHistorico(vendaId) {
+            // localizar simulação e venda
+            const sim = vendasSalvas.find(s => s.vendas.some(v => v.id === vendaId));
+            if (!sim) return;
+            const venda = sim.vendas.find(v => v.id === vendaId);
+            editingSimulacaoId = sim.id;
+            editingVendaId = vendaId;
+            const titleEl = document.getElementById('editModalTitle');
+            if (titleEl) titleEl.textContent = 'Editar Venda';
+            const clienteInfo = document.getElementById('editModalClienteInfo');
+            const nomeCliente = (venda.nome || '').toUpperCase();
+            const cnpjCliente = formatCNPJ(venda.cnpj || '');
+            clienteInfo.innerHTML = `
+                <div class="detalhe-item">
+                    <div class="detalhe-header">
+                        <span class="detalhe-tipo venda-novos">Cliente</span>
+                        <span style="font-weight: 600; color: #4B5563;">${nomeCliente || '-'}</span>
+                    </div>
+                    <div class="detalhe-footer">
+                        <span style="font-size: 0.9rem; color: #6B7280;">CNPJ: ${cnpjCliente || '-'}</span>
+                        <span style="font-size: 0.9rem; color: #6B7280;">Edição de venda vinculada</span>
+                    </div>
+                </div>
+            `;
+            const lista = document.getElementById('editModalVendasLista');
+            lista.innerHTML = `
+                <div class="edit-row" data-index="0">
+                    <div>
+                        <label>Vendedor</label>
+                        <select class="edit-vendedor">
+                            <option value="Marcelo" ${ (venda.vendedor||'Marcelo')==='Marcelo'?'selected':'' }>Marcelo</option>
+                            <option value="Diego" ${ (venda.vendedor||'Marcelo')==='Diego'?'selected':'' }>Diego</option>
+                            <option value="Cesar" ${ (venda.vendedor||'Marcelo')==='Cesar'?'selected':'' }>Cesar</option>
+                            <option value="Dheovana" ${ (venda.vendedor||'Marcelo')==='Dheovana'?'selected':'' }>Dheovana</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>P2B</label>
+                        <input type="number" value="${venda.p2b || 0}" class="edit-p2b" min="0" step="1">
+                    </div>
+                    <div>
+                        <label>Receita</label>
+                        <input type="number" value="${venda.receita}" class="edit-receita" step="0.01" min="0">
+                    </div>
+                    <div>
+                        <label>Tipo</label>
+                        <select class="edit-tipo">
+                            <option value="novos" ${venda.tipo==='novos'?'selected':''}>Novos Acessos e Aditivos</option>
+                            <option value="renovacao" ${venda.tipo==='renovacao'?'selected':''}>Renovação</option>
+                            <option value="ultraFibra" ${venda.tipo==='ultraFibra'?'selected':''}>Ultra Fibra</option>
+                            <option value="wttx" ${venda.tipo==='wttx'?'selected':''}>WTTX</option>
+                            <option value="m2m" ${venda.tipo==='m2m'?'selected':''}>M2M</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            document.getElementById('editModal').classList.add('show');
+        }
+        
         function fecharEditModal() {
             document.getElementById('editModal').classList.remove('show');
             editingSimulacaoId = null;
+            editingVendaId = null;
         }
         
         function salvarEditModal() {
             if (!editingSimulacaoId) return;
             const simIndex = vendasSalvas.findIndex(s => s.id === editingSimulacaoId);
             if (simIndex === -1) return;
-            const sim = vendasSalvas[simIndex];
-            const nomeCliente = (sim.vendas[0]?.nome || '').toUpperCase();
-            const cnpjCliente = sim.vendas[0]?.cnpj || '';
             const container = document.getElementById('editModalVendasLista');
             const rows = Array.from(container.querySelectorAll('.edit-row'));
-            const novasVendas = rows.map(row => {
+            if (editingVendaId) {
+                // atualizar apenas uma venda
+                const row = rows[0];
                 const p2b = parseFloat(row.querySelector('.edit-p2b').value) || 0;
                 const receita = parseFloat(row.querySelector('.edit-receita').value) || 0;
                 const tipo = row.querySelector('.edit-tipo').value;
                 const vendedor = row.querySelector('.edit-vendedor').value;
-                return { id: Date.now() + Math.floor(Math.random()*1000), nome: nomeCliente, cnpj: cnpjCliente, p2b, receita, tipo, vendedor };
-            });
-            const receitaNovos = novasVendas.filter(v => v.tipo === 'novos').reduce((acc, v) => acc + v.receita, 0);
-            const receitaTotal = novasVendas.reduce((acc, v) => acc + v.receita, 0);
-            const nivel = calcularNivel(receitaNovos);
-            const detalhes = novasVendas.map(v => ({ ...v, comissao: calcularComissaoProduto(receitaNovos, v.tipo, v.receita) }));
-            const agrupados = detalhes.reduce((acc, d) => {
-                if (!acc[d.tipo]) acc[d.tipo] = { tipo: d.tipo, receita: 0, comissao: 0, quantidade: 0 };
-                acc[d.tipo].receita += d.receita;
-                acc[d.tipo].comissao += d.comissao;
-                acc[d.tipo].quantidade += 1;
-                return acc;
-            }, {});
-            const detalhesPorTipo = Object.values(agrupados);
-            const comissaoTotal = detalhes.reduce((acc, d) => acc + d.comissao, 0);
-            vendasSalvas[simIndex] = {
-                ...vendasSalvas[simIndex],
-                vendas: novasVendas,
-                receitaNovos,
-                receitaTotal,
-                nivel,
-                detalhes,
-                detalhesPorTipo,
-                comissaoTotal
-            };
+                const sim = vendasSalvas[simIndex];
+                const vendaIndex = sim.vendas.findIndex(v => v.id === editingVendaId);
+                if (vendaIndex !== -1) {
+                    const vendaAtual = sim.vendas[vendaIndex];
+                    sim.vendas[vendaIndex] = { ...vendaAtual, p2b, receita, tipo, vendedor };
+                }
+                // recalcular totais da simulação
+                const receitaNovos = sim.vendas.filter(v => v.tipo === 'novos').reduce((acc, v) => acc + v.receita, 0);
+                const receitaTotal = sim.vendas.reduce((acc, v) => acc + v.receita, 0);
+                const nivel = calcularNivel(receitaNovos);
+                const detalhes = sim.vendas.map(v => ({ ...v, comissao: calcularComissaoProduto(receitaNovos, v.tipo, v.receita) }));
+                const agrupados = detalhes.reduce((acc, d) => {
+                    if (!acc[d.tipo]) acc[d.tipo] = { tipo: d.tipo, receita: 0, comissao: 0, quantidade: 0 };
+                    acc[d.tipo].receita += d.receita;
+                    acc[d.tipo].comissao += d.comissao;
+                    acc[d.tipo].quantidade += 1;
+                    return acc;
+                }, {});
+                const detalhesPorTipo = Object.values(agrupados);
+                const comissaoTotal = detalhes.reduce((acc, d) => acc + d.comissao, 0);
+                vendasSalvas[simIndex] = {
+                    ...vendasSalvas[simIndex],
+                    receitaNovos,
+                    receitaTotal,
+                    nivel,
+                    detalhes,
+                    detalhesPorTipo,
+                    comissaoTotal
+                };
+                localStorage.setItem('vendasSalvas', JSON.stringify(vendasSalvas));
+                atualizarSimulacoesSalvas();
+                fecharEditModal();
+                mostrarToast('Venda atualizada', 'success');
+            } else {
+                // atualizar simulação inteira (modo original)
+                const sim = vendasSalvas[simIndex];
+                const nomeCliente = (sim.vendas[0]?.nome || '').toUpperCase();
+                const cnpjCliente = sim.vendas[0]?.cnpj || '';
+                const novasVendas = rows.map(row => {
+                    const p2b = parseFloat(row.querySelector('.edit-p2b').value) || 0;
+                    const receita = parseFloat(row.querySelector('.edit-receita').value) || 0;
+                    const tipo = row.querySelector('.edit-tipo').value;
+                    const vendedor = row.querySelector('.edit-vendedor').value;
+                    return { id: Date.now() + Math.floor(Math.random()*1000), nome: nomeCliente, cnpj: cnpjCliente, p2b, receita, tipo, vendedor };
+                });
+                const receitaNovos = novasVendas.filter(v => v.tipo === 'novos').reduce((acc, v) => acc + v.receita, 0);
+                const receitaTotal = novasVendas.reduce((acc, v) => acc + v.receita, 0);
+                const nivel = calcularNivel(receitaNovos);
+                const detalhes = novasVendas.map(v => ({ ...v, comissao: calcularComissaoProduto(receitaNovos, v.tipo, v.receita) }));
+                const agrupados = detalhes.reduce((acc, d) => {
+                    if (!acc[d.tipo]) acc[d.tipo] = { tipo: d.tipo, receita: 0, comissao: 0, quantidade: 0 };
+                    acc[d.tipo].receita += d.receita;
+                    acc[d.tipo].comissao += d.comissao;
+                    acc[d.tipo].quantidade += 1;
+                    return acc;
+                }, {});
+                const detalhesPorTipo = Object.values(agrupados);
+                const comissaoTotal = detalhes.reduce((acc, d) => acc + d.comissao, 0);
+                vendasSalvas[simIndex] = {
+                    ...vendasSalvas[simIndex],
+                    vendas: novasVendas,
+                    receitaNovos,
+                    receitaTotal,
+                    nivel,
+                    detalhes,
+                    detalhesPorTipo,
+                    comissaoTotal
+                };
+                localStorage.setItem('vendasSalvas', JSON.stringify(vendasSalvas));
+                atualizarSimulacoesSalvas();
+                fecharEditModal();
+                mostrarToast('Simulação atualizada', 'success');
+            }
+        }
+        
+        function removerVendaHistorico(vendaId) {
+            const simIndex = vendasSalvas.findIndex(s => s.vendas.some(v => v.id === vendaId));
+            if (simIndex === -1) return;
+            const sim = vendasSalvas[simIndex];
+            sim.vendas = sim.vendas.filter(v => v.id !== vendaId);
+            if (sim.vendas.length === 0) {
+                vendasSalvas.splice(simIndex, 1);
+            } else {
+                const receitaNovos = sim.vendas.filter(v => v.tipo === 'novos').reduce((acc, v) => acc + v.receita, 0);
+                const receitaTotal = sim.vendas.reduce((acc, v) => acc + v.receita, 0);
+                const nivel = calcularNivel(receitaNovos);
+                const detalhes = sim.vendas.map(v => ({ ...v, comissao: calcularComissaoProduto(receitaNovos, v.tipo, v.receita) }));
+                const agrupados = detalhes.reduce((acc, d) => {
+                    if (!acc[d.tipo]) acc[d.tipo] = { tipo: d.tipo, receita: 0, comissao: 0, quantidade: 0 };
+                    acc[d.tipo].receita += d.receita;
+                    acc[d.tipo].comissao += d.comissao;
+                    acc[d.tipo].quantidade += 1;
+                    return acc;
+                }, {});
+                const detalhesPorTipo = Object.values(agrupados);
+                const comissaoTotal = detalhes.reduce((acc, d) => acc + d.comissao, 0);
+                vendasSalvas[simIndex] = {
+                    ...vendasSalvas[simIndex],
+                    receitaNovos,
+                    receitaTotal,
+                    nivel,
+                    detalhes,
+                    detalhesPorTipo,
+                    comissaoTotal
+                };
+            }
             localStorage.setItem('vendasSalvas', JSON.stringify(vendasSalvas));
             atualizarSimulacoesSalvas();
-            fecharEditModal();
-            mostrarToast('Simulação atualizada', 'success');
+            mostrarToast('Venda removida', 'info');
+        }
+        
+        function abrirConfirmacaoExclusao(vendaId) {
+            pendingDeleteVendaId = vendaId;
+            const modal = document.getElementById('confirmDeleteModal');
+            modal.classList.add('show');
+        }
+        
+        function fecharConfirmacaoExclusao() {
+            const modal = document.getElementById('confirmDeleteModal');
+            modal.classList.remove('show');
+            pendingDeleteVendaId = null;
+        }
+        
+        function confirmarExclusaoVenda() {
+            if (!pendingDeleteVendaId) return;
+            removerVendaHistorico(pendingDeleteVendaId);
+            fecharConfirmacaoExclusao();
+        }
+        
+        function toggleVendedorAccordion(key) {
+            const el = document.getElementById(`vend-items-${key}`);
+            const btnTop = document.getElementById(`vend-accordion-btn-${key}`);
+            const btnBottom = document.getElementById(`vend-accordion-bottom-btn-${key}`);
+            if (!el) return;
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                if (btnTop) btnTop.textContent = '▾';
+                if (btnBottom) btnBottom.textContent = '▾ ver produtos';
+            } else {
+                el.classList.add('hidden');
+                if (btnTop) btnTop.textContent = '▸';
+                if (btnBottom) btnBottom.textContent = '▸ ver produtos';
+            }
+        }
+        
+        function toggleVendaAccordion(vendaId) {
+            const el = document.getElementById(`venda-details-${vendaId}`);
+            const btn = document.getElementById(`accordion-btn-${vendaId}`);
+            if (!el) return;
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                if (btn) btn.textContent = '▾';
+            } else {
+                el.classList.add('hidden');
+                if (btn) btn.textContent = '▸';
+            }
+        }
+        
+        function detalharVendaHistorico(vendaId) {
+            const el = document.getElementById(`venda-details-${vendaId}`);
+            if (!el) return;
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
         }
 
         function copiarSimulacao() {
