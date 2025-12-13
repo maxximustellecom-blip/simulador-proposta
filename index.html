@@ -1323,85 +1323,79 @@
             
             if (vendasSalvas.length > 0) {
                 container.classList.remove('hidden');
-                lista.innerHTML = vendasSalvas.slice().reverse().map(simulacao => {
-                    const grupos = {};
-                    simulacao.vendas.forEach(v => {
+                const gruposGlobais = {};
+                const datasPorVendedor = {};
+                vendasSalvas.forEach(sim => {
+                    const dataSim = sim.data;
+                    sim.vendas.forEach(v => {
                         const key = v.vendedor || '-';
-                        if (!grupos[key]) grupos[key] = [];
-                        grupos[key].push(v);
+                        if (!gruposGlobais[key]) gruposGlobais[key] = [];
+                        gruposGlobais[key].push(v);
+                        const prev = datasPorVendedor[key];
+                        datasPorVendedor[key] = prev ? prev : dataSim;
+                        // usa a data mais recente visualmente como a última salva
+                        datasPorVendedor[key] = dataSim;
                     });
-                    const vendedores = Object.keys(grupos);
+                });
+                const vendedores = Object.keys(gruposGlobais);
+                lista.innerHTML = vendedores.map(nomeVend => {
+                    const vs = gruposGlobais[nomeVend];
+                    const receitaNovosVend = vs.filter(v => v.tipo === 'novos').reduce((acc, v) => acc + v.receita, 0);
+                    const receitaTotalVend = vs.reduce((acc, v) => acc + v.receita, 0);
+                    const nivelVend = calcularNivel(receitaTotalVend);
+                    const detalhesVend = vs.map(v => ({ ...v, comissao: calcularComissaoProduto(receitaTotalVend, v.tipo, v.receita) }));
+                    const comissaoVendTotal = detalhesVend.reduce((acc, d) => acc + d.comissao, 0);
+                    const dataHeader = datasPorVendedor[nomeVend];
                     return `
-                    <div class="simulacao-salva">
-                        <div class="simulacao-header">
-                            <div>
-                                <div style="font-size: 0.9rem; color: #6B7280; margin-bottom: 0.5rem;">
-                                    ${simulacao.data}
-                                </div>
-                                <div style="font-size: 1.2rem; font-weight: 700; color: #374151;">
-                                    Agrupado por Vendedor
+                        <div class="simulacao-salva">
+                            <div class="simulacao-header">
+                                <div>
+                                    <div style="font-size: 0.9rem; color: #6B7280; margin-bottom: 0.5rem;">
+                                        ${dataHeader}
+                                    </div>
                                 </div>
                             </div>
-                            <div style="display:flex; gap:0.5rem;">
-                                <button class="btn btn-secondary" onclick="editarSimulacaoSalva(${simulacao.id})">
-                                    ✏️ Editar
-                                </button>
-                                <button class="btn btn-danger" onclick="removerSimulacaoSalva(${simulacao.id})">
-                                    🗑️ Excluir
-                                </button>
+                            <div class="detalhe-item">
+                                <div class="detalhe-header">
+                                    <span class="detalhe-tipo venda-novos">
+                                        ${nomeVend}
+                                    </span>
+                                    <span style="font-weight: 700; color: ${nivelVend.cor};">
+                                        ${nivelVend.nome} (${Math.round(nivelVend.fator * 100)}%)
+                                    </span>
+                                </div>
+                                <div class="detalhe-footer">
+                                    <span style="font-size: 0.9rem; color: #6B7280;">
+                                        Novos: ${formatMoeda(receitaNovosVend)} • Total: ${formatMoeda(receitaTotalVend)} • Vendas: ${vs.length}
+                                    </span>
+                                    <span style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">
+                                        Comissão: ${formatMoeda(comissaoVendTotal)}
+                                    </span>
+                                </div>
+                                <div style="margin-top:0.75rem;">
+                                    ${detalhesVend.map((d, i) => `
+                                        <div class="detalhe-item" style="background:#fff; border-left-color:${nivelVend.cor}">
+                                            <div class="detalhe-header">
+                                                <span class="detalhe-tipo ${getTipoVendaClasse(d.tipo)}">
+                                                    ${i + 1}. ${getTipoVendaLabel(d.tipo)}
+                                                </span>
+                                                <span style="font-weight: 600; color: #4B5563;">
+                                                    ${formatMoeda(d.receita)}
+                                                </span>
+                                            </div>
+                                            <div class="detalhe-footer">
+                                                <span style="font-size: 0.9rem; color: #6B7280;">
+                                                    Nome: ${d.nome || '-'} • CNPJ: ${d.cnpj || '-'} • P2B: ${d.p2b ?? '-'} • Vendedor: ${d.vendedor || '-'}
+                                                </span>
+                                                <span style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">
+                                                    Comissão: ${formatMoeda(d.comissao)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
                             </div>
                         </div>
-                        ${vendedores.map(nomeVend => {
-                            const vs = grupos[nomeVend];
-                            const receitaNovosVend = vs.filter(v => v.tipo === 'novos').reduce((acc, v) => acc + v.receita, 0);
-                            const receitaTotalVend = vs.reduce((acc, v) => acc + v.receita, 0);
-                            const nivelVend = calcularNivel(receitaNovosVend);
-                            const detalhesVend = vs.map(v => ({ ...v, comissao: calcularComissaoProduto(receitaNovosVend, v.tipo, v.receita) }));
-                            const comissaoVendTotal = detalhesVend.reduce((acc, d) => acc + d.comissao, 0);
-                            return `
-                                <div class="detalhe-item">
-                                    <div class="detalhe-header">
-                                        <span class="detalhe-tipo venda-novos">
-                                            ${nomeVend}
-                                        </span>
-                                        <span style="font-weight: 700; color: ${nivelVend.cor};">
-                                            ${nivelVend.nome} (${Math.round(nivelVend.fator * 100)}%)
-                                        </span>
-                                    </div>
-                                    <div class="detalhe-footer">
-                                        <span style="font-size: 0.9rem; color: #6B7280;">
-                                            Novos: ${formatMoeda(receitaNovosVend)} • Total: ${formatMoeda(receitaTotalVend)} • Vendas: ${vs.length}
-                                        </span>
-                                        <span style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">
-                                            Comissão: ${formatMoeda(comissaoVendTotal)}
-                                        </span>
-                                    </div>
-                                    <div style="margin-top:0.75rem;">
-                                        ${detalhesVend.map((d, i) => `
-                                            <div class="detalhe-item" style="background:#fff; border-left-color:${nivelVend.cor}">
-                                                <div class="detalhe-header">
-                                                    <span class="detalhe-tipo ${getTipoVendaClasse(d.tipo)}">
-                                                        ${i + 1}. ${getTipoVendaLabel(d.tipo)}
-                                                    </span>
-                                                    <span style="font-weight: 600; color: #4B5563;">
-                                                        ${formatMoeda(d.receita)}
-                                                    </span>
-                                                </div>
-                                                <div class="detalhe-footer">
-                                                    <span style="font-size: 0.9rem; color: #6B7280;">
-                                                        Nome: ${d.nome || '-'} • CNPJ: ${d.cnpj || '-'} • P2B: ${d.p2b ?? '-'} • Vendedor: ${d.vendedor || '-'}
-                                                    </span>
-                                                    <span style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">
-                                                        Comissão: ${formatMoeda(d.comissao)}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
                     `;
                 }).join('');
             } else {
