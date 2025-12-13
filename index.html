@@ -653,6 +653,10 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        #resultadoContainer{
+            margin-bottom: 30px;
+        }
     </style>
 </head>
 <body>
@@ -669,6 +673,49 @@
         <div class="header">
             <h1>💰 Simulador de Comissão Premium</h1>
             <p class="subtitle">Calcule suas comissões de vendas com precisão e estilo</p>
+        </div>
+
+        <div id="resultadoContainer" class="hidden">
+            <div class="card">
+                <h2 class="card-title">
+                    <span>🏆</span>
+                    Resultado da Simulação
+                </h2>
+
+                <div class="nivel-badge" id="nivelBadge">
+                    <p class="nivel-label">Nível Atingido</p>
+                    <p class="nivel-nome" id="nivelNome">-</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card stat-card-blue">
+                        <p class="stat-label">Receita Novos</p>
+                        <p class="stat-value" id="receitaNovos">R$ 0,00</p>
+                        <p class="stat-note">Conta para o nível</p>
+                    </div>
+                    <div class="stat-card stat-card-purple">
+                        <p class="stat-label">Receita Total</p>
+                        <p class="stat-value" id="receitaTotal">R$ 0,00</p>
+                        <p class="stat-note">Todos os serviços</p>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-card-green" style="margin-bottom: 1.5rem;">
+                    <p class="stat-label">Comissão Total</p>
+                    <p class="stat-value" id="comissaoTotal" style="font-size: 2rem;">R$ 0,00</p>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-success" onclick="salvarSimulacao()">
+                        <span>💾</span>
+                        Salvar
+                    </button>
+                    <button class="btn btn-secondary" onclick="copiarSimulacao()">
+                        <span>📋</span>
+                        Copiar
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="grid">
@@ -710,52 +757,10 @@
                 </div>
             </div>
 
-            <!-- Resultados -->
+            <!-- Detalhamento -->
             <div>
-                <div id="resultadoContainer" class="hidden">
+                <div id="detalhamentoContainer" class="hidden">
                     <div class="card">
-                        <h2 class="card-title">
-                            <span>🏆</span>
-                            Resultado da Simulação
-                        </h2>
-
-                        <div class="nivel-badge" id="nivelBadge">
-                            <p class="nivel-label">Nível Atingido</p>
-                            <p class="nivel-nome" id="nivelNome">-</p>
-                        </div>
-
-                        <div class="stats-grid">
-                            <div class="stat-card stat-card-blue">
-                                <p class="stat-label">Receita Novos</p>
-                                <p class="stat-value" id="receitaNovos">R$ 0,00</p>
-                                <p class="stat-note">Conta para o nível</p>
-                            </div>
-                            <div class="stat-card stat-card-purple">
-                                <p class="stat-label">Receita Total</p>
-                                <p class="stat-value" id="receitaTotal">R$ 0,00</p>
-                                <p class="stat-note">Todos os serviços</p>
-                            </div>
-                        </div>
-
-                        <div class="stat-card stat-card-green" style="margin-bottom: 1.5rem;">
-                            <p class="stat-label">Comissão Total</p>
-                            <p class="stat-value" id="comissaoTotal" style="font-size: 2rem;">R$ 0,00</p>
-                        </div>
-
-                        <div class="btn-group">
-                            <button class="btn btn-success" onclick="salvarSimulacao()">
-                                <span>💾</span>
-                                Salvar
-                            </button>
-                            <button class="btn btn-secondary" onclick="copiarSimulacao()">
-                                <span>📋</span>
-                                Copiar
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Detalhamento -->
-                    <div class="card" style="margin-top: 1.5rem;">
                         <h3 class="card-title">
                             <span>💵</span>
                             Detalhamento por Venda
@@ -1035,6 +1040,8 @@
                 // Calcular e mostrar resultado
                 const resultado = calcularTotais();
                 document.getElementById('resultadoContainer').classList.remove('hidden');
+                const detContainer = document.getElementById('detalhamentoContainer');
+                if (detContainer) detContainer.classList.remove('hidden');
                 
                 // Atualizar nível
                 const nivelBadge = document.getElementById('nivelBadge');
@@ -1071,6 +1078,8 @@
             } else {
                 vendasContainer.classList.add('hidden');
                 document.getElementById('resultadoContainer').classList.add('hidden');
+                const detContainer = document.getElementById('detalhamentoContainer');
+                if (detContainer) detContainer.classList.add('hidden');
             }
         }
 
