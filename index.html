@@ -61,6 +61,83 @@
             position: relative;
             z-index: 2;
         }
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--card-shadow);
+            padding: 0.7rem 0;
+        }
+        .topbar .brand {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.8rem;
+            color: var(--primary-dark);
+            letter-spacing: 2px;
+        }
+        .topbar .inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .user-area {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .user-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            border: 1px solid #E5E7EB;
+            border-radius: 9999px;
+            padding: 0.4rem 0.8rem;
+            background: linear-gradient(180deg, #FFFFFF 0%, #F7FAFC 100%);
+            color: #111827;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .user-button:hover {
+            background: #FFFFFF;
+            border-color: #D1D5DB;
+            box-shadow: 0 4px 10px rgba(17,24,39,0.08);
+        }
+        .user-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+            min-width: 160px;
+            display: none;
+            animation: fadeIn 0.2s ease-out;
+            z-index: 1000;
+        }
+        .user-dropdown.show {
+            display: block;
+        }
+        .dropdown-item {
+            width: 100%;
+            padding: 0.6rem 0.9rem;
+            border: none;
+            background: transparent;
+            text-align: left;
+            cursor: pointer;
+            color: #374151;
+            font-weight: 600;
+        }
+        .dropdown-item:hover {
+            background: #F3F4F6;
+        }
         
         .header {
             background: rgba(255, 255, 255, 0.95);
@@ -912,6 +989,19 @@
     </div>
 
     <div class="container">
+        <div class="topbar">
+            <div class="inner">
+                <div class="brand">MAXXIMUS TELECOM</div>
+                <div class="user-area">
+                    <button id="userMenuBtn" class="user-button"><span id="userNameLabel">Usuário</span> ▾</button>
+                    <div id="userDropdown" class="user-dropdown">
+                        <button id="logoutBtn" class="dropdown-item">Sair</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br>
+        <br>
         <!-- Header -->
         <div class="header">
             <h1>📱 Simulador de Premiações</h1>
@@ -968,16 +1058,6 @@
                 <div class="form-group">
                     <label for="p2b">P2B</label>
                     <input type="number" id="p2b" placeholder="P2B" step="1" min="0">
-                </div>
-                <div class="btn-group">
-                    <button class="btn btn-success" onclick="definirCliente()">
-                        <span>✅</span>
-                        Definir Cliente
-                    </button>
-                    <button class="btn btn-danger" onclick="limparCliente()">
-                        <span>🧹</span>
-                        Limpar
-                    </button>
                 </div>
                 <div id="clienteAtualInfo" style="margin-top:1rem;"></div>
             </div>
@@ -1253,6 +1333,29 @@
                 window.location.href = 'login.html';
                 return;
             }
+            try {
+                const user = JSON.parse(auth);
+                const label = document.getElementById('userNameLabel');
+                if (label && user && user.name) label.textContent = user.name;
+            } catch {}
+            const menuBtn = document.getElementById('userMenuBtn');
+            const dropdown = document.getElementById('userDropdown');
+            if (menuBtn && dropdown) {
+                menuBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('show');
+                });
+                document.addEventListener('click', function() {
+                    dropdown.classList.remove('show');
+                });
+            }
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function() {
+                    localStorage.removeItem('authUser');
+                    window.location.href = 'login.html';
+                });
+            }
             carregarVendasSalvas();
             carregarUsuarios();
             
@@ -1375,8 +1478,28 @@
             const tipoVenda = document.getElementById('tipoVenda').value;
             const receita = parseFloat(document.getElementById('receita').value);
             if (!clienteAtual) {
-                mostrarToast('Defina os dados do cliente antes de adicionar venda', 'error');
-                return;
+                const nome = (document.getElementById('nomeCliente').value || '').trim();
+                const cnpj = (document.getElementById('cnpjCliente').value || '').trim();
+                const p2bValor = parseFloat(document.getElementById('p2b').value);
+                const p2bNum = isNaN(p2bValor) ? 0 : p2bValor;
+                if (!nome) {
+                    mostrarToast('Informe o nome do cliente', 'error');
+                    return;
+                }
+                clienteAtual = { id: Date.now(), nome: nome.toUpperCase(), cnpj, p2b: p2bNum };
+                const info = document.getElementById('clienteAtualInfo');
+                info.innerHTML = `
+                    <div class="detalhe-item">
+                        <div class="detalhe-header">
+                            <span class="detalhe-tipo venda-novos">Cliente Atual</span>
+                            <span style="font-weight:600; color:#4B5563;">P2B: ${p2bNum}</span>
+                        </div>
+                        <div class="detalhe-footer">
+                            <span style="font-size:0.9rem; color:#6B7280;">${nome.toUpperCase()} • ${cnpj || '-'}</span>
+                            <span style="font-size:0.9rem; color:#6B7280;">Pronto para vincular vendas</span>
+                        </div>
+                    </div>
+                `;
             }
             const vendedor = document.getElementById('vendedor').value;
             
@@ -1402,40 +1525,7 @@
             mostrarToast('Venda adicionada com sucesso!', 'success');
         }
         
-        function definirCliente() {
-            const nome = document.getElementById('nomeCliente').value.trim();
-            const cnpj = document.getElementById('cnpjCliente').value.trim();
-            const p2bValor = parseFloat(document.getElementById('p2b').value);
-            const p2bNum = isNaN(p2bValor) ? 0 : p2bValor;
-            if (!nome) {
-                mostrarToast('Informe o nome do cliente', 'error');
-                return;
-            }
-            clienteAtual = { id: Date.now(), nome: nome.toUpperCase(), cnpj, p2b: p2bNum };
-            const info = document.getElementById('clienteAtualInfo');
-            info.innerHTML = `
-                <div class="detalhe-item">
-                    <div class="detalhe-header">
-                        <span class="detalhe-tipo venda-novos">Cliente Atual</span>
-                        <span style="font-weight:600; color:#4B5563;">P2B: ${p2bNum}</span>
-                    </div>
-                    <div class="detalhe-footer">
-                        <span style="font-size:0.9rem; color:#6B7280;">${nome} • ${cnpj || '-'}</span>
-                        <span style="font-size:0.9rem; color:#6B7280;">Pronto para vincular vendas</span>
-                    </div>
-                </div>
-            `;
-            mostrarToast('Cliente definido', 'success');
-        }
         
-        function limparCliente() {
-            clienteAtual = null;
-            document.getElementById('nomeCliente').value = '';
-            document.getElementById('cnpjCliente').value = '';
-            document.getElementById('p2b').value = '';
-            document.getElementById('clienteAtualInfo').innerHTML = '';
-            mostrarToast('Dados do cliente limpos', 'info');
-        }
 
         function removerVenda(id) {
             vendas = vendas.filter(v => v.id !== id);
@@ -1570,6 +1660,15 @@
                 atualizarSimulacoesSalvas();
                 vendas = [];
                 atualizarInterface();
+                clienteAtual = null;
+                const nomeEl = document.getElementById('nomeCliente');
+                const cnpjEl = document.getElementById('cnpjCliente');
+                const p2bEl = document.getElementById('p2b');
+                const infoEl = document.getElementById('clienteAtualInfo');
+                if (nomeEl) nomeEl.value = '';
+                if (cnpjEl) cnpjEl.value = '';
+                if (p2bEl) p2bEl.value = '';
+                if (infoEl) infoEl.innerHTML = '';
                 mostrarToast('Simulação salva com sucesso!', 'success');
             } catch (e) {
                 mostrarToast('Erro ao salvar no servidor', 'error');
