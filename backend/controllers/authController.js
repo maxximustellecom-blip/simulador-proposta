@@ -29,3 +29,15 @@ export async function login(req, res) {
     return res.status(500).json({ error: 'server_error' });
   }
 }
+
+export async function listUsers(req, res) {
+  try {
+    const { role } = req.query || {};
+    const where = {};
+    if (role) where.role = role;
+    const users = await User.findAll({ where, order: [['name', 'ASC']] });
+    return res.json(users.map(u => ({ id: u.id, name: u.name, email: u.email, role: u.role })));
+  } catch (e) {
+    return res.status(500).json({ error: 'server_error' });
+  }
+}

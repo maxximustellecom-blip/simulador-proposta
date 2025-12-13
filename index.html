@@ -1197,7 +1197,7 @@
         let vendas = [];
         let vendasSalvas = [];
         let clienteAtual = null;
-        const API_BASE = 'http://localhost:' + (localStorage.getItem('apiPort') || '3001');
+        const API_BASE = 'http://localhost:' + (localStorage.getItem('apiPort') || '3002');
         async function api(path, options = {}) {
             const url = `${API_BASE}${path}`;
             const res = await fetch(url, {
@@ -1210,6 +1210,41 @@
             }
             return res.json();
         }
+        let usuarios = [];
+        async function carregarUsuarios() {
+            try {
+                let list = await api('/auth/users?role=user', { method: 'GET' });
+                if (!Array.isArray(list) || list.length === 0) {
+                    list = await api('/auth/users', { method: 'GET' });
+                }
+                usuarios = Array.isArray(list) ? list : [];
+                populateVendedorSelect();
+                populateFiltroVendedor();
+            } catch (e) {
+                usuarios = [];
+            }
+        }
+        function renderUsuarioOptions(selected) {
+            if (!usuarios || usuarios.length === 0) {
+                return `<option value="">Selecione</option>`;
+            }
+            return usuarios.map(u => {
+                const sel = (u.name === selected) ? 'selected' : '';
+                return `<option value="${u.name}" ${sel}>${u.name}</option>`;
+            }).join('');
+        }
+        function populateVendedorSelect() {
+            const sel = document.getElementById('vendedor');
+            if (!sel) return;
+            sel.innerHTML = renderUsuarioOptions(sel.value || '');
+        }
+        function populateFiltroVendedor() {
+            const sel = document.getElementById('filtroVendedor');
+            if (!sel) return;
+            const base = [`<option value="Todos">Todos</option>`];
+            const opts = usuarios.map(u => `<option value="${u.name}">${u.name}</option>`);
+            sel.innerHTML = base.concat(opts).join('');
+        }
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
@@ -1219,6 +1254,7 @@
                 return;
             }
             carregarVendasSalvas();
+            carregarUsuarios();
             
             // Enter para adicionar venda
             document.getElementById('receita').addEventListener('keypress', function(e) {
@@ -1726,12 +1762,7 @@
                 <div class="edit-row" data-index="${idx}">
                     <div>
                         <label>Vendedor</label>
-                        <select class="edit-vendedor">
-                            <option value="Marcelo" ${ (v.vendedor||'Marcelo')==='Marcelo'?'selected':'' }>Marcelo</option>
-                            <option value="Diego" ${ (v.vendedor||'Marcelo')==='Diego'?'selected':'' }>Diego</option>
-                            <option value="Cesar" ${ (v.vendedor||'Marcelo')==='Cesar'?'selected':'' }>Cesar</option>
-                            <option value="Dheovana" ${ (v.vendedor||'Marcelo')==='Dheovana'?'selected':'' }>Dheovana</option>
-                        </select>
+                        <select class="edit-vendedor">${renderUsuarioOptions(v.vendedor || '')}</select>
                     </div>
                     <div>
                         <label>P2B</label>
@@ -1785,12 +1816,7 @@
                 <div class="edit-row" data-index="0">
                     <div>
                         <label>Vendedor</label>
-                        <select class="edit-vendedor">
-                            <option value="Marcelo" ${ (venda.vendedor||'Marcelo')==='Marcelo'?'selected':'' }>Marcelo</option>
-                            <option value="Diego" ${ (venda.vendedor||'Marcelo')==='Diego'?'selected':'' }>Diego</option>
-                            <option value="Cesar" ${ (venda.vendedor||'Marcelo')==='Cesar'?'selected':'' }>Cesar</option>
-                            <option value="Dheovana" ${ (venda.vendedor||'Marcelo')==='Dheovana'?'selected':'' }>Dheovana</option>
-                        </select>
+                        <select class="edit-vendedor">${renderUsuarioOptions(venda.vendedor || '')}</select>
                     </div>
                     <div>
                         <label>P2B</label>
