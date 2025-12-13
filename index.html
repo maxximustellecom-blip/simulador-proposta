@@ -621,7 +621,7 @@
         
         .edit-row {
             display: grid;
-            grid-template-columns: 1fr 1fr 1.2fr;
+            grid-template-columns: 1.2fr 1fr 1fr 1.2fr;
             gap: 0.75rem;
             margin-bottom: 0.75rem;
             align-items: end;
@@ -798,15 +798,6 @@
                     Dados do Cliente
                 </h2>
                 <div class="form-group">
-                    <label for="vendedor">Vendedor</label>
-                    <select id="vendedor">
-                        <option value="Marcelo">Marcelo</option>
-                        <option value="Diego">Diego</option>
-                        <option value="Cesar">Cesar</option>
-                        <option value="Dheovana">Dheovana</option>
-                    </select>
-                </div>
-                <div class="form-group">
                     <label for="nomeCliente">Nome</label>
                     <input type="text" id="nomeCliente" placeholder="Nome do cliente">
                 </div>
@@ -836,6 +827,16 @@
                     <span>➕</span>
                     Adicionar Venda
                 </h2>
+                
+                <div class="form-group">
+                    <label for="vendedor">Vendedor</label>
+                    <select id="vendedor">
+                        <option value="Marcelo">Marcelo</option>
+                        <option value="Diego">Diego</option>
+                        <option value="Cesar">Cesar</option>
+                        <option value="Dheovana">Dheovana</option>
+                    </select>
+                </div>
 
                 <div class="form-group">
                     <label for="tipoVenda">Tipo de Venda</label>
@@ -870,9 +871,9 @@
             </div>
 
             <!-- Detalhamento -->
-            <div>
+            <div style="grid-column: 1 / -1;">
                 <div id="detalhamentoContainer" class="hidden">
-                    <div class="card">
+                    <div class="card" style="width: 100%;">
                         <h3 class="card-title">
                             <span>💵</span>
                             Detalhamento por Venda
@@ -1105,6 +1106,7 @@
                 mostrarToast('Defina os dados do cliente antes de adicionar venda', 'error');
                 return;
             }
+            const vendedor = document.getElementById('vendedor').value;
             
             if (isNaN(receita) || receita <= 0) {
                 mostrarToast('Por favor, insira um valor válido', 'error');
@@ -1118,7 +1120,7 @@
                 nome: clienteAtual.nome,
                 cnpj: clienteAtual.cnpj,
                 p2b: clienteAtual.p2b,
-                vendedor: clienteAtual.vendedor
+                vendedor: vendedor
             };
 
             vendas.push(novaVenda);
@@ -1133,12 +1135,11 @@
             const cnpj = document.getElementById('cnpjCliente').value.trim();
             const p2bValor = parseFloat(document.getElementById('p2b').value);
             const p2bNum = isNaN(p2bValor) ? 0 : p2bValor;
-            const vendedor = document.getElementById('vendedor').value;
             if (!nome) {
                 mostrarToast('Informe o nome do cliente', 'error');
                 return;
             }
-            clienteAtual = { id: Date.now(), vendedor, nome: nome.toUpperCase(), cnpj, p2b: p2bNum };
+            clienteAtual = { id: Date.now(), nome: nome.toUpperCase(), cnpj, p2b: p2bNum };
             const info = document.getElementById('clienteAtualInfo');
             info.innerHTML = `
                 <div class="detalhe-item">
@@ -1160,7 +1161,6 @@
             document.getElementById('nomeCliente').value = '';
             document.getElementById('cnpjCliente').value = '';
             document.getElementById('p2b').value = '';
-            document.getElementById('vendedor').value = 'Marcelo';
             document.getElementById('clienteAtualInfo').innerHTML = '';
             mostrarToast('Dados do cliente limpos', 'info');
         }
@@ -1373,7 +1373,7 @@
                                     </div>
                                     <div class="detalhe-footer">
                                         <span style="font-size: 0.9rem; color: #6B7280;">
-                                            Nome: ${d.nome || '-'} • CNPJ: ${d.cnpj || '-'} • P2B: ${d.p2b ?? '-'}
+                                            Vendedor: ${d.vendedor || '-'} • Nome: ${d.nome || '-'} • CNPJ: ${d.cnpj || '-'} • P2B: ${d.p2b ?? '-'}
                                         </span>
                                         <span style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">
                                             Comissão: ${formatMoeda(d.comissao)}
@@ -1423,6 +1423,15 @@
             lista.innerHTML = sim.vendas.map((v, idx) => `
                 <div class="edit-row" data-index="${idx}">
                     <div>
+                        <label>Vendedor</label>
+                        <select class="edit-vendedor">
+                            <option value="Marcelo" ${ (v.vendedor||'Marcelo')==='Marcelo'?'selected':'' }>Marcelo</option>
+                            <option value="Diego" ${ (v.vendedor||'Marcelo')==='Diego'?'selected':'' }>Diego</option>
+                            <option value="Cesar" ${ (v.vendedor||'Marcelo')==='Cesar'?'selected':'' }>Cesar</option>
+                            <option value="Dheovana" ${ (v.vendedor||'Marcelo')==='Dheovana'?'selected':'' }>Dheovana</option>
+                        </select>
+                    </div>
+                    <div>
                         <label>P2B</label>
                         <input type="number" value="${v.p2b || 0}" class="edit-p2b" min="0" step="1">
                     </div>
@@ -1463,7 +1472,8 @@
                 const p2b = parseFloat(row.querySelector('.edit-p2b').value) || 0;
                 const receita = parseFloat(row.querySelector('.edit-receita').value) || 0;
                 const tipo = row.querySelector('.edit-tipo').value;
-                return { id: Date.now() + Math.floor(Math.random()*1000), nome: nomeCliente, cnpj: cnpjCliente, p2b, receita, tipo };
+                const vendedor = row.querySelector('.edit-vendedor').value;
+                return { id: Date.now() + Math.floor(Math.random()*1000), nome: nomeCliente, cnpj: cnpjCliente, p2b, receita, tipo, vendedor };
             });
             const receitaNovos = novasVendas.filter(v => v.tipo === 'novos').reduce((acc, v) => acc + v.receita, 0);
             const receitaTotal = novasVendas.reduce((acc, v) => acc + v.receita, 0);
