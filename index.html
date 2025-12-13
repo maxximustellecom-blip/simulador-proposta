@@ -990,6 +990,17 @@
                 comissao: calcularComissaoProduto(receitaNovos, venda.tipo, venda.receita)
             }));
 
+            const agrupados = detalhes.reduce((acc, d) => {
+                if (!acc[d.tipo]) {
+                    acc[d.tipo] = { tipo: d.tipo, receita: 0, comissao: 0, quantidade: 0 };
+                }
+                acc[d.tipo].receita += d.receita;
+                acc[d.tipo].comissao += d.comissao;
+                acc[d.tipo].quantidade += 1;
+                return acc;
+            }, {});
+            const detalhesPorTipo = Object.values(agrupados);
+
             const comissaoTotal = detalhes.reduce((acc, d) => acc + d.comissao, 0);
 
             return {
@@ -997,6 +1008,7 @@
                 receitaTotal,
                 nivel,
                 detalhes,
+                detalhesPorTipo,
                 comissaoTotal
             };
         }
@@ -1038,11 +1050,11 @@
                 
                 // Atualizar detalhamento
                 const detalhamentoLista = document.getElementById('detalhamentoLista');
-                detalhamentoLista.innerHTML = resultado.detalhes.map(detalhe => `
+                detalhamentoLista.innerHTML = resultado.detalhesPorTipo.map(detalhe => `
                     <div class="detalhe-item">
                         <div class="detalhe-header">
                             <span class="detalhe-tipo ${getTipoVendaClasse(detalhe.tipo)}">
-                                ${getTipoVendaLabel(detalhe.tipo)}
+                                ${getTipoVendaLabel(detalhe.tipo)} (${detalhe.quantidade})
                             </span>
                             <span style="font-weight: 600; color: #4B5563;">
                                 ${formatMoeda(detalhe.receita)}
