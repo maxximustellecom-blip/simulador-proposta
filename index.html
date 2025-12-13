@@ -564,6 +564,10 @@
             display: flex;
         }
         
+        #nomeCliente {
+            text-transform: uppercase;
+        }
+        
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -617,7 +621,7 @@
         
         .edit-row {
             display: grid;
-            grid-template-columns: 2fr 1.5fr 1fr 1fr 1.5fr;
+            grid-template-columns: 1fr 1fr 1.2fr;
             gap: 0.75rem;
             margin-bottom: 0.75rem;
             align-items: end;
@@ -715,6 +719,10 @@
         #resultadoContainer{
             margin-bottom: 30px;
         }
+
+        #simulacoesSalvasContainer{
+            margin-bottom: 30px;
+        }
     </style>
 </head>
 <body>
@@ -733,6 +741,7 @@
                 <button class="btn btn-danger" onclick="fecharEditModal()">Fechar</button>
             </div>
             <div class="modal-body">
+                <div id="editModalClienteInfo" style="margin-bottom:1rem;"></div>
                 <div id="editModalVendasLista"></div>
             </div>
             <div class="modal-actions">
@@ -783,6 +792,44 @@
         </div>
 
         <div class="grid">
+            <div class="card">
+                <h2 class="card-title">
+                    <span>👤</span>
+                    Dados do Cliente
+                </h2>
+                <div class="form-group">
+                    <label for="vendedor">Vendedor</label>
+                    <select id="vendedor">
+                        <option value="Marcelo">Marcelo</option>
+                        <option value="Diego">Diego</option>
+                        <option value="Cesar">Cesar</option>
+                        <option value="Dheovana">Dheovana</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="nomeCliente">Nome</label>
+                    <input type="text" id="nomeCliente" placeholder="Nome do cliente">
+                </div>
+                <div class="form-group">
+                    <label for="cnpjCliente">CNPJ</label>
+                    <input type="text" id="cnpjCliente" placeholder="00.000.000/0000-00">
+                </div>
+                <div class="form-group">
+                    <label for="p2b">P2B</label>
+                    <input type="number" id="p2b" placeholder="P2B" step="1" min="0">
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" onclick="definirCliente()">
+                        <span>✅</span>
+                        Definir Cliente
+                    </button>
+                    <button class="btn btn-danger" onclick="limparCliente()">
+                        <span>🧹</span>
+                        Limpar
+                    </button>
+                </div>
+                <div id="clienteAtualInfo" style="margin-top:1rem;"></div>
+            </div>
             <!-- Formulário de Adição -->
             <div class="card">
                 <h2 class="card-title">
@@ -802,21 +849,6 @@
                     </select>
                 </div>
                 
-                <div class="form-group">
-                    <label for="nomeCliente">Nome</label>
-                    <input type="text" id="nomeCliente" placeholder="Nome do cliente">
-                </div>
-                
-                <div class="form-group">
-                    <label for="cnpjCliente">CNPJ</label>
-                    <input type="text" id="cnpjCliente" placeholder="00.000.000/0000-00">
-                </div>
-                
-                <div class="form-group">
-                    <label for="p2b">P2B</label>
-                    <input type="number" id="p2b" placeholder="P2B" step="1" min="0">
-                </div>
-
                 <div class="form-group">
                     <label for="receita">Receita Gerada (R$)</label>
                     <input type="number" id="receita" placeholder="Digite o valor" step="0.01">
@@ -978,6 +1010,7 @@
         // Estado da aplicação
         let vendas = [];
         let vendasSalvas = [];
+        let clienteAtual = null;
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
@@ -993,6 +1026,12 @@
             if (cnpjInput) {
                 cnpjInput.addEventListener('input', function(e) {
                     e.target.value = formatCNPJ(e.target.value);
+                });
+            }
+            const nomeInput = document.getElementById('nomeCliente');
+            if (nomeInput) {
+                nomeInput.addEventListener('input', function(e) {
+                    e.target.value = (e.target.value || '').toUpperCase();
                 });
             }
         });
@@ -1062,10 +1101,10 @@
         function adicionarVenda() {
             const tipoVenda = document.getElementById('tipoVenda').value;
             const receita = parseFloat(document.getElementById('receita').value);
-            const nomeCliente = document.getElementById('nomeCliente').value.trim();
-            const cnpjCliente = document.getElementById('cnpjCliente').value.trim();
-            const p2bValor = parseFloat(document.getElementById('p2b').value);
-            const p2b = isNaN(p2bValor) ? 0 : p2bValor;
+            if (!clienteAtual) {
+                mostrarToast('Defina os dados do cliente antes de adicionar venda', 'error');
+                return;
+            }
             
             if (isNaN(receita) || receita <= 0) {
                 mostrarToast('Por favor, insira um valor válido', 'error');
@@ -1076,19 +1115,54 @@
                 id: Date.now(),
                 tipo: tipoVenda,
                 receita: receita,
-                nome: nomeCliente,
-                cnpj: cnpjCliente,
-                p2b: p2b
+                nome: clienteAtual.nome,
+                cnpj: clienteAtual.cnpj,
+                p2b: clienteAtual.p2b,
+                vendedor: clienteAtual.vendedor
             };
 
             vendas.push(novaVenda);
             document.getElementById('receita').value = '';
-            document.getElementById('nomeCliente').value = '';
-            document.getElementById('cnpjCliente').value = '';
-            document.getElementById('p2b').value = '';
             
             atualizarInterface();
             mostrarToast('Venda adicionada com sucesso!', 'success');
+        }
+        
+        function definirCliente() {
+            const nome = document.getElementById('nomeCliente').value.trim();
+            const cnpj = document.getElementById('cnpjCliente').value.trim();
+            const p2bValor = parseFloat(document.getElementById('p2b').value);
+            const p2bNum = isNaN(p2bValor) ? 0 : p2bValor;
+            const vendedor = document.getElementById('vendedor').value;
+            if (!nome) {
+                mostrarToast('Informe o nome do cliente', 'error');
+                return;
+            }
+            clienteAtual = { id: Date.now(), vendedor, nome: nome.toUpperCase(), cnpj, p2b: p2bNum };
+            const info = document.getElementById('clienteAtualInfo');
+            info.innerHTML = `
+                <div class="detalhe-item">
+                    <div class="detalhe-header">
+                        <span class="detalhe-tipo venda-novos">Cliente Atual</span>
+                        <span style="font-weight:600; color:#4B5563;">P2B: ${p2bNum}</span>
+                    </div>
+                    <div class="detalhe-footer">
+                        <span style="font-size:0.9rem; color:#6B7280;">${nome} • ${cnpj || '-'}</span>
+                        <span style="font-size:0.9rem; color:#6B7280;">Pronto para vincular vendas</span>
+                    </div>
+                </div>
+            `;
+            mostrarToast('Cliente definido', 'success');
+        }
+        
+        function limparCliente() {
+            clienteAtual = null;
+            document.getElementById('nomeCliente').value = '';
+            document.getElementById('cnpjCliente').value = '';
+            document.getElementById('p2b').value = '';
+            document.getElementById('vendedor').value = 'Marcelo';
+            document.getElementById('clienteAtualInfo').innerHTML = '';
+            mostrarToast('Dados do cliente limpos', 'info');
         }
 
         function removerVenda(id) {
@@ -1331,16 +1405,23 @@
             if (!sim) return;
             editingSimulacaoId = id;
             const lista = document.getElementById('editModalVendasLista');
+            const clienteInfo = document.getElementById('editModalClienteInfo');
+            const nomeCliente = (sim.vendas[0]?.nome || '').toUpperCase();
+            const cnpjCliente = formatCNPJ(sim.vendas[0]?.cnpj || '');
+            clienteInfo.innerHTML = `
+                <div class="detalhe-item">
+                    <div class="detalhe-header">
+                        <span class="detalhe-tipo venda-novos">Cliente</span>
+                        <span style="font-weight: 600; color: #4B5563;">${nomeCliente || '-'}</span>
+                    </div>
+                    <div class="detalhe-footer">
+                        <span style="font-size: 0.9rem; color: #6B7280;">CNPJ: ${cnpjCliente || '-'}</span>
+                        <span style="font-size: 0.9rem; color: #6B7280;">Edição de vendas vinculadas</span>
+                    </div>
+                </div>
+            `;
             lista.innerHTML = sim.vendas.map((v, idx) => `
                 <div class="edit-row" data-index="${idx}">
-                    <div>
-                        <label>Nome</label>
-                        <input type="text" value="${v.nome || ''}" class="edit-nome">
-                    </div>
-                    <div>
-                        <label>CNPJ</label>
-                        <input type="text" value="${v.cnpj || ''}" class="edit-cnpj">
-                    </div>
                     <div>
                         <label>P2B</label>
                         <input type="number" value="${v.p2b || 0}" class="edit-p2b" min="0" step="1">
@@ -1361,11 +1442,6 @@
                     </div>
                 </div>
             `).join('');
-            document.querySelectorAll('.edit-cnpj').forEach(el => {
-                el.addEventListener('input', function(e) {
-                    e.target.value = formatCNPJ(e.target.value);
-                });
-            });
             document.getElementById('editModal').classList.add('show');
         }
         
@@ -1378,15 +1454,16 @@
             if (!editingSimulacaoId) return;
             const simIndex = vendasSalvas.findIndex(s => s.id === editingSimulacaoId);
             if (simIndex === -1) return;
+            const sim = vendasSalvas[simIndex];
+            const nomeCliente = (sim.vendas[0]?.nome || '').toUpperCase();
+            const cnpjCliente = sim.vendas[0]?.cnpj || '';
             const container = document.getElementById('editModalVendasLista');
             const rows = Array.from(container.querySelectorAll('.edit-row'));
             const novasVendas = rows.map(row => {
-                const nome = row.querySelector('.edit-nome').value.trim();
-                const cnpj = row.querySelector('.edit-cnpj').value.trim();
                 const p2b = parseFloat(row.querySelector('.edit-p2b').value) || 0;
                 const receita = parseFloat(row.querySelector('.edit-receita').value) || 0;
                 const tipo = row.querySelector('.edit-tipo').value;
-                return { id: Date.now() + Math.floor(Math.random()*1000), nome, cnpj, p2b, receita, tipo };
+                return { id: Date.now() + Math.floor(Math.random()*1000), nome: nomeCliente, cnpj: cnpjCliente, p2b, receita, tipo };
             });
             const receitaNovos = novasVendas.filter(v => v.tipo === 'novos').reduce((acc, v) => acc + v.receita, 0);
             const receitaTotal = novasVendas.reduce((acc, v) => acc + v.receita, 0);
