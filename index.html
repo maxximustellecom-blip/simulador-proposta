@@ -1197,7 +1197,7 @@
         let vendas = [];
         let vendasSalvas = [];
         let clienteAtual = null;
-        const API_BASE = 'http://localhost:' + (localStorage.getItem('apiPort') || '3002');
+        const API_BASE = 'http://localhost:' + (localStorage.getItem('apiPort') || '3001');
         async function api(path, options = {}) {
             const url = `${API_BASE}${path}`;
             const res = await fetch(url, {
