@@ -245,27 +245,56 @@
             gap: 0.75rem;
             margin-bottom: 1rem;
         }
+        .filters-grid > div {
+            background: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
+            padding: 0.6rem 0.8rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
         .filters-grid label {
             display: block;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             color: #6B7280;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
         .filters-grid select,
         .filters-grid input[type="text"],
         .filters-grid input[type="date"] {
             width: 100%;
-            padding: 0.5rem 0.75rem;
+            padding: 0.55rem 0.8rem;
             border: 1px solid #E5E7EB;
-            border-radius: 8px;
-            background-color: #FFFFFF;
+            border-radius: 10px;
+            background-color: #F9FAFB;
             color: #374151;
             outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
         }
         .accordion-toggle {
             display: flex;
-            justify-content: center;
+            justify-content: flex-start;
             margin-top: 0.5rem;
+        }
+        .accordion-toggle .btn-minimal {
+            border-radius: 9999px;
+            padding: 0.4rem 0.85rem;
+            font-weight: 600;
+            background: linear-gradient(180deg, #FFFFFF 0%, #F7FAFC 100%);
+            border: 1px solid #E5E7EB;
+            box-shadow: 0 2px 6px rgba(17,24,39,0.06);
+        }
+        .accordion-toggle .btn-minimal:hover {
+            background: #FFFFFF;
+            border-color: #D1D5DB;
+            box-shadow: 0 4px 10px rgba(17,24,39,0.08);
+        }
+        .accordion-content {
+            overflow: hidden;
+        }
+        .animate-slideDown {
+            animation: slideDown 0.25s ease-out;
         }
         .filters-grid input[type="date"]::-webkit-calendar-picker-indicator {
             filter: invert(40%) sepia(20%) saturate(500%) hue-rotate(220deg);
@@ -275,11 +304,37 @@
         .filters-grid input[type="text"]:focus,
         .filters-grid input[type="date"]:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(107,33,168,0.15);
+            box-shadow: 0 0 0 3px rgba(107,33,168,0.12);
+            background-color: #FFFFFF;
         }
         .filters-grid .filters-actions {
             display: flex;
             align-items: end;
+            justify-content: flex-end;
+        }
+        #btnLimparFiltros {
+            background: linear-gradient(180deg, #FFFFFF 0%, #F7FAFC 100%);
+            color: #374151;
+            border: 1px solid #E5E7EB;
+            border-radius: 9999px;
+            padding: 0.35rem 0.8rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+        }
+        #btnLimparFiltros::before {
+            content: "🧹";
+            margin-right: 0.35rem;
+        }
+        #btnLimparFiltros:hover {
+            background: #F3F4F6;
+            border-color: #D1D5DB;
+            box-shadow: 0 2px 6px rgba(107,33,168,0.10);
+        }
+        #btnLimparFiltros:active {
+            transform: translateY(1px);
         }
         
         @media (max-width: 768px) {
@@ -1028,9 +1083,7 @@
                     <label for="filtroData">Data</label>
                     <input type="date" id="filtroData">
                 </div>
-                <div class="filters-actions">
-                    <button class="btn-minimal btn-mini" id="btnLimparFiltros">Limpar</button>
-                </div>
+                <button class="btn-minimal btn-mini" id="btnLimparFiltros">Limpar</button>
             </div>
             <div id="simulacoesSalvasLista"></div>
         </div>
@@ -1510,58 +1563,57 @@
                     if (filtroDataBr && !(data || '').includes(filtroDataBr)) return false;
                     return true;
                 });
-                const gruposGlobais = {};
-                const datasPorVendedor = {};
+                const mesesPt = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+                const gruposPorMesAno = {};
                 filtradas.forEach(({ v, data }) => {
-                    const key = v.vendedor || '-';
-                    if (!gruposGlobais[key]) gruposGlobais[key] = [];
-                    gruposGlobais[key].push(v);
-                    datasPorVendedor[key] = data;
+                    const m = (data || '').match(/(\d{2})\/(\d{2})\/(\d{4})/);
+                    const mesNum = m ? parseInt(m[2], 10) : NaN;
+                    const anoNum = m ? m[3] : '-';
+                    const mesNome = isNaN(mesNum) ? '-' : mesesPt[mesNum - 1];
+                    const key = `${anoNum}-${String(mesNum).padStart(2, '0')}`;
+                    const vendedor = v.vendedor || '-';
+                    if (!gruposPorMesAno[key]) gruposPorMesAno[key] = { label: `${mesNome.charAt(0).toUpperCase() + mesNome.slice(1)} ${anoNum}`, vendedores: {} };
+                    if (!gruposPorMesAno[key].vendedores[vendedor]) gruposPorMesAno[key].vendedores[vendedor] = [];
+                    gruposPorMesAno[key].vendedores[vendedor].push({ ...v, data });
                 });
-                const vendedores = Object.keys(gruposGlobais);
-                lista.innerHTML = vendedores.map(nomeVend => {
-                    const vs = gruposGlobais[nomeVend];
-                    const receitaNovosVend = vs.filter(v => v.tipo === 'novos').reduce((acc, v) => acc + v.receita, 0);
-                    const receitaTotalVend = vs.reduce((acc, v) => acc + v.receita, 0);
-                    const nivelVend = calcularNivel(receitaTotalVend);
-                    const detalhesVend = vs.map(v => ({ ...v, comissao: calcularComissaoProduto(receitaTotalVend, v.tipo, v.receita) }));
-                    const comissaoVendTotal = detalhesVend.reduce((acc, d) => acc + d.comissao, 0);
-                    const dataHeader = datasPorVendedor[nomeVend];
-                    const vendKey = String(nomeVend).replace(/[^a-zA-Z0-9_-]/g, '_');
-                    return `
-                        <div class="simulacao-salva">
-                            <div class="simulacao-header">
-                                <div>
-                                    <div style="font-size: 0.9rem; color: #6B7280; margin-bottom: 0.5rem;">
-                                        ${dataHeader}
-                                    </div>
-                                </div>
-                            </div>
+                const meses = Object.keys(gruposPorMesAno);
+                lista.innerHTML = meses.map(key => {
+                    const gruposVend = gruposPorMesAno[key].vendedores;
+                    const vendedores = Object.keys(gruposVend);
+                    const vendedoresHtml = vendedores.map(nomeVend => {
+                        const vs = gruposVend[nomeVend];
+                        const receitaNovosVend = vs.filter(v => v.tipo === 'novos').reduce((acc, v) => acc + v.receita, 0);
+                        const receitaTotalVend = vs.reduce((acc, v) => acc + v.receita, 0);
+                        const nivelVend = calcularNivel(receitaTotalVend);
+                        const detalhesVend = vs.map(v => ({ ...v, comissao: calcularComissaoProduto(receitaTotalVend, v.tipo, v.receita) }));
+                        const comissaoVendTotal = detalhesVend.reduce((acc, d) => acc + d.comissao, 0);
+                        const groupKey = (String(nomeVend) + '_' + String(key)).replace(/[^a-zA-Z0-9_-]/g, '_');
+                        return `
                             <div class="detalhe-item">
-                                 <div class="detalhe-header">
-                                     <span class="detalhe-tipo venda-novos">
-                                         ${nomeVend}
-                                     </span>
-                                     <span style="font-weight: 700; color: ${nivelVend.cor};">
-                                         ${nivelVend.nome} (${Math.round(nivelVend.fator * 100)}%)
-                                     </span>
-                                 </div>
-                                 <div class="detalhe-footer">
-                                     <span style="font-size: 0.9rem; color: #6B7280;">
-                                         Novos: ${formatMoeda(receitaNovosVend)} • Total: ${formatMoeda(receitaTotalVend)} • Vendas: ${vs.length}
-                                     </span>
-                                     <span style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">
-                                         Comissão: ${formatMoeda(comissaoVendTotal)}
-                                     </span>
-                                 </div>
-                                 <div class="accordion-toggle">
-                                     <button class="btn-minimal btn-mini" title="Ver produtos" onclick="toggleVendedorAccordion('${vendKey}')" id="vend-accordion-bottom-btn-${vendKey}">▸ ver produtos</button>
-                                 </div>
-                                 <div id="vend-items-${vendKey}" class="hidden" style="margin-top:0.75rem;">
-                                     ${detalhesVend.map((d, i) => `
-                                         <div class="detalhe-item" style="background:#fff; border-left-color:${nivelVend.cor}">
-                                             <div class="detalhe-header">
-                                                 <span class="detalhe-tipo ${getTipoVendaClasse(d.tipo)}">
+                                <div class="detalhe-header">
+                                    <span class="detalhe-tipo venda-novos">
+                                        ${nomeVend}
+                                    </span>
+                                    <span style="font-weight: 700; color: ${nivelVend.cor};">
+                                        ${nivelVend.nome} (${Math.round(nivelVend.fator * 100)}%)
+                                    </span>
+                                </div>
+                                <div class="detalhe-footer">
+                                    <span style="font-size: 0.9rem; color: #6B7280;">
+                                        Novos: ${formatMoeda(receitaNovosVend)} • Total: ${formatMoeda(receitaTotalVend)} • Vendas: ${vs.length}
+                                    </span>
+                                    <span style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">
+                                        Comissão: ${formatMoeda(comissaoVendTotal)}
+                                    </span>
+                                </div>
+                                <div class="accordion-toggle">
+                                    <button class="btn-minimal btn-mini" title="Ver produtos" onclick="toggleVendedorAccordion('${groupKey}')" id="vend-accordion-bottom-btn-${groupKey}">▸ ver produtos</button>
+                                </div>
+                                <div id="vend-items-${groupKey}" class="accordion-content hidden" style="margin-top:0.75rem;">
+                                    ${detalhesVend.map((d, i) => `
+                                        <div class="detalhe-item" style="background:#fff; border-left-color:${nivelVend.cor}">
+                                            <div class="detalhe-header">
+                                                <span class="detalhe-tipo ${getTipoVendaClasse(d.tipo)}">
                                                     ${i + 1}. ${getTipoVendaLabel(d.tipo)}
                                                 </span>
                                                 <span style="font-weight: 600; color: #4B5563;">
@@ -1579,13 +1631,25 @@
                                             </div>
                                             <div id="venda-details-${d.id}" style="margin-top:0.5rem;">
                                                 <div style="font-size: 0.9rem; color: #6B7280;">
-                                                    Nome: ${d.nome || '-'} • CNPJ: ${d.cnpj || '-'} • P2B: ${d.p2b ?? '-'} • Vendedor: ${d.vendedor || '-'}
+                                                    Nome: ${d.nome || '-'} • CNPJ: ${d.cnpj || '-'} • P2B: ${d.p2b ?? '-'} • Vendedor: ${d.vendedor || '-'} • Data: ${d.data || '-'}
                                                 </div>
                                             </div>
                                         </div>
                                     `).join('')}
                                 </div>
                             </div>
+                        `;
+                    }).join('');
+                    return `
+                        <div class="simulacao-salva">
+                            <div class="simulacao-header">
+                                <div>
+                                    <div style="font-size: 0.9rem; color: #6B7280; margin-bottom: 0.5rem;">
+                                        ${gruposPorMesAno[key].label}
+                                    </div>
+                                </div>
+                            </div>
+                            ${vendedoresHtml}
                         </div>
                     `;
                 }).join('');
@@ -1878,10 +1942,12 @@
             if (!el) return;
             if (el.classList.contains('hidden')) {
                 el.classList.remove('hidden');
+                el.classList.add('animate-slideDown');
                 if (btnTop) btnTop.textContent = '▾';
                 if (btnBottom) btnBottom.textContent = '▾ ver produtos';
             } else {
                 el.classList.add('hidden');
+                el.classList.remove('animate-slideDown');
                 if (btnTop) btnTop.textContent = '▸';
                 if (btnBottom) btnBottom.textContent = '▸ ver produtos';
             }
