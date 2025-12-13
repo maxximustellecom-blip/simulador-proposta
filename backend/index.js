@@ -6,12 +6,14 @@ import authRouter from './routes/auth.js';
 import clientRouter from './routes/client.js';
 import simulationRouter from './routes/simulation.js';
 import saleRouter from './routes/sale.js';
+import authContext from './middleware/authContext.js';
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(authContext);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });

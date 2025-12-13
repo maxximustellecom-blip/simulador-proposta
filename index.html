@@ -1280,10 +1280,15 @@
         const API_BASE = 'http://localhost:' + (localStorage.getItem('apiPort') || '3001');
         async function api(path, options = {}) {
             const url = `${API_BASE}${path}`;
-            const res = await fetch(url, {
-                headers: { 'Content-Type': 'application/json' },
-                ...options
-            });
+            const authRaw = localStorage.getItem('authUser');
+            let headers = { 'Content-Type': 'application/json' };
+            try {
+                const u = JSON.parse(authRaw || '{}');
+                if (u && u.id) headers['x-user-id'] = String(u.id);
+                if (u && u.role) headers['x-user-role'] = String(u.role);
+                if (u && u.name) headers['x-user-name'] = String(u.name);
+            } catch {}
+            const res = await fetch(url, { headers, ...options });
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 throw new Error(err.error || ('HTTP ' + res.status));
@@ -1337,6 +1342,8 @@
                 const user = JSON.parse(auth);
                 const label = document.getElementById('userNameLabel');
                 if (label && user && user.name) label.textContent = user.name;
+                window.currentUser = user;
+                window.isAdmin = (user && user.role === 'admin');
             } catch {}
             const menuBtn = document.getElementById('userMenuBtn');
             const dropdown = document.getElementById('userDropdown');
@@ -1787,10 +1794,7 @@
                                                 <span style="font-size: 0.9rem; color: #6B7280;">
                                                     Comissão: ${formatMoeda(d.comissao)}
                                                 </span>
-                                                <div style="display:flex; gap:0.5rem;">
-                                                    <button class="btn btn-flat btn-mini" title="Editar" onclick="editarVendaHistorico(${d.id})">✏️</button>
-                                                    <button class="btn btn-flat btn-mini" title="Excluir" onclick="abrirConfirmacaoExclusao(${d.id})">🗑️</button>
-                                                </div>
+                                                ${ (window.isAdmin ? `<div style="display:flex; gap:0.5rem;"><button class="btn btn-flat btn-mini" title="Editar" onclick="editarVendaHistorico(${d.id})">✏️</button><button class="btn btn-flat btn-mini" title="Excluir" onclick="abrirConfirmacaoExclusao(${d.id})">🗑️</button></div>` : ``) }
                                             </div>
                                             <div id="venda-details-${d.id}" style="margin-top:0.5rem;">
                                                 <div style="font-size: 0.9rem; color: #6B7280;">

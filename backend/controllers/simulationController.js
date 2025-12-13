@@ -93,14 +93,24 @@ export async function createSimulation(req, res) {
 export async function listSimulations(req, res) {
   try {
     const { vendedor, razao, cnpj, data } = req.query || {};
-    const sims = await Simulation.findAll({
+    let sims = await Simulation.findAll({
       order: [['created_at', 'DESC']],
       include: [{ model: Sale, as: 'sales', include: [{ model: Client, as: 'client' }] }]
     });
+    if (req.user && req.user.role === 'user' && req.user.id) {
+      sims = sims.filter(sim => Number(sim.created_by || 0) === Number(req.user.id));
+    }
     let result = sims.map(sim => ({
       id: sim.id,
       data: sim.data,
-      vendas: sim.sales.map(s => ({
+      vendas: sim.sales
+        .filter(s => {
+          if (req.user && req.user.role === 'user' && req.user.id) {
+            return Number(s.created_by || 0) === Number(req.user.id);
+          }
+          return true;
+        })
+        .map(s => ({
         id: s.id,
         tipo: s.tipo,
         receita: Number(s.receita),

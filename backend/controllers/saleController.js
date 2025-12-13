@@ -44,6 +44,9 @@ async function recomputeSimulation(simulationId) {
 
 export async function updateSale(req, res) {
   try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'forbidden' });
+    }
     const { id } = req.params;
     const { tipo, receita, vendedor, p2b } = req.body || {};
     const sale = await Sale.findByPk(id, { include: [{ model: Client, as: 'client' }] });
@@ -69,6 +72,9 @@ export async function updateSale(req, res) {
 
 export async function deleteSale(req, res) {
   try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'forbidden' });
+    }
     const { id } = req.params;
     const sale = await Sale.findByPk(id);
     if (!sale) return res.status(404).json({ error: 'venda não encontrada' });
@@ -89,6 +95,9 @@ export async function listSales(req, res) {
       { model: Simulation, as: 'simulation' }
     ];
     let sales = await Sale.findAll({ include, order: [['created_at', 'DESC']] });
+    if (req.user && req.user.role === 'user' && req.user.id) {
+      sales = sales.filter(s => Number(s.created_by || 0) === Number(req.user.id));
+    }
     if (vendedor) {
       sales = sales.filter(s => s.vendedor === vendedor);
     }
