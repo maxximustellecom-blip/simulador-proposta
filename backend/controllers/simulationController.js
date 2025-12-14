@@ -23,6 +23,9 @@ function calcularComissaoProduto(receitaBase, tipo, valorVenda) {
 
 export async function createSimulation(req, res) {
   try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'unauthorized: usuário não autenticado' });
+    }
     const { cliente, vendas } = req.body || {};
     if (!cliente || !vendas || !Array.isArray(vendas) || vendas.length === 0) {
       return res.status(400).json({ error: 'payload inválido: cliente e vendas são obrigatórios' });
@@ -56,7 +59,7 @@ export async function createSimulation(req, res) {
       nivel_nome: nivel.nome,
       nivel_fator: nivel.fator,
       comissao_total: comissaoTotal,
-      created_by: req.user?.id || null
+      created_by: req.user.id
     });
     const salesPayload = vendas.map(v => ({
       tipo: v.tipo,
@@ -64,7 +67,7 @@ export async function createSimulation(req, res) {
       vendedor: v.vendedor || '-',
       client_id: client.id,
       simulation_id: simulation.id,
-      created_by: req.user?.id || null
+      created_by: req.user.id
     }));
     await Sale.bulkCreate(salesPayload);
     const createdSales = await Sale.findAll({ where: { simulation_id: simulation.id }, include: [{ model: Client, as: 'client' }] });
