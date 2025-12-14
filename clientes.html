@@ -142,6 +142,7 @@
         }
         .input:focus, .select:focus { border-color: rgba(59,130,246,0.6); box-shadow: 0 0 0 4px rgba(59,130,246,0.18); }
         .actions { display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; padding: 1rem; border-top: 1px solid rgba(255,255,255,0.06); }
+        .actions-right { display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; }
         .btn {
             display: inline-flex; align-items: center; gap: 0.6rem;
             border: 1px solid rgba(255,255,255,0.08); background: #0C1628;
@@ -202,7 +203,7 @@
         <div class="nav-group">
             <a href="dashboard.html" class="nav-link"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
             <a href="historico.html" class="nav-link"><i data-lucide="list"></i><span>Histórico</span></a>
-            <a href="venda.html" class="nav-link"><i data-lucide="shopping-cart"></i><span>Venda</span></a>
+            <a href="venda.html" class="nav-link"><i data-lucide="calculator"></i><span>Simular</span></a>
             <a href="clientes.html" class="nav-link active"><i data-lucide="building-2"></i><span>Clientes</span></a>
             <a id="navUsers" href="usuarios.html" class="nav-link" style="display:none;"><i data-lucide="users"></i><span>Usuários</span></a>
         </div>
@@ -298,6 +299,19 @@
             </div>
         </div>
     </div>
+    <div id="confirmDeleteModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Confirmar Exclusão</div><button id="confirmDeleteClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="label">Tem certeza que deseja excluir este cliente?</div>
+                <div id="confirmDeleteText" class="muted" style="margin-top:0.5rem;"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmDeleteCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
+                <button id="confirmDeleteConfirm" class="btn btn-ghost" type="button" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i><span>Excluir</span></button>
+            </div>
+        </div>
+    </div>
     <script>
         const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
         async function api(path, options = {}) {
@@ -341,10 +355,13 @@
                 <tr>
                     <td>${c.name}</td>
                     <td>${c.cnpj}</td>
-                    <td style="min-width:140px;">
-                        <button type="button" class="btn btn-ghost btn-icon" title="Detalhes" onclick="abrirDetalhes(${c.id})"><i data-lucide="info"></i></button>
-                        ${window.__isAdmin ? `<button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditar(${c.id})"><i data-lucide="edit-3"></i></button>` : ``}
-                        ${window.__isAdmin ? `<button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="excluirCliente(${c.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>` : ``}
+                    <td style="min-width:200px;">
+                        <div class="actions-right">
+                            <button type="button" class="btn btn-ghost btn-icon" title="Detalhes" onclick="abrirDetalhes(${c.id})"><i data-lucide="info"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditar(${c.id})"><i data-lucide="edit-3"></i></button>
+                            ${window.__isAdmin ? `<button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="excluirCliente(${c.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>` : ``}
+                            <button type="button" class="btn btn-ghost" title="Negociar" onclick="irNegociar(${c.id})" style="border-color: rgba(59,130,246,0.35); color: #93C5FD;"><i data-lucide="arrow-right"></i><span>Negociar</span></button>
+                        </div>
                     </td>
                 </tr>
             `).join('') || '<tr><td colspan="3" class="muted">Sem resultados</td></tr>';
@@ -393,14 +410,21 @@
                 if (navUsers) navUsers.style.display = isAdmin ? 'flex' : 'none';
             } catch {}
             const adminSection = document.getElementById('adminSection');
-            if (adminSection) adminSection.style.display = isAdmin ? 'block' : 'none';
+            if (adminSection) adminSection.style.display = 'block';
             const modal = document.getElementById('clienteModal');
             const openBtn = document.getElementById('openModalBtn');
             const closeBtn = document.getElementById('closeModalBtn');
             const salvarBtn = document.getElementById('mSalvar');
             const modalTitle = document.getElementById('modalTitle');
+            const confirmModal = document.getElementById('confirmDeleteModal');
+            const confirmClose = document.getElementById('confirmDeleteClose');
+            const confirmCancel = document.getElementById('confirmDeleteCancel');
+            const confirmConfirm = document.getElementById('confirmDeleteConfirm');
+            const confirmText = document.getElementById('confirmDeleteText');
             function openModal() { modal.classList.add('show'); }
             function closeModal() { modal.classList.remove('show'); }
+            function openConfirm() { confirmModal.classList.add('show'); }
+            function closeConfirm() { confirmModal.classList.remove('show'); }
             function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
             async function buscarCnpjAuto() {
                 try {
@@ -481,7 +505,6 @@
                 try {
                     const c = (window.__clientsCache || []).find(x => Number(x.id) === Number(id));
                     if (!c) return;
-                    if (!isAdmin) { toast('Apenas administradores podem editar', 'error'); return; }
                     modalTitle.textContent = 'Editar Cliente';
                     preencherCampos(c);
                     openModal();
@@ -491,14 +514,18 @@
             window.excluirCliente = async function(id) {
                 try {
                     if (!isAdmin) { toast('Apenas administradores podem excluir', 'error'); return; }
-                    const ok = window.confirm('Confirmar exclusão do cliente?');
-                    if (!ok) return;
-                    await api('/clients/' + id, { method: 'DELETE' });
-                    toast('Cliente excluído', 'success');
-                    buscar();
-                } catch {
-                    toast('Erro ao excluir cliente', 'error');
-                }
+                    const c = (window.__clientsCache || []).find(x => Number(x.id) === Number(id));
+                    if (!c) return;
+                    confirmText.textContent = (c.name || '') + ' • ' + (c.cnpj || '');
+                    confirmConfirm.dataset.id = String(c.id);
+                    openConfirm();
+                    if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+                } catch {}
+            };
+            window.irNegociar = function(id) {
+                try {
+                    window.location.href = 'negociar.html?id=' + String(id);
+                } catch {}
             };
             if (openBtn) openBtn.addEventListener('click', () => {
                 modalTitle.textContent = 'Adicionar Cliente';
@@ -508,6 +535,21 @@
             });
             if (closeBtn) closeBtn.addEventListener('click', closeModal);
             if (salvarBtn) salvarBtn.addEventListener('click', salvarClienteModal);
+            if (confirmClose) confirmClose.addEventListener('click', closeConfirm);
+            if (confirmCancel) confirmCancel.addEventListener('click', closeConfirm);
+            if (confirmConfirm) confirmConfirm.addEventListener('click', async () => {
+                try {
+                    if (!isAdmin) { toast('Apenas administradores podem excluir', 'error'); return; }
+                    const id = Number(confirmConfirm.dataset.id || 0);
+                    if (!id) { toast('Cliente inválido', 'error'); return; }
+                    await api('/clients/' + id, { method: 'DELETE' });
+                    toast('Cliente excluído', 'success');
+                    closeConfirm();
+                    buscar();
+                } catch {
+                    toast('Erro ao excluir cliente', 'error');
+                }
+            });
             {
                 const cnpjInput = document.getElementById('mCnpj');
                 let timer = null;
@@ -541,7 +583,7 @@
     <nav class="bottomnav">
         <a href="dashboard.html"><i data-lucide="layout-dashboard"></i><span class="label">Dashboard</span></a>
         <a href="historico.html"><i data-lucide="list"></i><span class="label">Histórico</span></a>
-        <a href="venda.html"><i data-lucide="shopping-cart"></i><span class="label">Venda</span></a>
+        <a href="venda.html"><i data-lucide="calculator"></i><span class="label">Simular</span></a>
         <a href="clientes.html"><i data-lucide="building-2"></i><span class="label">Clientes</span></a>
         <a id="bottomUsers" href="usuarios.html" style="display:none;"><i data-lucide="users"></i><span class="label">Usuários</span></a>
     </nav>

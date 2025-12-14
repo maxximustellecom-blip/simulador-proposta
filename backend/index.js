@@ -28,5 +28,5 @@ const port = process.env.PORT || 3001;
 
 app.listen(port, () => {});
 sequelize.authenticate().then(() => {
-  return sequelize.sync();
+  return sequelize.sync({ alter: true });
 }).catch(() => {});
