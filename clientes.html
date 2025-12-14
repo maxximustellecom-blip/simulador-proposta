@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes • Maxximus Telecom</title>
+    <link rel="icon" href="data:,">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        :root {
+            --bg: #0F172A;
+            --panel: #111827;
+            --muted: #6B7280;
+            --text: #E5E7EB;
+            --accent: #10B981;
+            --accent-2: #3B82F6;
+            --danger: #EF4444;
+            --card: #111827;
+            --field: #0B1220;
+            --border: #1F2937;
+        }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            margin: 0;
+            background: radial-gradient(1200px 1200px at 10% 0%, #0B1220 0%, #0A0F1E 35%, #08111C 80%), linear-gradient(180deg, #0B1220 0%, #0A0E1A 100%);
+            color: var(--text);
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        }
+        .topbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            backdrop-filter: saturate(180%) blur(12px);
+            background: rgba(17,24,39,0.7);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .topbar-inner {
+            width: 100%;
+            margin: 0;
+            padding: 0.85rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+        }
+        .brand-badge {
+            width: 34px; height: 34px;
+            border-radius: 10px;
+            background: radial-gradient(60% 60% at 30% 25%, #14B8A6 0%, #0EA5E9 50%, #3B82F6 100%);
+            box-shadow: 0 10px 25px rgba(62,140,253,0.35), inset 0 0 18px rgba(255,255,255,0.25);
+        }
+        .user { position: relative; display: flex; align-items: center; gap: 0.6rem; }
+        .user-btn {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.4rem 0.7rem; border-radius: 10px;
+            background: rgba(255,255,255,0.06); color: var(--text);
+            border: 1px solid rgba(255,255,255,0.08); cursor: pointer;
+        }
+        .user-menu {
+            position: absolute; right: 0; top: calc(100% + 0.5rem); min-width: 180px;
+            background: #0C1322; border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.45); border-radius: 12px; overflow: hidden; display: none;
+        }
+        .user-menu.show { display: block; }
+        .user-menu a { display:block; color: var(--text); text-decoration:none; padding:0.75rem 0.85rem; }
+        .user-menu a:hover { background: rgba(255,255,255,0.06); }
+        .container {
+            max-width: none;
+            width: calc(100% - 220px);
+            margin-left: 220px;
+            padding: 7rem 1rem 4rem;
+        }
+        @media (max-width: 919px) {
+            .container { width: 100%; margin: 0; padding-bottom: 6rem; }
+        }
+        .sidebar {
+            position: fixed; left: 0; top: 64px; bottom: 0; width: 220px;
+            background: #0B1220; border-right: 1px solid rgba(255,255,255,0.06);
+            padding: 0.9rem 0.75rem; display: none; z-index: 900;
+        }
+        .nav-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .nav-link {
+            display:flex; align-items:center; gap:0.6rem;
+            padding:0.6rem 0.7rem; border-radius:10px; color:var(--text); text-decoration:none;
+            border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.04);
+            transition: background 0.15s ease, transform 0.08s ease, border-color 0.15s ease;
+        }
+        .nav-link:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); }
+        .nav-link.active { background: linear-gradient(180deg, #1F8EFB, #2563EB); border-color: rgba(255,255,255,0.2); }
+        .nav-link i { width: 18px; height: 18px; }
+        @media (min-width: 920px) { .sidebar { display: block; } }
+        .bottomnav {
+            position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            background: rgba(17,24,39,0.9); backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: space-around;
+            padding: 0.4rem 0.6rem;
+        }
+        .bottomnav a { display:inline-flex; flex-direction:column; align-items:center; gap:0.25rem; color:var(--text); text-decoration:none; padding:0.25rem 0.5rem; border-radius:8px; }
+        .bottomnav a .label { font-size: 0.75rem; color: #CBD5E1; }
+        @media (min-width: 920px) { .bottomnav { display: none; } }
+        .card {
+            background: linear-gradient(180deg, rgba(17,24,39,0.9), rgba(15,23,42,0.8));
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 18px;
+            box-shadow: 0 20px 40px rgba(3,10,22,0.5);
+            overflow: hidden;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .card-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.2rem 1.2rem 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .card-title { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; letter-spacing: 0.3px; }
+        .chip { display:inline-flex; align-items:center; gap:0.4rem; font-size:0.85rem; color:#A7F3D0; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); border-radius:999px; padding:0.3rem 0.6rem; }
+        .card-body { padding: 1rem; }
+        .section {
+            background: #0B1220;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 1rem;
+        }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+        .label { font-size: 0.88rem; color: var(--muted); }
+        .input, .select {
+            width: 100%;
+            padding: 0.7rem 0.75rem;
+            border-radius: 10px;
+            background: #0A1221;
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text);
+            outline: none;
+        }
+        .input:focus, .select:focus { border-color: rgba(59,130,246,0.6); box-shadow: 0 0 0 4px rgba(59,130,246,0.18); }
+        .actions { display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; padding: 1rem; border-top: 1px solid rgba(255,255,255,0.06); }
+        .btn {
+            display: inline-flex; align-items: center; gap: 0.6rem;
+            border: 1px solid rgba(255,255,255,0.08); background: #0C1628;
+            color: var(--text); padding: 0.7rem 1rem; border-radius: 12px; cursor: pointer;
+        }
+        .btn-primary { background: linear-gradient(180deg, #1F8EFB, #2563EB); border-color: rgba(255,255,255,0.12); box-shadow: 0 8px 20px rgba(37,99,235,0.35); }
+        .btn-ghost { background: rgba(255,255,255,0.05); }
+        .btn-icon { padding: 0.25rem 0.4rem; border-radius: 10px; }
+        .toast {
+            position: fixed; right: 1rem; bottom: 1rem;
+            background: #0B1220; border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text); padding: 0.8rem 1rem; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.45); display: none;
+        }
+        .modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); z-index: 2000; }
+        .modal.show { display: flex; }
+        .modal-card { width: 720px; max-width: calc(100% - 2rem); background: #0B1220; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden; }
+        .modal-head { padding: 0.9rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; color: #E5E7EB; font-weight: 600; }
+        .modal-body { padding: 1rem; }
+        .modal-actions { padding: 0.9rem 1rem; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; }
+        .grid-3-modal { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+        .grid-2-modal { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .field { margin-bottom: 0.5rem; }
+        .label-inline { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.25rem; display: block; }
+        table { width: 100%; border-collapse: collapse; margin-top: 0.75rem; }
+        th, td { border-bottom: 1px solid rgba(255,255,255,0.06); padding: 0.6rem; text-align: left; }
+        th { color: #CBD5E1; font-weight: 600; }
+        .skeleton {
+            position: relative; overflow: hidden; background: #0B1220;
+        }
+        .skeleton::after {
+            content: ""; position: absolute; inset: 0;
+            background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.04) 100%);
+            transform: translateX(-100%); animation: shimmer 1.6s infinite;
+        }
+        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        .skel-row { height: 48px; }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="brand">
+                <div class="brand-badge"></div>
+                <div>MAXXIMUS TELECOM</div>
+            </div>
+            <div class="user">
+                <button id="userMenuBtn" class="user-btn">
+                    <span id="userNameLabel">Usuário</span>
+                    <span>▾</span>
+                </button>
+                <div id="userMenu" class="user-menu">
+                    <a id="logoutBtn" href="#">Sair</a>
+                </div>
+            </div>
+        </div>
+    </header>
+    <nav class="sidebar">
+        <div class="nav-group">
+            <a href="dashboard.html" class="nav-link"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
+            <a href="historico.html" class="nav-link"><i data-lucide="list"></i><span>Histórico</span></a>
+            <a href="venda.html" class="nav-link"><i data-lucide="shopping-cart"></i><span>Venda</span></a>
+            <a href="clientes.html" class="nav-link active"><i data-lucide="building-2"></i><span>Clientes</span></a>
+            <a id="navUsers" href="usuarios.html" class="nav-link" style="display:none;"><i data-lucide="users"></i><span>Usuários</span></a>
+        </div>
+    </nav>
+    <main class="container">
+        <div class="card">
+            <div class="card-head">
+                <div class="card-title">
+                    <span>Clientes</span>
+                    <span class="chip" id="roleChip">Leitura para todos • Edição admin</span>
+                </div>
+                <div class="muted">Consulta e cadastro</div>
+            </div>
+            <div class="card-body">
+                <section class="section">
+                    <div class="grid-3">
+                        <div>
+                            <div class="label">Nome</div>
+                            <input id="fNome" class="input" type="text" placeholder="Razão social" autocomplete="off">
+                        </div>
+                        <div>
+                            <div class="label">CNPJ</div>
+                            <input id="fCnpj" class="input" type="text" placeholder="00.000.000/0000-00" autocomplete="off">
+                        </div>
+                        <div class="actions" style="padding:0;">
+                            <button id="buscarBtn" class="btn btn-primary" type="button"><i data-lucide="search"></i><span>Buscar</span></button>
+                            <button id="limparBtn" class="btn btn-ghost" type="button"><i data-lucide="rotate-ccw"></i><span>Limpar</span></button>
+                        </div>
+                    </div>
+                </section>
+                <section id="adminSection" class="section" style="margin-top:1rem; display:none;">
+                    <div style="display:flex; align-items:center; justify-content:flex-end;">
+                        <button id="openModalBtn" class="btn btn-primary" type="button"><i data-lucide="plus"></i><span>Adicionar cliente</span></button>
+                    </div>
+                </section>
+                <section class="section" style="margin-top:1rem;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <div class="label">Lista de clientes</div>
+                        <div class="muted" id="countLabel">0 itens</div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>CNPJ</th>
+                                <th style="min-width:100px;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientsTbody">
+                            <tr><td colspan="3">
+                                <div class="skeleton skel-row"></div>
+                                <div class="skeleton skel-row"></div>
+                                <div class="skeleton skel-row"></div>
+                                <div class="skeleton skel-row"></div>
+                                <div class="skeleton skel-row"></div>
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+        </div>
+    </main>
+    <div id="clienteModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div id="modalTitle">Adicionar Cliente</div><button id="closeModalBtn" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="grid-3-modal">
+                    <div class="field"><span class="label-inline">CNPJ</span><input id="mCnpj" class="input" type="text" placeholder="00.000.000/0000-00"></div>
+                    <div class="field"><span class="label-inline">Razão Social</span><input id="mNome" class="input" type="text" placeholder="Razão Social"></div>
+                    <div class="field"><span class="label-inline">Nome Fantasia</span><input id="mFantasia" class="input" type="text" placeholder="Nome Fantasia"></div>
+                </div>
+                <div class="grid-3-modal" style="margin-top:0.5rem;">
+                    <div class="field"><span class="label-inline">Email</span><input id="mEmail" class="input" type="email" placeholder="email@empresa.com"></div>
+                    <div class="field"><span class="label-inline">Telefone</span><input id="mPhone" class="input" type="text" placeholder="(00) 0000-0000"></div>
+                    <div class="field"><span class="label-inline">Abertura</span><input id="mAbertura" class="input" type="text" placeholder="AAAA-MM-DD"></div>
+                </div>
+                <div class="grid-3-modal" style="margin-top:0.5rem;">
+                    <div class="field"><span class="label-inline">CEP</span><input id="mCep" class="input" type="text" placeholder="00000-000"></div>
+                    <div class="field"><span class="label-inline">UF</span><input id="mUf" class="input" type="text" placeholder="SP"></div>
+                    <div class="field"><span class="label-inline">Cidade</span><input id="mCidade" class="input" type="text" placeholder="Cidade"></div>
+                </div>
+                <div class="grid-3-modal" style="margin-top:0.5rem;">
+                    <div class="field"><span class="label-inline">Bairro</span><input id="mBairro" class="input" type="text" placeholder="Bairro"></div>
+                    <div class="field"><span class="label-inline">Logradouro</span><input id="mLogradouro" class="input" type="text" placeholder="Rua, Av."></div>
+                    <div class="field"><span class="label-inline">Número</span><input id="mNumero" class="input" type="text" placeholder="Número"></div>
+                </div>
+                <div class="grid-2-modal" style="margin-top:0.5rem;">
+                    <div class="field"><span class="label-inline">Complemento</span><input id="mComplemento" class="input" type="text" placeholder="Complemento"></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="mSalvar" class="btn btn-primary" type="button"><i data-lucide="save"></i><span>Salvar</span></button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
+        async function api(path, options = {}) {
+            const authRaw = localStorage.getItem('authUser');
+            let headers = { 'Content-Type': 'application/json' };
+            try {
+                const u = JSON.parse(authRaw || '{}');
+                if (u && u.id) headers['x-user-id'] = String(u.id);
+                if (u && u.role) headers['x-user-role'] = String(u.role);
+                if (u && u.name) headers['x-user-name'] = String(u.name);
+            } catch {}
+            const res = await fetch(API_BASE + path, { headers, ...options });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || ('HTTP ' + res.status));
+            }
+            return res.json();
+        }
+        function toast(msg, type) {
+            const el = document.getElementById('toast');
+            if (!el) return;
+            el.textContent = msg;
+            el.style.borderColor = type === 'error' ? 'rgba(239,68,68,0.35)' : 'rgba(16,185,129,0.35)';
+            el.style.display = 'block';
+            clearTimeout(window.__toastTimer);
+            window.__toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2500);
+        }
+        function isAdminUser() {
+            try {
+                const raw = localStorage.getItem('authUser');
+                const u = JSON.parse(raw || '{}');
+                return u && u.role === 'admin';
+            } catch { return false; }
+        }
+        function renderClientsTable(clients) {
+            const tbody = document.getElementById('clientsTbody');
+            const arr = Array.isArray(clients) ? clients : [];
+            document.getElementById('countLabel').textContent = arr.length + ' ' + (arr.length === 1 ? 'item' : 'itens');
+            window.__clientsCache = arr.slice();
+            tbody.innerHTML = arr.map(c => `
+                <tr>
+                    <td>${c.name}</td>
+                    <td>${c.cnpj}</td>
+                    <td style="min-width:140px;">
+                        <button type="button" class="btn btn-ghost btn-icon" title="Detalhes" onclick="abrirDetalhes(${c.id})"><i data-lucide="info"></i></button>
+                        ${window.__isAdmin ? `<button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditar(${c.id})"><i data-lucide="edit-3"></i></button>` : ``}
+                        ${window.__isAdmin ? `<button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="excluirCliente(${c.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>` : ``}
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="3" class="muted">Sem resultados</td></tr>';
+        }
+        async function buscar() {
+            try {
+                const nome = String(document.getElementById('fNome').value || '').trim();
+                const cnpj = String(document.getElementById('fCnpj').value || '').trim();
+                const qs = cnpj ? ('?cnpj=' + encodeURIComponent(cnpj)) : '';
+                const list = await api('/clients' + qs, { method: 'GET' });
+                let arr = Array.isArray(list) ? list : [];
+                if (nome) {
+                    const needle = nome.toUpperCase();
+                    arr = arr.filter(c => String(c.name || '').toUpperCase().includes(needle));
+                }
+                renderClientsTable(arr);
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+            } catch {
+                renderClientsTable([]);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', async () => {
+            const auth = localStorage.getItem('authUser');
+            if (!auth) { window.location.href = 'login.html'; return; }
+            let isAdmin = false;
+            try {
+                const user = JSON.parse(auth);
+                const label = document.getElementById('userNameLabel');
+                if (label && user && user.name) {
+                    isAdmin = (user && user.role === 'admin');
+                    window.__isAdmin = isAdmin;
+                    label.textContent = isAdmin ? (user.name + ' • Admin') : user.name;
+                }
+            } catch {}
+            document.getElementById('userMenuBtn').addEventListener('click', () => {
+                const menu = document.getElementById('userMenu');
+                menu.classList.toggle('show');
+            });
+            document.getElementById('logoutBtn').addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('authUser');
+                window.location.href = 'login.html';
+            });
+            try {
+                const navUsers = document.getElementById('navUsers');
+                if (navUsers) navUsers.style.display = isAdmin ? 'flex' : 'none';
+            } catch {}
+            const adminSection = document.getElementById('adminSection');
+            if (adminSection) adminSection.style.display = isAdmin ? 'block' : 'none';
+            const modal = document.getElementById('clienteModal');
+            const openBtn = document.getElementById('openModalBtn');
+            const closeBtn = document.getElementById('closeModalBtn');
+            const salvarBtn = document.getElementById('mSalvar');
+            const modalTitle = document.getElementById('modalTitle');
+            function openModal() { modal.classList.add('show'); }
+            function closeModal() { modal.classList.remove('show'); }
+            function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
+            async function buscarCnpjAuto() {
+                try {
+                    const cnpj = onlyDigits(document.getElementById('mCnpj').value);
+                    if (!cnpj || cnpj.length !== 14) return;
+                    const res = await fetch('https://brasilapi.com.br/api/cnpj/v1/' + cnpj);
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    document.getElementById('mNome').value = data.razao_social || document.getElementById('mNome').value;
+                    document.getElementById('mFantasia').value = data.nome_fantasia || document.getElementById('mFantasia').value;
+                    document.getElementById('mEmail').value = data.email || document.getElementById('mEmail').value;
+                    document.getElementById('mPhone').value = (data.telefone || data.telefone1 || '') || document.getElementById('mPhone').value;
+                    document.getElementById('mAbertura').value = data.data_inicio_atividade || document.getElementById('mAbertura').value;
+                    document.getElementById('mCep').value = data.cep || document.getElementById('mCep').value;
+                    document.getElementById('mUf').value = data.uf || document.getElementById('mUf').value;
+                    document.getElementById('mCidade').value = data.municipio || document.getElementById('mCidade').value;
+                    document.getElementById('mBairro').value = data.bairro || document.getElementById('mBairro').value;
+                    document.getElementById('mLogradouro').value = data.logradouro || document.getElementById('mLogradouro').value;
+                    document.getElementById('mNumero').value = data.numero || document.getElementById('mNumero').value;
+                    document.getElementById('mComplemento').value = data.complemento || document.getElementById('mComplemento').value;
+                } catch {}
+            }
+            async function salvarClienteModal() {
+                try {
+                    const payload = {
+                        name: String(document.getElementById('mNome').value || '').trim(),
+                        cnpj: onlyDigits(document.getElementById('mCnpj').value || ''),
+                        fantasy_name: String(document.getElementById('mFantasia').value || '').trim() || null,
+                        email: String(document.getElementById('mEmail').value || '').trim() || null,
+                        phone: String(document.getElementById('mPhone').value || '').trim() || null,
+                        cep: String(document.getElementById('mCep').value || '').trim() || null,
+                        state: String(document.getElementById('mUf').value || '').trim() || null,
+                        city: String(document.getElementById('mCidade').value || '').trim() || null,
+                        neighborhood: String(document.getElementById('mBairro').value || '').trim() || null,
+                        street: String(document.getElementById('mLogradouro').value || '').trim() || null,
+                        number: String(document.getElementById('mNumero').value || '').trim() || null,
+                        complement: String(document.getElementById('mComplemento').value || '').trim() || null,
+                        opening_date: String(document.getElementById('mAbertura').value || '').trim() || null
+                    };
+                    if (!payload.name || !payload.cnpj) { toast('Nome e CNPJ são obrigatórios', 'error'); return; }
+                    await api('/clients', { method: 'POST', body: JSON.stringify(payload) });
+                    toast('Cliente salvo', 'success');
+                    closeModal();
+                    buscar();
+                } catch {
+                    toast('Erro ao salvar cliente', 'error');
+                }
+            }
+            function preencherCampos(c) {
+                document.getElementById('mCnpj').value = c.cnpj || '';
+                document.getElementById('mNome').value = c.name || '';
+                document.getElementById('mFantasia').value = c.fantasy_name || '';
+                document.getElementById('mEmail').value = c.email || '';
+                document.getElementById('mPhone').value = c.phone || '';
+                document.getElementById('mAbertura').value = c.opening_date || '';
+                document.getElementById('mCep').value = c.cep || '';
+                document.getElementById('mUf').value = c.state || '';
+                document.getElementById('mCidade').value = c.city || '';
+                document.getElementById('mBairro').value = c.neighborhood || '';
+                document.getElementById('mLogradouro').value = c.street || '';
+                document.getElementById('mNumero').value = c.number || '';
+                document.getElementById('mComplemento').value = c.complement || '';
+            }
+            function limparCampos() {
+                preencherCampos({ cnpj: '', name: '', fantasy_name: '', email: '', phone: '', opening_date: '', cep: '', state: '', city: '', neighborhood: '', street: '', number: '', complement: '' });
+            }
+            window.abrirDetalhes = function(id) {
+                try {
+                    const c = (window.__clientsCache || []).find(x => Number(x.id) === Number(id));
+                    if (!c) return;
+                    modalTitle.textContent = 'Detalhes do Cliente';
+                    preencherCampos(c);
+                    openModal();
+                    if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+                } catch {}
+            };
+            window.abrirEditar = function(id) {
+                try {
+                    const c = (window.__clientsCache || []).find(x => Number(x.id) === Number(id));
+                    if (!c) return;
+                    if (!isAdmin) { toast('Apenas administradores podem editar', 'error'); return; }
+                    modalTitle.textContent = 'Editar Cliente';
+                    preencherCampos(c);
+                    openModal();
+                    if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+                } catch {}
+            };
+            window.excluirCliente = async function(id) {
+                try {
+                    if (!isAdmin) { toast('Apenas administradores podem excluir', 'error'); return; }
+                    const ok = window.confirm('Confirmar exclusão do cliente?');
+                    if (!ok) return;
+                    await api('/clients/' + id, { method: 'DELETE' });
+                    toast('Cliente excluído', 'success');
+                    buscar();
+                } catch {
+                    toast('Erro ao excluir cliente', 'error');
+                }
+            };
+            if (openBtn) openBtn.addEventListener('click', () => {
+                modalTitle.textContent = 'Adicionar Cliente';
+                limparCampos();
+                openModal();
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+            });
+            if (closeBtn) closeBtn.addEventListener('click', closeModal);
+            if (salvarBtn) salvarBtn.addEventListener('click', salvarClienteModal);
+            {
+                const cnpjInput = document.getElementById('mCnpj');
+                let timer = null;
+                let last = '';
+                function schedule() {
+                    clearTimeout(timer);
+                    timer = setTimeout(() => {
+                        const val = onlyDigits(cnpjInput.value);
+                        if (val !== last) {
+                            last = val;
+                            buscarCnpjAuto();
+                        }
+                    }, 400);
+                }
+                cnpjInput.addEventListener('input', schedule);
+                cnpjInput.addEventListener('blur', schedule);
+            }
+            document.getElementById('buscarBtn').addEventListener('click', buscar);
+            document.getElementById('limparBtn').addEventListener('click', () => {
+                document.getElementById('fNome').value = '';
+                document.getElementById('fCnpj').value = '';
+                buscar();
+            });
+            await buscar();
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        });
+    </script>
+    <div id="toast" class="toast"></div>
+    <nav class="bottomnav">
+        <a href="dashboard.html"><i data-lucide="layout-dashboard"></i><span class="label">Dashboard</span></a>
+        <a href="historico.html"><i data-lucide="list"></i><span class="label">Histórico</span></a>
+        <a href="venda.html"><i data-lucide="shopping-cart"></i><span class="label">Venda</span></a>
+        <a href="clientes.html"><i data-lucide="building-2"></i><span class="label">Clientes</span></a>
+        <a id="bottomUsers" href="usuarios.html" style="display:none;"><i data-lucide="users"></i><span class="label">Usuários</span></a>
+    </nav>
+</body>
+</html>

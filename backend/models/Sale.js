@@ -9,6 +9,7 @@ const Sale = sequelize.define('Sale', {
   tipo: { type: DataTypes.ENUM('novos', 'renovacao', 'ultraFibra', 'wttx', 'm2m'), allowNull: false },
   receita: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
   vendedor: { type: DataTypes.STRING(120), allowNull: false },
+  p2b: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
   client_id: { type: DataTypes.INTEGER, allowNull: false },
   simulation_id: { type: DataTypes.INTEGER, allowNull: false },
   created_by: { type: DataTypes.INTEGER, allowNull: true }

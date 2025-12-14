@@ -329,6 +329,7 @@
             <a href="dashboard.html" class="nav-link"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
             <a href="historico.html" class="nav-link"><i data-lucide="list"></i><span>Histórico</span></a>
             <a href="venda.html" class="nav-link active"><i data-lucide="shopping-cart"></i><span>Venda</span></a>
+            <a href="clientes.html" class="nav-link"><i data-lucide="building-2"></i><span>Clientes</span></a>
             <a id="navUsers" href="usuarios.html" class="nav-link" style="display:none;"><i data-lucide="users"></i><span>Usuários</span></a>
         </div>
     </nav>
@@ -353,10 +354,6 @@
                                 <label class="label">CNPJ</label>
                                 <input id="clienteCnpj" class="input" type="text" placeholder="00.000.000/0000-00" autocomplete="off">
                             </div>
-                            <div class="field">
-                                <label class="label">P2B</label>
-                                <input id="clienteP2b" class="input" type="number" step="1" min="0" placeholder="0">
-                            </div>
                         </div>
                     </section>
                     <section class="section">
@@ -379,9 +376,15 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="field">
-                            <label class="label">Receita (R$)</label>
-                            <input id="receita" class="input" type="number" step="0.01" min="0" placeholder="0,00">
+                        <div class="grid-2" style="margin-top:0.75rem;">
+                            <div class="field">
+                                <label class="label">P2B</label>
+                                <input id="p2b" class="input" type="number" step="1" min="0" placeholder="0">
+                            </div>
+                            <div class="field">
+                                <label class="label">Receita (R$)</label>
+                                <input id="receita" class="input" type="number" step="0.01" min="0" placeholder="0,00">
+                            </div>
                         </div>
                         <div class="actions" style="justify-content:flex-start; padding:0; border-top:none;">
                             <button type="button" id="addItemBtn" class="btn btn-ghost">Adicionar item</button>
@@ -572,8 +575,8 @@
         function limparFormulario() {
             document.getElementById('clienteNome').value = '';
             document.getElementById('clienteCnpj').value = '';
-            document.getElementById('clienteP2b').value = '';
             document.getElementById('receita').value = '';
+            document.getElementById('p2b').value = '';
             document.getElementById('summary').style.display = 'none';
             vendasTemp = [];
             renderItens();
@@ -640,12 +643,14 @@
             const vendedor = document.getElementById('vendedor').value;
             const tipo = document.getElementById('tipo').value;
             const receita = Number(document.getElementById('receita').value || 0);
+            const p2b = Number(document.getElementById('p2b').value || 0);
             if (!vendedor || !tipo || receita <= 0) {
                 toast('Informe vendedor, tipo e receita', 'error');
                 return;
             }
-            vendasTemp.push({ vendedor, tipo, receita });
+            vendasTemp.push({ vendedor, tipo, receita, p2b });
             document.getElementById('receita').value = '';
+            document.getElementById('p2b').value = '';
             renderItens();
         }
         function removerItem(i) {
@@ -679,7 +684,6 @@
             carregarUsuarios();
             const nome = document.getElementById('clienteNome');
             const cnpj = document.getElementById('clienteCnpj');
-            const p2b = document.getElementById('clienteP2b');
             const receita = document.getElementById('receita');
             nome.addEventListener('input', () => toUpperInput(nome));
             cnpj.addEventListener('input', () => { cnpj.value = formatCnpj(cnpj.value); });
@@ -706,7 +710,6 @@
                 e.preventDefault();
                 const nomeVal = (nome.value || '').trim();
                 const cnpjVal = (cnpj.value || '').replace(/\D/g, '');
-                const p2bVal = Number(p2b.value || 0);
                 if (!nomeVal || !cnpjVal) {
                     toast('Preencha todos os campos obrigatórios', 'error');
                     return;
@@ -716,8 +719,8 @@
                     return;
                 }
                 const payload = {
-                    cliente: { name: nomeVal.toUpperCase(), cnpj: cnpjVal, p2b: p2bVal },
-                    vendas: vendasTemp.map(v => ({ tipo: v.tipo, receita: Number(v.receita || 0), vendedor: v.vendedor }))
+                    cliente: { name: nomeVal.toUpperCase(), cnpj: cnpjVal },
+                    vendas: vendasTemp.map(v => ({ tipo: v.tipo, receita: Number(v.receita || 0), vendedor: v.vendedor, p2b: Number(v.p2b || 0) }))
                 };
                 try {
                     let overrideUserId;
@@ -736,8 +739,8 @@
                     preencherResumo(sim);
                     document.getElementById('clienteNome').value = '';
                     document.getElementById('clienteCnpj').value = '';
-                    document.getElementById('clienteP2b').value = '';
                     document.getElementById('receita').value = '';
+                    document.getElementById('p2b').value = '';
                     vendasTemp = [];
                     const list = document.getElementById('vendasList');
                     if (list) list.style.display = 'none';
@@ -753,6 +756,7 @@
         <a href="dashboard.html"><i data-lucide="layout-dashboard"></i><span class="label">Dashboard</span></a>
         <a href="historico.html"><i data-lucide="list"></i><span class="label">Histórico</span></a>
         <a href="venda.html"><i data-lucide="shopping-cart"></i><span class="label">Venda</span></a>
+        <a href="clientes.html"><i data-lucide="building-2"></i><span class="label">Clientes</span></a>
         <a id="bottomUsers" href="usuarios.html" style="display:none;"><i data-lucide="users"></i><span class="label">Usuários</span></a>
     </nav>
 </body>

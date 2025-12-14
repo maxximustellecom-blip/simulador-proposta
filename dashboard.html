@@ -180,6 +180,37 @@
         .kpi .value { font-weight: 700; font-size: 1.25rem; }
         .chart-card { padding: 1rem; }
         .muted { color: var(--muted); font-size: 0.9rem; }
+        .skeleton {
+            position: relative;
+            overflow: hidden;
+            background: #0B1220;
+        }
+        .skeleton::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.04) 100%);
+            transform: translateX(-100%);
+            animation: shimmer 1.6s infinite;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .skel-kpi {
+            height: 80px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .skel-chart {
+            height: 140px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .skel-list-item {
+            height: 52px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
         @media (max-width: 860px) {
             .grid { grid-template-columns: 1fr; }
             .grid-3 { grid-template-columns: 1fr; }
@@ -210,6 +241,7 @@
             <a href="dashboard.html" class="nav-link active"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
             <a href="historico.html" class="nav-link"><i data-lucide="list"></i><span>Histórico</span></a>
             <a href="venda.html" class="nav-link"><i data-lucide="shopping-cart"></i><span>Venda</span></a>
+            <a href="clientes.html" class="nav-link"><i data-lucide="building-2"></i><span>Clientes</span></a>
             <a id="navUsers" href="usuarios.html" class="nav-link" style="display:none;"><i data-lucide="users"></i><span>Usuários</span></a>
         </div>
     </nav>
@@ -224,58 +256,146 @@
             </div>
             <div class="card-body">
                 <div id="adminView" style="display:none;">
-                    <div class="filters">
-                        <select id="fVendor" class="select"><option value="Todos">Todos</option></select>
-                        <input id="fFrom" class="input" type="date">
-                        <input id="fTo" class="input" type="date">
-                        <button id="applyFilters" class="btn" type="button">Aplicar</button>
+                    <div id="adminSkeleton">
+                        <div class="kpis" style="margin-bottom:1rem;">
+                            <div class="skeleton skel-kpi"></div>
+                            <div class="skeleton skel-kpi"></div>
+                            <div class="skeleton skel-kpi"></div>
+                            <div class="skeleton skel-kpi"></div>
+                        </div>
+                        <div class="grid" style="margin-top:1rem;">
+                            <div class="card">
+                                <div class="card-head"><div class="card-title"><span>Receita por mês</span></div></div>
+                                <div class="chart-card"><div class="skeleton skel-chart"></div></div>
+                            </div>
+                            <div class="card">
+                                <div class="card-head"><div class="card-title"><span>Receita por tipo</span></div></div>
+                                <div class="chart-card"><div class="skeleton skel-chart"></div></div>
+                            </div>
+                        </div>
+                        <div class="grid" style="margin-top:1rem;">
+                            <div class="card">
+                                <div class="card-head"><div class="card-title"><span>Comissão por mês</span></div></div>
+                                <div class="chart-card"><div class="skeleton skel-chart"></div></div>
+                            </div>
+                            <div class="card">
+                                <div class="card-head"><div class="card-title"><span>Distribuição de nível</span></div></div>
+                                <div class="chart-card"><div class="skeleton skel-chart"></div></div>
+                            </div>
+                        </div>
+                        <div class="grid" style="margin-top:1rem;">
+                            <div class="card">
+                                <div class="card-head"><div class="card-title"><span>Top vendedores (comissão)</span></div></div>
+                                <div class="card-body">
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-head"><div class="card-title"><span>Últimas vendas</span></div></div>
+                                <div class="card-body">
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="kpis" id="kpis"></div>
-                    <div class="grid" style="margin-top:1rem;">
-                        <div class="card">
-                            <div class="card-head"><div class="card-title"><span>Receita por mês</span></div></div>
-                            <div class="chart-card"><canvas id="chartReceitaMes" height="140"></canvas></div>
+                    <div id="adminContent" style="display:none;">
+                        <div class="filters">
+                            <select id="fVendor" class="select"><option value="Todos">Todos</option></select>
+                            <input id="fFrom" class="input" type="date">
+                            <input id="fTo" class="input" type="date">
+                            <button id="applyFilters" class="btn" type="button">Aplicar</button>
                         </div>
-                        <div class="card">
-                            <div class="card-head"><div class="card-title"><span>Receita por tipo</span></div></div>
-                            <div class="chart-card"><canvas id="chartReceitaTipo" height="140"></canvas></div>
+                        <div class="kpis" id="kpis"></div>
+                        <div class="grid" style="margin-top:1rem;">
+                            <div class="card">
+                                <div class="card-head"><div class="card-title"><span>Receita por mês</span></div></div>
+                                <div class="chart-card"><canvas id="chartReceitaMes" height="140"></canvas></div>
+                            </div>
+                            <div class="card">
+                                <div class="card-head"><div class="card-title"><span>Receita por tipo</span></div></div>
+                                <div class="chart-card"><canvas id="chartReceitaTipo" height="140"></canvas></div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="grid" style="margin-top:1rem;">
-                        <div class="card">
-                            <div class="card-head"><div class="card-title"><span>Comissão por mês</span></div></div>
-                            <div class="chart-card"><canvas id="chartComissaoMes" height="140"></canvas></div>
+                        <div class="grid" style="margin-top:1rem;">
+                            <div class="card">
+                                <div class="card-head"><div class="card-title"><span>Comissão por mês</span></div></div>
+                                <div class="chart-card"><canvas id="chartComissaoMes" height="140"></canvas></div>
+                            </div>
+                            <div class="card">
+                                <div class="card-head"><div class="card-title"><span>Distribuição de nível</span></div></div>
+                                <div class="chart-card"><canvas id="chartNivelDistrib" height="140"></canvas></div>
+                            </div>
                         </div>
-                        <div class="card">
-                            <div class="card-head"><div class="card-title"><span>Distribuição de nível</span></div></div>
-                            <div class="chart-card"><canvas id="chartNivelDistrib" height="140"></canvas></div>
-                        </div>
-                    </div>
-                    <div class="grid" style="margin-top:1rem;">
-                        <div class="card">
-                            <div class="card-head"><div class="card-title"><span>Top vendedores (comissão)</span></div></div>
-                            <div class="card-body" id="topVendedores"></div>
-                        </div>
-                        <div class="card">
-                            <div class="card-head"><div class="card-title"><span>Últimas vendas</span></div></div>
-                            <div class="card-body" id="ultimasVendas"></div>
+                        <div class="grid" style="margin-top:1rem;">
+                            <div class="card">
+                                <div class="card-head"><div class="card-title"><span>Top vendedores (comissão)</span></div></div>
+                                <div class="card-body" id="topVendedores"></div>
+                            </div>
+                            <div class="card">
+                                <div class="card-head"><div class="card-title"><span>Últimas vendas</span></div></div>
+                                <div class="card-body" id="ultimasVendas"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div id="userView" style="display:none;">
-                    <div class="kpis" id="userKpis" style="margin-bottom:1rem;"></div>
-                    <div class="grid">
-                        <div class="card" style="grid-column:1/-1;">
-                            <div class="card-head"><div class="card-title"><span>Comissão por mês</span></div></div>
-                            <div class="chart-card"><canvas id="chartComissaoUser" height="160"></canvas></div>
+                    <div id="userSkeleton">
+                        <div class="kpis" style="margin-bottom:1rem;">
+                            <div class="skeleton skel-kpi"></div>
+                            <div class="skeleton skel-kpi"></div>
+                            <div class="skeleton skel-kpi"></div>
+                            <div class="skeleton skel-kpi"></div>
                         </div>
-                        <div class="card">
-                            <div class="card-head"><div class="card-title"><span>Receita por tipo</span></div></div>
-                            <div class="chart-card"><canvas id="chartReceitaTipoUser" height="140"></canvas></div>
+                        <div class="grid">
+                            <div class="card" style="grid-column:1/-1;">
+                                <div class="card-head"><div class="card-title"><span>Comissão por mês</span></div></div>
+                                <div class="chart-card"><div class="skeleton skel-chart" style="height:160px;"></div></div>
+                            </div>
+                            <div class="card">
+                                <div class="card-head"><div class="card-title"><span>Receita por tipo</span></div></div>
+                                <div class="chart-card"><div class="skeleton skel-chart"></div></div>
+                            </div>
+                            <div class="card">
+                                <div class="card-head"><div class="card-title"><span>Últimas vendas</span></div></div>
+                                <div class="card-body">
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                    <div class="skeleton skel-list-item"></div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card">
-                            <div class="card-head"><div class="card-title"><span>Últimas vendas</span></div></div>
-                            <div class="card-body" id="ultimasVendasUser"></div>
+                    </div>
+                    <div id="userContent" style="display:none;">
+                        <div class="kpis" id="userKpis" style="margin-bottom:1rem;"></div>
+                        <div class="grid">
+                            <div class="card" style="grid-column:1/-1;">
+                                <div class="card-head"><div class="card-title"><span>Comissão por mês</span></div></div>
+                                <div class="chart-card"><canvas id="chartComissaoUser" height="160"></canvas></div>
+                            </div>
+                            <div class="card">
+                                <div class="card-head"><div class="card-title"><span>Receita por tipo</span></div></div>
+                                <div class="chart-card"><canvas id="chartReceitaTipoUser" height="140"></canvas></div>
+                            </div>
+                            <div class="card">
+                                <div class="card-head"><div class="card-title"><span>Últimas vendas</span></div></div>
+                                <div class="card-body" id="ultimasVendasUser"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -437,6 +557,10 @@
         function renderAdminDashboard(sales) {
             const adminView = document.getElementById('adminView');
             adminView.style.display = 'block';
+            const adminSkeleton = document.getElementById('adminSkeleton');
+            const adminContent = document.getElementById('adminContent');
+            if (adminSkeleton) adminSkeleton.style.display = 'none';
+            if (adminContent) adminContent.style.display = 'block';
             const scopeLabel = document.getElementById('scopeLabel');
             scopeLabel.textContent = 'Administrador: visão geral';
             const kpi = document.getElementById('kpis');
@@ -533,6 +657,10 @@
         function renderUserDashboard(sales) {
             const userView = document.getElementById('userView');
             userView.style.display = 'block';
+            const userSkeleton = document.getElementById('userSkeleton');
+            const userContent = document.getElementById('userContent');
+            if (userSkeleton) userSkeleton.style.display = 'none';
+            if (userContent) userContent.style.display = 'block';
             const scopeLabel = document.getElementById('scopeLabel');
             scopeLabel.textContent = 'Usuário: suas vendas';
             const totalVendas = (sales || []).length;
@@ -644,6 +772,7 @@
         <a href="dashboard.html"><i data-lucide="layout-dashboard"></i><span class="label">Dashboard</span></a>
         <a href="historico.html"><i data-lucide="list"></i><span class="label">Histórico</span></a>
         <a href="venda.html"><i data-lucide="shopping-cart"></i><span class="label">Venda</span></a>
+        <a href="clientes.html"><i data-lucide="building-2"></i><span class="label">Clientes</span></a>
         <a id="bottomUsers" href="usuarios.html" style="display:none;"><i data-lucide="users"></i><span class="label">Usuários</span></a>
     </nav>
 </body>

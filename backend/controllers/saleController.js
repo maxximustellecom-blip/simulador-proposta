@@ -54,10 +54,7 @@ export async function updateSale(req, res) {
     if (tipo) sale.tipo = tipo;
     if (receita !== undefined) sale.receita = Number(receita || 0);
     if (vendedor) sale.vendedor = vendedor;
-    if (p2b !== undefined && sale.client) {
-      sale.client.p2b = Number(p2b || 0);
-      await sale.client.save();
-    }
+    if (p2b !== undefined) sale.p2b = Number(p2b || 0);
     await sale.save();
     const sim = await recomputeSimulation(sale.simulation_id);
     const updated = await Sale.findByPk(id, { include: [{ model: Client, as: 'client' }] });
@@ -120,7 +117,7 @@ export async function listSales(req, res) {
       vendedor: s.vendedor,
       nome: s.client?.name || '',
       cnpj: s.client?.cnpj || '',
-      p2b: s.client?.p2b || 0,
+      p2b: s.p2b || 0,
       data: s.simulation?.data || ''
     })));
   } catch (err) {

@@ -30,17 +30,16 @@ export async function createSimulation(req, res) {
     if (!cliente || !vendas || !Array.isArray(vendas) || vendas.length === 0) {
       return res.status(400).json({ error: 'payload inválido: cliente e vendas são obrigatórios' });
     }
-    const { name, cnpj, p2b } = cliente;
+    const { name, cnpj } = cliente;
     if (!name || !cnpj) {
       return res.status(400).json({ error: 'cliente inválido: name e cnpj são obrigatórios' });
     }
     const [client] = await Client.findOrCreate({
       where: { cnpj },
-      defaults: { name, cnpj, p2b: Number(p2b || 0) }
+      defaults: { name, cnpj }
     });
-    if (client.name !== name || client.p2b !== Number(p2b || 0)) {
+    if (client.name !== name) {
       client.name = name;
-      client.p2b = Number(p2b || 0);
       await client.save();
     }
     const receitaNovos = vendas.filter(v => v.tipo === 'novos').reduce((acc, v) => acc + Number(v.receita || 0), 0);
@@ -65,6 +64,7 @@ export async function createSimulation(req, res) {
       tipo: v.tipo,
       receita: Number(v.receita || 0),
       vendedor: v.vendedor || '-',
+      p2b: Number(v.p2b || 0),
       client_id: client.id,
       simulation_id: simulation.id,
       created_by: req.user.id
@@ -81,7 +81,7 @@ export async function createSimulation(req, res) {
         vendedor: s.vendedor,
         nome: s.client?.name || '',
         cnpj: s.client?.cnpj || '',
-        p2b: s.client?.p2b || 0
+        p2b: s.p2b || 0
       })),
       receitaNovos,
       receitaTotal,
@@ -120,7 +120,7 @@ export async function listSimulations(req, res) {
         vendedor: s.vendedor,
         nome: s.client?.name || '',
         cnpj: s.client?.cnpj || '',
-        p2b: s.client?.p2b || 0
+        p2b: s.p2b || 0
       })),
       receitaNovos: Number(sim.receita_novos),
       receitaTotal: Number(sim.receita_total),
