@@ -391,6 +391,10 @@
                 if (u && u.role) headers['x-user-role'] = String(u.role);
                 if (u && u.name) headers['x-user-name'] = String(u.name);
             } catch {}
+            if (options && typeof options.overrideUserId !== 'undefined') {
+                headers['x-user-id'] = String(options.overrideUserId);
+                delete options.overrideUserId;
+            }
             const res = await fetch(API_BASE + path, { headers, ...options });
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
@@ -407,14 +411,19 @@
             window.__toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2500);
         }
         let usuarios = [];
+        let __usuariosByName = {};
         async function carregarUsuarios() {
             try {
                 let list = await api('/auth/users?role=user', { method: 'GET' });
                 if (!Array.isArray(list) || list.length === 0) list = await api('/auth/users', { method: 'GET' });
                 usuarios = Array.isArray(list) ? list : [];
+                __usuariosByName = {};
                 const sel = document.getElementById('vendedor');
                 if (sel) {
-                    sel.innerHTML = usuarios.map(u => `<option value="${u.name}">${u.name}</option>`).join('');
+                    sel.innerHTML = usuarios.map(u => {
+                        __usuariosByName[String(u.name)] = Number(u.id);
+                        return `<option value="${u.name}">${u.name}</option>`;
+                    }).join('');
                 }
             } catch { usuarios = []; }
         }
@@ -579,7 +588,19 @@
                     vendas: vendasTemp.map(v => ({ tipo: v.tipo, receita: Number(v.receita || 0), vendedor: v.vendedor }))
                 };
                 try {
-                    const sim = await api('/simulations', { method: 'POST', body: JSON.stringify(payload) });
+                    let overrideUserId;
+                    try {
+                        const u = JSON.parse(localStorage.getItem('authUser') || '{}');
+                        const isAdmin = (u && u.role === 'admin');
+                        if (isAdmin) {
+                            const vendName = (vendasTemp[0]?.vendedor) || (document.getElementById('vendedor')?.value) || '';
+                            const mappedId = __usuariosByName[String(vendName)] || undefined;
+                            if (typeof mappedId !== 'undefined') overrideUserId = mappedId;
+                        }
+                    } catch {}
+                    const options = { method: 'POST', body: JSON.stringify(payload) };
+                    if (typeof overrideUserId !== 'undefined') options.overrideUserId = overrideUserId;
+                    const sim = await api('/simulations', options);
                     preencherResumo(sim);
                     document.getElementById('clienteNome').value = '';
                     document.getElementById('clienteCnpj').value = '';
