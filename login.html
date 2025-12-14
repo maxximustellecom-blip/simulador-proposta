@@ -3,172 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>Login • Maxximus Telecom</title>
     <style>
         :root {
-            --primary: #004A99;
-            --primary-dark: #003A7A;
-            --secondary: #002E6E;
+            --bg: #0F172A;
+            --panel: #111827;
+            --muted: #6B7280;
+            --text: #E5E7EB;
             --accent: #10B981;
+            --accent-2: #3B82F6;
             --danger: #EF4444;
-            --bg-gradient: linear-gradient(135deg, #003A7A 0%, #004A99 50%, #00A0E4 100%);
-            --card-shadow: 0 20px 40px rgba(0,0,0,0.15);
-            --hover-shadow: 0 25px 50px rgba(0,0,0,0.2);
-            --border-radius: 16px;
+            --field: #0B1220;
+            --border: #1F2937;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
         body {
-            font-family: 'Manrope', sans-serif;
-            background: var(--bg-gradient);
-            min-height: 100vh;
+            margin: 0;
+            background: radial-gradient(1200px 1200px at 10% 0%, #0B1220 0%, #0A0F1E 35%, #08111C 80%), linear-gradient(180deg, #0B1220 0%, #0A0E1A 100%);
+            color: var(--text);
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #1F2937;
         }
-        .login-card {
+        .auth-card {
             width: 100%;
             max-width: 420px;
-            background: rgba(255,255,255,0.96);
-            backdrop-filter: blur(10px);
-            border-radius: var(--border-radius);
-            box-shadow: var(--card-shadow);
-            padding: 2rem;
-            animation: fadeIn 0.6s ease-out;
+            background: linear-gradient(180deg, rgba(17,24,39,0.9), rgba(15,23,42,0.85));
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 18px;
+            box-shadow: 0 20px 40px rgba(3,10,22,0.5);
+            padding: 1.4rem;
         }
         .brand {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            justify-content: center;
-            margin-bottom: 1.25rem;
+            display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 0.75rem; font-weight: 700; letter-spacing: 0.4px;
         }
-        .brand h1 {
-            font-family: 'Bebas Neue', cursive;
-            font-size: 2.4rem;
-            color: var(--primary-dark);
-            letter-spacing: 2px;
+        .brand-badge {
+            width: 34px; height: 34px; border-radius: 10px;
+            background: radial-gradient(60% 60% at 30% 25%, #14B8A6 0%, #0EA5E9 50%, #3B82F6 100%);
+            box-shadow: 0 10px 25px rgba(62,140,253,0.35), inset 0 0 18px rgba(255,255,255,0.25);
         }
-        .subtitle {
-            text-align: center;
-            color: #64748B;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-        }
-        .form-group { margin-bottom: 1rem; }
-        label {
-            display: block;
-            font-weight: 600;
-            color: #4B5563;
-            margin-bottom: 0.4rem;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        input[type="email"], input[type="password"] {
+        .subtitle { text-align:center; color:#CBD5E1; margin-bottom:1rem; }
+        .form-group { margin-bottom: 0.9rem; }
+        .label { font-size: 0.88rem; color: var(--muted); margin-bottom: 0.25rem; }
+        .input {
             width: 100%;
-            padding: 0.9rem;
-            border: 2px solid #E5E7EB;
-            border-radius: 12px;
-            font-size: 1rem;
-            transition: all 0.2s ease;
-            background: #FAFAFA;
-            color: #1F2937;
-        }
-        input[type="email"]:focus, input[type="password"]:focus {
+            padding: 0.75rem 0.8rem;
+            border-radius: 10px;
+            background: #0A1221;
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text);
             outline: none;
-            border-color: var(--primary);
-            background: white;
-            box-shadow: 0 0 0 3px rgba(0, 74, 153, 0.12);
         }
-        .actions {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        .checkbox {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #4B5563;
-            font-size: 0.9rem;
-        }
-        .checkbox input { width: 16px; height: 16px; }
-        .link {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
+        .actions { display:flex; align-items:center; justify-content:space-between; margin-top:0.25rem; margin-bottom:0.75rem; }
+        .checkbox { display:inline-flex; align-items:center; gap:0.5rem; color:#CBD5E1; font-size:0.9rem; }
+        .link { color:#93C5FD; text-decoration:none; font-weight:600; font-size:0.9rem; }
         .btn {
             width: 100%;
-            padding: 0.9rem 1rem;
-            border: none;
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: linear-gradient(180deg, #1F8EFB, #2563EB);
+            color: var(--text);
+            padding: 0.75rem 0.9rem;
             border-radius: 12px;
-            font-weight: 800;
-            font-size: 1rem;
             cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            letter-spacing: 0.5px;
-            position: relative;
-            overflow: hidden;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
+            font-weight: 700;
         }
-        .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(0, 74, 153, 0.25); }
-        .btn:active { transform: translateY(0); }
-        .helper {
-            margin-top: 0.75rem;
-            text-align: center;
-            color: #6B7280;
-            font-size: 0.9rem;
-        }
+        .helper { margin-top: 0.5rem; text-align:center; color:#9CA3AF; font-size:0.85rem; }
         .error {
-            background: #FEE2E2;
-            color: #991B1B;
-            border: 1px solid #FCA5A5;
+            background: rgba(239,68,68,0.12);
+            color: #FCA5A5;
+            border: 1px solid rgba(239,68,68,0.35);
             padding: 0.6rem 0.8rem;
             border-radius: 10px;
             font-size: 0.9rem;
             margin-bottom: 0.75rem;
             display: none;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
     </style>
 </head>
 <body>
-    <div class="login-card">
+    <div class="auth-card">
         <div class="brand">
-            <h1>Entrar</h1>
+            <div class="brand-badge"></div>
+            <div>MAXXIMUS TELECOM</div>
         </div>
-        <p class="subtitle">Acesse para continuar</p>
+        <div class="subtitle">Entrar</div>
         <div id="errorBox" class="error"></div>
         <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" placeholder="seu@email.com">
+            <div class="label">Email</div>
+            <input class="input" type="email" id="email" placeholder="seu@email.com">
         </div>
         <div class="form-group">
-            <label for="password">Senha</label>
-            <input type="password" id="password" placeholder="Digite sua senha">
+            <div class="label">Senha</div>
+            <input class="input" type="password" id="password" placeholder="Digite sua senha">
         </div>
         <div class="actions">
             <label class="checkbox"><input type="checkbox" id="remember"> Lembrar</label>
             <a class="link" href="register.html">Criar conta</a>
         </div>
         <button class="btn" id="loginBtn">Entrar</button>
-        <p class="helper">Entre com seu email e senha</p>
+        <div class="helper">Entre com seu email e senha</div>
     </div>
     <script>
         const API = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
@@ -197,7 +133,7 @@
                 const user = await res.json();
                 const payload = { ...user, remember, at: new Date().toISOString() };
                 localStorage.setItem('authUser', JSON.stringify(payload));
-                window.location.href = 'index.html';
+                window.location.href = 'dashboard.html';
             } catch {
                 showError('Falha de conexão');
             }

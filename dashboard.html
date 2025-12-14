@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard • Maxximus Telecom</title>
+    <link rel="icon" href="data:,">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg: #0F172A;
+            --panel: #111827;
+            --muted: #6B7280;
+            --text: #E5E7EB;
+            --accent: #10B981;
+            --accent-2: #3B82F6;
+            --danger: #EF4444;
+            --card: #111827;
+            --field: #0B1220;
+        }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            margin: 0;
+            background: radial-gradient(1200px 1200px at 10% 0%, #0B1220 0%, #0A0F1E 35%, #08111C 80%), linear-gradient(180deg, #0B1220 0%, #0A0E1A 100%);
+            color: var(--text);
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        }
+        .topbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            backdrop-filter: saturate(180%) blur(12px);
+            background: rgba(17,24,39,0.7);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .topbar-inner {
+            width: 100%;
+            margin: 0;
+            padding: 0.85rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+        }
+        .brand-badge {
+            width: 34px; height: 34px;
+            border-radius: 10px;
+            background: radial-gradient(60% 60% at 30% 25%, #14B8A6 0%, #0EA5E9 50%, #3B82F6 100%);
+            box-shadow: 0 10px 25px rgba(62,140,253,0.35), inset 0 0 18px rgba(255,255,255,0.25);
+        }
+        .user { position: relative; display: flex; align-items: center; gap: 0.6rem; }
+        .user-btn {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.4rem 0.7rem; border-radius: 10px;
+            background: rgba(255,255,255,0.06); color: var(--text);
+            border: 1px solid rgba(255,255,255,0.08); cursor: pointer;
+        }
+        .user-menu {
+            position: absolute; right: 0; top: calc(100% + 0.5rem); min-width: 180px;
+            background: #0C1322; border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.45); border-radius: 12px; overflow: hidden; display: none;
+        }
+        .user-menu.show { display: block; }
+        .user-menu a { display:block; color: var(--text); text-decoration:none; padding:0.75rem 0.85rem; }
+        .user-menu a:hover { background: rgba(255,255,255,0.06); }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 7rem 1rem 4rem;
+        }
+        .sidebar {
+            position: fixed; left: 0; top: 64px; bottom: 0; width: 220px;
+            background: #0B1220; border-right: 1px solid rgba(255,255,255,0.06);
+            padding: 0.9rem 0.75rem; display: none; z-index: 900;
+        }
+        .nav-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .nav-link {
+            display:flex; align-items:center; gap:0.6rem;
+            padding:0.6rem 0.7rem; border-radius:10px; color:var(--text); text-decoration:none;
+            border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.04);
+            transition: background 0.15s ease, transform 0.08s ease, border-color 0.15s ease;
+        }
+        .nav-link:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); }
+        .nav-link.active { background: linear-gradient(180deg, #1F8EFB, #2563EB); border-color: rgba(255,255,255,0.2); }
+        .nav-link i { width: 18px; height: 18px; }
+        .bottomnav {
+            position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            background: rgba(17,24,39,0.9); backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: space-around;
+            padding: 0.4rem 0.6rem;
+        }
+        .bottomnav a {
+            display: inline-flex; flex-direction: column; align-items: center;
+            gap: 0.25rem; color: var(--text); text-decoration: none;
+            padding: 0.25rem 0.5rem; border-radius: 8px;
+        }
+        .bottomnav a .label { font-size: 0.75rem; color: #CBD5E1; }
+        @media (min-width: 920px) { .sidebar { display: block; } .bottomnav { display: none; } .container { max-width: none; width: calc(100% - 220px); margin-left: 220px; } }
+        @media (max-width: 919px) { .container { padding-bottom: 6rem; } }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        .card {
+            background: linear-gradient(180deg, rgba(17,24,39,0.9), rgba(15,23,42,0.8));
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 18px;
+            box-shadow: 0 20px 40px rgba(3,10,22,0.5);
+            overflow: hidden;
+            width: 100%;
+        }
+        .container > .card {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .card-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.2rem 1.2rem 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .card-title { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; letter-spacing: 0.3px; }
+        .chip { display:inline-flex; align-items:center; gap:0.4rem; font-size:0.85rem; color:#A7F3D0; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); border-radius:999px; padding:0.3rem 0.6rem; }
+        .card-body { padding: 1rem; }
+        .filters {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .input, .select {
+            width: 100%;
+            padding: 0.6rem 0.7rem;
+            border-radius: 10px;
+            background: #0A1221;
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text);
+            outline: none;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: #0C1628;
+            color: var(--text);
+            padding: 0.6rem 0.9rem;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+        .kpis {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.8rem;
+        }
+        .kpi {
+            background: #0B1220;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.8rem;
+        }
+        .kpi .label { color: var(--muted); font-size: 0.85rem; }
+        .kpi .value { font-weight: 700; font-size: 1.25rem; }
+        .chart-card { padding: 1rem; }
+        .muted { color: var(--muted); font-size: 0.9rem; }
+        @media (max-width: 860px) {
+            .grid { grid-template-columns: 1fr; }
+            .grid-3 { grid-template-columns: 1fr; }
+            .kpis { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="brand">
+                <div class="brand-badge"></div>
+                <div>MAXXIMUS TELECOM</div>
+            </div>
+            <div class="user">
+                <button id="userMenuBtn" class="user-btn">
+                    <span id="userNameLabel">Usuário</span>
+                    <span>▾</span>
+                </button>
+                <div id="userMenu" class="user-menu">
+                    <a id="logoutBtn" href="#">Sair</a>
+                </div>
+            </div>
+        </div>
+    </header>
+    <nav class="sidebar">
+        <div class="nav-group">
+            <a href="dashboard.html" class="nav-link active"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
+            <a href="historico.html" class="nav-link"><i data-lucide="list"></i><span>Histórico</span></a>
+            <a href="venda.html" class="nav-link"><i data-lucide="shopping-cart"></i><span>Registrar</span></a>
+            <a id="navUsers" href="usuarios.html" class="nav-link" style="display:none;"><i data-lucide="users"></i><span>Usuários</span></a>
+        </div>
+    </nav>
+    <main class="container">
+        <div class="card" style="max-width: 960px;">
+            <div class="card-head">
+                <div class="card-title">
+                    <span>Dashboard</span>
+                    <span class="chip" id="scopeLabel">Visão</span>
+                </div>
+                <div class="muted" id="kpiContext">Resumo</div>
+            </div>
+            <div class="card-body">
+                <div id="adminView" style="display:none;">
+                    <div class="filters">
+                        <select id="fVendor" class="select"><option value="Todos">Todos</option></select>
+                        <input id="fFrom" class="input" type="date">
+                        <input id="fTo" class="input" type="date">
+                        <button id="applyFilters" class="btn" type="button">Aplicar</button>
+                    </div>
+                    <div class="kpis" id="kpis"></div>
+                    <div class="grid" style="margin-top:1rem;">
+                        <div class="card">
+                            <div class="card-head"><div class="card-title"><span>Receita por mês</span></div></div>
+                            <div class="chart-card"><canvas id="chartReceitaMes" height="140"></canvas></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-head"><div class="card-title"><span>Receita por tipo</span></div></div>
+                            <div class="chart-card"><canvas id="chartReceitaTipo" height="140"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="grid" style="margin-top:1rem;">
+                        <div class="card">
+                            <div class="card-head"><div class="card-title"><span>Comissão por mês</span></div></div>
+                            <div class="chart-card"><canvas id="chartComissaoMes" height="140"></canvas></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-head"><div class="card-title"><span>Distribuição de nível</span></div></div>
+                            <div class="chart-card"><canvas id="chartNivelDistrib" height="140"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="grid" style="margin-top:1rem;">
+                        <div class="card">
+                            <div class="card-head"><div class="card-title"><span>Top vendedores (comissão)</span></div></div>
+                            <div class="card-body" id="topVendedores"></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-head"><div class="card-title"><span>Últimas vendas</span></div></div>
+                            <div class="card-body" id="ultimasVendas"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="userView" style="display:none;">
+                    <div class="kpis" id="userKpis" style="margin-bottom:1rem;"></div>
+                    <div class="grid">
+                        <div class="card" style="grid-column:1/-1;">
+                            <div class="card-head"><div class="card-title"><span>Comissão por mês</span></div></div>
+                            <div class="chart-card"><canvas id="chartComissaoUser" height="160"></canvas></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-head"><div class="card-title"><span>Receita por tipo</span></div></div>
+                            <div class="chart-card"><canvas id="chartReceitaTipoUser" height="140"></canvas></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-head"><div class="card-title"><span>Últimas vendas</span></div></div>
+                            <div class="card-body" id="ultimasVendasUser"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script>
+        const API_BASE = 'http://localhost:' + (localStorage.getItem('apiPort') || '3001');
+        async function api(path, options = {}) {
+            const authRaw = localStorage.getItem('authUser');
+            let headers = { 'Content-Type': 'application/json' };
+            try {
+                const u = JSON.parse(authRaw || '{}');
+                if (u && u.id) headers['x-user-id'] = String(u.id);
+                if (u && u.role) headers['x-user-role'] = String(u.role);
+                if (u && u.name) headers['x-user-name'] = String(u.name);
+            } catch {}
+            const res = await fetch(API_BASE + path, { headers, ...options });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || ('HTTP ' + res.status));
+            }
+            return res.json();
+        }
+        function currency(n) { return Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+        function getMonthLabel(dateStr) {
+            const s = String(dateStr || '');
+            const parts = s.split(' ')[0].split('/');
+            if (parts.length >= 3) {
+                const m = Number(parts[1]);
+                const y = parts[2];
+                const names = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+                const name = names[m - 1] || '';
+                return name ? (name + ' ' + y) : s;
+            }
+            return s || '-';
+        }
+        function calcularNivelLocal(receitaNovos) {
+            if (receitaNovos < 700) return { nome: 'BLUE', fator: 0.6 };
+            if (receitaNovos < 900) return { nome: 'SILVER', fator: 0.8 };
+            if (receitaNovos < 1500) return { nome: 'PLATINUM', fator: 1.0 };
+            if (receitaNovos < 1900) return { nome: 'BLACK', fator: 1.5 };
+            return { nome: 'BLACK+', fator: 2.0 };
+        }
+        function calcularComissaoProdutoLocal(receitaBase, tipo, valorVenda) {
+            const nivel = calcularNivelLocal(receitaBase);
+            const taxas = {
+                'BLUE': { novos: 0.6, renovacao: 0.3, ultraFibra: 0.3, wttx: 0.6, m2m: 0.6 },
+                'SILVER': { novos: 0.8, renovacao: 0.3, ultraFibra: 0.3, wttx: 0.6, m2m: 0.6 },
+                'PLATINUM': { novos: 1.0, renovacao: 0.4, ultraFibra: 0.5, wttx: 1.0, m2m: 0.6 },
+                'BLACK': { novos: 1.5, renovacao: 0.5, ultraFibra: 0.7, wttx: 1.5, m2m: 0.6 },
+                'BLACK+': { novos: 2.0, renovacao: 0.6, ultraFibra: 0.8, wttx: 2.0, m2m: 0.6 }
+            };
+            const key = String(tipo || '').toLowerCase();
+            const taxa = taxas[nivel.nome][key] || 0;
+            return Number(valorVenda || 0) * Number(taxa || 0);
+        }
+        function groupByMonth(arr) {
+            const map = {};
+            (arr || []).forEach(s => {
+                const k = getMonthLabel(s.data);
+                if (!map[k]) map[k] = [];
+                map[k].push(s);
+            });
+            return map;
+        }
+        function groupByTipo(arr) {
+            const map = {};
+            (arr || []).forEach(s => {
+                const t = String(s.tipo || '').toLowerCase();
+                if (!map[t]) map[t] = 0;
+                map[t] += Number(s.receita || 0);
+            });
+            return map;
+        }
+        function parseBrDateToDate(s) {
+            const str = String(s || '');
+            const datePart = str.split(',')[0] || '';
+            const [d,m,y] = datePart.split('/');
+            if (!d || !m || !y) return null;
+            const dt = new Date(Number(y), Number(m)-1, Number(d));
+            return isNaN(dt.getTime()) ? null : dt;
+        }
+        function filterByControls(sales) {
+            const vendorSel = document.getElementById('fVendor').value;
+            const from = document.getElementById('fFrom').value;
+            const to = document.getElementById('fTo').value;
+            const fromDt = from ? new Date(from) : null;
+            const toDt = to ? new Date(to) : null;
+            return (sales || []).filter(s => {
+                if (vendorSel && vendorSel !== 'Todos' && s.vendedor !== vendorSel) return false;
+                const dt = parseBrDateToDate(s.data);
+                if (fromDt && dt && dt < fromDt) return false;
+                if (toDt && dt && dt > toDt) return false;
+                return true;
+            });
+        }
+        function buildVendorOptions(sales) {
+            const sel = document.getElementById('fVendor');
+            const names = Array.from(new Set((sales || []).map(s => s.vendedor || '-'))).sort((a,b) => a.localeCompare(b));
+            sel.innerHTML = ['<option value="Todos">Todos</option>'].concat(names.map(n => `<option value="${n}">${n}</option>`)).join('');
+        }
+        function topVendedoresByComissao(sales, limit = 5) {
+            const byVendor = {};
+            const monthsByVendor = {};
+            (sales || []).forEach(s => {
+                const v = s.vendedor || '-';
+                const month = getMonthLabel(s.data);
+                if (!monthsByVendor[v]) monthsByVendor[v] = {};
+                if (!monthsByVendor[v][month]) monthsByVendor[v][month] = [];
+                monthsByVendor[v][month].push(s);
+            });
+            Object.keys(monthsByVendor).forEach(v => {
+                const months = monthsByVendor[v];
+                const total = Object.keys(months).reduce((acc, m) => {
+                    const list = months[m];
+                    const receitaNovos = list.filter(x => x.tipo === 'novos').reduce((a, x) => a + Number(x.receita || 0), 0);
+                    return acc + list.reduce((a, x) => a + calcularComissaoProdutoLocal(receitaNovos, x.tipo, Number(x.receita || 0)), 0);
+                }, 0);
+                byVendor[v] = total;
+            });
+            const pairs = Object.keys(byVendor).map(v => ({ vendedor: v, comissao: byVendor[v] }));
+            return pairs.sort((a,b) => b.comissao - a.comissao).slice(0, limit);
+        }
+        function renderListaVendas(elId, sales, limit = 8) {
+            const el = document.getElementById(elId);
+            const arr = (sales || []).slice(0, limit);
+            el.innerHTML = arr.map(s => `
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <div style="display:flex; align-items:center; gap:0.6rem;">
+                        <i data-lucide="shopping-bag"></i>
+                        <div>
+                            <div style="font-weight:600;">${s.nome || '-'}</div>
+                            <div class="muted">${s.vendedor || '-'} • ${s.tipo} • ${s.data || '-'}</div>
+                        </div>
+                    </div>
+                    <div style="font-weight:600; color:#FCD34D;">${currency(s.receita)}</div>
+                </div>
+            `).join('');
+        }
+        let __charts = {};
+        function calcularComissaoTotalPorVendedorMes(sales) {
+            const byMonthVendor = {};
+            (sales || []).forEach(s => {
+                const month = getMonthLabel(s.data);
+                const vendor = s.vendedor || '-';
+                const key = month + '|' + vendor;
+                if (!byMonthVendor[key]) byMonthVendor[key] = [];
+                byMonthVendor[key].push(s);
+            });
+            let total = 0;
+            Object.keys(byMonthVendor).forEach(k => {
+                const list = byMonthVendor[k];
+                const receitaNovos = list.filter(x => x.tipo === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
+                total += list.reduce((acc, x) => acc + calcularComissaoProdutoLocal(receitaNovos, x.tipo, Number(x.receita || 0)), 0);
+            });
+            return total;
+        }
+        function renderAdminDashboard(sales) {
+            const adminView = document.getElementById('adminView');
+            adminView.style.display = 'block';
+            const scopeLabel = document.getElementById('scopeLabel');
+            scopeLabel.textContent = 'Administrador: visão geral';
+            const kpi = document.getElementById('kpis');
+            const totalVendas = (sales || []).length;
+            const receitaTotal = (sales || []).reduce((acc, s) => acc + Number(s.receita || 0), 0);
+            const comissaoTotal = calcularComissaoTotalPorVendedorMes(sales);
+            const vendedoresUnicos = Array.from(new Set((sales || []).map(s => s.vendedor || '-'))).length;
+            kpi.innerHTML = [
+                `<div class="kpi"><div class="label">Vendas</div><div class="value">${totalVendas}</div></div>`,
+                `<div class="kpi"><div class="label">Receita Total</div><div class="value">${currency(receitaTotal)}</div></div>`,
+                `<div class="kpi"><div class="label">Comissão Total</div><div class="value">${currency(comissaoTotal)}</div></div>`,
+                `<div class="kpi"><div class="label">Vendedores</div><div class="value">${vendedoresUnicos}</div></div>`
+            ].join('');
+            const byMonth = groupByMonth(sales);
+            const labelsMes = Object.keys(byMonth).sort((a,b) => a.localeCompare(b));
+            const dataMes = labelsMes.map(m => byMonth[m].reduce((acc, s) => acc + Number(s.receita || 0), 0));
+            const ctxMes = document.getElementById('chartReceitaMes');
+            if (__charts['chartReceitaMes']) __charts['chartReceitaMes'].destroy();
+            __charts['chartReceitaMes'] = new Chart(ctxMes, {
+                type: 'bar',
+                data: {
+                    labels: labelsMes,
+                    datasets: [{ label: 'Receita (R$)', data: dataMes, backgroundColor: 'rgba(37, 99, 235, 0.5)', borderColor: 'rgba(37, 99, 235, 1)', borderWidth: 1 }]
+                },
+                options: { responsive: true, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true } } }
+            });
+            const byTipo = groupByTipo(sales);
+            const labelsTipo = Object.keys(byTipo);
+            const dataTipo = labelsTipo.map(t => byTipo[t]);
+            const ctxTipo = document.getElementById('chartReceitaTipo');
+            if (__charts['chartReceitaTipo']) __charts['chartReceitaTipo'].destroy();
+            __charts['chartReceitaTipo'] = new Chart(ctxTipo, {
+                type: 'doughnut',
+                data: {
+                    labels: labelsTipo,
+                    datasets: [{ data: dataTipo, backgroundColor: ['#10B981','#F59E0B','#3B82F6','#EF4444','#A855F7'] }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+            const dataComMes = labelsMes.map(m => {
+                const list = byMonth[m];
+                const receitaNovos = list.filter(x => x.tipo === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
+                return list.reduce((acc, x) => acc + calcularComissaoProdutoLocal(receitaNovos, x.tipo, Number(x.receita || 0)), 0);
+            });
+            const ctxComMes = document.getElementById('chartComissaoMes');
+            if (__charts['chartComissaoMes']) __charts['chartComissaoMes'].destroy();
+            __charts['chartComissaoMes'] = new Chart(ctxComMes, {
+                type: 'line',
+                data: { labels: labelsMes, datasets: [{ label: 'Comissão (R$)', data: dataComMes, borderColor: 'rgba(16,185,129,1)', backgroundColor: 'rgba(16,185,129,0.2)', tension: 0.3 }] },
+                options: { responsive: true, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true } } }
+            });
+            const levelCounts = {};
+            labelsMes.forEach(m => {
+                const list = byMonth[m];
+                const byVend = {};
+                list.forEach(s => {
+                    const v = s.vendedor || '-';
+                    if (!byVend[v]) byVend[v] = [];
+                    byVend[v].push(s);
+                });
+                Object.keys(byVend).forEach(v => {
+                    const vs = byVend[v];
+                    const receitaNovos = vs.filter(x => x.tipo === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
+                    const nivel = calcularNivelLocal(receitaNovos).nome;
+                    levelCounts[nivel] = (levelCounts[nivel] || 0) + 1;
+                });
+            });
+            const nivelLabels = Object.keys(levelCounts);
+            const nivelData = nivelLabels.map(k => levelCounts[k]);
+            const ctxNivel = document.getElementById('chartNivelDistrib');
+            if (__charts['chartNivelDistrib']) __charts['chartNivelDistrib'].destroy();
+            __charts['chartNivelDistrib'] = new Chart(ctxNivel, {
+                type: 'doughnut',
+                data: { labels: nivelLabels, datasets: [{ data: nivelData, backgroundColor: ['#60A5FA','#9CA3AF','#A78BFA','#111827','#000000'] }] },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+            const top = topVendedoresByComissao(sales, 5);
+            document.getElementById('topVendedores').innerHTML = top.map(t => `
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <div style="display:flex; align-items:center; gap:0.6rem;">
+                        <i data-lucide="user"></i>
+                        <div>${t.vendedor}</div>
+                    </div>
+                    <div style="font-weight:600; color:#A7F3D0;">${currency(t.comissao)}</div>
+                </div>
+            `).join('');
+            const sortedRecent = (sales || []).slice().sort((a,b) => {
+                const da = parseBrDateToDate(a.data)?.getTime() || 0;
+                const db = parseBrDateToDate(b.data)?.getTime() || 0;
+                return db - da;
+            });
+            renderListaVendas('ultimasVendas', sortedRecent, 8);
+        }
+        function renderUserDashboard(sales) {
+            const userView = document.getElementById('userView');
+            userView.style.display = 'block';
+            const scopeLabel = document.getElementById('scopeLabel');
+            scopeLabel.textContent = 'Usuário: suas vendas';
+            const totalVendas = (sales || []).length;
+            const receitaTotal = (sales || []).reduce((acc, s) => acc + Number(s.receita || 0), 0);
+            const receitaNovosTotal = (sales || []).filter(s => s.tipo === 'novos').reduce((acc, s) => acc + Number(s.receita || 0), 0);
+            const nivelAtual = calcularNivelLocal(receitaNovosTotal);
+            const comissaoTotal = calcularComissaoTotalPorVendedorMes(sales);
+            document.getElementById('userKpis').innerHTML = [
+                `<div class="kpi"><div class="label">Vendas</div><div class="value">${totalVendas}</div></div>`,
+                `<div class="kpi"><div class="label">Receita</div><div class="value">${currency(receitaTotal)}</div></div>`,
+                `<div class="kpi"><div class="label">Comissão</div><div class="value">${currency(comissaoTotal)}</div></div>`,
+                `<div class="kpi"><div class="label">Nível</div><div class="value">${nivelAtual.nome}</div></div>`
+            ].join('');
+            const nameLabel = document.getElementById('userNameLabel');
+            if (nameLabel) {
+                const base = String(nameLabel.textContent || '').split(' • ')[0];
+                nameLabel.textContent = `${base} • ${nivelAtual.nome}`;
+            }
+            const byMonth = groupByMonth(sales);
+            const labels = Object.keys(byMonth).sort((a,b) => a.localeCompare(b));
+            const data = labels.map(m => {
+                const list = byMonth[m];
+                const receitaNovos = list.filter(x => x.tipo === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
+                return list.reduce((acc, x) => acc + calcularComissaoProdutoLocal(receitaNovos, x.tipo, Number(x.receita || 0)), 0);
+            });
+            const ctx = document.getElementById('chartComissaoUser');
+            if (__charts['chartComissaoUser']) __charts['chartComissaoUser'].destroy();
+            __charts['chartComissaoUser'] = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets: [{ label: 'Comissão (R$)', data, borderColor: 'rgba(16,185,129,1)', backgroundColor: 'rgba(16,185,129,0.2)', tension: 0.3 }] },
+                options: { responsive: true, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true } } }
+            });
+            const byTipo = groupByTipo(sales);
+            const labelsTipo = Object.keys(byTipo);
+            const dataTipo = labelsTipo.map(t => byTipo[t]);
+            const ctxTipoUser = document.getElementById('chartReceitaTipoUser');
+            if (__charts['chartReceitaTipoUser']) __charts['chartReceitaTipoUser'].destroy();
+            __charts['chartReceitaTipoUser'] = new Chart(ctxTipoUser, {
+                type: 'doughnut',
+                data: {
+                    labels: labelsTipo,
+                    datasets: [{ data: dataTipo, backgroundColor: ['#10B981','#F59E0B','#3B82F6','#EF4444','#A855F7'] }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+            const sortedRecent = (sales || []).slice().sort((a,b) => {
+                const da = parseBrDateToDate(a.data)?.getTime() || 0;
+                const db = parseBrDateToDate(b.data)?.getTime() || 0;
+                return db - da;
+            });
+            renderListaVendas('ultimasVendasUser', sortedRecent, 8);
+        }
+        document.addEventListener('DOMContentLoaded', async () => {
+            const auth = localStorage.getItem('authUser');
+            if (!auth) { window.location.href = 'login.html'; return; }
+            let isAdmin = false;
+            try {
+                const user = JSON.parse(auth);
+                const label = document.getElementById('userNameLabel');
+                if (label && user && user.name) {
+                    isAdmin = (user && user.role === 'admin');
+                    label.textContent = isAdmin ? (user.name + ' • Admin') : user.name;
+                }
+            } catch {}
+            document.getElementById('userMenuBtn').addEventListener('click', () => {
+                const menu = document.getElementById('userMenu');
+                menu.classList.toggle('show');
+            });
+            document.getElementById('logoutBtn').addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('authUser');
+                window.location.href = 'login.html';
+            });
+            try {
+                const sales = await api('/sales', { method: 'GET' });
+                if (isAdmin) {
+                    document.getElementById('adminView').style.display = 'block';
+                    const arr = Array.isArray(sales) ? sales : [];
+                    buildVendorOptions(arr);
+                    document.getElementById('applyFilters').addEventListener('click', () => {
+                        const filtered = filterByControls(arr);
+                        renderAdminDashboard(filtered);
+                        if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+                    });
+                    renderAdminDashboard(arr);
+                } else {
+                    document.getElementById('userView').style.display = 'block';
+                    renderUserDashboard(Array.isArray(sales) ? sales : []);
+                }
+            } catch {
+                if (isAdmin) {
+                    document.getElementById('adminView').style.display = 'block';
+                } else {
+                    document.getElementById('userView').style.display = 'block';
+                }
+            }
+            try {
+                const navUsers = document.getElementById('navUsers');
+                const bottomUsers = document.getElementById('bottomUsers');
+                if (navUsers) navUsers.style.display = isAdmin ? 'flex' : 'none';
+                if (bottomUsers) bottomUsers.style.display = isAdmin ? 'inline-flex' : 'none';
+            } catch {}
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        });
+    </script>
+    <nav class="bottomnav">
+        <a href="dashboard.html"><i data-lucide="layout-dashboard"></i><span class="label">Dashboard</span></a>
+        <a href="historico.html"><i data-lucide="list"></i><span class="label">Histórico</span></a>
+        <a href="venda.html"><i data-lucide="shopping-cart"></i><span class="label">Registrar</span></a>
+        <a id="bottomUsers" href="usuarios.html" style="display:none;"><i data-lucide="users"></i><span class="label">Usuários</span></a>
+    </nav>
+</body>
+</html>
