@@ -381,7 +381,7 @@
     </main>
     <div id="toast" class="toast"></div>
     <script>
-        const API_BASE = 'http://localhost:' + (localStorage.getItem('apiPort') || '3001');
+        const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
         async function api(path, options) {
             const auth = localStorage.getItem('authUser');
             let headers = { 'Content-Type': 'application/json' };

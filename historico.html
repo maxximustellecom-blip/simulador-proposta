@@ -609,7 +609,7 @@
         </div>
     </div>
     <script>
-        const API_BASE = 'http://localhost:' + (localStorage.getItem('apiPort') || '3001');
+        const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
         async function api(path, options = {}) {
             const authRaw = localStorage.getItem('authUser');
             let headers = { 'Content-Type': 'application/json' };
