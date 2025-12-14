@@ -76,6 +76,7 @@ export async function deleteUser(req, res) {
     if (!actor || actor.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
     const id = Number(req.params.id);
     if (!id) return res.status(400).json({ error: 'missing_id' });
+    if (id === 1) return res.status(403).json({ error: 'protected_admin' });
     const user = await User.findByPk(id);
     if (!user) return res.status(404).json({ error: 'not_found' });
     const userName = user.name;
