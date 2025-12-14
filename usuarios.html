@@ -152,6 +152,7 @@
             box-shadow: 0 8px 20px rgba(37,99,235,0.35);
         }
         .btn-ghost { background: rgba(255,255,255,0.05); }
+        .btn-icon { padding: 0.25rem 0.4rem; border-radius: 10px; }
         .toast {
             position: fixed; right: 1rem; bottom: 1rem;
             background: #0B1220; border: 1px solid rgba(255,255,255,0.08);
@@ -160,6 +161,28 @@
         table { width: 100%; border-collapse: collapse; margin-top: 0.75rem; }
         th, td { border-bottom: 1px solid rgba(255,255,255,0.06); padding: 0.6rem; text-align: left; }
         th { color: #CBD5E1; font-weight: 600; }
+        .modal {
+            position: fixed; inset: 0; display: none;
+            align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.5); z-index: 2000;
+        }
+        .modal.show { display: flex; }
+        .modal-card {
+            width: 520px; max-width: calc(100% - 2rem);
+            background: #0B1220; border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+        .modal-head {
+            padding: 0.9rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex; align-items: center; justify-content: space-between;
+            color: #E5E7EB; font-weight: 600;
+        }
+        .modal-body { padding: 1rem; }
+        .modal-actions {
+            padding: 0.9rem 1rem; border-top: 1px solid rgba(255,255,255,0.08);
+            display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -184,7 +207,7 @@
         <div class="nav-group">
             <a href="dashboard.html" class="nav-link"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
             <a href="historico.html" class="nav-link"><i data-lucide="list"></i><span>Histórico</span></a>
-            <a href="venda.html" class="nav-link"><i data-lucide="shopping-cart"></i><span>Registrar</span></a>
+            <a href="venda.html" class="nav-link"><i data-lucide="shopping-cart"></i><span>Venda</span></a>
             <a href="usuarios.html" class="nav-link active"><i data-lucide="users"></i><span>Usuários</span></a>
         </div>
     </nav>
@@ -236,6 +259,7 @@
                                     <th>Nome</th>
                                     <th>Email</th>
                                     <th>Perfil</th>
+                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="usersTbody"></tbody>
@@ -245,10 +269,59 @@
             </div>
         </div>
     </main>
+    <div id="editUserModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head">
+                <span>Editar usuário</span>
+                <button type="button" class="btn btn-ghost btn-icon" onclick="fecharEditarUsuario()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="section" style="padding:0.8rem;">
+                    <div class="label">Nome</div>
+                    <input id="editName" class="input" type="text" placeholder="Nome completo">
+                </div>
+                <div class="section" style="padding:0.8rem; margin-top:0.6rem;">
+                    <div class="label">Email</div>
+                    <input id="editEmail" class="input" type="email" placeholder="email@empresa.com">
+                </div>
+                <div class="section" style="padding:0.8rem; margin-top:0.6rem;">
+                    <div class="label">Perfil</div>
+                    <select id="editRole" class="select">
+                        <option value="user">Usuário</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="section" style="padding:0.8rem; margin-top:0.6rem;">
+                    <div class="label">Nova senha (opcional)</div>
+                    <input id="editPassword" class="input" type="password" placeholder="Definir nova senha">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" onclick="fecharEditarUsuario()">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarEdicaoUsuario()">Salvar</button>
+            </div>
+        </div>
+    </div>
+    <div id="deleteUserModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head">
+                <span>Confirmar exclusão</span>
+                <button type="button" class="btn btn-ghost btn-icon" onclick="fecharExcluirUsuario()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="deleteUserText" class="muted">Tem certeza que deseja excluir?</div>
+                <div style="margin-top:0.6rem; color:#FCA5A5;">Ao excluir, todos os dados de vendas associados serão removidos.</div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" onclick="fecharExcluirUsuario()">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="confirmarExcluirUsuario()">Excluir</button>
+            </div>
+        </div>
+    </div>
     <nav class="bottomnav">
         <a href="dashboard.html"><i data-lucide="layout-dashboard"></i><span class="label">Dashboard</span></a>
         <a href="historico.html"><i data-lucide="list"></i><span class="label">Histórico</span></a>
-        <a href="venda.html"><i data-lucide="shopping-cart"></i><span class="label">Registrar</span></a>
+        <a href="venda.html"><i data-lucide="shopping-cart"></i><span class="label">Venda</span></a>
         <a href="usuarios.html" class="active"><i data-lucide="users"></i><span class="label">Usuários</span></a>
     </nav>
     <div id="toast" class="toast"></div>
@@ -285,15 +358,24 @@
                 return u && u.role === 'admin';
             } catch { return false; }
         }
+        let __usersCache = [];
+        let __editUserId = null;
+        let __deleteUserId = null;
         function renderUsersTable(users) {
             const tbody = document.getElementById('usersTbody');
-            tbody.innerHTML = (users || []).map(u => `
+            __usersCache = Array.isArray(users) ? users.slice() : [];
+            tbody.innerHTML = (__usersCache || []).map(u => `
                 <tr>
                     <td>${u.name}</td>
                     <td>${u.email}</td>
                     <td>${u.role}</td>
+                    <td style="min-width:140px;">
+                        <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditarUsuario(${u.id})"><i data-lucide="edit-3"></i></button>
+                        <button type="button" class="btn btn-primary btn-icon" title="Excluir" onclick="abrirExcluirUsuario(${u.id})"><i data-lucide="trash-2"></i></button>
+                    </td>
                 </tr>
             `).join('');
+            if (window.lucide && typeof window.lucide.createIcons === 'function') { window.lucide.createIcons(); }
         }
         async function carregarUsuarios() {
             try {
@@ -303,11 +385,69 @@
                 renderUsersTable([]);
             }
         }
+        function getUserById(id) {
+            return (__usersCache || []).find(u => Number(u.id) === Number(id));
+        }
         function limparFormulario() {
             document.getElementById('uName').value = '';
             document.getElementById('uEmail').value = '';
             document.getElementById('uPassword').value = '';
             document.getElementById('uRole').value = 'user';
+        }
+        function abrirEditarUsuario(id) {
+            const u = getUserById(id);
+            if (!u) return;
+            __editUserId = Number(id);
+            document.getElementById('editName').value = u.name || '';
+            document.getElementById('editEmail').value = u.email || '';
+            document.getElementById('editRole').value = u.role || 'user';
+            document.getElementById('editPassword').value = '';
+            document.getElementById('editUserModal').classList.add('show');
+        }
+        function fecharEditarUsuario() {
+            __editUserId = null;
+            document.getElementById('editUserModal').classList.remove('show');
+        }
+        async function salvarEdicaoUsuario() {
+            if (!__editUserId) return;
+            const name = (document.getElementById('editName').value || '').trim();
+            const email = (document.getElementById('editEmail').value || '').trim();
+            const role = document.getElementById('editRole').value || 'user';
+            const password = (document.getElementById('editPassword').value || '').trim();
+            if (!name || !email) { toast('Preencha nome e email', 'error'); return; }
+            const payload = { name, email, role };
+            if (password) payload.password = password;
+            try {
+                await api('/auth/users/' + __editUserId, { method: 'PUT', body: JSON.stringify(payload) });
+                toast('Usuário atualizado', 'success');
+                fecharEditarUsuario();
+                await carregarUsuarios();
+            } catch {
+                toast('Erro ao atualizar usuário', 'error');
+            }
+        }
+        function abrirExcluirUsuario(id) {
+            const u = getUserById(id);
+            if (!u) return;
+            __deleteUserId = Number(id);
+            const el = document.getElementById('deleteUserText');
+            if (el) el.textContent = `Deseja excluir o usuário "${u.name}"? Esta ação removerá também os dados de vendas associados.`;
+            document.getElementById('deleteUserModal').classList.add('show');
+        }
+        function fecharExcluirUsuario() {
+            __deleteUserId = null;
+            document.getElementById('deleteUserModal').classList.remove('show');
+        }
+        async function confirmarExcluirUsuario() {
+            if (!__deleteUserId) return;
+            try {
+                await api('/auth/users/' + __deleteUserId, { method: 'DELETE' });
+                toast('Usuário excluído', 'success');
+                fecharExcluirUsuario();
+                await carregarUsuarios();
+            } catch {
+                toast('Erro ao excluir usuário', 'error');
+            }
         }
         async function salvarUsuario() {
             const name = (document.getElementById('uName').value || '').trim();
