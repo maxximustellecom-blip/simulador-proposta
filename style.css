@@ -339,6 +339,20 @@ th.col-actions, td.col-actions {
   opacity: 0.7;
   cursor: not-allowed;
 }
+select option, .select option, select optgroup {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+}
+select option[disabled], .select option[disabled] {
+  color: var(--muted) !important;
+}
+[data-theme="dark"] select option, [data-theme="dark"] .select option, [data-theme="dark"] select optgroup {
+  background: #FFFFFF !important;
+  color: #000000 !important;
+}
+[data-theme="dark"] select option[disabled], [data-theme="dark"] .select option[disabled] {
+  color: #6B7280 !important;
+}
 .btn {
   display: inline-flex;
   align-items: center;
@@ -430,7 +444,7 @@ th.col-actions, td.col-actions {
 .modal-card {
   background: var(--surface) !important;
   border: 1px solid var(--border) !important;
-  width: clamp(320px, 720px, calc(100% - 2rem));
+  width: clamp(320px, calc(100% - 2rem), 720px);
   border-radius: 16px;
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -439,7 +453,7 @@ th.col-actions, td.col-actions {
 .modal-overlay .modal {
   background: var(--surface) !important;
   border: 1px solid var(--border) !important;
-  width: clamp(320px, 900px, calc(100% - 2rem));
+  width: clamp(320px, calc(100% - 2rem), 900px);
   border-radius: 16px;
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -467,6 +481,7 @@ th.col-actions, td.col-actions {
   color: var(--text);
   max-height: 70vh;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 .modal-actions {
   padding: 0.9rem 1rem;
@@ -475,6 +490,14 @@ th.col-actions, td.col-actions {
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
+}
+@media (max-width: 919px) {
+  .grid-3-modal { grid-template-columns: 1fr 1fr; }
+  .grid-2-modal { grid-template-columns: 1fr 1fr; }
+  .modal-card { width: clamp(320px, 96vw, 720px); }
+}
+@media (max-width: 640px) {
+  .grid-3-modal, .grid-2-modal { grid-template-columns: 1fr; }
 }
 .modal-actions .btn { margin: 0; }
 .modal-body {
@@ -489,13 +512,32 @@ th.col-actions, td.col-actions {
   justify-content: flex-end;
   gap: 0.5rem;
 }
-.grid-3-modal { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
-.grid-2-modal { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-.field { margin-bottom: 0.5rem; }
-.label-inline { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.25rem; display: block; }
+.grid-3-modal { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+.grid-2-modal { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.field { margin-bottom: 0.75rem; }
+.label-inline { font-size: 0.9rem; color: var(--muted); margin-bottom: 0.35rem; display: block; }
+.modal-card .grid-3-modal, .modal-card .grid-2-modal { margin-top: 0.75rem; }
+.modal-card .input, .modal-card input, .modal-card select, .modal-card textarea {
+  width: 100%;
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+  box-sizing: border-box;
+  min-width: 0;
+}
+.modal-card .field { min-width: 0; }
+.modal-card .form-group { margin-bottom: 1rem; }
+.modal-card .input:hover, .modal-card input:hover, .modal-card select:hover, .modal-card textarea:hover {
+  border-color: rgba(255,255,255,0.16);
+}
+.modal-card .input:focus, .modal-card input:focus, .modal-card select:focus, .modal-card textarea:focus {
+  outline: none;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+}
 .actions { display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; padding: 1rem; }
 .actions-right { display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; }
 .list { display: flex; flex-direction: column; gap: 1rem; }
+.summary { margin-top: 0.75rem; }
 .month { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
 .month-head { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1rem; border-bottom: 1px solid var(--border); color: var(--muted); }
 .vendor { padding: 0.9rem 1rem; border-top: 1px dashed var(--border); }

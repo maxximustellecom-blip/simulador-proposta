@@ -22,14 +22,14 @@
             </div>
             <div class="card-body">
                 <section class="section" style="margin-top:1rem;">
-                    <div id="usersList">
+                    <div id="usersList" class="table-container">
                         <table>
                             <thead>
                                 <tr>
                                     <th>Nome</th>
                                     <th>Email</th>
                                     <th>Perfil</th>
-                                    <th>Ações</th>
+                                    <th class="col-actions">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="usersTbody"></tbody>
@@ -178,7 +178,7 @@
                     <td>${u.name}</td>
                     <td>${u.email}</td>
                     <td>${u.role}</td>
-                    <td style="min-width:140px;">
+                    <td class="col-actions" style="min-width:140px;">
                         <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditarUsuario(${u.id})"><i data-lucide="edit-3"></i></button>
                         ${u.id === 1 ? '' : `<button type="button" class="btn btn-primary btn-icon" title="Excluir" onclick="abrirExcluirUsuario(${u.id})"><i data-lucide='trash-2'></i></button>`}
                     </td>

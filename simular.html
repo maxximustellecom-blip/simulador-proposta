@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrar Venda • Maxximus Telecom</title>
+    <title>Registrar Simulação • Maxximus Telecom</title>
     <link rel="icon" href="data:,">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -13,79 +13,21 @@
         <div class="card">
             <div class="card-head">
                 <div class="card-title">
-                    <span>Registrar Venda</span>
+                    <span>Registrar Simulação</span>
                     <span class="chip">Rápido e intuitivo</span>
                 </div>
+                <div class="muted">
+                    <button type="button" id="openSimModal" class="btn btn-primary"><i data-lucide="plus"></i><span>Nova Simulação</span></button>
+                </div>
             </div>
-            <form id="vendaForm">
-                <div class="card-body">
-                    <section class="section">
-                        <h3>Dados do Cliente</h3>
-                        <div class="field">
-                            <label class="label">Nome</label>
-                            <input id="clienteNome" class="input" type="text" placeholder="RAZÃO SOCIAL" autocomplete="off">
-                        </div>
-                        <div class="grid-2">
-                            <div class="field">
-                                <label class="label">CNPJ</label>
-                                <input id="clienteCnpj" class="input" type="text" placeholder="00.000.000/0000-00" autocomplete="off">
-                            </div>
-                        </div>
-                    </section>
-                    <section class="section">
-                        <h3>Dados da Venda</h3>
-                        <div class="grid-2">
-                            <div class="field">
-                                <label class="label">Vendedor</label>
-                                <select id="vendedor" class="select">
-                                    <option>Carregando...</option>
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label class="label">Tipo</label>
-                                <select id="tipo" class="select">
-                                    <option value="novos">Novos</option>
-                                    <option value="renovacao">Renovação</option>
-                                    <option value="ultraFibra">Ultra Fibra</option>
-                                    <option value="wttx">WTTx</option>
-                                    <option value="m2m">M2M</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="grid-2" style="margin-top:0.75rem;">
-                            <div class="field">
-                                <label class="label">P2B</label>
-                                <input id="p2b" class="input" type="number" step="1" min="0" placeholder="0">
-                            </div>
-                            <div class="field">
-                                <label class="label">Receita (R$)</label>
-                                <input id="receita" class="input" type="number" step="0.01" min="0" placeholder="0,00">
-                            </div>
-                        </div>
-                        <div class="actions" style="justify-content:flex-start; padding:0; border-top:none;">
-                            <button type="button" id="addItemBtn" class="btn btn-ghost">Adicionar item</button>
-                        </div>
-                    </section>
+            <div class="card-body">
+                <div class="section" style="margin-top: 20px;">
+                    <div class="label">Inicie uma nova simulação</div>
+                    <div class="muted">Clique em "Nova Simulação" para preencher os dados do cliente e da venda.</div>
                 </div>
-                <div style="padding: 1.2rem;">
-                    <div id="vendasList" class="section" style="display:none;">
-                        <h3>Itens adicionados</h3>
-                        <div id="vendasListContent"></div>
-                    </div>
-                    <div id="summary" class="summary" style="display:none;">
-                        <div class="summary-row"><span>Nível</span><strong id="sumNivel">-</strong></div>
-                        <div class="summary-row"><span>Receita Novos</span><strong id="sumNovos">-</strong></div>
-                        <div class="summary-row"><span>Receita Total</span><strong id="sumTotal">-</strong></div>
-                        <div class="summary-row"><span>Comissão Total</span><strong id="sumComissao">-</strong></div>
-                    </div>
-                </div>
-                <div class="actions">
-                    <button type="button" id="limparBtn" class="btn btn-ghost">Limpar</button>
-                    <button type="submit" class="btn btn-primary">Salvar Venda</button>
-                </div>
-            </form>
+            </div>
         </div>
-        <div class="card" style="max-width: 960px; margin: 1rem auto 0;">
+        <div class="card">
         <div style="padding: 1.2rem;">
             <h3 class="card-title">📊 Tabela 1: Níveis e Fator de Comissionamento</h3>
             <div class="table-container">
@@ -191,6 +133,80 @@
     </main>
     </div>
     <div id="toast" class="toast"></div>
+    <div id="novaSimulacaoModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head">
+                <span>Nova Simulação</span>
+                <button id="closeSimModal" type="button" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button>
+            </div>
+            <form id="vendaForm">
+                <div class="modal-body">
+                    <section class="section">
+                        <div class="label">Dados do Cliente</div>
+                        <div class="grid-2-modal">
+                            <div class="field">
+                                <span class="label-inline">Nome</span>
+                                <input id="clienteNome" class="input" type="text" placeholder="RAZÃO SOCIAL" autocomplete="off">
+                            </div>
+                            <div class="field">
+                                <span class="label-inline">CNPJ</span>
+                                <input id="clienteCnpj" class="input" type="text" placeholder="00.000.000/0000-00" autocomplete="off">
+                            </div>
+                        </div>
+                    </section>
+                    <section class="section" style="margin-top:0.75rem;">
+                        <div class="label">Dados da Venda</div>
+                        <div class="grid-2-modal">
+                            <div class="field">
+                                <span class="label-inline">Vendedor</span>
+                                <select id="vendedor" class="select"><option>Carregando...</option></select>
+                            </div>
+                            <div class="field">
+                                <span class="label-inline">Tipo</span>
+                                <select id="tipo" class="select">
+                                    <option value="novos">Novos</option>
+                                    <option value="renovacao">Renovação</option>
+                                    <option value="ultraFibra">Ultra Fibra</option>
+                                    <option value="wttx">WTTx</option>
+                                    <option value="m2m">M2M</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid-2-modal" style="margin-top:0.75rem;">
+                            <div class="field">
+                                <span class="label-inline">P2B</span>
+                                <input id="p2b" class="input" type="number" step="1" min="0" placeholder="0">
+                            </div>
+                            <div class="field">
+                                <span class="label-inline">Receita (R$)</span>
+                                <input id="receita" class="input" type="number" step="0.01" min="0" placeholder="0,00">
+                            </div>
+                        </div>
+                        <div class="actions" style="justify-content:flex-start; padding:0; border-top:none;">
+                            <button type="button" id="addItemBtn" class="btn btn-ghost">Adicionar item</button>
+                        </div>
+                    </section>
+                    <section id="itensResumoSection" class="section" style="margin-top:0.75rem; display:none;">
+                        <div id="vendasList" class="section" style="display:none;">
+                            <div class="label">Itens adicionados</div>
+                            <div id="vendasListContent"></div>
+                        </div>
+                        <div id="summary" class="summary" style="display:none;">
+                            <div class="summary-row"><span>Nível: </span><strong id="sumNivel">-</strong></div>
+                            <div class="summary-row"><span>Receita Novos: </span><strong id="sumNovos">-</strong></div>
+                            <div class="summary-row"><span>Receita Total: </span><strong id="sumTotal">-</strong></div>
+                            <div class="summary-row"><span>Comissão Total: </span><strong id="sumComissao">-</strong></div>
+                        </div>
+                    </section>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-ghost" onclick="limparFormulario()">Limpar</button>
+                    <button type="button" class="btn" onclick="document.getElementById('novaSimulacaoModal').classList.remove('show')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar e Copiar</button>
+                </div>
+            </form>
+        </div>
+    </div>
     <script>
         const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
         async function api(path, options) {
@@ -254,6 +270,8 @@
             document.getElementById('receita').value = '';
             document.getElementById('p2b').value = '';
             document.getElementById('summary').style.display = 'none';
+            const sec = document.getElementById('itensResumoSection');
+            if (sec) sec.style.display = 'none';
             vendasTemp = [];
             renderItens();
         }
@@ -263,6 +281,8 @@
             document.getElementById('sumTotal').textContent = Number(sim.receitaTotal || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             document.getElementById('sumComissao').textContent = Number((sim.comissaoTotal ?? sim.comissao_total ?? 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             document.getElementById('summary').style.display = 'block';
+            const sec = document.getElementById('itensResumoSection');
+            if (sec) sec.style.display = 'block';
         }
         function calcularNivelLocal(receitaNovos) {
             if (receitaNovos < 700) return { nome: 'BLUE', fator: 0.6 };
@@ -287,13 +307,16 @@
         function renderItens() {
             const list = document.getElementById('vendasList');
             const content = document.getElementById('vendasListContent');
+            const sec = document.getElementById('itensResumoSection');
             if (!list || !content) return;
             if (!vendasTemp.length) {
                 list.style.display = 'none';
                 document.getElementById('summary').style.display = 'none';
                 content.innerHTML = '';
+                if (sec) sec.style.display = 'none';
                 return;
             }
+            if (sec) sec.style.display = 'block';
             list.style.display = 'block';
             content.innerHTML = vendasTemp.map((v, i) => `
                 <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem; border:1px solid rgba(255,255,255,0.06); border-radius:10px; margin-bottom:0.5rem;">
@@ -386,7 +409,8 @@
                 if (navUsers) navUsers.style.display = isAdmin ? 'flex' : 'none';
                 if (bottomUsers) bottomUsers.style.display = isAdmin ? 'inline-flex' : 'none';
             } catch {}
-            document.getElementById('limparBtn').addEventListener('click', () => limparFormulario());
+            const limpar = document.getElementById('limparBtn');
+            if (limpar) limpar.addEventListener('click', () => limparFormulario());
             document.getElementById('addItemBtn').addEventListener('click', () => adicionarItem());
             document.getElementById('vendaForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -419,6 +443,44 @@
                     if (typeof overrideUserId !== 'undefined') options.overrideUserId = overrideUserId;
                     const sim = await api('/simulations', options);
                     preencherResumo(sim);
+                    try {
+                        const msg = (function buildClipboardMessage(s) {
+                            const vendas = Array.isArray(s.vendas) ? s.vendas : [];
+                            const nomeCliente = (vendas[0]?.nome || '').toUpperCase();
+                            const cnpjCliente = String(vendas[0]?.cnpj || '');
+                            const linhas = [];
+                            linhas.push('✨ Proposta Maxximus Telecom');
+                            if (nomeCliente) linhas.push('🏢 Cliente: ' + nomeCliente);
+                            if (cnpjCliente) linhas.push('🧾 CNPJ: ' + cnpjCliente);
+                            if (s.data) linhas.push('📅 Data: ' + s.data);
+                            linhas.push('');
+                            linhas.push('🛍️ Itens:');
+                            const mapEmoji = { novos: '🌟', renovacao: '🔁', ultraFibra: '🚀', wttx: '📡', m2m: '📲' };
+                            vendas.forEach(v => {
+                                const tipo = String(v.tipo || '').toLowerCase();
+                                const em = mapEmoji[tipo] || '•';
+                                const rec = Number(v.receita || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                                const p2b = Number(v.p2b || 0);
+                                const vend = String(v.vendedor || '-');
+                                linhas.push(`${em} ${tipo} • Receita: ${rec} • P2B: ${p2b} • Vendedor: ${vend}`);
+                            });
+                            linhas.push('');
+                            const nivelNome = s.nivel?.nome || '-';
+                            const recNovos = Number(s.receitaNovos || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                            const recTotal = Number(s.receitaTotal || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                            const comTotal = Number((s.comissaoTotal ?? s.comissao_total ?? 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                            linhas.push(`🏅 Nível: ${nivelNome}`);
+                            linhas.push(`💰 Receita Novos: ${recNovos}`);
+                            linhas.push(`📈 Receita Total: ${recTotal}`);
+                            linhas.push(`🎯 Comissão Total: ${comTotal}`);
+                            linhas.push('');
+                            linhas.push('🚀 Maxximus Telecom • Conectando sua empresa ao futuro');
+                            return linhas.join('\n');
+                        })(sim);
+                        if (navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                            await navigator.clipboard.writeText(msg);
+                        }
+                    } catch {}
                     document.getElementById('clienteNome').value = '';
                     document.getElementById('clienteCnpj').value = '';
                     document.getElementById('receita').value = '';
@@ -426,11 +488,18 @@
                     vendasTemp = [];
                     const list = document.getElementById('vendasList');
                     if (list) list.style.display = 'none';
-                    toast('Venda registrada com sucesso', 'success');
+                    toast('Venda salva e proposta copiada ✨', 'success');
                 } catch {
                     toast('Erro ao salvar venda', 'error');
                 }
             });
+            const openBtn = document.getElementById('openSimModal');
+            const closeBtn = document.getElementById('closeSimModal');
+            const modalEl = document.getElementById('novaSimulacaoModal');
+            if (openBtn && modalEl) openBtn.addEventListener('click', () => { modalEl.classList.add('show'); });
+            if (closeBtn && modalEl) closeBtn.addEventListener('click', () => { modalEl.classList.remove('show'); });
+            if (modalEl) modalEl.addEventListener('click', (e) => { if (e.target === modalEl) modalEl.classList.remove('show'); });
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { const m = document.getElementById('novaSimulacaoModal'); if (m) m.classList.remove('show'); } });
             if (window.lucide && typeof window.lucide.createIcons === 'function') { window.lucide.createIcons(); }
         });
     </script>

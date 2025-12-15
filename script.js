@@ -38,7 +38,7 @@
         '<a href="dashboard.html" class="nav-link' + (isActive('dashboard') ? ' active' : '') + '"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>' +
         '<a href="clientes.html" class="nav-link' + (isActive('clientes') ? ' active' : '') + '"><i data-lucide="building-2"></i><span>Clientes</span></a>' +
         '<a href="historico.html" class="nav-link' + (isActive('historico') ? ' active' : '') + '"><i data-lucide="list"></i><span>Histórico</span></a>' +
-        '<a href="venda.html" class="nav-link' + (isActive('venda') ? ' active' : '') + '"><i data-lucide="calculator"></i><span>Simular</span></a>' +
+        '<a href="simular.html" class="nav-link' + (isActive('simular') ? ' active' : '') + '"><i data-lucide="calculator"></i><span>Simular</span></a>' +
         '<a id="navUsers" href="usuarios.html" class="nav-link' + (isActive('usuarios') ? ' active' : '') + '" style="display:' + (isAdmin ? 'flex' : 'none') + '"><i data-lucide="users"></i><span>Usuários</span></a>' +
       '</div>' +
     '</nav>';
@@ -46,7 +46,7 @@
     '<nav class="bottomnav">' +
       '<a href="dashboard.html" class="' + (isActive('dashboard') ? 'active' : '') + '"><i data-lucide="layout-dashboard"></i><span class="label">Dashboard</span></a>' +
       '<a href="historico.html" class="' + (isActive('historico') ? 'active' : '') + '"><i data-lucide="list"></i><span class="label">Histórico</span></a>' +
-      '<a href="venda.html" class="' + (isActive('venda') ? 'active' : '') + '"><i data-lucide="calculator"></i><span class="label">Simular</span></a>' +
+      '<a href="simular.html" class="' + (isActive('simular') ? 'active' : '') + '"><i data-lucide="calculator"></i><span class="label">Simular</span></a>' +
       '<a href="clientes.html" class="' + (isActive('clientes') ? 'active' : '') + '"><i data-lucide="building-2"></i><span class="label">Clientes</span></a>' +
       '<a id="bottomUsers" href="usuarios.html" style="display:' + (isAdmin ? 'inline-flex' : 'none') + ';" class="' + (isActive('usuarios') ? 'active' : '') + '"><i data-lucide="users"></i><span class="label">Usuários</span></a>' +
     '</nav>';
