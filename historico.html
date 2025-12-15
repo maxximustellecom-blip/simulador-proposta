@@ -7,34 +7,11 @@
     <link rel="icon" href="data:,">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <style>
-        :root {
-            --bg: #0F172A;
-            --panel: #111827;
-            --muted: #6B7280;
-            --text: #E5E7EB;
-            --accent: #10B981;
-            --accent-2: #3B82F6;
-            --danger: #EF4444;
-            --card: #111827;
-            --field: #0B1220;
-            --border: #1F2937;
-        }
+        :root { }
         * { box-sizing: border-box; }
         html, body { height: 100%; }
-        body {
-            margin: 0;
-            background: radial-gradient(1200px 1200px at 10% 0%, #0B1220 0%, #0A0F1E 35%, #08111C 80%), linear-gradient(180deg, #0B1220 0%, #0A0E1A 100%);
-            color: var(--text);
-            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-        }
-        .topbar {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 1000;
-            backdrop-filter: saturate(180%) blur(12px);
-            background: rgba(17,24,39,0.7);
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+        .topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; backdrop-filter: saturate(180%) blur(12px); background: var(--surface); border-bottom: 1px solid var(--border); }
         .topbar-inner {
             width: 100%;
             margin: 0;
@@ -62,28 +39,8 @@
             align-items: center;
             gap: 0.6rem;
         }
-        .user-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.4rem 0.7rem;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.06);
-            color: var(--text);
-            border: 1px solid rgba(255,255,255,0.08);
-            cursor: pointer;
-        }
-        .user-menu {
-            position: absolute;
-            right: 0; top: calc(100% + 0.5rem);
-            min-width: 180px;
-            background: #0C1322;
-            border: 1px solid rgba(255,255,255,0.08);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.45);
-            border-radius: 12px;
-            overflow: hidden;
-            display: none;
-        }
+        .user-btn { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.7rem; border-radius: 10px; background: var(--surface); color: var(--text); border: 1px solid var(--border); cursor: pointer; }
+        .user-menu { position: absolute; right: 0; top: calc(100% + 0.5rem); min-width: 180px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); border-radius: 12px; overflow: hidden; display: none; }
         .user-menu.show { display: block; }
         .user-menu a {
             display: block;
@@ -97,53 +54,20 @@
             margin: 0 auto;
             padding: 7rem 1rem 4rem;
         }
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 64px;
-            bottom: 0;
-            width: 220px;
-            background: #0B1220;
-            border-right: 1px solid rgba(255,255,255,0.06);
-            padding: 0.9rem 0.75rem;
-            display: none;
-            z-index: 900;
-        }
+        .sidebar { position: fixed; left: 0; top: 64px; bottom: 0; width: 220px; background: var(--bg); border-right: 1px solid var(--border); padding: 0.9rem 0.75rem; display: none; z-index: 900; }
         .nav-group {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
         }
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            padding: 0.6rem 0.7rem;
-            border-radius: 10px;
-            color: var(--text);
-            text-decoration: none;
-            border: 1px solid rgba(255,255,255,0.06);
-            background: rgba(255,255,255,0.04);
-            transition: background 0.15s ease, transform 0.08s ease, border-color 0.15s ease;
-        }
+        .nav-link { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.7rem; border-radius: 10px; color: var(--text); text-decoration: none; border: 1px solid var(--border); background: var(--surface); transition: background 0.15s ease, transform 0.08s ease, border-color 0.15s ease; }
         .nav-link:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); }
         .nav-link.active {
             background: linear-gradient(180deg, #1F8EFB, #2563EB);
             border-color: rgba(255,255,255,0.2);
         }
         .nav-link i { width: 18px; height: 18px; }
-        .bottomnav {
-            position: fixed;
-            left: 0; right: 0; bottom: 0;
-            z-index: 1000;
-            border-top: 1px solid rgba(255,255,255,0.06);
-            background: rgba(17,24,39,0.9);
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-            padding: 0.4rem 0.6rem;
-        }
+        .bottomnav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000; border-top: 1px solid var(--border); background: var(--surface); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: space-around; padding: 0.4rem 0.6rem; }
         .bottomnav a {
             display: inline-flex;
             flex-direction: column;
@@ -163,22 +87,8 @@
         @media (max-width: 919px) {
             .container { padding-bottom: 6rem; }
         }
-        .card {
-            background: linear-gradient(180deg, rgba(17,24,39,0.9), rgba(15,23,42,0.8));
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 18px;
-            box-shadow: 0 20px 40px rgba(3,10,22,0.5);
-            overflow: hidden;
-            max-width: 960px;
-            margin: 0 auto;
-        }
-        .card-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1.2rem 1.2rem 0.9rem;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; max-width: 960px; margin: 0 auto; }
+        .card-head { display: flex; align-items: center; justify-content: space-between; padding: 1.2rem 1.2rem 0.9rem; border-bottom: 1px solid var(--border); }
         .card-title {
             display: flex;
             align-items: center;
@@ -186,23 +96,8 @@
             font-weight: 700;
             letter-spacing: 0.3px;
         }
-        .chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            font-size: 0.85rem;
-            color: #A7F3D0;
-            background: rgba(16,185,129,0.12);
-            border: 1px solid rgba(16,185,129,0.35);
-            border-radius: 999px;
-            padding: 0.3rem 0.6rem;
-        }
-        .section {
-            background: #0B1220;
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 14px;
-            padding: 1rem;
-        }
+        .chip { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 0.3rem 0.6rem; }
+        .section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1rem; }
         .list {
             display: flex;
             flex-direction: column;
@@ -220,31 +115,13 @@
             color: var(--muted);
             margin-bottom: 0.25rem;
         }
-        .input, .select {
-            width: 100%;
-            padding: 0.6rem 0.7rem;
-            border-radius: 10px;
-            background: #0A1221;
-            border: 1px solid rgba(255,255,255,0.08);
-            color: var(--text);
-            outline: none;
-        }
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.6rem;
-            border: 1px solid rgba(255,255,255,0.08);
-            background: #0C1628;
-            color: var(--text);
-            padding: 0.6rem 0.9rem;
-            border-radius: 12px;
-            cursor: pointer;
-        }
+        .input, .select { width: 100%; padding: 0.6rem 0.7rem; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); color: var(--text); outline: none; }
+        .btn { display: inline-flex; align-items: center; gap: 0.6rem; border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 0.6rem 0.9rem; border-radius: 12px; cursor: pointer; }
         .btn-primary {
             background: linear-gradient(180deg, #1F8EFB, #2563EB);
             border-color: rgba(255,255,255,0.12);
         }
-        .btn-ghost { background: rgba(255,255,255,0.05); }
+        .btn-ghost { background: transparent; border-color: var(--border); }
         .btn-icon {
             padding: 0.25rem 0.4rem;
             border-radius: 10px;
@@ -252,20 +129,8 @@
         .btn-icon svg {
             width: 16px; height: 16px;
         }
-        .month {
-            background: #0B1220;
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 14px;
-            overflow: hidden;
-        }
-        .month-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.9rem 1rem;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            color: #CBD5E1;
-        }
+        .month { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+        .month-head { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1rem; border-bottom: 1px solid var(--border); color: var(--muted); }
         .vendor {
             padding: 0.9rem 1rem;
             border-top: 1px dashed rgba(255,255,255,0.06);
@@ -281,14 +146,7 @@
             padding-top: 0.4rem;
         }
         .accordion-content.hidden { display: none; }
-        .accordion-content {
-            margin-top: 0.6rem;
-            background: linear-gradient(180deg, rgba(11,18,32,0.85), rgba(11,18,32,0.7));
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 14px;
-            padding: 0.9rem 1rem;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 10px 20px rgba(0,0,0,0.25);
-        }
+        .accordion-content { margin-top: 0.6rem; background: var(--surface-strong); border: 1px solid var(--border); border-radius: 14px; padding: 0.9rem 1rem; box-shadow: var(--shadow); }
         .accordion-content[id^="vend-items-"] {
             margin-top: 0;
             border-top-left-radius: 0;
@@ -301,28 +159,12 @@
         .accordion-content .item:first-child {
             margin-top: 1rem;
         }
-        .accordion-btn {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.75rem;
-            padding: 0.75rem 0.95rem;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
-            color: var(--text);
-            cursor: pointer;
-            transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
-        }
+        .accordion-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.75rem 0.95rem; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text); cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease; }
         .accordion-btn:hover {
             background: rgba(255,255,255,0.08);
             border-color: rgba(255,255,255,0.12);
         }
-        .accordion-btn .acc-label {
-            font-weight: 600;
-            color: #CBD5E1;
-        }
+        .accordion-btn .acc-label { font-weight: 600; color: var(--muted); }
         .accordion-btn .acc-chevron svg {
             width: 20px; height: 20px;
             stroke: #E5E7EB;
@@ -345,17 +187,8 @@
             align-items: center;
             gap: 0.4rem;
         }
-        .vendor-name {
-            color: #93C5FD;
-            font-weight: 600;
-        }
-        .vendor-meta {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.9rem;
-            color: #CBD5E1;
-        }
+        .vendor-name { color: var(--primary); font-weight: 600; }
+        .vendor-meta { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--muted); }
         .level-pill {
             color: #A7F3D0;
             background: rgba(16,185,129,0.12);
@@ -364,30 +197,13 @@
             padding: 0.1rem 0.45rem;
             font-size: 0.8rem;
         }
-        .item {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 0.9rem;
-            padding: 0.8rem 1rem;
-            background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 12px;
-            margin-bottom: 0.5rem;
-            transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease;
-        }
+        .item { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.9rem; padding: 0.8rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 0.5rem; transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease; }
         .item:hover {
             background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
             border-color: rgba(255,255,255,0.12);
             transform: translateY(-1px);
         }
-        .item-left {
-            display: grid;
-            grid-template-columns: 42px auto;
-            gap: 0.8rem;
-            color: #CBD5E1;
-            flex: 1;
-        }
+        .item-left { display: grid; grid-template-columns: 42px auto; gap: 0.8rem; color: var(--muted); flex: 1; }
         .avatar {
             width: 42px; height: 42px;
             border-radius: 12px;
@@ -411,10 +227,7 @@
             align-items: center;
             gap: 0.5rem;
         }
-        .item-name {
-            font-weight: 600;
-            color: #E5E7EB;
-        }
+        .item-name { font-weight: 600; color: var(--text); }
         .item-meta {
             display: flex;
             flex-wrap: wrap;
@@ -466,15 +279,7 @@
             z-index: 2000;
         }
         .modal.show { display: flex; }
-        .modal-card {
-            width: 520px;
-            max-width: calc(100% - 2rem);
-            background: #0B1220;
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 16px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-            overflow: hidden;
-        }
+        .modal-card { width: 520px; max-width: calc(100% - 2rem); background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
         .modal-head {
             padding: 0.9rem 1rem;
             border-bottom: 1px solid rgba(255,255,255,0.08);
@@ -498,32 +303,6 @@
     </style>
 </head>
 <body>
-    <header class="topbar">
-        <div class="topbar-inner">
-            <div class="brand">
-                <div class="brand-badge"></div>
-                <div>MAXXIMUS TELECOM</div>
-            </div>
-            <div class="user">
-                <button id="userMenuBtn" class="user-btn">
-                    <span id="userNameLabel">Usuário</span>
-                    <span>▾</span>
-                </button>
-                <div id="userMenu" class="user-menu">
-                    <a id="logoutBtn" href="#">Sair</a>
-                </div>
-            </div>
-        </div>
-    </header>
-    <nav class="sidebar">
-        <div class="nav-group">
-            <a href="dashboard.html" class="nav-link"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
-            <a href="historico.html" class="nav-link active"><i data-lucide="list"></i><span>Histórico</span></a>
-            <a href="venda.html" class="nav-link"><i data-lucide="calculator"></i><span>Simular</span></a>
-            <a href="clientes.html" class="nav-link"><i data-lucide="building-2"></i><span>Clientes</span></a>
-            <a id="navUsers" href="usuarios.html" class="nav-link" style="display:none;"><i data-lucide="users"></i><span>Usuários</span></a>
-        </div>
-    </nav>
     <main class="container">
         <div class="card">
             <div class="card-head">
@@ -929,15 +708,21 @@
                 isAdmin = (user && user.role === 'admin');
             } catch {}
             __isAdminGlobal = isAdmin;
-            document.getElementById('userMenuBtn').addEventListener('click', () => {
-                const menu = document.getElementById('userMenu');
-                menu.classList.toggle('show');
-            });
-            document.getElementById('logoutBtn').addEventListener('click', (e) => {
-                e.preventDefault();
-                localStorage.removeItem('authUser');
-                window.location.href = 'login.html';
-            });
+            const umb = document.getElementById('userMenuBtn');
+            if (umb) {
+                umb.addEventListener('click', () => {
+                    const menu = document.getElementById('userMenu');
+                    if (menu) menu.classList.toggle('show');
+                });
+            }
+            const lb = document.getElementById('logoutBtn');
+            if (lb) {
+                lb.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    localStorage.removeItem('authUser');
+                    window.location.href = 'login.html';
+                });
+            }
             async function carregarUsuarios() {
                 const sel = document.getElementById('fVendedor');
                 try {
@@ -1024,12 +809,6 @@
             setTimeout(initIcons, 200);
         });
     </script>
-    <nav class="bottomnav">
-        <a href="dashboard.html"><i data-lucide="layout-dashboard"></i><span class="label">Dashboard</span></a>
-        <a href="historico.html"><i data-lucide="list"></i><span class="label">Histórico</span></a>
-        <a href="venda.html"><i data-lucide="calculator"></i><span class="label">Simular</span></a>
-        <a href="clientes.html"><i data-lucide="building-2"></i><span class="label">Clientes</span></a>
-        <a id="bottomUsers" href="usuarios.html" style="display:none;"><i data-lucide="users"></i><span class="label">Usuários</span></a>
-    </nav>
+    <script src="script.js"></script>
 </body>
 </html>

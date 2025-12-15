@@ -186,32 +186,6 @@
     </style>
 </head>
 <body>
-    <header class="topbar">
-        <div class="topbar-inner">
-            <div class="brand">
-                <div class="brand-badge"></div>
-                <div>MAXXIMUS TELECOM</div>
-            </div>
-            <div class="user">
-                <button id="userMenuBtn" class="user-btn">
-                    <span id="userNameLabel">Usuário</span>
-                    <span>▾</span>
-                </button>
-                <div id="userMenu" class="user-menu">
-                    <a id="logoutBtn" href="#">Sair</a>
-                </div>
-            </div>
-        </div>
-    </header>
-    <nav class="sidebar">
-        <div class="nav-group">
-            <a href="dashboard.html" class="nav-link"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
-            <a href="historico.html" class="nav-link"><i data-lucide="list"></i><span>Histórico</span></a>
-            <a href="venda.html" class="nav-link"><i data-lucide="calculator"></i><span>Simular</span></a>
-            <a href="clientes.html" class="nav-link"><i data-lucide="building-2"></i><span>Clientes</span></a>
-            <a href="usuarios.html" class="nav-link active"><i data-lucide="users"></i><span>Usuários</span></a>
-        </div>
-    </nav>
     <main class="container">
         <div class="card">
             <div class="card-head">
@@ -319,13 +293,7 @@
             </div>
         </div>
     </div>
-    <nav class="bottomnav">
-        <a href="dashboard.html"><i data-lucide="layout-dashboard"></i><span class="label">Dashboard</span></a>
-        <a href="historico.html"><i data-lucide="list"></i><span class="label">Histórico</span></a>
-        <a href="venda.html"><i data-lucide="calculator"></i><span class="label">Simular</span></a>
-        <a href="clientes.html"><i data-lucide="building-2"></i><span class="label">Clientes</span></a>
-        <a href="usuarios.html" class="active"><i data-lucide="users"></i><span class="label">Usuários</span></a>
-    </nav>
+    <script src="script.js"></script>
     <div id="toast" class="toast"></div>
     <script>
         const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
@@ -479,15 +447,21 @@
                 const label = document.getElementById('userNameLabel');
                 if (label && user && user.name) label.textContent = user.name + ' • Admin';
             } catch {}
-            document.getElementById('userMenuBtn').addEventListener('click', () => {
-                const menu = document.getElementById('userMenu');
-                menu.classList.toggle('show');
-            });
-            document.getElementById('logoutBtn').addEventListener('click', (e) => {
-                e.preventDefault();
-                localStorage.removeItem('authUser');
-                window.location.href = 'login.html';
-            });
+            const umb = document.getElementById('userMenuBtn');
+            if (umb) {
+                umb.addEventListener('click', () => {
+                    const menu = document.getElementById('userMenu');
+                    if (menu) menu.classList.toggle('show');
+                });
+            }
+            const lb = document.getElementById('logoutBtn');
+            if (lb) {
+                lb.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    localStorage.removeItem('authUser');
+                    window.location.href = 'login.html';
+                });
+            }
             document.getElementById('clearBtn').addEventListener('click', limparFormulario);
             document.getElementById('saveBtn').addEventListener('click', salvarUsuario);
             await carregarUsuarios();
