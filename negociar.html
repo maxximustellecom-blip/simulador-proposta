@@ -129,7 +129,7 @@
                     <td>${n.data || '-'}</td>
                     <td class="col-actions">
                         <div class="table-actions">
-                            <button type="button" class="btn btn-ghost btn-icon" title="Detalhes" onclick="detalharNegociacao(${n.id})"><i data-lucide="info"></i></button>
+                            <button type="button" class="btn btn-ghost" title="Configurar" onclick="configurarNegociacao(${n.id})"><i data-lucide="settings"></i><span>Configurar</span></button>
                             <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="editarNegociacao(${n.id})"><i data-lucide="edit-3"></i></button>
                             <button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="excluirNegociacao(${n.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
                         </div>
@@ -198,7 +198,7 @@
             if (mClienteSearch) mClienteSearch.value = '';
             if (mClienteDropdown) { mClienteDropdown.innerHTML = ''; mClienteDropdown.classList.remove('show', 'limited'); }
             if (mTipo) mTipo.value = '1º VENDA';
-            if (mProposta) mProposta.value = 'PROPOSTA TABELADA';
+            if (mProposta) mProposta.value = 'PROPOSTA PADRÃO';
         }
         async function buscar() {
             try {
@@ -221,7 +221,7 @@
             const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
             setClienteSelected(n?.cnpj || '');
             document.getElementById('mTipo').value = n?.tipo || '1º VENDA';
-            document.getElementById('mProposta').value = n?.proposta || 'PROPOSTA TABELADA';
+            document.getElementById('mProposta').value = n?.proposta || 'PROPOSTA PADRÃO';
             openModal();
         };
         window.detalharNegociacao = function(id) {
@@ -236,12 +236,22 @@
             ].join('\n');
             alert(msg);
         };
+        window.configurarNegociacao = function(id) {
+            try {
+                window.location.href = 'configuracao-padrao.html?id=' + String(id);
+            } catch {}
+        };
         window.excluirNegociacao = async function(id) {
             try {
-                const ok = window.confirm('Confirmar exclusão?');
-                if (!ok) return;
-                await api('/negotiations/' + id, { method: 'DELETE' });
-                buscar();
+                const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
+                const txt = (n ? ((n.tipo || '-') + ' • ' + (n.proposta || '-') + ' • ' + formatCnpj(n.cnpj || '')) : ('ID ' + String(id)));
+                const t = document.getElementById('confirmNegociacaoText');
+                if (t) t.textContent = txt;
+                const btn = document.getElementById('confirmNegociacaoConfirm');
+                if (btn) btn.dataset.id = String(id);
+                const m = document.getElementById('confirmNegociacaoModal');
+                if (m) m.classList.add('show');
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             } catch {}
         };
         async function salvarNegociacao() {
@@ -270,7 +280,7 @@
                     if (c) {
                         setClienteSelected(c.cnpj || '');
                         document.getElementById('mTipo').value = '1º VENDA';
-                        document.getElementById('mProposta').value = 'PROPOSTA TABELADA';
+                        document.getElementById('mProposta').value = 'PROPOSTA PADRÃO';
                         openModal();
                         if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
                         try {
@@ -286,7 +296,7 @@
             document.getElementById('novaNegociacaoBtn').addEventListener('click', () => {
                 setClienteSelected('');
                 document.getElementById('mTipo').value = '1º VENDA';
-                document.getElementById('mProposta').value = 'PROPOSTA TABELADA';
+                document.getElementById('mProposta').value = 'PROPOSTA PADRÃO';
                 openModal();
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             });
@@ -300,6 +310,29 @@
             document.getElementById('mSalvar').addEventListener('click', salvarNegociacao);
             document.getElementById('mFechar').addEventListener('click', closeModal);
             document.getElementById('fCnpj').addEventListener('input', (e) => { e.target.value = formatCnpj(e.target.value); });
+            {
+                const modal = document.getElementById('confirmNegociacaoModal');
+                const btnClose = document.getElementById('confirmNegociacaoClose');
+                const btnCancel = document.getElementById('confirmNegociacaoCancel');
+                const btnConfirm = document.getElementById('confirmNegociacaoConfirm');
+                function fecharConfirm() {
+                    if (btnConfirm) btnConfirm.dataset.id = '';
+                    if (modal) modal.classList.remove('show');
+                }
+                if (btnClose) btnClose.addEventListener('click', fecharConfirm);
+                if (btnCancel) btnCancel.addEventListener('click', fecharConfirm);
+                if (btnConfirm) btnConfirm.addEventListener('click', async () => {
+                    const id = Number(btnConfirm.dataset.id || 0);
+                    if (!id) { fecharConfirm(); return; }
+                    try {
+                        await api('/negotiations/' + id, { method: 'DELETE' });
+                        fecharConfirm();
+                        buscar();
+                    } catch {
+                        fecharConfirm();
+                    }
+                });
+            }
             const mSearch = document.getElementById('mClienteSearch');
             const mDropdown = document.getElementById('mClienteDropdown');
             if (mSearch) {
@@ -348,7 +381,7 @@
                     <div>
                         <div class="label">Proposta</div>
                         <select id="mProposta" class="select">
-                            <option value="PROPOSTA TABELADA">PROPOSTA TABELADA</option>
+                            <option value="PROPOSTA PADRÃO">PROPOSTA PADRÃO</option>
                             <option value="PROPOSTA COSTUMIZADA">PROPOSTA COSTUMIZADA</option>
                         </select>
                     </div>
@@ -360,6 +393,19 @@
         </div>
     </div>
     <div id="toast" class="toast"></div>
+    <div id="confirmNegociacaoModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Confirmar Exclusão</div><button id="confirmNegociacaoClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="label">Tem certeza que deseja excluir esta negociação?</div>
+                <div id="confirmNegociacaoText" class="muted" style="margin-top:0.5rem;"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmNegociacaoCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
+                <button id="confirmNegociacaoConfirm" class="btn btn-ghost" type="button" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i><span>Excluir</span></button>
+            </div>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>

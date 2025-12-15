@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuração Padrão • Maxximus Telecom</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <main class="container">
+        <div class="card">
+            <div class="card-head">
+                <div class="card-title">
+                    <span>Configuração Padrão</span>
+                    <span class="chip">Negociação</span>
+                </div>
+                <div class="muted">
+                    <button id="addLinhaBtn" class="btn btn-primary" type="button"><i data-lucide="plus"></i><span>Adicionar linha</span></button>
+                </div>
+            </div>
+            <div class="card-body">
+                <section class="section" style="margin-top: 20px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <div class="label">Itens da proposta</div>
+                        <div class="muted" id="countItensLabel">0 itens</div>
+                    </div>
+                    <div class="table-container" style="margin-top:0.5rem;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Qtd</th>
+                                    <th>Categoria</th>
+                                    <th>Plano</th>
+                                    <th>Pct</th>
+                                    <th>Valor Plano</th>
+                                    <th>Total Linha</th>
+                                    <th class="col-actions" style="min-width:140px;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itensTbody">
+                                <tr><td colspan="8">
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                </td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                <section class="section" style="margin-top:1rem;">
+                    <div class="label">Resumo</div>
+                    <div class="grid-2" style="margin-top:0.5rem;">
+                        <div class="card" style="padding:0.75rem;">
+                            <div class="muted">Valor total mensal</div>
+                            <div id="resumoTotal" style="font-size:1.6rem; font-weight:700; color: var(--primary);">R$ 0,00</div>
+                            <div id="resumoAcessos" class="muted" style="margin-top:0.3rem;">0 acessos</div>
+                        </div>
+                        <div class="card" style="padding:0.75rem;">
+                            <div class="muted">Itens incluídos</div>
+                            <div id="resumoItens" class="muted" style="margin-top:0.3rem;">-</div>
+                        </div>
+                    </div>
+                </section>
+                <section style="margin-top:1rem;">
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end;">
+                        <button id="copiarBtn" class="btn btn-ghost" type="button" title="Copiar proposta"><i data-lucide="copy"></i><span>Copiar Proposta</span></button>
+                        <button id="salvarBtn" class="btn btn-primary" type="button" title="Salvar proposta"><i data-lucide="save"></i><span>Salvar Proposta</span></button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+    <div id="toast" class="toast"></div>
+    <script src="script.js"></script>
+    <script>
+        const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
+        async function api(path, options = {}) {
+            const authRaw = localStorage.getItem('authUser');
+            let headers = { 'Content-Type': 'application/json' };
+            try {
+                const u = JSON.parse(authRaw || '{}');
+                if (u && u.id) headers['x-user-id'] = String(u.id);
+                if (u && u.role) headers['x-user-role'] = String(u.role);
+                if (u && u.name) headers['x-user-name'] = String(u.name);
+            } catch {}
+            const res = await fetch(API_BASE + path, { headers, ...options });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || ('HTTP ' + res.status));
+            }
+            return res.json();
+        }
+        function toast(msg, type) {
+            const el = document.getElementById('toast');
+            if (!el) return;
+            el.textContent = msg;
+            el.style.borderColor = type === 'error' ? 'rgba(239,68,68,0.35)' : 'rgba(16,185,129,0.35)';
+            el.style.display = 'block';
+            clearTimeout(window.__toastTimer);
+            window.__toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2500);
+        }
+        document.addEventListener('DOMContentLoaded', async () => {
+            const auth = localStorage.getItem('authUser');
+            if (!auth) { window.location.href = 'login.html'; return; }
+            try {
+                const params = new URLSearchParams(window.location.search || '');
+                const idParam = Number(params.get('id') || 0);
+                if (!idParam) { window.location.href = 'negociar.html'; return; }
+                const list = await api('/negotiations', { method: 'GET' }).catch(() => []);
+                const arr = Array.isArray(list) ? list : [];
+                const exists = arr.find(n => Number(n.id) === Number(idParam));
+                if (!exists) { window.location.href = 'negociar.html'; return; }
+                __negociacaoId = idParam;
+                await initConfiguracao();
+            } catch {
+                window.location.href = 'negociar.html';
+            }
+        });
+        async function carregarPropostaSalva() {
+            try {
+                if (!__negociacaoId) return;
+                const data = await api(`/negotiations/${__negociacaoId}/proposal`, { method: 'GET' }).catch(() => null);
+                if (data && Array.isArray(data.linhas)) {
+                    const linhas = data.linhas.map((l, idx) => ({
+                        id: Number(l.id || idx + 1),
+                        quantidade: Number(l.quantidade || 1),
+                        categoria: l.categoria || (__categorias[0]?.nome || ''),
+                        plano: l.plano || '',
+                        pct: l.pct || '',
+                        valorPlano: Number(l.valorPlano || 0)
+                    }));
+                    __linhas = linhas.length ? linhas : __linhas;
+                }
+            } catch {}
+        }
+        function currency(v) {
+            try { return (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })).format(Number(v || 0)); } catch { return 'R$ 0,00'; }
+        }
+        function parsePctFromText(s) {
+            const txt = String(s || '');
+            const m = txt.match(/(\d+(?:[\.,]\d+)?)\s*(GB|MB)/i);
+            return m ? (m[1].replace(',', '.') + m[2].toUpperCase()) : '';
+        }
+        let __categorias = [];
+        let __produtos = [];
+        let __map = {}; // categoria.nome -> produtos
+        let __linhas = [];
+        let __negociacaoId = null;
+        async function initConfiguracao() {
+            await carregarCategorias();
+            await carregarProdutos();
+            construirMapa();
+            __linhas = [{
+                id: 1,
+                quantidade: 1,
+                categoria: (__categorias[0]?.nome || ''),
+                plano: '',
+                pct: '',
+                valorPlano: 0
+            }];
+            await carregarPropostaSalva();
+            bindActions();
+            renderTabela();
+            renderResumo();
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        }
+        async function carregarCategorias() {
+            try {
+                const list = await api('/categories', { method: 'GET' });
+                __categorias = Array.isArray(list) ? list : [];
+            } catch { __categorias = []; }
+        }
+        async function carregarProdutos() {
+            try {
+                const list = await api('/products', { method: 'GET' });
+                __produtos = Array.isArray(list) ? list : [];
+            } catch { __produtos = []; }
+        }
+        function construirMapa() {
+            const byId = {};
+            __categorias.forEach(c => { byId[c.id] = c.nome; });
+            const map = {};
+            __produtos.forEach(p => {
+                const catName = byId[p.categoria_id] || 'Sem categoria';
+                if (!map[catName]) map[catName] = [];
+                map[catName].push(p);
+            });
+            __map = map;
+        }
+        function bindActions() {
+            const addBtn = document.getElementById('addLinhaBtn');
+            const salvarBtn = document.getElementById('salvarBtn');
+            const copiarBtn = document.getElementById('copiarBtn');
+            if (addBtn) addBtn.addEventListener('click', () => {
+                const nextId = (__linhas.reduce((acc, l) => Math.max(acc, Number(l.id)), 0) || 0) + 1;
+                __linhas.push({
+                    id: nextId,
+                    quantidade: 1,
+                    categoria: (__categorias[0]?.nome || ''),
+                    plano: '',
+                    pct: '',
+                    valorPlano: 0
+                });
+                renderTabela();
+                renderResumo();
+            });
+            if (salvarBtn) salvarBtn.addEventListener('click', salvarProposta);
+            if (copiarBtn) copiarBtn.addEventListener('click', copiarProposta);
+        }
+        function atualizarLinha(id, campo, valor) {
+            __linhas = __linhas.map(l => {
+                if (Number(l.id) !== Number(id)) return l;
+                const novo = { ...l, [campo]: valor };
+                if (campo === 'categoria') {
+                    novo.plano = '';
+                    novo.pct = '';
+                    novo.valorPlano = 0;
+                }
+                if (campo === 'plano') {
+                    const planos = __map[l.categoria] || [];
+                    const sel = planos.find(p => p.nome === valor);
+                    if (sel) {
+                        const baseTxt = sel.descricao || sel.nome || '';
+                        novo.pct = parsePctFromText(baseTxt);
+                        novo.valorPlano = Number(sel.preco || 0);
+                    } else {
+                        novo.pct = '';
+                        novo.valorPlano = 0;
+                    }
+                }
+                if (campo === 'quantidade') {
+                    const q = Number(valor || 1);
+                    novo.quantidade = (isFinite(q) && q > 0) ? q : 1;
+                }
+                return novo;
+            });
+            renderTabela();
+            renderResumo();
+        }
+        function removerLinha(id) {
+            if (__linhas.length <= 1) return;
+            __linhas = __linhas.filter(l => Number(l.id) !== Number(id));
+            renderTabela();
+            renderResumo();
+        }
+        function totalLinha(l) {
+            const q = Number(l.quantidade || 1);
+            const v = Number(l.valorPlano || 0);
+            return q * v;
+        }
+        function totalGeral() {
+            return __linhas.reduce((acc, l) => acc + totalLinha(l), 0);
+        }
+        function copiarLinha(id) {
+            const src = __linhas.find(x => Number(x.id) === Number(id));
+            if (!src) return;
+            const nextId = (__linhas.reduce((acc, l) => Math.max(acc, Number(l.id)), 0) || 0) + 1;
+            __linhas.push({
+                id: nextId,
+                quantidade: Number(src.quantidade || 1),
+                categoria: src.categoria || (__categorias[0]?.nome || ''),
+                plano: src.plano || '',
+                pct: src.pct || '',
+                valorPlano: Number(src.valorPlano || 0)
+            });
+            renderTabela();
+            renderResumo();
+        }
+        function renderTabela() {
+            const tbody = document.getElementById('itensTbody');
+            const cats = __categorias.map(c => c.nome);
+            const rows = __linhas.map((l, idx) => {
+                const planos = __map[l.categoria] || [];
+                const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
+                    planos.map(p => `<option value="${p.nome}" ${p.nome === l.plano ? 'selected' : ''}>${p.nome}</option>`)
+                ).join('');
+                const catOpts = cats.map(n => `<option value="${n}" ${n === l.categoria ? 'selected' : ''}>${n}</option>`).join('');
+                return `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td>
+                            <input type="number" min="1" class="input" style="width:90px; text-align:center;" value="${l.quantidade}"
+                                   data-id="${l.id}" data-field="quantidade">
+                        </td>
+                        <td>
+                            <select class="select" data-id="${l.id}" data-field="categoria">${catOpts}</select>
+                        </td>
+                        <td>
+                            <select class="select" data-id="${l.id}" data-field="plano" style="width:240px;">${planoOpts}</select>
+                        </td>
+                        <td><span class="muted">${l.pct || '-'}</span></td>
+                        <td><span class="muted">${currency(l.valorPlano)}</span></td>
+                        <td><strong style="color: var(--primary);">${currency(totalLinha(l))}</strong></td>
+                        <td class="col-actions">
+                            <div class="table-actions">
+                                <button type="button" class="btn btn-ghost btn-icon" title="Copiar" onclick="copiarLinha(${l.id})"><i data-lucide="copy"></i></button>
+                                <button type="button" class="btn btn-ghost btn-icon" title="Remover" data-id="${l.id}" data-action="remover"><i data-lucide="trash-2"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            document.getElementById('countItensLabel').textContent = `${__linhas.length} ${__linhas.length === 1 ? 'item' : 'itens'}`;
+            tbody.innerHTML = rows || '<tr><td colspan="8" class="muted">Sem itens</td></tr>';
+            Array.from(tbody.querySelectorAll('input[data-field], select[data-field]')).forEach(el => {
+                el.addEventListener('change', (e) => {
+                    const id = Number(e.currentTarget.getAttribute('data-id') || 0);
+                    const field = e.currentTarget.getAttribute('data-field');
+                    const val = e.currentTarget.value;
+                    atualizarLinha(id, field, val);
+                });
+            });
+            Array.from(tbody.querySelectorAll('button[data-action="remover"]')).forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = Number(e.currentTarget.getAttribute('data-id') || 0);
+                    removerLinha(id);
+                });
+            });
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        }
+        function renderResumo() {
+            const total = totalGeral();
+            const acessos = __linhas.reduce((acc, l) => acc + Number(l.quantidade || 0), 0);
+            const itens = __linhas.map((l, idx) => `${idx + 1}. ${l.plano || '-'}`).join(' • ') || '-';
+            const elTotal = document.getElementById('resumoTotal');
+            const elAcessos = document.getElementById('resumoAcessos');
+            const elItens = document.getElementById('resumoItens');
+            if (elTotal) elTotal.textContent = currency(total);
+            if (elAcessos) elAcessos.textContent = `${acessos} ${acessos === 1 ? 'acesso' : 'acessos'}`;
+            if (elItens) elItens.textContent = itens;
+        }
+        function validar() {
+            const erros = [];
+            __linhas.forEach((l, idx) => {
+                const q = Number(l.quantidade || 0);
+                if (!q || q < 1) erros.push(`Linha ${idx + 1}: Quantidade deve ser pelo menos 1`);
+                if (!l.plano) erros.push(`Linha ${idx + 1}: Selecione um plano`);
+            });
+            return erros;
+        }
+        function gerarResumoTexto() {
+            const linhasTxt = __linhas.map((l, idx) => {
+                return [
+                    `[ITEM ${idx + 1}]`,
+                    `Qtd: ${Number(l.quantidade || 1)}`,
+                    `Categoria: ${l.categoria || '-'}`,
+                    `Plano: ${l.plano || '-'}`,
+                    `Pacote: ${l.pct || 'N/A'}`,
+                    `Valor unitário: ${currency(l.valorPlano)}`,
+                    `Total da linha: ${currency(totalLinha(l))}`
+                ].join('\n');
+            }).join('\n' + '─'.repeat(50) + '\n');
+            const total = currency(totalGeral());
+            const acessos = __linhas.reduce((acc, l) => acc + Number(l.quantidade || 0), 0);
+            const header = [
+                '=== PROPOSTA PADRÃO ===',
+                `Data: ${new Date().toLocaleString('pt-BR')}`,
+                `Total de linhas: ${__linhas.length}`,
+                ''
+            ].join('\n');
+            const resumo = [
+                '\n--- RESUMO FINANCEIRO ---',
+                `Valor Total Mensal: ${total}`,
+                `Total de Acessos: ${acessos}`
+            ].join('\n');
+            return header + linhasTxt + '\n' + resumo;
+        }
+        function gerarMensagemBonita() {
+            const total = currency(totalGeral());
+            const acessos = __linhas.reduce((acc, l) => acc + Number(l.quantidade || 0), 0);
+            const header = [
+                '🧾 Proposta Padrão',
+                `📅 ${new Date().toLocaleString('pt-BR')}`,
+                `🔢 Linhas: ${__linhas.length}`,
+                ''
+            ].join('\n');
+            const linhasTxt = __linhas.map((l, idx) => {
+                return `🔹 Item ${idx + 1}: ${Number(l.quantidade || 1)}x ${l.plano || '-'} (${l.categoria || '-'}) • ${l.pct || 'N/A'} • ${currency(l.valorPlano)} • Total: ${currency(totalLinha(l))}`;
+            }).join('\n');
+            const counts = {};
+            __linhas.forEach(l => {
+                const k = l.categoria || '-';
+                const q = Number(l.quantidade || 0);
+                counts[k] = (counts[k] || 0) + q;
+            });
+            const itens = Object.entries(counts).map(([k, v]) => `• ${k}: ${v}`).join('\n') || '-';
+            const resumo = [
+                '',
+                '💰 Resumo Financeiro',
+                `   • Valor Total Mensal: ${total}`,
+                `   • Total de Acessos: ${acessos}`,
+                '',
+                '📋 Itens',
+                itens
+            ].join('\n');
+            return header + linhasTxt + '\n' + resumo + '\n✅ Proposta copiada!';
+        }
+        function salvarProposta() {
+            const erros = validar();
+            if (erros.length) {
+                toast('Corrija os seguintes problemas: ' + erros.join('; '), 'error');
+                return;
+            }
+            try {
+                if (!__negociacaoId) return;
+                api(`/negotiations/${__negociacaoId}/proposal`, {
+                    method: 'POST',
+                    body: JSON.stringify({ linhas: __linhas })
+                }).then(async () => {
+                    toast('Proposta salva', 'success');
+                    await carregarPropostaSalva();
+                    renderTabela();
+                    renderResumo();
+                }).catch(() => { toast('Erro ao salvar proposta', 'error'); });
+            } catch {}
+        }
+        function copiarProposta() {
+            const erros = validar();
+            if (erros.length) {
+                toast('Corrija os seguintes problemas: ' + erros.join('; '), 'error');
+                return;
+            }
+            try {
+                const txt = gerarMensagemBonita();
+                if (navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                    navigator.clipboard.writeText(txt);
+                }
+            } catch {}
+        }
+    </script>
+</body>
+</html>
