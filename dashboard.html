@@ -211,6 +211,12 @@
             if (receitaNovos < 1900) return { nome: 'BLACK', fator: 1.5 };
             return { nome: 'BLACK+', fator: 2.0 };
         }
+        function mapTipoKey(tipo) {
+            const t = String(tipo || '').toUpperCase();
+            if (t.includes('1º')) return 'novos';
+            if (t.includes('RENEGOC')) return 'renovacao';
+            return 'novos';
+        }
         function calcularComissaoProdutoLocal(receitaBase, tipo, valorVenda) {
             const nivel = calcularNivelLocal(receitaBase);
             const taxas = {
@@ -286,8 +292,8 @@
                 const months = monthsByVendor[v];
                 const total = Object.keys(months).reduce((acc, m) => {
                     const list = months[m];
-                    const receitaNovos = list.filter(x => x.tipo === 'novos').reduce((a, x) => a + Number(x.receita || 0), 0);
-                    return acc + list.reduce((a, x) => a + calcularComissaoProdutoLocal(receitaNovos, x.tipo, Number(x.receita || 0)), 0);
+                    const receitaNovos = list.filter(x => mapTipoKey(x.tipo) === 'novos').reduce((a, x) => a + Number(x.receita || 0), 0);
+                    return acc + list.reduce((a, x) => a + calcularComissaoProdutoLocal(receitaNovos, mapTipoKey(x.tipo), Number(x.receita || 0)), 0);
                 }, 0);
                 byVendor[v] = total;
             });
@@ -302,7 +308,7 @@
                     <div style="display:flex; align-items:center; gap:0.6rem;">
                         <i data-lucide="shopping-bag"></i>
                         <div>
-                            <div style="font-weight:600;">${s.nome || '-'}</div>
+                            <div style="font-weight:600;">${s.proposta || '-'}</div>
                             <div class="muted">${s.vendedor || '-'} • ${s.tipo} • ${s.data || '-'}</div>
                         </div>
                     </div>
@@ -343,10 +349,10 @@
             const comissaoTotal = calcularComissaoTotalPorVendedorMes(sales);
             const vendedoresUnicos = Array.from(new Set((sales || []).map(s => s.vendedor || '-'))).length;
             kpi.innerHTML = [
-                `<div class="kpi"><div class="label">Vendas</div><div class="value">${totalVendas}</div></div>`,
+                `<div class="kpi"><div class="label">Negociações</div><div class="value">${totalVendas}</div></div>`,
                 `<div class="kpi"><div class="label">Receita Total</div><div class="value">${currency(receitaTotal)}</div></div>`,
                 `<div class="kpi"><div class="label">Comissão Total</div><div class="value">${currency(comissaoTotal)}</div></div>`,
-                `<div class="kpi"><div class="label">Vendedores</div><div class="value">${vendedoresUnicos}</div></div>`
+                `<div class="kpi"><div class="label">Usuários</div><div class="value">${vendedoresUnicos}</div></div>`
             ].join('');
             const byMonth = groupByMonth(sales);
             const labelsMes = Object.keys(byMonth).sort((a,b) => a.localeCompare(b));
@@ -376,8 +382,8 @@
             });
             const dataComMes = labelsMes.map(m => {
                 const list = byMonth[m];
-                const receitaNovos = list.filter(x => x.tipo === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
-                return list.reduce((acc, x) => acc + calcularComissaoProdutoLocal(receitaNovos, x.tipo, Number(x.receita || 0)), 0);
+                const receitaNovos = list.filter(x => mapTipoKey(x.tipo) === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
+                return list.reduce((acc, x) => acc + calcularComissaoProdutoLocal(receitaNovos, mapTipoKey(x.tipo), Number(x.receita || 0)), 0);
             });
             const ctxComMes = document.getElementById('chartComissaoMes');
             if (__charts['chartComissaoMes']) __charts['chartComissaoMes'].destroy();
@@ -397,7 +403,7 @@
                 });
                 Object.keys(byVend).forEach(v => {
                     const vs = byVend[v];
-                    const receitaNovos = vs.filter(x => x.tipo === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
+                    const receitaNovos = vs.filter(x => mapTipoKey(x.tipo) === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
                     const nivel = calcularNivelLocal(receitaNovos).nome;
                     levelCounts[nivel] = (levelCounts[nivel] || 0) + 1;
                 });
@@ -436,14 +442,14 @@
             if (userSkeleton) userSkeleton.style.display = 'none';
             if (userContent) userContent.style.display = 'block';
             const scopeLabel = document.getElementById('scopeLabel');
-            scopeLabel.textContent = 'Usuário: suas vendas';
+            scopeLabel.textContent = 'Usuário: suas negociações';
             const totalVendas = (sales || []).length;
             const receitaTotal = (sales || []).reduce((acc, s) => acc + Number(s.receita || 0), 0);
-            const receitaNovosTotal = (sales || []).filter(s => s.tipo === 'novos').reduce((acc, s) => acc + Number(s.receita || 0), 0);
+            const receitaNovosTotal = (sales || []).filter(s => mapTipoKey(s.tipo) === 'novos').reduce((acc, s) => acc + Number(s.receita || 0), 0);
             const nivelAtual = calcularNivelLocal(receitaNovosTotal);
             const comissaoTotal = calcularComissaoTotalPorVendedorMes(sales);
             document.getElementById('userKpis').innerHTML = [
-                `<div class="kpi"><div class="label">Vendas</div><div class="value">${totalVendas}</div></div>`,
+                `<div class="kpi"><div class="label">Negociações</div><div class="value">${totalVendas}</div></div>`,
                 `<div class="kpi"><div class="label">Receita</div><div class="value">${currency(receitaTotal)}</div></div>`,
                 `<div class="kpi"><div class="label">Comissão</div><div class="value">${currency(comissaoTotal)}</div></div>`,
                 `<div class="kpi"><div class="label">Nível</div><div class="value">${nivelAtual.nome}</div></div>`
@@ -457,8 +463,8 @@
             const labels = Object.keys(byMonth).sort((a,b) => a.localeCompare(b));
             const data = labels.map(m => {
                 const list = byMonth[m];
-                const receitaNovos = list.filter(x => x.tipo === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
-                return list.reduce((acc, x) => acc + calcularComissaoProdutoLocal(receitaNovos, x.tipo, Number(x.receita || 0)), 0);
+                const receitaNovos = list.filter(x => mapTipoKey(x.tipo) === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
+                return list.reduce((acc, x) => acc + calcularComissaoProdutoLocal(receitaNovos, mapTipoKey(x.tipo), Number(x.receita || 0)), 0);
             });
             const ctx = document.getElementById('chartComissaoUser');
             if (__charts['chartComissaoUser']) __charts['chartComissaoUser'].destroy();
@@ -515,10 +521,18 @@
                 });
             }
             try {
-                const sales = await api('/sales', { method: 'GET' });
+                const sales = await api('/negotiations', { method: 'GET' });
                 if (isAdmin) {
                     document.getElementById('adminView').style.display = 'block';
-                    const arr = Array.isArray(sales) ? sales : [];
+                    const arr = Array.isArray(sales) ? sales.map(n => ({
+                        data: n.data,
+                        tipo: n.tipo,
+                        receita: Number(n.valor || 0),
+                        vendedor: (n.creator && n.creator.name) ? n.creator.name : '-',
+                        cnpj: n.cnpj,
+                        proposta: n.proposta,
+                        status: n.status
+                    })) : [];
                     buildVendorOptions(arr);
                     document.getElementById('applyFilters').addEventListener('click', () => {
                         const filtered = filterByControls(arr);
@@ -528,7 +542,15 @@
                     renderAdminDashboard(arr);
                 } else {
                     document.getElementById('userView').style.display = 'block';
-                    const arr = Array.isArray(sales) ? sales : [];
+                    const arr = Array.isArray(sales) ? sales.map(n => ({
+                        data: n.data,
+                        tipo: n.tipo,
+                        receita: Number(n.valor || 0),
+                        vendedor: (n.creator && n.creator.name) ? n.creator.name : '-',
+                        cnpj: n.cnpj,
+                        proposta: n.proposta,
+                        status: n.status
+                    })) : [];
                     const btn = document.getElementById('applyFiltersUser');
                     if (btn) {
                         btn.addEventListener('click', () => {
