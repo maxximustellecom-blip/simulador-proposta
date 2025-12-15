@@ -18,7 +18,7 @@
                 </div>
                 <div class="muted" id="scopeLabel"></div>
             </div>
-            <div class="filters">
+            <div id="filtersHistorico" class="filters">
                 <div>
                     <div class="label">Vendedor</div>
                     <select id="fVendedor" class="select"><option value="Todos">Todos</option></select>
@@ -36,8 +36,8 @@
                     <input id="fData" class="input" type="date">
                 </div>
                 <div style="display:flex; align-items:flex-end; gap:0.5rem;">
-                    <button id="buscarBtn" class="btn btn-primary" type="button">Buscar</button>
-                    <button id="limparBtn" class="btn btn-ghost" type="button">Limpar</button>
+                    <button id="buscarBtn" class="btn btn-ghost btn-icon" type="button" title="Buscar"><i data-lucide="search"></i></button>
+                    <button id="limparBtn" class="btn btn-ghost btn-icon" type="button" title="Limpar"><i data-lucide="x"></i></button>
                 </div>
             </div>
             <div class="list" id="historyList"></div>

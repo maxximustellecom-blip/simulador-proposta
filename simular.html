@@ -37,7 +37,7 @@
                             <th>VENDEDOR</th>
                             <th>Receita Gerada</th>
                             <th>ELEGIBILIDADE</th>
-                            <th>% Fator</th>
+                            <th style="text-align: end;">% Fator</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -45,31 +45,31 @@
                             <td><strong style="color: #3182ce;">BLUE</strong></td>
                             <td>Até R$699</td>
                             <td style="text-align: left;">N/D</td>
-                            <td style="text-align: left; font-weight: 600; color: #3182ce;">60%</td>
+                            <td style="text-align: end; font-weight: 600; color: #3182ce;">60%</td>
                         </tr>
                         <tr>
                             <td><strong style="color: #94A3B8;">SILVER</strong></td>
                             <td>R$700 a R$899</td>
                             <td style="text-align: left;">N/D</td>
-                            <td style="text-align: left; font-weight: 600; color: #94A3B8;">80%</td>
+                            <td style="text-align: end; font-weight: 600; color: #94A3B8;">80%</td>
                         </tr>
                         <tr>
                             <td><strong style="color: #A855F7;">PLATINUM</strong></td>
                             <td>R$900 a R$1.499</td>
                             <td style="text-align: left;">1 Fibra/ 1 WTTX</td>
-                            <td style="text-align: left; font-weight: 600; color: #A855F7;">100%</td>
+                            <td style="text-align: end; font-weight: 600; color: #A855F7;">100%</td>
                         </tr>
                         <tr>
                             <td><strong style="color: #1F2937;">BLACK</strong></td>
                             <td>R$1.500 a R$1.899</td>
                             <td style="text-align: left;">1 Fibra/ 1 WTTX</td>
-                            <td style="text-align: left; font-weight: 600; color: #1F2937;">150%</td>
+                            <td style="text-align: end; font-weight: 600; color: #1F2937;">150%</td>
                         </tr>
                         <tr>
                             <td><strong style="color: #000000;">BLACK+</strong></td>
                             <td>R$ 1.900 ou mais</td>
                             <td style="text-align: left;">1 Fibra/ 1 WTTX</td>
-                            <td style="text-align: left; font-weight: 600; color: #000000;">200%</td>
+                            <td style="text-align: end; font-weight: 600; color: #000000;">200%</td>
                         </tr>
                     </tbody>
                 </table>
@@ -84,7 +84,7 @@
                             <th style="text-align: center;">RENOVAÇÃO</th>
                             <th style="text-align: center;">ULTRA FIBRA</th>
                             <th style="text-align: center;">WTTX</th>
-                            <th style="text-align: center;">M2M</th>
+                            <th style="text-align: end;">M2M</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -93,35 +93,35 @@
                             <td style="text-align: center; font-weight: 600;">30%</td>
                             <td style="text-align: center; font-weight: 600;">30%</td>
                             <td style="text-align: center; font-weight: 600;">60%</td>
-                            <td style="text-align: center; font-weight: 600;">60%</td>
+                            <td style="text-align: end; font-weight: 600;">60%</td>
                         </tr>
                         <tr>
                             <td><strong style="color: #A855F7;">PLATINUM</strong></td>
                             <td style="text-align: center; font-weight: 600;">40%</td>
                             <td style="text-align: center; font-weight: 600;">50%</td>
                             <td style="text-align: center; font-weight: 600;">100%</td>
-                            <td style="text-align: center; font-weight: 600;">60%</td>
+                            <td style="text-align: end; font-weight: 600;">60%</td>
                         </tr>
                         <tr>
                             <td><strong style="color: #1F2937;">BLACK</strong></td>
                             <td style="text-align: center; font-weight: 600;">50%</td>
                             <td style="text-align: center; font-weight: 600;">70%</td>
                             <td style="text-align: center; font-weight: 600;">150%</td>
-                            <td style="text-align: center; font-weight: 600;">60%</td>
+                            <td style="text-align: end; font-weight: 600;">60%</td>
                         </tr>
                         <tr>
                             <td><strong style="color: #000000;">BLACK+</strong></td>
                             <td style="text-align: center; font-weight: 600;">60%</td>
                             <td style="text-align: center; font-weight: 600;">80%</td>
                             <td style="text-align: center; font-weight: 600;">200%</td>
-                            <td style="text-align: center; font-weight: 600;">60%</td>
+                            <td style="text-align: end; font-weight: 600;">60%</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="nota-importante">
-                <p>
+                <p style="margin-bottom: 0px;">
                     <strong>Observação Importante:</strong> Apenas <strong>Novos Acessos e Aditivos</strong> contribuem
                     para a classificação do nível do vendedor. Os serviços de <strong>Renovação, Ultra Fibra, WTTX e M2M</strong> são
                     remunerados de acordo com o nível obtido através das vendas de Novos Acessos e Aditivos, mas não influenciam
@@ -322,7 +322,7 @@
                 <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem; border:1px solid rgba(255,255,255,0.06); border-radius:10px; margin-bottom:0.5rem;">
                     <div style="display:flex; gap:0.75rem; align-items:center;">
                         <span style="color:#93C5FD; font-weight:600;">${v.vendedor}</span>
-                        <span style="color:#A7F3D0; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); border-radius:999px; padding:0.2rem 0.5rem; font-size:0.8rem;">${v.tipo}</span>
+                        <span class="level-pill" style="padding:0.2rem 0.5rem; font-size:0.8rem;">${v.tipo}</span>
                         <span style="color:#FCD34D;">${Number(v.receita || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     </div>
                     <button type="button" class="btn btn-ghost" onclick="removerItem(${i})">Remover</button>

@@ -180,7 +180,7 @@
                     <td>${u.role}</td>
                     <td class="col-actions" style="min-width:140px;">
                         <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditarUsuario(${u.id})"><i data-lucide="edit-3"></i></button>
-                        ${u.id === 1 ? '' : `<button type="button" class="btn btn-primary btn-icon" title="Excluir" onclick="abrirExcluirUsuario(${u.id})"><i data-lucide='trash-2'></i></button>`}
+                        ${String(u.role) === 'admin' ? '' : `<button type="button" class="btn btn-primary btn-icon" title="Excluir" onclick="abrirExcluirUsuario(${u.id})"><i data-lucide='trash-2'></i></button>`}
                     </td>
                 </tr>
             `).join('');
@@ -238,7 +238,7 @@
         function abrirExcluirUsuario(id) {
             const u = getUserById(id);
             if (!u) return;
-            if (Number(id) === 1) { toast('Usuário admin padrão não pode ser excluído', 'error'); return; }
+            if (String(u.role) === 'admin') { toast('Usuário admin não pode ser excluído', 'error'); return; }
             __deleteUserId = Number(id);
             const el = document.getElementById('deleteUserText');
             if (el) el.textContent = `Deseja excluir o usuário "${u.name}"? Esta ação removerá também os dados de vendas associados.`;
