@@ -55,6 +55,17 @@
                     </div>
                 </section>
                 <section class="section" style="margin-top:1rem;">
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        <div class="label">Status da negociação</div>
+                        <select id="fStatus" class="select" style="width:220px;">
+                            <option value="Todos">Todos</option>
+                            <option value="Em andamento">Em andamento</option>
+                            <option value="Concluída">Concluída</option>
+                            <option value="Cancelada">Cancelada</option>
+                        </select>
+                    </div>
+                </section>
+                <section class="section" style="margin-top:1rem;">
                     <div class="label">Resumo</div>
                     <div class="grid-2" style="margin-top:0.5rem;">
                         <div class="card" style="padding:0.75rem;">
@@ -71,7 +82,7 @@
                 <section style="margin-top:1rem;">
                     <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end;">
                         <button id="copiarBtn" class="btn btn-ghost" type="button" title="Copiar proposta"><i data-lucide="copy"></i><span>Copiar Proposta</span></button>
-                        <button id="salvarBtn" class="btn btn-primary" type="button" title="Salvar proposta"><i data-lucide="save"></i><span>Salvar Proposta</span></button>
+                        <button id="salvarBtn" class="btn btn-primary" type="button" title="Salvar"><i data-lucide="save"></i><span>Salvar</span></button>
                     </div>
                 </section>
             </div>
@@ -130,6 +141,7 @@
                 const exists = arr.find(n => Number(n.id) === Number(idParam));
                 if (!exists) { window.location.href = 'negociar.html'; return; }
                 __negociacaoId = idParam;
+                __negociacaoStatus = exists && exists.status ? String(exists.status) : 'Em andamento';
                 await initConfiguracao();
             } catch {
                 window.location.href = 'negociar.html';
@@ -169,6 +181,7 @@
         let __map = {}; // categoria.nome -> produtos
         let __linhas = [];
         let __negociacaoId = null;
+        let __negociacaoStatus = 'Em andamento';
         async function initConfiguracao() {
             await carregarCategorias();
             await carregarProdutos();
@@ -237,6 +250,23 @@
             });
             if (salvarBtn) salvarBtn.addEventListener('click', salvarProposta);
             if (copiarBtn) copiarBtn.addEventListener('click', copiarProposta);
+            const statusSel = document.getElementById('fStatus');
+            if (statusSel) {
+                statusSel.value = __negociacaoStatus || 'Em andamento';
+                statusSel.addEventListener('change', async (e) => {
+                    const val = String(e.currentTarget.value || '');
+                    if (!__negociacaoId) return;
+                    if (val === 'Todos') { toast('Selecione um status válido', 'error'); statusSel.value = __negociacaoStatus; return; }
+                    try {
+                        await api(`/negotiations/${__negociacaoId}`, { method: 'PUT', body: JSON.stringify({ status: val }) });
+                        __negociacaoStatus = val;
+                        toast('Status atualizado', 'success');
+                    } catch {
+                        toast('Erro ao atualizar status', 'error');
+                        statusSel.value = __negociacaoStatus;
+                    }
+                });
+            }
         }
         function atualizarLinha(id, campo, valor) {
             __linhas = __linhas.map(l => {
