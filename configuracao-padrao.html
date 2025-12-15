@@ -7,6 +7,8 @@
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
     <main class="container">
@@ -22,6 +24,17 @@
             </div>
             <div class="card-body">
                 <section class="section" style="margin-top: 20px;">
+                    <div class="label">Dados básicos do cliente</div>
+                    <div style="padding:0.4rem 0.0rem; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+                        <span class="muted">Cliente:</span>
+                        <span id="clienteNome" style="font-weight:600;">-</span>
+                        <span class="muted">CNPJ:</span>
+                        <span id="clienteCnpj">-</span>
+                        <span class="muted">Status:</span>
+                        <span id="negStatusLabel">-</span>
+                    </div>
+                </section>
+                <section class="section" style="margin-top: 20px;">
                     <div style="display:flex; align-items:center; justify-content:space-between;">
                         <div class="label">Itens da proposta</div>
                         <div class="muted" id="countItensLabel">0 itens</div>
@@ -32,6 +45,10 @@
                                 <tr>
                                     <th>#</th>
                                     <th>Qtd</th>
+                                    <th>Portabilidade</th>
+                                    <th>Operadora Doadora</th>
+                                    <th>DDD</th>
+                                    <th>Número a Portar</th>
                                     <th>Categoria</th>
                                     <th>Plano</th>
                                     <th>Pct</th>
@@ -45,7 +62,7 @@
                                 </tr>
                             </thead>
                             <tbody id="itensTbody">
-                                <tr><td colspan="12">
+                                <tr><td colspan="16">
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
@@ -81,6 +98,7 @@
                 <section style="margin-top:1rem;">
                     <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end;">
                         <button id="copiarBtn" class="btn btn-ghost" type="button" title="Copiar proposta"><i data-lucide="copy"></i><span>Copiar Proposta</span></button>
+                        <button id="relatorioBtn" class="btn btn-ghost" type="button" title="Gerar Relatório"><i data-lucide="file-text"></i><span>Gerar Relatório</span></button>
                         <button id="salvarBtn" class="btn btn-primary" type="button" title="Salvar"><i data-lucide="save"></i><span>Salvar</span></button>
                     </div>
                 </section>
@@ -141,6 +159,7 @@
                 if (!exists) { window.location.href = 'negociar.html'; return; }
                 __negociacaoId = idParam;
                 __negociacaoStatus = exists && exists.status ? String(exists.status) : 'Em andamento';
+                __negociacaoInfo = exists || null;
                 await initConfiguracao();
             } catch {
                 window.location.href = 'negociar.html';
@@ -151,18 +170,31 @@
                 if (!__negociacaoId) return;
                 const data = await api(`/negotiations/${__negociacaoId}/proposal`, { method: 'GET' }).catch(() => null);
                 if (data && Array.isArray(data.linhas)) {
-                    const linhas = data.linhas.map((l, idx) => ({
-                        id: Number(l.id || idx + 1),
-                        quantidade: Number(l.quantidade || 1),
-                        categoria: l.categoria || (__categorias[0]?.nome || ''),
-                        plano: l.plano || '',
-                        pct: l.pct || '',
-                        valorPlano: Number(l.valorPlano || 0),
-                        temAparelho: l.temAparelho || 'Não',
-                        modeloAparelho: l.modeloAparelho || '',
-                        tipoAparelho: l.tipoAparelho || '',
-                        valorAparelho: Number(l.valorAparelho || 0)
-                    }));
+                    const linhas = data.linhas.map((l, idx) => {
+                        const cat = l.categoria || (__categorias[0]?.nome || '');
+                        const planoNome = l.plano || '';
+                        const planos = __map[cat] || [];
+                        const sel = planos.find(p => p.nome === planoNome);
+                        const baseTxt = sel ? (sel.descricao || sel.nome || '') : '';
+                        let pctNorm = parsePctFromText(baseTxt);
+                        if (!pctNorm) pctNorm = l.pct || '';
+                        return {
+                            id: Number(l.id || idx + 1),
+                            portabilidade: l.portabilidade || 'Não',
+                            operadoraDoadora: l.operadoraDoadora || '',
+                            ddd: l.ddd || '',
+                            numeroPortar: l.numeroPortar || '',
+                            quantidade: Number(l.quantidade || 1),
+                            categoria: cat,
+                            plano: planoNome,
+                            pct: pctNorm,
+                            valorPlano: Number(l.valorPlano || (sel ? Number(sel.preco || 0) : 0)),
+                            temAparelho: l.temAparelho || 'Não',
+                            modeloAparelho: l.modeloAparelho || '',
+                            tipoAparelho: l.tipoAparelho || '',
+                            valorAparelho: Number(l.valorAparelho || 0)
+                        };
+                    });
                     __linhas = linhas.length ? linhas : __linhas;
                 }
             } catch {}
@@ -170,10 +202,85 @@
         function currency(v) {
             try { return (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })).format(Number(v || 0)); } catch { return 'R$ 0,00'; }
         }
+        function formatCnpj(s) {
+            const d = String(s || '').replace(/\D/g, '');
+            if (d.length !== 14) return d;
+            return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+        }
+        function formatPhone(s) {
+            const d = String(s || '').replace(/\D/g, '');
+            if (d.length === 11) return d.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+            if (d.length === 10) return d.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
+            return s || '';
+        }
+        async function carregarClienteBasico() {
+            try {
+                const cnpj = __negociacaoInfo ? (__negociacaoInfo.cnpj || '') : '';
+                if (!cnpj) { __clienteInfo = null; return; }
+                const list = await api('/clients?cnpj=' + encodeURIComponent(String(cnpj).replace(/\D/g, '')), { method: 'GET' }).catch(() => []);
+                __clienteInfo = Array.isArray(list) && list.length ? list[0] : null;
+            } catch { __clienteInfo = null; }
+        }
+        function renderClienteBasico() {
+            const nomeEl = document.getElementById('clienteNome');
+            const cnpjEl = document.getElementById('clienteCnpj');
+            const emailEl = document.getElementById('clienteEmail');
+            const phoneEl = document.getElementById('clientePhone');
+            const tipoEl = document.getElementById('negTipo');
+            const propEl = document.getElementById('negProposta');
+            const dataEl = document.getElementById('negData');
+            const statusEl = document.getElementById('negStatusLabel');
+            const n = __negociacaoInfo || {};
+            const c = __clienteInfo || {};
+            if (nomeEl) nomeEl.textContent = c.name || '-';
+            if (cnpjEl) cnpjEl.textContent = formatCnpj(n.cnpj || c.cnpj || '');
+            if (emailEl) emailEl.textContent = c.email || '-';
+            if (phoneEl) phoneEl.textContent = formatPhone(c.phone || '');
+            if (tipoEl) tipoEl.textContent = n.tipo || '-';
+            if (propEl) propEl.textContent = n.proposta || '-';
+            if (dataEl) dataEl.textContent = n.data || '-';
+            if (statusEl) statusEl.textContent = __negociacaoStatus || (n.status || '-');
+        }
         function parsePctFromText(s) {
             const txt = String(s || '');
+            const paren = txt.match(/\(([^)]+)\)/);
+            const target = paren ? paren[1] : txt;
+            if (txt.includes('+')) {
+                const parts = target.split('+').map(p => p.trim());
+                let sum = 0;
+                let unit = null;
+                let any = false;
+                for (const part of parts) {
+                    const m = part.match(/(\d+(?:[\.,]\d+)?)\s*(GB|MB)?/i);
+                    if (!m) continue;
+                    any = true;
+                    const num = Number(String(m[1] || '0').replace(',', '.'));
+                    const u = (m[2] || '').toUpperCase();
+                    if (!unit && u) unit = u;
+                    if (unit) {
+                        const val = unit === 'GB'
+                            ? (u === 'MB' ? (num / 1024) : num)
+                            : (u === 'GB' ? (num * 1024) : num);
+                        sum += val;
+                    } else {
+                        sum += num;
+                    }
+                }
+                if (!any) return '';
+                const rounded = Math.round(sum * 100) / 100;
+                const out = (rounded % 1 === 0) ? String(Math.round(rounded)) : String(rounded).replace('.', ',');
+                return unit ? (out + unit) : out;
+            }
             const m = txt.match(/(\d+(?:[\.,]\d+)?)\s*(GB|MB)/i);
-            return m ? (m[1].replace(',', '.') + m[2].toUpperCase()) : '';
+            if (m) {
+                const num = m[1].replace(',', '.');
+                const u = m[2].toUpperCase();
+                const n = Number(num);
+                const rounded = Math.round(n * 100) / 100;
+                const out = (rounded % 1 === 0) ? String(Math.round(rounded)) : String(rounded).replace('.', ',');
+                return out + u;
+            }
+            return '';
         }
         let __categorias = [];
         let __produtos = [];
@@ -181,12 +288,33 @@
         let __linhas = [];
         let __negociacaoId = null;
         let __negociacaoStatus = 'Em andamento';
+        let __negociacaoInfo = null;
+        let __clienteInfo = null;
+        let __loadingTimer = null;
+        function setLoading(active) {
+            const el = document.getElementById('loadingDots');
+            if (active) {
+                if (!el) return;
+                let dots = 0;
+                clearInterval(__loadingTimer);
+                __loadingTimer = setInterval(() => {
+                    dots = (dots + 1) % 4;
+                    el.textContent = 'Carregando' + '.'.repeat(dots);
+                }, 450);
+            } else {
+                clearInterval(__loadingTimer);
+            }
+        }
         async function initConfiguracao() {
             await carregarCategorias();
             await carregarProdutos();
             construirMapa();
             __linhas = [{
                 id: 1,
+                portabilidade: 'Não',
+                operadoraDoadora: '',
+                ddd: '',
+                numeroPortar: '',
                 quantidade: 1,
                 categoria: (__categorias[0]?.nome || ''),
                 plano: '',
@@ -197,8 +325,10 @@
                 tipoAparelho: '',
                 valorAparelho: 0
             }];
+            await carregarClienteBasico();
             await carregarPropostaSalva();
             bindActions();
+            renderClienteBasico();
             renderTabela();
             renderResumo();
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
@@ -230,6 +360,7 @@
             const addBtn = document.getElementById('addLinhaBtn');
             const salvarBtn = document.getElementById('salvarBtn');
             const copiarBtn = document.getElementById('copiarBtn');
+            const relatorioBtn = document.getElementById('relatorioBtn');
             if (addBtn) addBtn.addEventListener('click', () => {
                 const nextId = (__linhas.reduce((acc, l) => Math.max(acc, Number(l.id)), 0) || 0) + 1;
                 __linhas.push({
@@ -249,23 +380,26 @@
             });
             if (salvarBtn) salvarBtn.addEventListener('click', salvarProposta);
             if (copiarBtn) copiarBtn.addEventListener('click', copiarProposta);
+            if (relatorioBtn) relatorioBtn.addEventListener('click', gerarRelatorioPdf);
             const statusSel = document.getElementById('fStatus');
             if (statusSel) {
                 statusSel.value = __negociacaoStatus || 'Em andamento';
                 statusSel.addEventListener('change', async (e) => {
                     const val = String(e.currentTarget.value || '');
-                    if (!__negociacaoId) return;
-                    if (val === 'Todos') { toast('Selecione um status válido', 'error'); statusSel.value = __negociacaoStatus; return; }
-                    try {
-                        await api(`/negotiations/${__negociacaoId}`, { method: 'PUT', body: JSON.stringify({ status: val }) });
-                        __negociacaoStatus = val;
-                        toast('Status atualizado', 'success');
-                    } catch {
-                        toast('Erro ao atualizar status', 'error');
-                        statusSel.value = __negociacaoStatus;
-                    }
-                });
-            }
+                        if (!__negociacaoId) return;
+                        if (val === 'Todos') { toast('Selecione um status válido', 'error'); statusSel.value = __negociacaoStatus; return; }
+                        try {
+                            await api(`/negotiations/${__negociacaoId}`, { method: 'PUT', body: JSON.stringify({ status: val }) });
+                            __negociacaoStatus = val;
+                            toast('Status atualizado', 'success');
+                            const statusEl = document.getElementById('negStatusLabel');
+                            if (statusEl) statusEl.textContent = __negociacaoStatus;
+                        } catch {
+                            toast('Erro ao atualizar status', 'error');
+                            statusSel.value = __negociacaoStatus;
+                        }
+                    });
+                }
         }
         function atualizarLinha(id, campo, valor) {
             __linhas = __linhas.map(l => {
@@ -291,6 +425,20 @@
                 if (campo === 'quantidade') {
                     const q = Number(valor || 1);
                     novo.quantidade = (isFinite(q) && q > 0) ? q : 1;
+                }
+                if (campo === 'portabilidade') {
+                    const v = String(valor || 'Não');
+                    if (v !== 'Sim') {
+                        novo.portabilidade = 'Não';
+                        novo.operadoraDoadora = '';
+                        novo.ddd = '';
+                        novo.numeroPortar = '';
+                    } else {
+                        novo.portabilidade = 'Sim';
+                    }
+                }
+                if (campo === 'numeroPortar') {
+                    novo.numeroPortar = formatNumeroPortar(valor);
                 }
                 if (campo === 'temAparelho') {
                     if (valor !== 'Sim') {
@@ -332,12 +480,21 @@
         function totalGeral() {
             return __linhas.reduce((acc, l) => acc + totalLinha(l), 0);
         }
+        function formatNumeroPortar(valor) {
+            const digs = String(valor || '').replace(/\D/g, '').slice(0, 9);
+            if (digs.length <= 5) return digs;
+            return digs.slice(0, 5) + '-' + digs.slice(5);
+        }
         function copiarLinha(id) {
             const src = __linhas.find(x => Number(x.id) === Number(id));
             if (!src) return;
             const nextId = (__linhas.reduce((acc, l) => Math.max(acc, Number(l.id)), 0) || 0) + 1;
             __linhas.push({
                 id: nextId,
+                portabilidade: src.portabilidade || 'Não',
+                operadoraDoadora: src.operadoraDoadora || '',
+                ddd: src.ddd || '',
+                numeroPortar: src.numeroPortar || '',
                 quantidade: Number(src.quantidade || 1),
                 categoria: src.categoria || (__categorias[0]?.nome || ''),
                 plano: src.plano || '',
@@ -354,18 +511,52 @@
         function renderTabela() {
             const tbody = document.getElementById('itensTbody');
             const cats = __categorias.map(c => c.nome);
+            if (!__categorias.length && !__produtos.length) {
+                tbody.innerHTML = `
+                    <tr><td colspan="16">
+                        <div id="loadingDots" class="muted" style="padding:0.8rem; text-align:center; font-weight:600;">Carregando</div>
+                    </td></tr>
+                `;
+                setLoading(true);
+                return;
+            }
+            setLoading(false);
             const rows = __linhas.map((l, idx) => {
                 const planos = __map[l.categoria] || [];
                 const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
                     planos.map(p => `<option value="${p.nome}" ${p.nome === l.plano ? 'selected' : ''}>${p.nome}</option>`)
                 ).join('');
                 const catOpts = cats.map(n => `<option value="${n}" ${n === l.categoria ? 'selected' : ''}>${n}</option>`).join('');
+                const ops = ['Claro','Vivo','TIM','Oi'];
+                const opOpts = ['<option value="">Selecione...</option>'].concat(ops.map(o => `<option value="${o}" ${o === l.operadoraDoadora ? 'selected' : ''}>${o}</option>`)).join('');
+                const ddds = [11,12,13,14,15,16,17,18,19,21,22,24,27,28,31,32,33,34,35,37,38,41,42,43,44,45,46,47,48,49,51,53,54,55,61,62,63,64,65,66,67,68,69,71,73,74,75,77,79,81,82,83,84,85,86,87,88,89,91,92,93,94,95,96,97,98,99];
+                const dddOpts = ['<option value="">DDD</option>'].concat(ddds.map(d => `<option value="${d}" ${String(d) === String(l.ddd || '') ? 'selected' : ''}>${d}</option>`)).join('');
                 return `
                     <tr>
                         <td>${idx + 1}</td>
                         <td>
                             <input type="number" min="1" class="input" style="width:90px; text-align:center;" value="${l.quantidade}"
                                    data-id="${l.id}" data-field="quantidade">
+                        </td>
+                        <td>
+                            <select class="select" data-id="${l.id}" data-field="portabilidade" style="width:110px;">
+                                <option value="Não" ${l.portabilidade === 'Não' ? 'selected' : ''}>Não</option>
+                                <option value="Sim" ${l.portabilidade === 'Sim' ? 'selected' : ''}>Sim</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="select" data-id="${l.id}" data-field="operadoraDoadora" style="width:160px;" ${l.portabilidade !== 'Sim' ? 'disabled' : ''}>
+                                ${opOpts}
+                            </select>
+                        </td>
+                        <td>
+                            <select class="select" data-id="${l.id}" data-field="ddd" style="width:110px;" ${l.portabilidade !== 'Sim' ? 'disabled' : ''}>
+                                ${dddOpts}
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" class="input" placeholder="00000-0000" style="width:140px; text-align:center;"
+                                   value="${l.numeroPortar || ''}" data-id="${l.id}" data-field="numeroPortar" ${l.portabilidade !== 'Sim' ? 'disabled' : ''} maxlength="10">
                         </td>
                         <td>
                             <select class="select" data-id="${l.id}" data-field="categoria">${catOpts}</select>
@@ -388,14 +579,13 @@
                         </td>
                         <td>
                             <select class="select" data-id="${l.id}" data-field="tipoAparelho" style="width:140px;" ${l.temAparelho !== 'Sim' ? 'disabled' : ''}>
-                                <option value="" ${!l.tipoAparelho ? 'selected' : ''}></option>
                                 <option value="Comodato" ${l.tipoAparelho === 'Comodato' ? 'selected' : ''}>Comodato</option>
                                 <option value="VF 24x" ${l.tipoAparelho === 'VF 24x' ? 'selected' : ''}>VF 24x</option>
                             </select>
                         </td>
                         <td>
                             <input type="number" step="0.01" min="0" class="input" placeholder="0,00" style="width:110px; text-align:center;"
-                                   value="${Number(l.valorAparelho || 0)}" data-id="${l.id}" data-field="valorAparelho" ${l.temAparelho !== 'Sim' ? 'disabled' : ''}>
+                                   value="${Number(l.valorAparelho || 0)}" data-id="${l.id}" data-field="valorAparelho" ${l.temAparelho !== 'Sim' || l.tipoAparelho === 'Comodato' ? 'disabled' : ''}>
                         </td>
                         <td class="col-actions">
                             <div class="table-actions">
@@ -407,13 +597,21 @@
                 `;
             }).join('');
             document.getElementById('countItensLabel').textContent = `${__linhas.length} ${__linhas.length === 1 ? 'item' : 'itens'}`;
-            tbody.innerHTML = rows || '<tr><td colspan="12" class="muted">Sem itens</td></tr>';
+            tbody.innerHTML = rows || '<tr><td colspan="16" class="muted">Sem itens</td></tr>';
             Array.from(tbody.querySelectorAll('input[data-field], select[data-field]')).forEach(el => {
                 el.addEventListener('change', (e) => {
                     const id = Number(e.currentTarget.getAttribute('data-id') || 0);
                     const field = e.currentTarget.getAttribute('data-field');
                     const val = e.currentTarget.value;
                     atualizarLinha(id, field, val);
+                });
+            });
+            Array.from(tbody.querySelectorAll('input[data-field="numeroPortar"]')).forEach(el => {
+                el.addEventListener('input', (e) => {
+                    const id = Number(e.currentTarget.getAttribute('data-id') || 0);
+                    const masked = formatNumeroPortar(e.currentTarget.value);
+                    e.currentTarget.value = masked;
+                    __linhas = __linhas.map(l => Number(l.id) === id ? ({ ...l, numeroPortar: masked }) : l);
                 });
             });
             Array.from(tbody.querySelectorAll('button[data-action="remover"]')).forEach(btn => {
@@ -500,6 +698,115 @@
                 itens
             ].join('\n');
             return header + linhasTxt + '\n' + resumo + '\n✅ Proposta copiada!';
+        }
+        function gerarRelatorioPdf() {
+            try {
+                const lib = window.jspdf || {};
+                const jsPDF = lib.jsPDF;
+                if (!jsPDF || !document || !document.body) { toast('Biblioteca de PDF indisponível', 'error'); return; }
+                const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+                const n = __negociacaoInfo || {};
+                const c = __clienteInfo || {};
+                const acessos = __linhas.reduce((acc, l) => acc + Number(l.quantidade || 0), 0);
+                const total = currency(totalGeral());
+                doc.setFontSize(16);
+                doc.text('Relatório da Proposta', 40, 40);
+                doc.setFontSize(10);
+                doc.text('Gerado em ' + new Date().toLocaleString('pt-BR'), 40, 56);
+                doc.setFontSize(11);
+                doc.text('Total mensal: ' + total, 450, 40, { align: 'right' });
+                doc.autoTable({
+                    startY: 80,
+                    head: [['Campo', 'Valor']],
+                    body: [
+                        ['Nome', c.name || '-'],
+                        ['CNPJ', formatCnpj(n.cnpj || c.cnpj || '')],
+                        ['Email', c.email || '-'],
+                        ['Telefone', formatPhone(c.phone || '') || '-']
+                    ],
+                    styles: { fontSize: 10 },
+                    headStyles: { fillColor: [243, 244, 246], textColor: [55, 65, 81] },
+                    theme: 'grid',
+                    margin: { left: 40, right: 40 }
+                });
+                doc.autoTable({
+                    startY: doc.lastAutoTable.finalY + 12,
+                    head: [['Campo', 'Valor']],
+                    body: [
+                        ['Tipo', n.tipo || '-'],
+                        ['Proposta', n.proposta || '-'],
+                        ['Data', n.data || '-'],
+                        ['Status', __negociacaoStatus || (n.status || '-')]
+                    ],
+                    styles: { fontSize: 10 },
+                    headStyles: { fillColor: [243, 244, 246], textColor: [55, 65, 81] },
+                    theme: 'grid',
+                    margin: { left: 40, right: 40 }
+                });
+                const head = [['#','Qtd','Portabilidade','Operadora Doadora','DDD','Número a Portar','Categoria','Plano','Pct','Valor Plano','Total Linha','Aparelho','Modelo','Tipo Aparelho','Valor Aparelho']];
+                const body = (__linhas || []).map((l, idx) => ([
+                    String(idx + 1),
+                    String(Number(l.quantidade || 0)),
+                    String(l.portabilidade || '-'),
+                    String(l.operadoraDoadora || '-'),
+                    String(l.ddd || '-'),
+                    String(l.numeroPortar || '-'),
+                    String(l.categoria || '-'),
+                    String(l.plano || '-'),
+                    String(l.pct || '-'),
+                    String(currency(l.valorPlano)),
+                    String(currency(totalLinha(l))),
+                    String(l.temAparelho || '-'),
+                    String(l.modeloAparelho || '-'),
+                    String(l.tipoAparelho || '-'),
+                    String(currency(l.valorAparelho))
+                ]));
+                doc.setFontSize(14);
+                const startY = (doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY : 80) + 24;
+                doc.text('Itens da Proposta', 40, startY - 12);
+                let currentY = startY;
+                const linhasArr = Array.isArray(__linhas) ? __linhas : [];
+                if (!linhasArr.length) {
+                    doc.setFontSize(10);
+                    doc.text('Sem itens', 40, currentY + 6);
+                    currentY += 20;
+                } else {
+                    linhasArr.forEach((l, idx) => {
+                        doc.autoTable({
+                            startY: currentY,
+                            head: [['Campo', 'Valor']],
+                            body: [
+                                ['Item', String(idx + 1)],
+                                ['Qtd', String(Number(l.quantidade || 0))],
+                                ['Portabilidade', String(l.portabilidade || '-')],
+                                ['Operadora Doadora', String(l.operadoraDoadora || '-')],
+                                ['DDD', String(l.ddd || '-')],
+                                ['Número a Portar', String(l.numeroPortar || '-')],
+                                ['Categoria', String(l.categoria || '-')],
+                                ['Plano', String(l.plano || '-')],
+                                ['Pct', String(l.pct || '-')],
+                                ['Valor Plano', String(currency(l.valorPlano))],
+                                ['Total Linha', String(currency(totalLinha(l)))],
+                                ['Aparelho', String(l.temAparelho || '-')],
+                                ['Modelo', String(l.modeloAparelho || '-')],
+                                ['Tipo Aparelho', String(l.tipoAparelho || '-')],
+                                ['Valor Aparelho', String(currency(l.valorAparelho))]
+                            ],
+                            styles: { fontSize: 10, cellPadding: 4 },
+                            headStyles: { fillColor: [243, 244, 246], textColor: [55, 65, 81] },
+                            theme: 'grid',
+                            margin: { left: 40, right: 40 }
+                        });
+                        currentY = (doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY : currentY) + 10;
+                    });
+                }
+                doc.setFontSize(10);
+                doc.text('Total de acessos: ' + String(acessos) + ' • Valor total mensal: ' + total, 40, currentY + 14);
+                const nomeArquivo = 'Relatorio_Proposta_' + String((n.cnpj || c.cnpj || '').replace(/\D/g, '') || 'sem-cnpj') + '_' + String(new Date().toISOString().slice(0,10)) + '.pdf';
+                doc.save(nomeArquivo);
+            } catch {
+                toast('Erro ao gerar relatório', 'error');
+            }
         }
         function salvarProposta() {
             const erros = validar();
