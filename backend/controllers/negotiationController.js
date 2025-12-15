@@ -1,11 +1,14 @@
-import { Negotiation } from '../models/index.js';
+import { Negotiation, User } from '../models/index.js';
 
 function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
 
 export async function listNegotiations(req, res) {
   try {
     const { cnpj, status, data } = req.query || {};
-    let list = await Negotiation.findAll({ order: [['created_at', 'DESC']] });
+    let list = await Negotiation.findAll({
+      include: [{ model: User, as: 'creator', attributes: ['id', 'name'] }],
+      order: [['created_at', 'DESC']]
+    });
     if (req.user && req.user.role === 'user' && req.user.id) {
       list = list.filter(n => Number(n.created_by || 0) === Number(req.user.id));
     }
@@ -28,7 +31,9 @@ export async function listNegotiations(req, res) {
       proposta: n.proposta,
       valor: n.valor !== null && n.valor !== undefined ? Number(n.valor) : null,
       status: n.status,
-      data: n.data
+      data: n.data,
+      created_by: n.created_by !== null && n.created_by !== undefined ? Number(n.created_by) : null,
+      creator: n.creator ? { id: n.creator.id, name: n.creator.name } : null
     })));
   } catch (err) {
     return res.status(500).json({ error: 'erro ao listar negociações', details: String(err && err.message ? err.message : err) });
@@ -116,4 +121,3 @@ export async function deleteNegotiation(req, res) {
     return res.status(500).json({ error: 'erro ao excluir negociação', details: String(err && err.message ? err.message : err) });
   }
 }
-

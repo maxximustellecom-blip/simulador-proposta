@@ -61,11 +61,12 @@
                                     <th>Valor</th>
                                     <th>Status</th>
                                     <th>Data</th>
+                                    <th>Criado por</th>
                                     <th class="col-actions" style="min-width:160px;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="negocTbody">
-                                <tr><td colspan="7">
+                                <tr><td colspan="8">
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
@@ -127,6 +128,7 @@
                     <td>${(n.valor !== undefined && n.valor !== null) ? currency(n.valor) : '-'}</td>
                     <td>${n.status || '-'}</td>
                     <td>${n.data || '-'}</td>
+                    <td>${n.creator && n.creator.name ? n.creator.name : '-'}</td>
                     <td class="col-actions">
                         <div class="table-actions">
                             <button type="button" class="btn btn-ghost" title="Configurar" onclick="configurarNegociacao(${n.id})"><i data-lucide="settings"></i><span>Configurar</span></button>
