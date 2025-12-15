@@ -104,6 +104,23 @@
   if (window.lucide && typeof window.lucide.createIcons === 'function') {
     window.lucide.createIcons();
   }
+  try {
+    var tables = document.querySelectorAll('table');
+    tables.forEach(function (tbl) {
+      var heads = Array.prototype.map.call(tbl.querySelectorAll('thead th'), function (th) {
+        return String(th.textContent || '').trim();
+      });
+      var rows = tbl.querySelectorAll('tbody tr');
+      Array.prototype.forEach.call(rows, function (tr) {
+        var cells = tr.querySelectorAll('td');
+        Array.prototype.forEach.call(cells, function (td, idx) {
+          if (!td.getAttribute('data-label')) {
+            td.setAttribute('data-label', heads[idx] || '');
+          }
+        });
+      });
+    });
+  } catch {}
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

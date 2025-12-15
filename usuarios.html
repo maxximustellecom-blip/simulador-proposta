@@ -6,184 +6,7 @@
     <title>Usuários • Maxximus Telecom</title>
     <link rel="icon" href="data:,">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <style>
-        :root {
-            --bg: #0F172A;
-            --panel: #111827;
-            --muted: #6B7280;
-            --text: #E5E7EB;
-            --accent: #10B981;
-            --accent-2: #3B82F6;
-            --danger: #EF4444;
-            --card: #111827;
-            --field: #0B1220;
-            --border: #1F2937;
-        }
-        * { box-sizing: border-box; }
-        html, body { height: 100%; }
-        body {
-            margin: 0;
-            background: radial-gradient(1200px 1200px at 10% 0%, #0B1220 0%, #0A0F1E 35%, #08111C 80%), linear-gradient(180deg, #0B1220 0%, #0A0E1A 100%);
-            color: var(--text);
-            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-        }
-        .topbar {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 1000;
-            backdrop-filter: saturate(180%) blur(12px);
-            background: rgba(17,24,39,0.7);
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-        .topbar-inner {
-            width: 100%;
-            margin: 0;
-            padding: 0.85rem 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.4px;
-        }
-        .brand-badge {
-            width: 34px; height: 34px;
-            border-radius: 10px;
-            background: radial-gradient(60% 60% at 30% 25%, #14B8A6 0%, #0EA5E9 50%, #3B82F6 100%);
-            box-shadow: 0 10px 25px rgba(62,140,253,0.35), inset 0 0 18px rgba(255,255,255,0.25);
-        }
-        .user { position: relative; display: flex; align-items: center; gap: 0.6rem; }
-        .user-btn {
-            display: flex; align-items: center; gap: 0.5rem;
-            padding: 0.4rem 0.7rem; border-radius: 10px;
-            background: rgba(255,255,255,0.06); color: var(--text);
-            border: 1px solid rgba(255,255,255,0.08); cursor: pointer;
-        }
-        .user-menu {
-            position: absolute; right: 0; top: calc(100% + 0.5rem); min-width: 180px;
-            background: #0C1322; border: 1px solid rgba(255,255,255,0.08);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.45); border-radius: 12px; overflow: hidden; display: none;
-        }
-        .user-menu.show { display: block; }
-        .user-menu a { display:block; color: var(--text); text-decoration:none; padding:0.75rem 0.85rem; }
-        .user-menu a:hover { background: rgba(255,255,255,0.06); }
-        .container {
-            max-width: none;
-            width: calc(100% - 220px);
-            margin-left: 220px;
-            padding: 7rem 1rem 4rem;
-        }
-        @media (max-width: 919px) {
-            .container { width: 100%; margin: 0; padding-bottom: 6rem; }
-        }
-        .sidebar {
-            position: fixed; left: 0; top: 64px; bottom: 0; width: 220px;
-            background: #0B1220; border-right: 1px solid rgba(255,255,255,0.06);
-            padding: 0.9rem 0.75rem; display: none; z-index: 900;
-        }
-        .nav-group { display: flex; flex-direction: column; gap: 0.5rem; }
-        .nav-link {
-            display:flex; align-items:center; gap:0.6rem;
-            padding:0.6rem 0.7rem; border-radius:10px; color:var(--text); text-decoration:none;
-            border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.04);
-            transition: background 0.15s ease, transform 0.08s ease, border-color 0.15s ease;
-        }
-        .nav-link:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); }
-        .nav-link.active { background: linear-gradient(180deg, #1F8EFB, #2563EB); border-color: rgba(255,255,255,0.2); }
-        .nav-link i { width: 18px; height: 18px; }
-        @media (min-width: 920px) { .sidebar { display: block; } }
-        .bottomnav {
-            position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000;
-            border-top: 1px solid rgba(255,255,255,0.06);
-            background: rgba(17,24,39,0.9); backdrop-filter: blur(10px);
-            display: flex; align-items: center; justify-content: space-around;
-            padding: 0.4rem 0.6rem;
-        }
-        .bottomnav a { display:inline-flex; flex-direction:column; align-items:center; gap:0.25rem; color:var(--text); text-decoration:none; padding:0.25rem 0.5rem; border-radius:8px; }
-        .bottomnav a .label { font-size: 0.75rem; color: #CBD5E1; }
-        @media (min-width: 920px) { .bottomnav { display: none; } }
-        .card {
-            background: linear-gradient(180deg, rgba(17,24,39,0.9), rgba(15,23,42,0.8));
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 18px;
-            box-shadow: 0 20px 40px rgba(3,10,22,0.5);
-            overflow: hidden;
-            max-width: 960px;
-            margin: 0 auto;
-        }
-        .card-head {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 1.2rem 1.2rem 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-        .card-title { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; letter-spacing: 0.3px; }
-        .chip { display:inline-flex; align-items:center; gap:0.4rem; font-size:0.85rem; color:#A7F3D0; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); border-radius:999px; padding:0.3rem 0.6rem; }
-        .card-body { padding: 1rem; }
-        .section {
-            background: #0B1220;
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 14px;
-            padding: 1rem;
-        }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-        .label { font-size: 0.88rem; color: var(--muted); }
-        .input, .select {
-            width: 100%;
-            padding: 0.7rem 0.75rem;
-            border-radius: 10px;
-            background: #0A1221;
-            border: 1px solid rgba(255,255,255,0.08);
-            color: var(--text);
-            outline: none;
-        }
-        .input:focus, .select:focus { border-color: rgba(59,130,246,0.6); box-shadow: 0 0 0 4px rgba(59,130,246,0.18); }
-        .actions { display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; padding: 1rem; border-top: 1px solid rgba(255,255,255,0.06); }
-        .btn {
-            display: inline-flex; align-items: center; gap: 0.6rem;
-            border: 1px solid rgba(255,255,255,0.08); background: #0C1628;
-            color: var(--text); padding: 0.7rem 1rem; border-radius: 12px; cursor: pointer;
-        }
-        .btn-primary {
-            background: linear-gradient(180deg, #1F8EFB, #2563EB);
-            border-color: rgba(255,255,255,0.12);
-            box-shadow: 0 8px 20px rgba(37,99,235,0.35);
-        }
-        .btn-ghost { background: rgba(255,255,255,0.05); }
-        .btn-icon { padding: 0.25rem 0.4rem; border-radius: 10px; }
-        .toast {
-            position: fixed; right: 1rem; bottom: 1rem;
-            background: #0B1220; border: 1px solid rgba(255,255,255,0.08);
-            color: var(--text); padding: 0.8rem 1rem; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.45); display: none;
-        }
-        table { width: 100%; border-collapse: collapse; margin-top: 0.75rem; }
-        th, td { border-bottom: 1px solid rgba(255,255,255,0.06); padding: 0.6rem; text-align: left; }
-        th { color: #CBD5E1; font-weight: 600; }
-        .modal {
-            position: fixed; inset: 0; display: none;
-            align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.5); z-index: 2000;
-        }
-        .modal.show { display: flex; }
-        .modal-card {
-            width: 520px; max-width: calc(100% - 2rem);
-            background: #0B1220; border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 16px; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-            overflow: hidden;
-        }
-        .modal-head {
-            padding: 0.9rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.08);
-            display: flex; align-items: center; justify-content: space-between;
-            color: #E5E7EB; font-weight: 600;
-        }
-        .modal-body { padding: 1rem; }
-        .modal-actions {
-            padding: 0.9rem 1rem; border-top: 1px solid rgba(255,255,255,0.08);
-            display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <main class="container">
@@ -193,40 +16,12 @@
                     <span>Usuários</span>
                     <span class="chip">Somente Admin</span>
                 </div>
-                <div class="muted">Gerenciar cadastro</div>
+                <div class="muted">
+                    <button type="button" class="btn btn-primary" onclick="abrirCadastroUsuario()"><i data-lucide="user-plus"></i><span>Novo Usuário</span></button>
+                </div>
             </div>
             <div class="card-body">
-                <section class="section">
-                    <div class="grid-2">
-                        <div>
-                            <div class="label">Nome</div>
-                            <input id="uName" class="input" type="text" placeholder="Nome completo" autocomplete="off">
-                        </div>
-                        <div>
-                            <div class="label">Email</div>
-                            <input id="uEmail" class="input" type="email" placeholder="email@empresa.com" autocomplete="off">
-                        </div>
-                    </div>
-                    <div class="grid-2" style="margin-top:0.75rem;">
-                        <div>
-                            <div class="label">Senha</div>
-                            <input id="uPassword" class="input" type="password" placeholder="••••••••">
-                        </div>
-                        <div>
-                            <div class="label">Perfil</div>
-                            <select id="uRole" class="select">
-                                <option value="user">Usuário</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="actions">
-                        <button id="clearBtn" type="button" class="btn btn-ghost">Limpar</button>
-                        <button id="saveBtn" type="button" class="btn btn-primary">Cadastrar</button>
-                    </div>
-                </section>
                 <section class="section" style="margin-top:1rem;">
-                    <h3 style="margin:0 0 0.75rem 0; font-size:1rem; font-weight:600; color:#D1D5DB;">Usuários cadastrados</h3>
                     <div id="usersList">
                         <table>
                             <thead>
@@ -244,6 +39,43 @@
             </div>
         </div>
     </main>
+    <div id="cadastroUserModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head">
+                <span>Cadastrar usuário</span>
+                <button type="button" class="btn btn-ghost btn-icon" onclick="fecharCadastroUsuario()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="grid-2">
+                    <div>
+                        <div class="label">Nome</div>
+                        <input id="uName" class="input" type="text" placeholder="Nome completo" autocomplete="off">
+                    </div>
+                    <div>
+                        <div class="label">Email</div>
+                        <input id="uEmail" class="input" type="email" placeholder="email@empresa.com" autocomplete="off">
+                    </div>
+                </div>
+                <div class="grid-2" style="margin-top:0.75rem;">
+                    <div>
+                        <div class="label">Senha</div>
+                        <input id="uPassword" class="input" type="password" placeholder="••••••••">
+                    </div>
+                    <div>
+                        <div class="label">Perfil</div>
+                        <select id="uRole" class="select">
+                            <option value="user">Usuário</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" onclick="limparFormulario()">Limpar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarUsuario()">Cadastrar</button>
+            </div>
+        </div>
+    </div>
     <div id="editUserModal" class="modal">
         <div class="modal-card">
             <div class="modal-head">
@@ -331,6 +163,13 @@
         let __usersCache = [];
         let __editUserId = null;
         let __deleteUserId = null;
+        function abrirCadastroUsuario() {
+            document.getElementById('cadastroUserModal').classList.add('show');
+        }
+        function fecharCadastroUsuario() {
+            document.getElementById('cadastroUserModal').classList.remove('show');
+            limparFormulario();
+        }
         function renderUsersTable(users) {
             const tbody = document.getElementById('usersTbody');
             __usersCache = Array.isArray(users) ? users.slice() : [];
@@ -433,6 +272,7 @@
                 await api('/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password, role }) });
                 toast('Usuário cadastrado', 'success');
                 limparFormulario();
+                try { document.getElementById('cadastroUserModal').classList.remove('show'); } catch {}
                 await carregarUsuarios();
             } catch (e) {
                 toast('Erro ao cadastrar usuário', 'error');
@@ -462,8 +302,6 @@
                     window.location.href = 'login.html';
                 });
             }
-            document.getElementById('clearBtn').addEventListener('click', limparFormulario);
-            document.getElementById('saveBtn').addEventListener('click', salvarUsuario);
             await carregarUsuarios();
             if (window.lucide && typeof window.lucide.createIcons === 'function') { window.lucide.createIcons(); }
         });
