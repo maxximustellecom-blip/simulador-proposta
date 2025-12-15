@@ -112,6 +112,7 @@
         }
         let __clients = [];
         let __negociacoes = [];
+        let __editingNegId = null;
         function findClientByCnpj(cnpjDigits) {
             const d = onlyDigits(cnpjDigits || '');
             return (__clients || []).find(c => onlyDigits(c.cnpj) === d);
@@ -196,11 +197,14 @@
             const mClienteDropdown = document.getElementById('mClienteDropdown');
             const mTipo = document.getElementById('mTipo');
             const mProposta = document.getElementById('mProposta');
+            const headTitleEl = document.querySelector('#negociarModal .modal-head div');
             if (mClienteHidden) mClienteHidden.value = '';
             if (mClienteSearch) mClienteSearch.value = '';
             if (mClienteDropdown) { mClienteDropdown.innerHTML = ''; mClienteDropdown.classList.remove('show', 'limited'); }
             if (mTipo) mTipo.value = '1º VENDA';
             if (mProposta) mProposta.value = 'PROPOSTA PADRÃO';
+            __editingNegId = null;
+            if (headTitleEl) headTitleEl.textContent = 'Nova negociação';
         }
         async function buscar() {
             try {
@@ -224,6 +228,9 @@
             setClienteSelected(n?.cnpj || '');
             document.getElementById('mTipo').value = n?.tipo || '1º VENDA';
             document.getElementById('mProposta').value = n?.proposta || 'PROPOSTA PADRÃO';
+            __editingNegId = Number(id);
+            const headTitleEl = document.querySelector('#negociarModal .modal-head div');
+            if (headTitleEl) headTitleEl.textContent = 'Editar negociação';
             openModal();
         };
         window.detalharNegociacao = function(id) {
@@ -263,7 +270,11 @@
                 const proposta = document.getElementById('mProposta').value;
                 if (!cnpj || !tipo || !proposta) return;
                 const payload = { cnpj, tipo, proposta };
-                await api('/negotiations', { method: 'POST', body: JSON.stringify(payload) });
+                if (__editingNegId) {
+                    await api('/negotiations/' + String(__editingNegId), { method: 'PUT', body: JSON.stringify(payload) });
+                } else {
+                    await api('/negotiations', { method: 'POST', body: JSON.stringify(payload) });
+                }
                 closeModal();
                 buscar();
             } catch {}
