@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Histórico de Vendas • Maxximus Telecom</title>
+    <title>Histórico de Simulações • Maxximus Telecom</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
@@ -13,7 +13,7 @@
         <div class="card">
             <div class="card-head">
                 <div class="card-title">
-                    <span>Histórico de Vendas</span>
+                    <span>Histórico de Simulações</span>
                     <span class="chip">Visão consolidada</span>
                 </div>
                 <div class="muted" id="scopeLabel"></div>
@@ -183,7 +183,7 @@
             __currentSales = Array.isArray(sales) ? sales.slice() : [];
             const list = document.getElementById('historyList');
             const scopeLabel = document.getElementById('scopeLabel');
-            scopeLabel.textContent = isAdmin ? 'Administrador: todas as vendas' : 'Usuário: suas vendas';
+            scopeLabel.textContent = isAdmin ? 'Administrador: todas as simulações' : 'Usuário: suas simulações';
             if (!sales || sales.length === 0) {
                 list.innerHTML = `<div class="empty">Nenhum registro encontrado</div>`;
                 return;

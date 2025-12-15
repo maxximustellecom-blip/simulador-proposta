@@ -32,20 +32,27 @@
         '</div>' +
       '</div>' +
     '</header>';
+  var simOpen = isActive('simular') || isActive('historico-simulacoes');
   var sidebarHtml =
     '<nav class="sidebar">' +
       '<div class="nav-group">' +
         '<a href="dashboard.html" class="nav-link' + (isActive('dashboard') ? ' active' : '') + '"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>' +
         '<a href="clientes.html" class="nav-link' + (isActive('clientes') ? ' active' : '') + '"><i data-lucide="building-2"></i><span>Clientes</span></a>' +
-        '<a href="historico.html" class="nav-link' + (isActive('historico') ? ' active' : '') + '"><i data-lucide="list"></i><span>Histórico</span></a>' +
-        '<a href="simular.html" class="nav-link' + (isActive('simular') ? ' active' : '') + '"><i data-lucide="calculator"></i><span>Simular</span></a>' +
+        '<button id="simulacaoToggle" class="nav-dropdown' + (simOpen ? ' open' : '') + '" type="button">' +
+          '<div class="left"><i data-lucide="layers"></i><span>Simulação</span></div>' +
+          '<div class="chev"><i data-lucide="chevron-down"></i></div>' +
+        '</button>' +
+        '<div id="simulacaoMenu" class="nav-subgroup" style="display:' + (simOpen ? 'flex' : 'none') + ';">' +
+          '<a href="simular.html" class="nav-sublink' + (isActive('simular') ? ' active' : '') + '"><i data-lucide="calculator"></i><span>Simular</span></a>' +
+          '<a href="historico-simulacoes.html" class="nav-sublink' + (isActive('historico-simulacoes') ? ' active' : '') + '"><i data-lucide="list"></i><span>Histórico</span></a>' +
+        '</div>' +
         '<a id="navUsers" href="usuarios.html" class="nav-link' + (isActive('usuarios') ? ' active' : '') + '" style="display:' + (isAdmin ? 'flex' : 'none') + '"><i data-lucide="users"></i><span>Usuários</span></a>' +
       '</div>' +
     '</nav>';
   var bottomHtml =
     '<nav class="bottomnav">' +
       '<a href="dashboard.html" class="' + (isActive('dashboard') ? 'active' : '') + '"><i data-lucide="layout-dashboard"></i><span class="label">Dashboard</span></a>' +
-      '<a href="historico.html" class="' + (isActive('historico') ? 'active' : '') + '"><i data-lucide="list"></i><span class="label">Histórico</span></a>' +
+      '<a href="historico-simulacoes.html" class="' + (isActive('historico-simulacoes') ? 'active' : '') + '"><i data-lucide="list"></i><span class="label">Histórico</span></a>' +
       '<a href="simular.html" class="' + (isActive('simular') ? 'active' : '') + '"><i data-lucide="calculator"></i><span class="label">Simular</span></a>' +
       '<a href="clientes.html" class="' + (isActive('clientes') ? 'active' : '') + '"><i data-lucide="building-2"></i><span class="label">Clientes</span></a>' +
       '<a id="bottomUsers" href="usuarios.html" style="display:' + (isAdmin ? 'inline-flex' : 'none') + ';" class="' + (isActive('usuarios') ? 'active' : '') + '"><i data-lucide="users"></i><span class="label">Usuários</span></a>' +
@@ -103,6 +110,21 @@
   }
   if (window.lucide && typeof window.lucide.createIcons === 'function') {
     window.lucide.createIcons();
+  }
+  var simBtn = document.getElementById('simulacaoToggle');
+  var simMenu = document.getElementById('simulacaoMenu');
+  if (simBtn && simMenu) {
+    simBtn.addEventListener('click', function () {
+      var isOpen = simBtn.classList.contains('open');
+      if (isOpen) {
+        simBtn.classList.remove('open');
+        simMenu.style.display = 'none';
+      } else {
+        simBtn.classList.add('open');
+        simMenu.style.display = 'flex';
+      }
+      if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    });
   }
   try {
     var tables = document.querySelectorAll('table');
