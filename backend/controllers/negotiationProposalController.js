@@ -40,7 +40,12 @@ export async function saveProposalForNegotiation(req, res) {
     const { linhas } = req.body || {};
     if (!Array.isArray(linhas) || linhas.length === 0) return res.status(400).json({ error: 'linhas inválidas' });
     const total_acessos = linhas.reduce((acc, l) => acc + toNumber(l.quantidade, 0), 0);
-    const total_valor = linhas.reduce((acc, l) => acc + (toNumber(l.quantidade, 1) * toNumber(l.valorPlano, 0)), 0);
+    const total_valor = linhas.reduce((acc, l) => {
+      const q = toNumber(l.quantidade, 1);
+      const vPlano = toNumber(l.valorPlano, 0);
+      const vAparelho = String(l.temAparelho) === 'Sim' ? toNumber(l.valorAparelho, 0) : 0;
+      return acc + (q * vPlano) + (q * vAparelho);
+    }, 0);
     let prop = await NegociacaoProposta.findOne({ where: { negotiation_id: id } });
     if (!prop) {
       prop = await NegociacaoProposta.create({
@@ -68,4 +73,3 @@ export async function saveProposalForNegotiation(req, res) {
     return res.status(500).json({ error: 'erro ao salvar proposta', details: String(err && err.message ? err.message : err) });
   }
 }
-
