@@ -5,8 +5,9 @@ import Simulation from './Simulation.js';
 import Sale from './Sale.js';
 import Category from './Category.js';
 import Product from './Product.js';
+import Negotiation from './Negotiation.js';
 
 Simulation.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 User.hasMany(Simulation, { foreignKey: 'created_by', as: 'simulations' });
 
-export { sequelize, User, Client, Simulation, Sale, Category, Product };
+export { sequelize, User, Client, Simulation, Sale, Category, Product, Negotiation };

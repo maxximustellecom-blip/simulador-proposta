@@ -53,12 +53,12 @@
           '<a href="simular.html" class="nav-sublink' + (isActive('simular') ? ' active' : '') + '"><i data-lucide="calculator"></i><span>Simular</span></a>' +
           '<a href="historico-simulacoes.html" class="nav-sublink' + (isActive('historico-simulacoes') ? ' active' : '') + '"><i data-lucide="list"></i><span>Histórico</span></a>' +
         '</div>' +
-        '<div class="nav-title">Ofertas</div>' +
-        '<button id="ofertaToggle" class="nav-dropdown' + (ofertaOpen ? ' open' : '') + '" type="button">' +
+        '<div class="nav-title" style="display:' + (isAdmin ? 'flex' : 'none') + '">Ofertas</div>' +
+        '<button id="ofertaToggle" class="nav-dropdown' + (ofertaOpen ? ' open' : '') + '" type="button" style="display:' + (isAdmin ? 'flex' : 'none') + ';">' +
           '<div class="left"><i data-lucide="package"></i><span>Oferta Padrão</span></div>' +
           '<div class="chev"><i data-lucide="chevron-down"></i></div>' +
         '</button>' +
-        '<div id="ofertaMenu" class="nav-subgroup" style="display:' + (ofertaOpen ? 'flex' : 'none') + ';">' +
+        '<div id="ofertaMenu" class="nav-subgroup" style="display:' + ((isAdmin && ofertaOpen) ? 'flex' : 'none') + ';">' +
           '<a href="categorias.html" class="nav-sublink' + (isActive('categorias') ? ' active' : '') + '"><i data-lucide="tags"></i><span>Categorias</span></a>' +
           '<a href="produtos.html" class="nav-sublink' + (isActive('produtos') ? ' active' : '') + '"><i data-lucide="shopping-bag"></i><span>Produtos</span></a>' +
         '</div>' +

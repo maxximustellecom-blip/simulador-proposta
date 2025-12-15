@@ -8,6 +8,7 @@ import simulationRouter from './routes/simulation.js';
 import saleRouter from './routes/sale.js';
 import categoryRouter from './routes/category.js';
 import productRouter from './routes/product.js';
+import negotiationRouter from './routes/negotiation.js';
 import authContext from './middleware/authContext.js';
 
 dotenv.config();
@@ -27,6 +28,7 @@ app.use('/simulations', simulationRouter);
 app.use('/sales', saleRouter);
 app.use('/categories', categoryRouter);
 app.use('/products', productRouter);
+app.use('/negotiations', negotiationRouter);
 
 const port = process.env.PORT || 3001;
 

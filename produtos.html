@@ -237,6 +237,11 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const auth = localStorage.getItem('authUser');
             if (!auth) { window.location.href = 'login.html'; return; }
+            try {
+                const u = JSON.parse(auth || '{}');
+                const role = String(u.role || '').toLowerCase();
+                if (role !== 'admin') { window.location.href = 'dashboard.html'; return; }
+            } catch { window.location.href = 'dashboard.html'; return; }
             await carregarCategorias();
             await carregarProdutos();
             const novoBtn = document.getElementById('novoProdutoBtn');
