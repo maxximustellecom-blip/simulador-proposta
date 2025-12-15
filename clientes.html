@@ -21,8 +21,8 @@
                 </div>
             </div>
             <div class="card-body">
-                <section class="section">
-                    <div class="grid-3">
+                <section class="section" style="margin-top: 20px;">
+                    <div id="filtersClientes" class="filters">
                         <div>
                             <div class="label">Nome</div>
                             <input id="fNome" class="input" type="text" placeholder="Razão social" autocomplete="off">
@@ -31,9 +31,9 @@
                             <div class="label">CNPJ</div>
                             <input id="fCnpj" class="input" type="text" placeholder="00.000.000/0000-00" autocomplete="off">
                         </div>
-                        <div class="actions" style="padding:0;">
-                            <button id="buscarBtn" class="btn btn-primary" type="button"><i data-lucide="search"></i><span>Buscar</span></button>
-                            <button id="limparBtn" class="btn btn-ghost" type="button"><i data-lucide="rotate-ccw"></i><span>Limpar</span></button>
+                        <div style="display:flex; align-items:flex-end; gap:0.5rem;">
+                            <button id="buscarBtn" class="btn btn-primary" type="button" title="Buscar"><i data-lucide="search"></i><span>Buscar</span></button>
+                            <button id="limparBtn" class="btn btn-ghost" type="button" title="Limpar"><i data-lucide="rotate-ccw"></i><span>Limpar</span></button>
                         </div>
                     </div>
                 </section>
@@ -42,24 +42,26 @@
                         <div class="label">Lista de clientes</div>
                         <div class="muted" id="countLabel">0 itens</div>
                     </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>CNPJ</th>
-                                <th style="min-width:100px;">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="clientsTbody">
-                            <tr><td colspan="3">
-                                <div class="skeleton skel-row"></div>
-                                <div class="skeleton skel-row"></div>
-                                <div class="skeleton skel-row"></div>
-                                <div class="skeleton skel-row"></div>
-                                <div class="skeleton skel-row"></div>
-                            </td></tr>
-                        </tbody>
-                    </table>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>CNPJ</th>
+                                    <th class="col-actions" style="min-width:140px;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientsTbody">
+                                <tr><td colspan="3">
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                </td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </section>
             </div>
         </div>
@@ -154,9 +156,8 @@
                 <tr>
                     <td>${c.name}</td>
                     <td>${c.cnpj}</td>
-                    <td style="min-width:200px;">
-                        <div class="actions-right">
-                            <button type="button" class="btn btn-ghost btn-icon" title="Detalhes" onclick="abrirDetalhes(${c.id})"><i data-lucide="info"></i></button>
+                    <td class="col-actions">
+                        <div class="table-actions">
                             <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditar(${c.id})"><i data-lucide="edit-3"></i></button>
                             ${window.__isAdmin ? `<button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="excluirCliente(${c.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>` : ``}
                             <button type="button" class="btn btn-ghost" title="Negociar" onclick="irNegociar(${c.id})" style="border-color: rgba(59,130,246,0.35); color: #93C5FD;"><i data-lucide="arrow-right"></i><span>Negociar</span></button>

@@ -424,13 +424,23 @@ select option[disabled], .select option[disabled] {
 #filtersHistorico .input, #filtersHistorico .select { width: 100%; }
 #filtersHistorico .input, #filtersHistorico .select { box-sizing: border-box; min-width: 0; }
 #filtersHistorico .btn-icon { border-color: var(--border); }
+#filtersClientes {
+  align-items: end;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.2fr) auto;
+}
+#filtersClientes .input, #filtersClientes .select { width: 100%; box-sizing: border-box; min-width: 0; }
+#filtersClientes .btn-icon { border-color: var(--border); }
 @media (max-width: 919px) {
   #filtersHistorico { grid-template-columns: 1fr; }
   #filtersHistorico > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
+  #filtersClientes { grid-template-columns: 1fr; }
+  #filtersClientes > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
 }
 @media (max-width: 1024px) and (min-width: 920px) {
   #filtersHistorico { grid-template-columns: 1fr 1fr; }
   #filtersHistorico > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
+  #filtersClientes { grid-template-columns: 1fr 1fr; }
+  #filtersClientes > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
 }
 .chart-card { padding: 1rem; }
 .modal {
