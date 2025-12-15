@@ -245,10 +245,10 @@
                                                     <span class="muted">• CNPJ: ${s.cnpj || '-'}</span>
                                                     <span class="muted">• P2B: ${s.p2b ?? '-'}</span>
                                                 </div>
+                                                ${ isAdmin ? `<div class="amount">${currency(s.receita)}</div>` : ``}
                                             </div>
                                         </div>
                                         <div class="item-right">
-                                            ${ isAdmin ? `<div class="amount">${currency(s.receita)}</div>` : ``}
                                             ${ isAdmin ? `<button class="btn btn-ghost btn-icon" type="button" onclick='openEditModal(${JSON.stringify({id:""+s.id,tipo:s.tipo,receita:Number(s.receita||0),vendedor:s.vendedor||"",p2b:Number(s.p2b||0)})})'><i data-lucide="pencil"></i></button>` : ``}
                                             ${ isAdmin ? `<button class="btn btn-ghost btn-icon" type="button" onclick="openDeleteModal(${s.id})"><i data-lucide='trash-2'></i></button>` : ``}
                                         </div>

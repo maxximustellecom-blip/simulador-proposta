@@ -578,8 +578,18 @@ select option[disabled], .select option[disabled] {
 .vendor-heading { display: inline-flex; align-items: center; gap: 0.4rem; }
 .vendor-name { color: var(--primary); font-weight: 600; }
 .vendor-meta { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--muted); }
-.item { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.9rem; padding: 0.8rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 0.5rem; transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease; }
+.item { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.9rem; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 0.75rem; box-shadow: var(--shadow); transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease; }
 .item:hover { background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03)); border-color: rgba(255,255,255,0.12); transform: translateY(-1px); }
+.item-left { display: flex; align-items: flex-start; gap: 0.85rem; flex: 1; min-width: 0; }
+.item-right { display: inline-flex; align-items: flex-start; gap: 0.5rem; flex: none; }
+.avatar { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; background: var(--surface-strong); border: 1px solid var(--border); flex-shrink: 0; }
+.avatar i { width: 18px; height: 18px; stroke: var(--text); }
+.item-info { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+.item-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.item-name { display: block; width: 100%; font-weight: 700; color: var(--text); line-height: 1.35; }
+.level-inline { color: var(--primary); font-weight: 700; font-size: 0.85rem; }
+.item-meta { display: grid; grid-template-columns: 1fr; row-gap: 0.15rem; color: var(--muted); font-size: 0.9rem; }
+.amount { font-weight: 700; color: var(--text); letter-spacing: 0.2px; margin-top: 0.35rem; }
 .theme-toggle:hover {
   background: var(--surface-strong);
   border-color: var(--border);
