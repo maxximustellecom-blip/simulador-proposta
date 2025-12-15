@@ -52,13 +52,12 @@
                                 <tr>
                                     <th>Categoria</th>
                                     <th>Nome</th>
-                                    <th>Descrição</th>
-                                    <th>Preço (R$)</th>
+                                    <th>Preço&nbsp;(R$)</th>
                                     <th class="col-actions" style="min-width:160px;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="prodTbody">
-                                <tr><td colspan="5">
+                                <tr><td colspan="4">
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
@@ -149,21 +148,22 @@
             const arr = Array.isArray(list) ? list : [];
             const countLabel = document.getElementById('prodCountLabel');
             if (countLabel) countLabel.textContent = arr.length + ' ' + (arr.length === 1 ? 'item' : 'itens');
-            tbody.innerHTML = arr.map(p => `
+            tbody.innerHTML = arr.map(p => {
+                const catName = (__categoriasIdx[Number(p.categoria_id)] || ((p && p.category && (p.category.nome || p.category.name)) || '-'));
+                return `
                 <tr>
-                    <td><span class="ellipsis">${__categoriasIdx[Number(p.categoria_id)] || '-'}</span></td>
+                    <td><span class="ellipsis">${catName}</span></td>
                     <td><span class="ellipsis">${p.nome || p.name || '-'}</span></td>
-                    <td><span class="ellipsis">${p.descricao || p.description || '-'}</span></td>
                     <td>${currency(p.preco)}</td>
                     <td class="col-actions">
                         <div class="table-actions">
-                            <button type="button" class="btn btn-ghost btn-icon" title="Detalhes" onclick="detalharProduto(${p.id})"><i data-lucide="info"></i></button>
                             <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditarProduto(${p.id})"><i data-lucide="edit-3"></i></button>
-                            <button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="excluirProduto(${p.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="abrirConfirmExcluirProduto(${p.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
                         </div>
                     </td>
                 </tr>
-            `).join('') || '<tr><td colspan="5" class="muted">Sem resultados</td></tr>';
+            `;
+            }).join('') || '<tr><td colspan="4" class="muted">Sem resultados</td></tr>';
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         }
         function openModal() { document.getElementById('produtoModal').classList.add('show'); }
@@ -234,11 +234,11 @@
                 toast('Erro ao salvar produto', 'error');
             }
         }
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             const auth = localStorage.getItem('authUser');
             if (!auth) { window.location.href = 'login.html'; return; }
-            carregarCategorias();
-            carregarProdutos();
+            await carregarCategorias();
+            await carregarProdutos();
             const novoBtn = document.getElementById('novoProdutoBtn');
             if (novoBtn) {
                 novoBtn.addEventListener('click', () => {
@@ -264,8 +264,43 @@
             const mFechar = document.getElementById('mProdFechar');
             if (mSalvar) mSalvar.addEventListener('click', salvarProdutoModal);
             if (mFechar) mFechar.addEventListener('click', closeModal);
+            const confirmClose = document.getElementById('confirmDeleteClose');
+            const confirmCancel = document.getElementById('confirmDeleteCancel');
+            const confirmConfirm = document.getElementById('confirmDeleteConfirm');
+            if (confirmClose) confirmClose.addEventListener('click', fecharConfirmExcluirProduto);
+            if (confirmCancel) confirmCancel.addEventListener('click', fecharConfirmExcluirProduto);
+            if (confirmConfirm) confirmConfirm.addEventListener('click', async () => {
+                try {
+                    const id = Number(confirmConfirm.dataset.id || 0);
+                    if (!id) { toast('Produto inválido', 'error'); return; }
+                    await api('/products/' + id, { method: 'DELETE' });
+                    toast('Produto excluído', 'success');
+                    fecharConfirmExcluirProduto();
+                    carregarProdutos();
+                } catch {
+                    toast('Erro ao excluir produto', 'error');
+                }
+            });
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         });
+        function abrirConfirmExcluirProduto(id) {
+            try {
+                const p = (__produtos || []).find(x => Number(x.id) === Number(id));
+                const txt = document.getElementById('confirmDeleteText');
+                if (txt) txt.textContent = `Deseja excluir o produto "${p?.nome || p?.name || '-'}"?`;
+                const btn = document.getElementById('confirmDeleteConfirm');
+                if (btn) btn.dataset.id = String(id);
+                const modal = document.getElementById('confirmDeleteModal');
+                if (modal) modal.classList.add('show');
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+            } catch {}
+        }
+        function fecharConfirmExcluirProduto() {
+            const btn = document.getElementById('confirmDeleteConfirm');
+            if (btn) btn.dataset.id = '';
+            const modal = document.getElementById('confirmDeleteModal');
+            if (modal) modal.classList.remove('show');
+        }
     </script>
     <div id="toast" class="toast"></div>
     <script src="script.js"></script>
@@ -282,6 +317,19 @@
             </div>
             <div class="modal-actions">
                 <button id="mProdSalvar" class="btn btn-primary" type="button"><i data-lucide="check"></i><span>Salvar</span></button>
+            </div>
+        </div>
+    </div>
+    <div id="confirmDeleteModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Confirmar Exclusão</div><button id="confirmDeleteClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="label">Tem certeza que deseja excluir este produto?</div>
+                <div id="confirmDeleteText" class="muted" style="margin-top:0.5rem;"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmDeleteCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
+                <button id="confirmDeleteConfirm" class="btn btn-ghost" type="button" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i><span>Excluir</span></button>
             </div>
         </div>
     </div>

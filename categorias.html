@@ -105,9 +105,8 @@
                     <td><span class="ellipsis">${c.descricao || c.description || '-'}</span></td>
                     <td class="col-actions">
                         <div class="table-actions">
-                            <button type="button" class="btn btn-ghost btn-icon" title="Detalhes" onclick="detalharCategoria(${c.id})"><i data-lucide="info"></i></button>
                             <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditarCategoria(${c.id})"><i data-lucide="edit-3"></i></button>
-                            <button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="excluirCategoria(${c.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="abrirConfirmExcluirCategoria(${c.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
                         </div>
                     </td>
                 </tr>
@@ -215,8 +214,43 @@
             const mFechar = document.getElementById('mCatFechar');
             if (mSalvar) mSalvar.addEventListener('click', salvarCategoriaModal);
             if (mFechar) mFechar.addEventListener('click', closeModal);
+            const confirmClose = document.getElementById('confirmDeleteClose');
+            const confirmCancel = document.getElementById('confirmDeleteCancel');
+            const confirmConfirm = document.getElementById('confirmDeleteConfirm');
+            if (confirmClose) confirmClose.addEventListener('click', fecharConfirmExcluirCategoria);
+            if (confirmCancel) confirmCancel.addEventListener('click', fecharConfirmExcluirCategoria);
+            if (confirmConfirm) confirmConfirm.addEventListener('click', async () => {
+                try {
+                    const id = Number(confirmConfirm.dataset.id || 0);
+                    if (!id) { toast('Categoria inválida', 'error'); return; }
+                    await api('/categories/' + id, { method: 'DELETE' });
+                    toast('Categoria excluída', 'success');
+                    fecharConfirmExcluirCategoria();
+                    carregarCategoriasList();
+                } catch {
+                    toast('Erro ao excluir categoria', 'error');
+                }
+            });
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         });
+        function abrirConfirmExcluirCategoria(id) {
+            try {
+                const c = (__categorias || []).find(x => Number(x.id) === Number(id));
+                const txt = document.getElementById('confirmDeleteText');
+                if (txt) txt.textContent = `Deseja excluir a categoria "${c?.nome || c?.name || '-'}"?`;
+                const btn = document.getElementById('confirmDeleteConfirm');
+                if (btn) btn.dataset.id = String(id);
+                const modal = document.getElementById('confirmDeleteModal');
+                if (modal) modal.classList.add('show');
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+            } catch {}
+        }
+        function fecharConfirmExcluirCategoria() {
+            const btn = document.getElementById('confirmDeleteConfirm');
+            if (btn) btn.dataset.id = '';
+            const modal = document.getElementById('confirmDeleteModal');
+            if (modal) modal.classList.remove('show');
+        }
     </script>
     <div id="toast" class="toast"></div>
     <script src="script.js"></script>
@@ -231,6 +265,19 @@
             </div>
             <div class="modal-actions">
                 <button id="mCatSalvar" class="btn btn-primary" type="button"><i data-lucide="check"></i><span>Salvar</span></button>
+            </div>
+        </div>
+    </div>
+    <div id="confirmDeleteModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Confirmar Exclusão</div><button id="confirmDeleteClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="label">Tem certeza que deseja excluir esta categoria?</div>
+                <div id="confirmDeleteText" class="muted" style="margin-top:0.5rem;"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmDeleteCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
+                <button id="confirmDeleteConfirm" class="btn btn-ghost" type="button" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i><span>Excluir</span></button>
             </div>
         </div>
     </div>
