@@ -232,6 +232,26 @@
             function openConfirm() { confirmModal.classList.add('show'); }
             function closeConfirm() { confirmModal.classList.remove('show'); }
             function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
+            function formatCnpj(s) {
+                const p = onlyDigits(s).split('');
+                if (p.length >= 14) return `${p[0]}${p[1]}.${p[2]}${p[3]}${p[4]}.${p[5]}${p[6]}${p[7]}/${p[8]}${p[9]}${p[10]}${p[11]}-${p[12]}${p[13]}`;
+                if (p.length >= 12) return `${p[0]}${p[1]}.${p[2]}${p[3]}${p[4]}.${p[5]}${p[6]}${p[7]}/${p[8]}${p[9]}${p[10]}${p[11]}`;
+                if (p.length >= 8) return `${p[0]}${p[1]}.${p[2]}${p[3]}${p[4]}.${p[5]}${p[6]}${p[7]}`;
+                if (p.length >= 5) return `${p[0]}${p[1]}.${p[2]}${p[3]}${p[4]}`;
+                if (p.length >= 2) return `${p[0]}${p[1]}`;
+                return p[0] || '';
+            }
+            function formatCep(s) {
+                const p = onlyDigits(s).split('');
+                if (p.length >= 8) return `${p[0]}${p[1]}${p[2]}${p[3]}${p[4]}-${p[5]}${p[6]}${p[7]}`;
+                return p.join('');
+            }
+            function formatPhone(s) {
+                const p = onlyDigits(s);
+                if (p.length >= 11) return `(${p.slice(0,2)}) ${p.slice(2,7)}-${p.slice(7,11)}`;
+                if (p.length >= 10) return `(${p.slice(0,2)}) ${p.slice(2,6)}-${p.slice(6,10)}`;
+                return p;
+            }
             async function buscarCnpjAuto() {
                 try {
                     const cnpj = onlyDigits(document.getElementById('mCnpj').value);
@@ -242,9 +262,9 @@
                     document.getElementById('mNome').value = data.razao_social || document.getElementById('mNome').value;
                     document.getElementById('mFantasia').value = data.nome_fantasia || document.getElementById('mFantasia').value;
                     document.getElementById('mEmail').value = data.email || document.getElementById('mEmail').value;
-                    document.getElementById('mPhone').value = (data.telefone || data.telefone1 || '') || document.getElementById('mPhone').value;
+                    document.getElementById('mPhone').value = formatPhone((data.telefone || data.telefone1 || '') || document.getElementById('mPhone').value);
                     document.getElementById('mAbertura').value = data.data_inicio_atividade || document.getElementById('mAbertura').value;
-                    document.getElementById('mCep').value = data.cep || document.getElementById('mCep').value;
+                    document.getElementById('mCep').value = formatCep(data.cep || document.getElementById('mCep').value);
                     document.getElementById('mUf').value = data.uf || document.getElementById('mUf').value;
                     document.getElementById('mCidade').value = data.municipio || document.getElementById('mCidade').value;
                     document.getElementById('mBairro').value = data.bairro || document.getElementById('mBairro').value;
@@ -280,13 +300,13 @@
                 }
             }
             function preencherCampos(c) {
-                document.getElementById('mCnpj').value = c.cnpj || '';
+                document.getElementById('mCnpj').value = formatCnpj(c.cnpj || '');
                 document.getElementById('mNome').value = c.name || '';
                 document.getElementById('mFantasia').value = c.fantasy_name || '';
                 document.getElementById('mEmail').value = c.email || '';
-                document.getElementById('mPhone').value = c.phone || '';
+                document.getElementById('mPhone').value = formatPhone(c.phone || '');
                 document.getElementById('mAbertura').value = c.opening_date || '';
-                document.getElementById('mCep').value = c.cep || '';
+                document.getElementById('mCep').value = formatCep(c.cep || '');
                 document.getElementById('mUf').value = c.state || '';
                 document.getElementById('mCidade').value = c.city || '';
                 document.getElementById('mBairro').value = c.neighborhood || '';
@@ -363,15 +383,32 @@
                 function schedule() {
                     clearTimeout(timer);
                     timer = setTimeout(() => {
+                        cnpjInput.value = formatCnpj(cnpjInput.value);
                         const val = onlyDigits(cnpjInput.value);
-                        if (val !== last) {
-                            last = val;
-                            buscarCnpjAuto();
-                        }
+                        if (val.length === 14 && val !== last) { last = val; buscarCnpjAuto(); return; }
+                        if (val !== last) { last = val; buscarCnpjAuto(); }
                     }, 400);
                 }
-                cnpjInput.addEventListener('input', schedule);
+                cnpjInput.addEventListener('input', () => {
+                    clearTimeout(timer);
+                    cnpjInput.value = formatCnpj(cnpjInput.value);
+                    const val = onlyDigits(cnpjInput.value);
+                    if (val.length === 14 && val !== last) { last = val; buscarCnpjAuto(); return; }
+                    schedule();
+                });
                 cnpjInput.addEventListener('blur', schedule);
+            }
+            {
+                const cepInput = document.getElementById('mCep');
+                const phoneInput = document.getElementById('mPhone');
+                if (cepInput) {
+                    cepInput.addEventListener('input', () => { cepInput.value = formatCep(cepInput.value); });
+                    cepInput.addEventListener('blur', () => { cepInput.value = formatCep(cepInput.value); });
+                }
+                if (phoneInput) {
+                    phoneInput.addEventListener('input', () => { phoneInput.value = formatPhone(phoneInput.value); });
+                    phoneInput.addEventListener('blur', () => { phoneInput.value = formatPhone(phoneInput.value); });
+                }
             }
             document.getElementById('buscarBtn').addEventListener('click', buscar);
             document.getElementById('limparBtn').addEventListener('click', () => {

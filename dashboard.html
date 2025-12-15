@@ -147,6 +147,11 @@
                         </div>
                     </div>
                     <div id="userContent" style="display:none;">
+                        <div id="userFilters" class="filters">
+                            <input id="fFromUser" class="input" type="date">
+                            <input id="fToUser" class="input" type="date">
+                            <button id="applyFiltersUser" class="btn" type="button" title="Aplicar"><i data-lucide="filter"></i><span>Aplicar</span></button>
+                        </div>
                         <div class="kpis" id="userKpis" style="margin-bottom:1rem;"></div>
                         <div class="grid">
                             <div class="card" style="grid-column:1/-1;">
@@ -246,9 +251,12 @@
             return isNaN(dt.getTime()) ? null : dt;
         }
         function filterByControls(sales) {
-            const vendorSel = document.getElementById('fVendor').value;
-            const from = document.getElementById('fFrom').value;
-            const to = document.getElementById('fTo').value;
+            const vendorEl = document.getElementById('fVendor');
+            const vendorSel = vendorEl ? vendorEl.value : 'Todos';
+            const fromEl = document.getElementById('fFrom') || document.getElementById('fFromUser');
+            const toEl = document.getElementById('fTo') || document.getElementById('fToUser');
+            const from = fromEl ? fromEl.value : '';
+            const to = toEl ? toEl.value : '';
             const fromDt = from ? new Date(from) : null;
             const toDt = to ? new Date(to) : null;
             return (sales || []).filter(s => {
@@ -520,7 +528,16 @@
                     renderAdminDashboard(arr);
                 } else {
                     document.getElementById('userView').style.display = 'block';
-                    renderUserDashboard(Array.isArray(sales) ? sales : []);
+                    const arr = Array.isArray(sales) ? sales : [];
+                    const btn = document.getElementById('applyFiltersUser');
+                    if (btn) {
+                        btn.addEventListener('click', () => {
+                            const filtered = filterByControls(arr);
+                            renderUserDashboard(filtered);
+                            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+                        });
+                    }
+                    renderUserDashboard(arr);
                 }
             } catch {
                 if (isAdmin) {

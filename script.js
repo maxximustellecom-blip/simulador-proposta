@@ -35,9 +35,15 @@
   var simOpen = isActive('simular') || isActive('historico-simulacoes');
   var sidebarHtml =
     '<nav class="sidebar">' +
-      '<div class="nav-group">' +
-        '<a href="dashboard.html" class="nav-link' + (isActive('dashboard') ? ' active' : '') + '"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>' +
-        '<a href="clientes.html" class="nav-link' + (isActive('clientes') ? ' active' : '') + '"><i data-lucide="building-2"></i><span>Clientes</span></a>' +
+      '<div class="sidebar-inner">' +
+        '<div class="brand-mini"><i data-lucide="zap"></i><span>Maxximus</span></div>' +
+        '<div class="nav-title">Principal</div>' +
+        '<div class="nav-group">' +
+          '<a href="dashboard.html" class="nav-link' + (isActive('dashboard') ? ' active' : '') + '"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>' +
+          '<a href="clientes.html" class="nav-link' + (isActive('clientes') ? ' active' : '') + '"><i data-lucide="building-2"></i><span>Clientes</span></a>' +
+          '<a href="negociar.html" class="nav-link' + (isActive('negociar') ? ' active' : '') + '"><i data-lucide="handshake"></i><span>Negociação</span></a>' +
+        '</div>' +
+        '<div class="nav-title">Simulação</div>' +
         '<button id="simulacaoToggle" class="nav-dropdown' + (simOpen ? ' open' : '') + '" type="button">' +
           '<div class="left"><i data-lucide="layers"></i><span>Simulação</span></div>' +
           '<div class="chev"><i data-lucide="chevron-down"></i></div>' +
@@ -46,6 +52,7 @@
           '<a href="simular.html" class="nav-sublink' + (isActive('simular') ? ' active' : '') + '"><i data-lucide="calculator"></i><span>Simular</span></a>' +
           '<a href="historico-simulacoes.html" class="nav-sublink' + (isActive('historico-simulacoes') ? ' active' : '') + '"><i data-lucide="list"></i><span>Histórico</span></a>' +
         '</div>' +
+        '<div class="nav-title" id="adminTitle" style="display:' + (isAdmin ? 'block' : 'none') + '">Admin</div>' +
         '<a id="navUsers" href="usuarios.html" class="nav-link' + (isActive('usuarios') ? ' active' : '') + '" style="display:' + (isAdmin ? 'flex' : 'none') + '"><i data-lucide="users"></i><span>Usuários</span></a>' +
       '</div>' +
     '</nav>';

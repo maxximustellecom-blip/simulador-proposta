@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Negociações • Maxximus Telecom</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <main class="container">
+        <div class="card">
+            <div class="card-head">
+                <div class="card-title">
+                    <span>Negociações</span>
+                    <span class="chip">Painel de negociações</span>
+                </div>
+                <div class="muted">
+                    <button id="novaNegociacaoBtn" class="btn btn-primary" type="button"><i data-lucide="plus"></i><span>Nova negociação</span></button>
+                </div>
+            </div>
+            <div class="card-body">
+                <section class="section" style="margin-top: 20px;">
+                    <div id="filtersNegociacao" class="filters">
+                        <div>
+                            <div class="label">CNPJ</div>
+                            <input id="fCnpj" class="input" type="text" placeholder="00.000.000/0000-00" autocomplete="off">
+                        </div>
+                        <div>
+                            <div class="label">Status</div>
+                            <select id="fStatus" class="select">
+                                <option value="Todos">Todos</option>
+                                <option value="Em andamento">Em andamento</option>
+                                <option value="Concluída">Concluída</option>
+                                <option value="Cancelada">Cancelada</option>
+                            </select>
+                        </div>
+                        <div>
+                            <div class="label">Data</div>
+                            <input id="fData" class="input" type="date">
+                        </div>
+                        <div style="display:flex; align-items:flex-end; gap:0.5rem;">
+                            <button id="buscarBtn" class="btn btn-primary" type="button" title="Buscar"><i data-lucide="search"></i><span>Buscar</span></button>
+                            <button id="limparBtn" class="btn btn-ghost" type="button" title="Limpar"><i data-lucide="rotate-ccw"></i><span>Limpar</span></button>
+                        </div>
+                    </div>
+                </section>
+                <section class="section" style="margin-top:1rem;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <div class="label">Lista de negociações</div>
+                        <div class="muted" id="countLabel">0 itens</div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>CNPJ</th>
+                                    <th>Tipo</th>
+                                    <th>Proposta</th>
+                                    <th>Status</th>
+                                    <th>Data</th>
+                                    <th class="col-actions" style="min-width:160px;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="negocTbody">
+                                <tr><td colspan="6">
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                </td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+    <script>
+        const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
+        async function api(path, options = {}) {
+            const authRaw = localStorage.getItem('authUser');
+            let headers = { 'Content-Type': 'application/json' };
+            try {
+                const u = JSON.parse(authRaw || '{}');
+                if (u && u.id) headers['x-user-id'] = String(u.id);
+                if (u && u.role) headers['x-user-role'] = String(u.role);
+                if (u && u.name) headers['x-user-name'] = String(u.name);
+            } catch {}
+            const res = await fetch(API_BASE + path, { headers, ...options });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || ('HTTP ' + res.status));
+            }
+            return res.json();
+        }
+        function currency(v) {
+            try { return (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })).format(Number(v || 0)); } catch { return 'R$ 0,00'; }
+        }
+        function formatCnpj(s) {
+            const p = String(s || '').replace(/\D/g,'').split('');
+            if (p.length >= 14) return `${p[0]}${p[1]}.${p[2]}${p[3]}${p[4]}.${p[5]}${p[6]}${p[7]}/${p[8]}${p[9]}${p[10]}${p[11]}-${p[12]}${p[13]}`;
+            if (p.length >= 12) return `${p[0]}${p[1]}.${p[2]}${p[3]}${p[4]}.${p[5]}${p[6]}${p[7]}/${p[8]}${p[9]}${p[10]}${p[11]}`;
+            if (p.length >= 8) return `${p[0]}${p[1]}.${p[2]}${p[3]}${p[4]}.${p[5]}${p[6]}${p[7]}`;
+            if (p.length >= 5) return `${p[0]}${p[1]}.${p[2]}${p[3]}${p[4]}`;
+            if (p.length >= 2) return `${p[0]}${p[1]}`;
+            return p[0] || '';
+        }
+        let __clients = [];
+        let __negociacoes = [];
+        function findClientByCnpj(cnpjDigits) {
+            const d = onlyDigits(cnpjDigits || '');
+            return (__clients || []).find(c => onlyDigits(c.cnpj) === d);
+        }
+        function renderNegociacoesTable(list) {
+            const tbody = document.getElementById('negocTbody');
+            const arr = Array.isArray(list) ? list : [];
+            document.getElementById('countLabel').textContent = arr.length + ' ' + (arr.length === 1 ? 'item' : 'itens');
+            tbody.innerHTML = arr.map(n => `
+                <tr>
+                    <td>${formatCnpj(n.cnpj || '')}</td>
+                    <td>${n.tipo || '-'}</td>
+                    <td><span class="ellipsis">${n.proposta || '-'}</span></td>
+                    <td>${n.status || '-'}</td>
+                    <td>${n.data || '-'}</td>
+                    <td class="col-actions">
+                        <div class="table-actions">
+                            <button type="button" class="btn btn-ghost btn-icon" title="Detalhes" onclick="detalharNegociacao(${n.id})"><i data-lucide="info"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="editarNegociacao(${n.id})"><i data-lucide="edit-3"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="excluirNegociacao(${n.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="6" class="muted">Sem resultados</td></tr>';
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        }
+        function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
+        async function carregarClientes() {
+            try {
+                const list = await api('/clients', { method: 'GET' });
+                __clients = Array.isArray(list) ? list : [];
+            } catch { __clients = []; }
+        }
+        function renderClienteOptions(selectedCnpj) {
+            if (!__clients || __clients.length === 0) return [];
+            const q = String(document.getElementById('mClienteSearch')?.value || '').toLowerCase();
+            return __clients.filter(c => {
+                if (!q) return true;
+                const s = (String(c.name || '') + ' ' + String(c.cnpj || '')).toLowerCase();
+                return s.includes(q);
+            }).map(c => ({
+                value: onlyDigits(c.cnpj),
+                label: (c.name || '') + ' • ' + formatCnpj(c.cnpj),
+                selected: (onlyDigits(c.cnpj) === onlyDigits(selectedCnpj))
+            }));
+        }
+        function setClienteSelected(cnpjDigits) {
+            const inputHidden = document.getElementById('mCliente');
+            const inputSearch = document.getElementById('mClienteSearch');
+            const c = findClientByCnpj(cnpjDigits);
+            inputHidden.value = onlyDigits(cnpjDigits || '');
+            inputSearch.value = c ? ((c.name || '') + ' • ' + formatCnpj(c.cnpj)) : '';
+            const dd = document.getElementById('mClienteDropdown');
+            if (dd) dd.classList.remove('show');
+        }
+        function renderClienteDropdown(selectedCnpj) {
+            const dd = document.getElementById('mClienteDropdown');
+            const opts = renderClienteOptions(selectedCnpj);
+            dd.innerHTML = opts.map(o => `
+                <button type="button" class="dropdown-item" data-val="${o.value}">
+                    <i data-lucide="building-2"></i>
+                    <span>${o.label}</span>
+                </button>
+            `).join('') || `<div class="muted" style="padding:0.6rem 0.9rem;">Sem resultados</div>`;
+            if (opts.length > 10) dd.classList.add('limited'); else dd.classList.remove('limited');
+            Array.from(dd.querySelectorAll('.dropdown-item')).forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const v = e.currentTarget.getAttribute('data-val') || '';
+                    setClienteSelected(v);
+                });
+            });
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        }
+        function openModal() { document.getElementById('negociarModal').classList.add('show'); }
+        function closeModal() {
+            const modal = document.getElementById('negociarModal');
+            if (modal) modal.classList.remove('show');
+            const mClienteHidden = document.getElementById('mCliente');
+            const mClienteSearch = document.getElementById('mClienteSearch');
+            const mClienteDropdown = document.getElementById('mClienteDropdown');
+            const mTipo = document.getElementById('mTipo');
+            const mProposta = document.getElementById('mProposta');
+            if (mClienteHidden) mClienteHidden.value = '';
+            if (mClienteSearch) mClienteSearch.value = '';
+            if (mClienteDropdown) { mClienteDropdown.innerHTML = ''; mClienteDropdown.classList.remove('show', 'limited'); }
+            if (mTipo) mTipo.value = '1º VENDA';
+            if (mProposta) mProposta.value = 'PROPOSTA TABELADA';
+        }
+        async function buscar() {
+            try {
+                const cnpj = onlyDigits(document.getElementById('fCnpj').value);
+                const status = document.getElementById('fStatus').value;
+                const data = document.getElementById('fData').value;
+                const params = [];
+                if (cnpj) params.push('cnpj=' + encodeURIComponent(cnpj));
+                if (status && status !== 'Todos') params.push('status=' + encodeURIComponent(status));
+                if (data) params.push('data=' + encodeURIComponent(data));
+                const qs = params.length ? ('?' + params.join('&')) : '';
+                const list = await api('/negotiations' + qs, { method: 'GET' }).catch(() => []);
+                __negociacoes = Array.isArray(list) ? list : [];
+                renderNegociacoesTable(__negociacoes);
+            } catch {
+                renderNegociacoesTable([]);
+            }
+        }
+        window.editarNegociacao = function(id) {
+            const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
+            setClienteSelected(n?.cnpj || '');
+            document.getElementById('mTipo').value = n?.tipo || '1º VENDA';
+            document.getElementById('mProposta').value = n?.proposta || 'PROPOSTA TABELADA';
+            openModal();
+        };
+        window.detalharNegociacao = function(id) {
+            const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
+            const msg = [
+                'Negociação',
+                'CNPJ: ' + formatCnpj(n?.cnpj || ''),
+                'Status: ' + (n?.status || '-'),
+                'Data: ' + (n?.data || '-'),
+                'Tipo: ' + (n?.tipo || '-'),
+                'Proposta: ' + (n?.proposta || '-')
+            ].join('\n');
+            alert(msg);
+        };
+        window.excluirNegociacao = async function(id) {
+            try {
+                const ok = window.confirm('Confirmar exclusão?');
+                if (!ok) return;
+                await api('/negotiations/' + id, { method: 'DELETE' });
+                buscar();
+            } catch {}
+        };
+        async function salvarNegociacao() {
+            try {
+                const cnpj = onlyDigits(document.getElementById('mCliente').value || '');
+                const tipo = document.getElementById('mTipo').value;
+                const proposta = document.getElementById('mProposta').value;
+                if (!cnpj || !tipo || !proposta) return;
+                const payload = { cnpj, tipo, proposta };
+                await api('/negotiations', { method: 'POST', body: JSON.stringify(payload) });
+                closeModal();
+                buscar();
+            } catch {}
+        }
+        document.addEventListener('DOMContentLoaded', async () => {
+            const auth = localStorage.getItem('authUser');
+            if (!auth) { window.location.href = 'login.html'; return; }
+            try {
+                await carregarClientes();
+                renderClienteDropdown('');
+                const params = new URLSearchParams(window.location.search || '');
+                const idParam = params.get('id');
+                if (idParam) {
+                    const idNum = Number(idParam);
+                    const c = (__clients || []).find(x => Number(x.id) === idNum);
+                    if (c) {
+                        setClienteSelected(c.cnpj || '');
+                        document.getElementById('mTipo').value = '1º VENDA';
+                        document.getElementById('mProposta').value = 'PROPOSTA TABELADA';
+                        openModal();
+                        if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+                        try {
+                            const url = new URL(window.location.href);
+                            url.searchParams.delete('id');
+                            const newQs = url.searchParams.toString();
+                            const newUrl = url.pathname + (newQs ? ('?' + newQs) : '') + url.hash;
+                            window.history.replaceState({}, document.title, newUrl);
+                        } catch {}
+                    }
+                }
+            } catch {}
+            document.getElementById('novaNegociacaoBtn').addEventListener('click', () => {
+                setClienteSelected('');
+                document.getElementById('mTipo').value = '1º VENDA';
+                document.getElementById('mProposta').value = 'PROPOSTA TABELADA';
+                openModal();
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+            });
+            document.getElementById('buscarBtn').addEventListener('click', buscar);
+            document.getElementById('limparBtn').addEventListener('click', () => {
+                document.getElementById('fCnpj').value = '';
+                document.getElementById('fStatus').value = 'Todos';
+                document.getElementById('fData').value = '';
+                buscar();
+            });
+            document.getElementById('mSalvar').addEventListener('click', salvarNegociacao);
+            document.getElementById('mFechar').addEventListener('click', closeModal);
+            document.getElementById('fCnpj').addEventListener('input', (e) => { e.target.value = formatCnpj(e.target.value); });
+            const mSearch = document.getElementById('mClienteSearch');
+            const mDropdown = document.getElementById('mClienteDropdown');
+            if (mSearch) {
+                mSearch.addEventListener('input', () => {
+                    renderClienteDropdown(document.getElementById('mCliente').value || '');
+                    if (mDropdown) mDropdown.classList.add('show');
+                });
+                mSearch.addEventListener('focus', () => {
+                    renderClienteDropdown(document.getElementById('mCliente').value || '');
+                    if (mDropdown) mDropdown.classList.add('show');
+                });
+            }
+            document.addEventListener('click', (e) => {
+                const wrap = document.getElementById('mClienteWrap');
+                if (!wrap) return;
+                if (!wrap.contains(e.target)) {
+                    if (mDropdown) mDropdown.classList.remove('show');
+                }
+            });
+            await buscar();
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        });
+    </script>
+    <div id="negociarModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Nova negociação</div><button id="mFechar" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="grid-2">
+                    <div>
+                        <div class="label">Cliente</div>
+                        <div id="mClienteWrap" class="search-select">
+                            <input id="mClienteSearch" class="input" type="text" placeholder="Pesquisar cliente por nome/CNPJ">
+                            <input id="mCliente" type="hidden" value="">
+                            <div id="mClienteDropdown" class="search-select-dropdown"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="label">Tipo</div>
+                        <select id="mTipo" class="select">
+                            <option value="1º VENDA">1º VENDA</option>
+                            <option value="RENEGOCIAÇÃO/ADTIVO">RENEGOCIAÇÃO/ADTIVO</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="label">Proposta</div>
+                        <select id="mProposta" class="select">
+                            <option value="PROPOSTA TABELADA">PROPOSTA TABELADA</option>
+                            <option value="PROPOSTA COSTUMIZADA">PROPOSTA COSTUMIZADA</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="mSalvar" class="btn btn-primary" type="button"><i data-lucide="check"></i><span>Salvar</span></button>
+            </div>
+        </div>
+    </div>
+    <div id="toast" class="toast"></div>
+    <script src="script.js"></script>
+</body>
+</html>
