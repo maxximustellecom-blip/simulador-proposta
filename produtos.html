@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produtos • Maxximus Telecom</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <main class="container">
+        <div class="card">
+            <div class="card-head">
+                <div class="card-title">
+                    <span>Oferta Padrão</span>
+                    <span class="chip">Produtos</span>
+                </div>
+                <div class="muted">
+                    <button id="novoProdutoBtn" class="btn btn-primary" type="button"><i data-lucide="plus"></i><span>Novo produto</span></button>
+                </div>
+            </div>
+            <div class="card-body">
+                <section class="section" style="margin-top: 20px;">
+                    <div id="filtersProdutos" class="filters">
+                        <div>
+                            <div class="label">Categoria</div>
+                            <select id="fProdCategoria" class="select"><option value="">Todas</option></select>
+                        </div>
+                        <div>
+                            <div class="label">Nome</div>
+                            <input id="fProdNome" class="input" type="text" placeholder="Nome do produto" autocomplete="off">
+                        </div>
+                        <div>
+                            <div class="label">Descrição</div>
+                            <input id="fProdDesc" class="input" type="text" placeholder="Descrição" autocomplete="off">
+                        </div>
+                        <div style="display:flex; align-items:flex-end; gap:0.5rem;">
+                            <button id="prodBuscarBtn" class="btn btn-primary" type="button" title="Buscar"><i data-lucide="search"></i><span>Buscar</span></button>
+                            <button id="prodLimparBtn" class="btn btn-ghost" type="button" title="Limpar"><i data-lucide="rotate-ccw"></i><span>Limpar</span></button>
+                        </div>
+                    </div>
+                </section>
+                <section class="section" style="margin-top: 10px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <div class="label">Lista de produtos</div>
+                        <div class="muted" id="prodCountLabel">0 itens</div>
+                    </div>
+                    <div class="table-container" style="margin-top:0.6rem;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Categoria</th>
+                                    <th>Nome</th>
+                                    <th>Descrição</th>
+                                    <th>Preço (R$)</th>
+                                    <th class="col-actions" style="min-width:160px;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prodTbody">
+                                <tr><td colspan="5">
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                </td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+    <script>
+        const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
+        async function api(path, options = {}) {
+            const authRaw = localStorage.getItem('authUser');
+            let headers = { 'Content-Type': 'application/json' };
+            try {
+                const u = JSON.parse(authRaw || '{}');
+                if (u && u.id) headers['x-user-id'] = String(u.id);
+                if (u && u.role) headers['x-user-role'] = String(u.role);
+                if (u && u.name) headers['x-user-name'] = String(u.name);
+            } catch {}
+            const res = await fetch(API_BASE + path, { headers, ...options });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || ('HTTP ' + res.status));
+            }
+            return res.json();
+        }
+        function currency(v) {
+            try { return (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })).format(Number(v || 0)); } catch { return 'R$ 0,00'; }
+        }
+        function toast(msg, type) {
+            const el = document.getElementById('toast');
+            if (!el) return;
+            el.textContent = msg;
+            el.style.borderColor = type === 'error' ? 'rgba(239,68,68,0.35)' : 'rgba(16,185,129,0.35)';
+            el.style.display = 'block';
+            clearTimeout(window.__toastTimer);
+            window.__toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2500);
+        }
+        let __categorias = [];
+        let __categoriasIdx = {};
+        let __produtos = [];
+        let __editingProdId = null;
+        async function carregarCategorias() {
+            try {
+                const list = await api('/categories', { method: 'GET' }).catch(() => []);
+                __categorias = Array.isArray(list) ? list : [];
+                __categoriasIdx = {};
+                __categorias.forEach(c => { __categoriasIdx[Number(c.id)] = (c.nome || c.name || '-'); });
+                const sel = document.getElementById('mProdCategoria');
+                if (sel) sel.innerHTML = ['<option value="">Selecione</option>'].concat(__categorias.map(c => `<option value="${c.id}">${c.nome || c.name || '-'}</option>`)).join('');
+                const fsel = document.getElementById('fProdCategoria');
+                if (fsel) fsel.innerHTML = ['<option value="">Todas</option>'].concat(__categorias.map(c => `<option value="${c.id}">${c.nome || c.name || '-'}</option>`)).join('');
+            } catch {
+                __categorias = [];
+                __categoriasIdx = {};
+                const sel = document.getElementById('mProdCategoria');
+                if (sel) sel.innerHTML = '<option value="">Erro ao carregar</option>';
+                const fsel = document.getElementById('fProdCategoria');
+                if (fsel) fsel.innerHTML = '<option value="">Erro ao carregar</option>';
+            }
+        }
+        async function carregarProdutos() {
+            try {
+                const list = await api('/products', { method: 'GET' }).catch(() => []);
+                __produtos = Array.isArray(list) ? list : [];
+                renderProdutosTable(__produtos);
+            } catch {
+                __produtos = [];
+                renderProdutosTable([]);
+            }
+        }
+        function aplicarFiltroProdutos() {
+            const cid = Number(document.getElementById('fProdCategoria').value || 0);
+            const nome = String(document.getElementById('fProdNome').value || '').trim().toUpperCase();
+            const desc = String(document.getElementById('fProdDesc').value || '').trim().toUpperCase();
+            let arr = (__produtos || []).slice();
+            if (cid) arr = arr.filter(p => Number(p.categoria_id) === cid);
+            if (nome) arr = arr.filter(p => String(p.nome || p.name || '').toUpperCase().includes(nome));
+            if (desc) arr = arr.filter(p => String(p.descricao || p.description || '').toUpperCase().includes(desc));
+            renderProdutosTable(arr);
+        }
+        function renderProdutosTable(list) {
+            const tbody = document.getElementById('prodTbody');
+            const arr = Array.isArray(list) ? list : [];
+            const countLabel = document.getElementById('prodCountLabel');
+            if (countLabel) countLabel.textContent = arr.length + ' ' + (arr.length === 1 ? 'item' : 'itens');
+            tbody.innerHTML = arr.map(p => `
+                <tr>
+                    <td><span class="ellipsis">${__categoriasIdx[Number(p.categoria_id)] || '-'}</span></td>
+                    <td><span class="ellipsis">${p.nome || p.name || '-'}</span></td>
+                    <td><span class="ellipsis">${p.descricao || p.description || '-'}</span></td>
+                    <td>${currency(p.preco)}</td>
+                    <td class="col-actions">
+                        <div class="table-actions">
+                            <button type="button" class="btn btn-ghost btn-icon" title="Detalhes" onclick="detalharProduto(${p.id})"><i data-lucide="info"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditarProduto(${p.id})"><i data-lucide="edit-3"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="excluirProduto(${p.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" class="muted">Sem resultados</td></tr>';
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        }
+        function openModal() { document.getElementById('produtoModal').classList.add('show'); }
+        function closeModal() {
+            const modal = document.getElementById('produtoModal');
+            if (modal) modal.classList.remove('show');
+            __editingProdId = null;
+            const cat = document.getElementById('mProdCategoria');
+            const nome = document.getElementById('mProdNome');
+            const desc = document.getElementById('mProdDesc');
+            const preco = document.getElementById('mProdPreco');
+            if (cat) cat.value = '';
+            if (nome) nome.value = '';
+            if (desc) desc.value = '';
+            if (preco) preco.value = '';
+        }
+        window.detalharProduto = function(id) {
+            const p = (__produtos || []).find(x => Number(x.id) === Number(id));
+            const msg = [
+                'Produto',
+                'Categoria: ' + (__categoriasIdx[Number(p?.categoria_id)] || '-'),
+                'Nome: ' + (p?.nome || p?.name || '-'),
+                'Descrição: ' + (p?.descricao || p?.description || '-'),
+                'Preço: ' + currency(p?.preco)
+            ].join('\n');
+            alert(msg);
+        };
+        window.abrirEditarProduto = function(id) {
+            const p = (__produtos || []).find(x => Number(x.id) === Number(id));
+            if (!p) return;
+            __editingProdId = Number(p.id);
+            document.getElementById('mProdCategoria').value = String(p.categoria_id || '');
+            document.getElementById('mProdNome').value = p.nome || p.name || '';
+            document.getElementById('mProdDesc').value = p.descricao || p.description || '';
+            document.getElementById('mProdPreco').value = String(p.preco || 0);
+            openModal();
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        };
+        window.excluirProduto = async function(id) {
+            try {
+                const ok = window.confirm('Confirmar exclusão?');
+                if (!ok) return;
+                await api('/products/' + id, { method: 'DELETE' });
+                toast('Produto excluído', 'success');
+                carregarProdutos();
+            } catch {
+                toast('Erro ao excluir produto', 'error');
+            }
+        };
+        async function salvarProdutoModal() {
+            try {
+                const categoria_id = Number(document.getElementById('mProdCategoria').value || 0);
+                const nome = String(document.getElementById('mProdNome').value || '').trim();
+                const descricao = String(document.getElementById('mProdDesc').value || '').trim() || null;
+                const preco = Number(document.getElementById('mProdPreco').value || 0);
+                if (!categoria_id || !nome || !(preco >= 0)) { toast('Preencha categoria, nome e preço', 'error'); return; }
+                const body = JSON.stringify({ categoria_id, nome, descricao, preco });
+                if (__editingProdId) {
+                    await api('/products/' + __editingProdId, { method: 'PUT', body });
+                    toast('Produto atualizado', 'success');
+                } else {
+                    await api('/products', { method: 'POST', body });
+                    toast('Produto registrado', 'success');
+                }
+                closeModal();
+                carregarProdutos();
+            } catch {
+                toast('Erro ao salvar produto', 'error');
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const auth = localStorage.getItem('authUser');
+            if (!auth) { window.location.href = 'login.html'; return; }
+            carregarCategorias();
+            carregarProdutos();
+            const novoBtn = document.getElementById('novoProdutoBtn');
+            if (novoBtn) {
+                novoBtn.addEventListener('click', () => {
+                    __editingProdId = null;
+                    document.getElementById('mProdCategoria').value = '';
+                    document.getElementById('mProdNome').value = '';
+                    document.getElementById('mProdDesc').value = '';
+                    document.getElementById('mProdPreco').value = '';
+                    openModal();
+                    if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+                });
+            }
+            const buscarBtn = document.getElementById('prodBuscarBtn');
+            const limparBtn = document.getElementById('prodLimparBtn');
+            if (buscarBtn) buscarBtn.addEventListener('click', aplicarFiltroProdutos);
+            if (limparBtn) limparBtn.addEventListener('click', () => {
+                document.getElementById('fProdCategoria').value = '';
+                document.getElementById('fProdNome').value = '';
+                document.getElementById('fProdDesc').value = '';
+                aplicarFiltroProdutos();
+            });
+            const mSalvar = document.getElementById('mProdSalvar');
+            const mFechar = document.getElementById('mProdFechar');
+            if (mSalvar) mSalvar.addEventListener('click', salvarProdutoModal);
+            if (mFechar) mFechar.addEventListener('click', closeModal);
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        });
+    </script>
+    <div id="toast" class="toast"></div>
+    <script src="script.js"></script>
+    <div id="produtoModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Produto</div><button id="mProdFechar" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="grid-2-modal">
+                    <div class="field"><span class="label-inline">Categoria</span><select id="mProdCategoria" class="select"><option value="">Carregando...</option></select></div>
+                    <div class="field"><span class="label-inline">Nome</span><input id="mProdNome" class="input" type="text" placeholder="Nome do produto"></div>
+                    <div class="field"><span class="label-inline">Descrição</span><input id="mProdDesc" class="input" type="text" placeholder="Descrição (opcional)"></div>
+                    <div class="field"><span class="label-inline">Preço (R$)</span><input id="mProdPreco" class="input" type="number" step="0.01" min="0" placeholder="0,00"></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="mProdSalvar" class="btn btn-primary" type="button"><i data-lucide="check"></i><span>Salvar</span></button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

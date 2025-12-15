@@ -6,6 +6,8 @@ import authRouter from './routes/auth.js';
 import clientRouter from './routes/client.js';
 import simulationRouter from './routes/simulation.js';
 import saleRouter from './routes/sale.js';
+import categoryRouter from './routes/category.js';
+import productRouter from './routes/product.js';
 import authContext from './middleware/authContext.js';
 
 dotenv.config();
@@ -23,6 +25,8 @@ app.use('/auth', authRouter);
 app.use('/clients', clientRouter);
 app.use('/simulations', simulationRouter);
 app.use('/sales', saleRouter);
+app.use('/categories', categoryRouter);
+app.use('/products', productRouter);
 
 const port = process.env.PORT || 3001;
 

@@ -514,6 +514,24 @@ select option[disabled], .select option[disabled] {
 }
 #filtersNegociacao .input, #filtersNegociacao .select { width: 100%; box-sizing: border-box; min-width: 0; }
 #filtersNegociacao .btn-icon { border-color: var(--border); }
+#filtersCategorias {
+  align-items: end;
+  background: var(--surface);
+  border-radius: 12px;
+  gap: 0.6rem;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.2fr) auto;
+}
+#filtersCategorias .input, #filtersCategorias .select { width: 100%; box-sizing: border-box; min-width: 0; }
+#filtersCategorias .btn-icon { border-color: var(--border); }
+#filtersProdutos {
+  align-items: end;
+  background: var(--surface);
+  border-radius: 12px;
+  gap: 0.6rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+}
+#filtersProdutos .input, #filtersProdutos .select { width: 100%; box-sizing: border-box; min-width: 0; }
+#filtersProdutos .btn-icon { border-color: var(--border); }
 @media (max-width: 919px) {
   #filtersHistorico { grid-template-columns: 1fr; }
   #filtersHistorico > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
@@ -525,6 +543,10 @@ select option[disabled], .select option[disabled] {
   #userFilters > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
   #filtersNegociacao { grid-template-columns: 1fr; }
   #filtersNegociacao > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
+  #filtersCategorias { grid-template-columns: 1fr; }
+  #filtersCategorias > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
+  #filtersProdutos { grid-template-columns: 1fr; }
+  #filtersProdutos > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
 }
 @media (max-width: 1024px) and (min-width: 920px) {
   #filtersHistorico { grid-template-columns: 1fr 1fr; }
@@ -537,6 +559,10 @@ select option[disabled], .select option[disabled] {
   #userFilters > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
   #filtersNegociacao { grid-template-columns: 1fr 1fr; }
   #filtersNegociacao > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
+  #filtersCategorias { grid-template-columns: 1fr 1fr; }
+  #filtersCategorias > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
+  #filtersProdutos { grid-template-columns: 1fr 1fr; }
+  #filtersProdutos > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
 }
 .chart-card canvas { max-width: 100%; }
 .chart-card { padding: 1rem; }

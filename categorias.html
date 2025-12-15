@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categorias • Maxximus Telecom</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <main class="container">
+        <div class="card">
+            <div class="card-head">
+                <div class="card-title">
+                    <span>Oferta Padrão</span>
+                    <span class="chip">Categorias</span>
+                </div>
+                <div class="muted">
+                    <button id="novaCategoriaBtn" class="btn btn-primary" type="button"><i data-lucide="plus"></i><span>Nova categoria</span></button>
+                </div>
+            </div>
+            <div class="card-body">
+                <section class="section" style="margin-top: 20px;">
+                    <div id="filtersCategorias" class="filters">
+                        <div>
+                            <div class="label">Nome</div>
+                            <input id="fCatNome" class="input" type="text" placeholder="Nome da categoria" autocomplete="off">
+                        </div>
+                        <div>
+                            <div class="label">Descrição</div>
+                            <input id="fCatDesc" class="input" type="text" placeholder="Descrição" autocomplete="off">
+                        </div>
+                        <div style="display:flex; align-items:flex-end; gap:0.5rem;">
+                            <button id="catBuscarBtn" class="btn btn-primary" type="button" title="Buscar"><i data-lucide="search"></i><span>Buscar</span></button>
+                            <button id="catLimparBtn" class="btn btn-ghost" type="button" title="Limpar"><i data-lucide="rotate-ccw"></i><span>Limpar</span></button>
+                        </div>
+                    </div>
+                </section>
+                <section class="section" style="margin-top: 10px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <div class="label">Lista de categorias</div>
+                        <div class="muted" id="catCountLabel">0 itens</div>
+                    </div>
+                    <div class="table-container" style="margin-top:0.6rem;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Descrição</th>
+                                    <th class="col-actions" style="min-width:160px;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="catTbody">
+                                <tr><td colspan="3">
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                </td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+    <script>
+        const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
+        async function api(path, options = {}) {
+            const authRaw = localStorage.getItem('authUser');
+            let headers = { 'Content-Type': 'application/json' };
+            try {
+                const u = JSON.parse(authRaw || '{}');
+                if (u && u.id) headers['x-user-id'] = String(u.id);
+                if (u && u.role) headers['x-user-role'] = String(u.role);
+                if (u && u.name) headers['x-user-name'] = String(u.name);
+            } catch {}
+            const res = await fetch(API_BASE + path, { headers, ...options });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || ('HTTP ' + res.status));
+            }
+            return res.json();
+        }
+        function toast(msg, type) {
+            const el = document.getElementById('toast');
+            if (!el) return;
+            el.textContent = msg;
+            el.style.borderColor = type === 'error' ? 'rgba(239,68,68,0.35)' : 'rgba(16,185,129,0.35)';
+            el.style.display = 'block';
+            clearTimeout(window.__toastTimer);
+            window.__toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2500);
+        }
+        let __categorias = [];
+        let __editingCatId = null;
+        function renderCategoriasTable(list) {
+            const tbody = document.getElementById('catTbody');
+            const arr = Array.isArray(list) ? list : [];
+            const countLabel = document.getElementById('catCountLabel');
+            if (countLabel) countLabel.textContent = arr.length + ' ' + (arr.length === 1 ? 'item' : 'itens');
+            tbody.innerHTML = arr.map(c => `
+                <tr>
+                    <td><span class="ellipsis">${c.nome || c.name || '-'}</span></td>
+                    <td><span class="ellipsis">${c.descricao || c.description || '-'}</span></td>
+                    <td class="col-actions">
+                        <div class="table-actions">
+                            <button type="button" class="btn btn-ghost btn-icon" title="Detalhes" onclick="detalharCategoria(${c.id})"><i data-lucide="info"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditarCategoria(${c.id})"><i data-lucide="edit-3"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="excluirCategoria(${c.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="3" class="muted">Sem resultados</td></tr>';
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        }
+        async function carregarCategoriasList() {
+            try {
+                const list = await api('/categories', { method: 'GET' }).catch(() => []);
+                __categorias = Array.isArray(list) ? list : [];
+                renderCategoriasTable(__categorias);
+            } catch {
+                __categorias = [];
+                renderCategoriasTable([]);
+            }
+        }
+        function aplicarFiltroCategorias() {
+            const nome = String(document.getElementById('fCatNome').value || '').trim().toUpperCase();
+            const desc = String(document.getElementById('fCatDesc').value || '').trim().toUpperCase();
+            let arr = (__categorias || []).slice();
+            if (nome) arr = arr.filter(c => String(c.nome || c.name || '').toUpperCase().includes(nome));
+            if (desc) arr = arr.filter(c => String(c.descricao || c.description || '').toUpperCase().includes(desc));
+            renderCategoriasTable(arr);
+        }
+        function openModal() { document.getElementById('categoriaModal').classList.add('show'); }
+        function closeModal() {
+            const modal = document.getElementById('categoriaModal');
+            if (modal) modal.classList.remove('show');
+            __editingCatId = null;
+            const nome = document.getElementById('mCatNome');
+            const desc = document.getElementById('mCatDesc');
+            if (nome) nome.value = '';
+            if (desc) desc.value = '';
+        }
+        window.detalharCategoria = function(id) {
+            const c = (__categorias || []).find(x => Number(x.id) === Number(id));
+            const msg = [
+                'Categoria',
+                'Nome: ' + (c?.nome || c?.name || '-'),
+                'Descrição: ' + (c?.descricao || c?.description || '-')
+            ].join('\n');
+            alert(msg);
+        };
+        window.abrirEditarCategoria = function(id) {
+            const c = (__categorias || []).find(x => Number(x.id) === Number(id));
+            if (!c) return;
+            __editingCatId = Number(c.id);
+            document.getElementById('mCatNome').value = c.nome || c.name || '';
+            document.getElementById('mCatDesc').value = c.descricao || c.description || '';
+            openModal();
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        };
+        window.excluirCategoria = async function(id) {
+            try {
+                const ok = window.confirm('Confirmar exclusão?');
+                if (!ok) return;
+                await api('/categories/' + id, { method: 'DELETE' });
+                toast('Categoria excluída', 'success');
+                carregarCategoriasList();
+            } catch {
+                toast('Erro ao excluir categoria', 'error');
+            }
+        };
+        async function salvarCategoriaModal() {
+            try {
+                const nome = String(document.getElementById('mCatNome').value || '').trim();
+                const descricao = String(document.getElementById('mCatDesc').value || '').trim() || null;
+                if (!nome) { toast('Informe o nome da categoria', 'error'); return; }
+                if (__editingCatId) {
+                    await api('/categories/' + __editingCatId, { method: 'PUT', body: JSON.stringify({ nome, descricao }) });
+                    toast('Categoria atualizada', 'success');
+                } else {
+                    await api('/categories', { method: 'POST', body: JSON.stringify({ nome, descricao }) });
+                    toast('Categoria registrada', 'success');
+                }
+                closeModal();
+                carregarCategoriasList();
+            } catch {
+                toast('Erro ao salvar categoria', 'error');
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const auth = localStorage.getItem('authUser');
+            if (!auth) { window.location.href = 'login.html'; return; }
+            carregarCategoriasList();
+            const novaBtn = document.getElementById('novaCategoriaBtn');
+            if (novaBtn) {
+                novaBtn.addEventListener('click', () => {
+                    __editingCatId = null;
+                    document.getElementById('mCatNome').value = '';
+                    document.getElementById('mCatDesc').value = '';
+                    openModal();
+                    if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+                });
+            }
+            const buscarBtn = document.getElementById('catBuscarBtn');
+            const limparBtn = document.getElementById('catLimparBtn');
+            if (buscarBtn) buscarBtn.addEventListener('click', aplicarFiltroCategorias);
+            if (limparBtn) limparBtn.addEventListener('click', () => {
+                document.getElementById('fCatNome').value = '';
+                document.getElementById('fCatDesc').value = '';
+                aplicarFiltroCategorias();
+            });
+            const mSalvar = document.getElementById('mCatSalvar');
+            const mFechar = document.getElementById('mCatFechar');
+            if (mSalvar) mSalvar.addEventListener('click', salvarCategoriaModal);
+            if (mFechar) mFechar.addEventListener('click', closeModal);
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        });
+    </script>
+    <div id="toast" class="toast"></div>
+    <script src="script.js"></script>
+    <div id="categoriaModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Categoria</div><button id="mCatFechar" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="grid-2-modal">
+                    <div class="field"><span class="label-inline">Nome</span><input id="mCatNome" class="input" type="text" placeholder="Nome da categoria"></div>
+                    <div class="field"><span class="label-inline">Descrição</span><input id="mCatDesc" class="input" type="text" placeholder="Descrição (opcional)"></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="mCatSalvar" class="btn btn-primary" type="button"><i data-lucide="check"></i><span>Salvar</span></button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

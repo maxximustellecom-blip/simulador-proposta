@@ -33,6 +33,7 @@
       '</div>' +
     '</header>';
   var simOpen = isActive('simular') || isActive('historico-simulacoes');
+  var ofertaOpen = isActive('categorias') || isActive('produtos');
   var sidebarHtml =
     '<nav class="sidebar">' +
       '<div class="sidebar-inner">' +
@@ -51,6 +52,15 @@
         '<div id="simulacaoMenu" class="nav-subgroup" style="display:' + (simOpen ? 'flex' : 'none') + ';">' +
           '<a href="simular.html" class="nav-sublink' + (isActive('simular') ? ' active' : '') + '"><i data-lucide="calculator"></i><span>Simular</span></a>' +
           '<a href="historico-simulacoes.html" class="nav-sublink' + (isActive('historico-simulacoes') ? ' active' : '') + '"><i data-lucide="list"></i><span>Histórico</span></a>' +
+        '</div>' +
+        '<div class="nav-title">Ofertas</div>' +
+        '<button id="ofertaToggle" class="nav-dropdown' + (ofertaOpen ? ' open' : '') + '" type="button">' +
+          '<div class="left"><i data-lucide="package"></i><span>Oferta Padrão</span></div>' +
+          '<div class="chev"><i data-lucide="chevron-down"></i></div>' +
+        '</button>' +
+        '<div id="ofertaMenu" class="nav-subgroup" style="display:' + (ofertaOpen ? 'flex' : 'none') + ';">' +
+          '<a href="categorias.html" class="nav-sublink' + (isActive('categorias') ? ' active' : '') + '"><i data-lucide="tags"></i><span>Categorias</span></a>' +
+          '<a href="produtos.html" class="nav-sublink' + (isActive('produtos') ? ' active' : '') + '"><i data-lucide="shopping-bag"></i><span>Produtos</span></a>' +
         '</div>' +
         '<div class="nav-title" id="adminTitle" style="display:' + (isAdmin ? 'block' : 'none') + '">Admin</div>' +
         '<a id="navUsers" href="usuarios.html" class="nav-link' + (isActive('usuarios') ? ' active' : '') + '" style="display:' + (isAdmin ? 'flex' : 'none') + '"><i data-lucide="users"></i><span>Usuários</span></a>' +
@@ -120,6 +130,8 @@
   }
   var simBtn = document.getElementById('simulacaoToggle');
   var simMenu = document.getElementById('simulacaoMenu');
+  var ofertaBtn = document.getElementById('ofertaToggle');
+  var ofertaMenu = document.getElementById('ofertaMenu');
   if (simBtn && simMenu) {
     simBtn.addEventListener('click', function () {
       var isOpen = simBtn.classList.contains('open');
@@ -129,6 +141,19 @@
       } else {
         simBtn.classList.add('open');
         simMenu.style.display = 'flex';
+      }
+      if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    });
+  }
+  if (ofertaBtn && ofertaMenu) {
+    ofertaBtn.addEventListener('click', function () {
+      var isOpen = ofertaBtn.classList.contains('open');
+      if (isOpen) {
+        ofertaBtn.classList.remove('open');
+        ofertaMenu.style.display = 'none';
+      } else {
+        ofertaBtn.classList.add('open');
+        ofertaMenu.style.display = 'flex';
       }
       if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
     });
