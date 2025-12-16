@@ -8,8 +8,8 @@ export async function upsertClient(req, res) {
       fantasy_name, email, phone,
       cep, state, city, neighborhood, street, number, complement,
       opening_date,
-      rep_cpf, rep_rg, rep_tel1, rep_tel2,
-      gestor_cpf, gestor_rg, gestor_tel1, gestor_tel2,
+      rep_nome, rep_cpf, rep_rg, rep_tel1, rep_tel2,
+      gestor_nome, gestor_cpf, gestor_rg, gestor_tel1, gestor_tel2,
       auth1_nome, auth1_cpf, auth1_rg, auth1_contato,
       auth2_nome, auth2_cpf, auth2_contato
     } = req.body || {};
@@ -34,10 +34,12 @@ export async function upsertClient(req, res) {
         number: number || null,
         complement: complement || null,
         opening_date: opening_date || null,
+        rep_nome: rep_nome || null,
         rep_cpf: rep_cpf || null,
         rep_rg: rep_rg || null,
         rep_tel1: rep_tel1 || null,
         rep_tel2: rep_tel2 || null,
+        gestor_nome: gestor_nome || null,
         gestor_cpf: gestor_cpf || null,
         gestor_rg: gestor_rg || null,
         gestor_tel1: gestor_tel1 || null,
@@ -72,10 +74,12 @@ export async function upsertClient(req, res) {
     if (client.number !== (number || null)) { client.number = number || null; changed = true; }
     if (client.complement !== (complement || null)) { client.complement = complement || null; changed = true; }
     if (client.opening_date !== (opening_date || null)) { client.opening_date = opening_date || null; changed = true; }
+    if (client.rep_nome !== (rep_nome || null)) { client.rep_nome = rep_nome || null; changed = true; }
     if (client.rep_cpf !== (rep_cpf || null)) { client.rep_cpf = rep_cpf || null; changed = true; }
     if (client.rep_rg !== (rep_rg || null)) { client.rep_rg = rep_rg || null; changed = true; }
     if (client.rep_tel1 !== (rep_tel1 || null)) { client.rep_tel1 = rep_tel1 || null; changed = true; }
     if (client.rep_tel2 !== (rep_tel2 || null)) { client.rep_tel2 = rep_tel2 || null; changed = true; }
+    if (client.gestor_nome !== (gestor_nome || null)) { client.gestor_nome = gestor_nome || null; changed = true; }
     if (client.gestor_cpf !== (gestor_cpf || null)) { client.gestor_cpf = gestor_cpf || null; changed = true; }
     if (client.gestor_rg !== (gestor_rg || null)) { client.gestor_rg = gestor_rg || null; changed = true; }
     if (client.gestor_tel1 !== (gestor_tel1 || null)) { client.gestor_tel1 = gestor_tel1 || null; changed = true; }

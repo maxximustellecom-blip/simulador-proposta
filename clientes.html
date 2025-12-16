@@ -99,11 +99,14 @@
     
                 <div class="section-title" style="font-weight: 600; margin-bottom: 0.5rem; color: #e5e7eb;">REPRESENTANTE LEGAL</div>
                 <div class="grid-2-modal">
+                    <div class="field"><span class="label-inline">Nome</span><input id="mRepNome" class="input" type="text" placeholder="Nome Completo"></div>
                     <div class="field"><span class="label-inline">CPF</span><input id="mRepCpf" class="input" type="text" placeholder="000.000.000-00"></div>
-                    <div class="field"><span class="label-inline">RG</span><input id="mRepRg" class="input" type="text" placeholder="RG"></div>
                 </div>
                 <div class="grid-2-modal" style="margin-top:0.5rem;">
+                    <div class="field"><span class="label-inline">RG</span><input id="mRepRg" class="input" type="text" placeholder="RG"></div>
                     <div class="field"><span class="label-inline">Tel. Contato (1)</span><input id="mRepTel1" class="input" type="text" placeholder="(00) 00000-0000"></div>
+                </div>
+                <div class="grid-2-modal" style="margin-top:0.5rem;">
                     <div class="field"><span class="label-inline">Tel. Contato (2)</span><input id="mRepTel2" class="input" type="text" placeholder="(00) 00000-0000"></div>
                 </div>
             
@@ -112,11 +115,14 @@
                     <button type="button" id="btnDuplicarRep" class="btn btn-ghost btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.5rem; border: 1px solid rgba(255,255,255,0.1);">Duplicar Rep.</button>
                 </div>
                 <div class="grid-2-modal">
+                    <div class="field"><span class="label-inline">Nome</span><input id="mGestorNome" class="input" type="text" placeholder="Nome Completo"></div>
                     <div class="field"><span class="label-inline">CPF</span><input id="mGestorCpf" class="input" type="text" placeholder="000.000.000-00"></div>
-                    <div class="field"><span class="label-inline">RG</span><input id="mGestorRg" class="input" type="text" placeholder="RG"></div>
                 </div>
                 <div class="grid-2-modal" style="margin-top:0.5rem;">
+                    <div class="field"><span class="label-inline">RG</span><input id="mGestorRg" class="input" type="text" placeholder="RG"></div>
                     <div class="field"><span class="label-inline">Tel. Contato (1)</span><input id="mGestorTel1" class="input" type="text" placeholder="(00) 00000-0000"></div>
+                </div>
+                <div class="grid-2-modal" style="margin-top:0.5rem;">
                     <div class="field"><span class="label-inline">Tel. Contato (2)</span><input id="mGestorTel2" class="input" type="text" placeholder="(00) 00000-0000"></div>
                 </div>
             
@@ -350,11 +356,13 @@
                         complement: String(document.getElementById('mComplemento').value || '').trim() || null,
                         opening_date: String(document.getElementById('mAbertura').value || '').trim() || null,
                         
+                        rep_nome: String(document.getElementById('mRepNome').value || '').trim() || null,
                         rep_cpf: String(document.getElementById('mRepCpf').value || '').trim() || null,
                         rep_rg: String(document.getElementById('mRepRg').value || '').trim() || null,
                         rep_tel1: String(document.getElementById('mRepTel1').value || '').trim() || null,
                         rep_tel2: String(document.getElementById('mRepTel2').value || '').trim() || null,
 
+                        gestor_nome: String(document.getElementById('mGestorNome').value || '').trim() || null,
                         gestor_cpf: String(document.getElementById('mGestorCpf').value || '').trim() || null,
                         gestor_rg: String(document.getElementById('mGestorRg').value || '').trim() || null,
                         gestor_tel1: String(document.getElementById('mGestorTel1').value || '').trim() || null,
@@ -394,11 +402,13 @@
                 document.getElementById('mNumero').value = c.number || '';
                 document.getElementById('mComplemento').value = c.complement || '';
 
+                document.getElementById('mRepNome').value = c.rep_nome || '';
                 document.getElementById('mRepCpf').value = c.rep_cpf || '';
                 document.getElementById('mRepRg').value = c.rep_rg || '';
                 document.getElementById('mRepTel1').value = c.rep_tel1 || '';
                 document.getElementById('mRepTel2').value = c.rep_tel2 || '';
 
+                document.getElementById('mGestorNome').value = c.gestor_nome || '';
                 document.getElementById('mGestorCpf').value = c.gestor_cpf || '';
                 document.getElementById('mGestorRg').value = c.gestor_rg || '';
                 document.getElementById('mGestorTel1').value = c.gestor_tel1 || '';
@@ -416,11 +426,11 @@
             function limparCampos() {
                 preencherCampos({ 
                     cnpj: '', name: '', fantasy_name: '', email: '', phone: '', opening_date: '', 
-                    cep: '', state: '', city: '', neighborhood: '', street: '', number: '', complement: '',
-                    rep_cpf: '', rep_rg: '', rep_tel1: '', rep_tel2: '',
-                    gestor_cpf: '', gestor_rg: '', gestor_tel1: '', gestor_tel2: '',
-                    auth1_nome: '', auth1_cpf: '', auth1_rg: '', auth1_contato: '',
-                    auth2_nome: '', auth2_cpf: '', auth2_contato: ''
+                     cep: '', state: '', city: '', neighborhood: '', street: '', number: '', complement: '',
+                     rep_nome: '', rep_cpf: '', rep_rg: '', rep_tel1: '', rep_tel2: '',
+                     gestor_nome: '', gestor_cpf: '', gestor_rg: '', gestor_tel1: '', gestor_tel2: '',
+                     auth1_nome: '', auth1_cpf: '', auth1_rg: '', auth1_contato: '',
+                     auth2_nome: '', auth2_cpf: '', auth2_contato: ''
                 });
             }
             window.abrirDetalhes = function(id) {
@@ -471,6 +481,7 @@
             const btnDuplicarRep = document.getElementById('btnDuplicarRep');
             if (btnDuplicarRep) {
                 btnDuplicarRep.addEventListener('click', () => {
+                    document.getElementById('mGestorNome').value = document.getElementById('mRepNome').value;
                     document.getElementById('mGestorCpf').value = document.getElementById('mRepCpf').value;
                     document.getElementById('mGestorRg').value = document.getElementById('mRepRg').value;
                     document.getElementById('mGestorTel1').value = document.getElementById('mRepTel1').value;
