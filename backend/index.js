@@ -9,6 +9,8 @@ import saleRouter from './routes/sale.js';
 import categoryRouter from './routes/category.js';
 import productRouter from './routes/product.js';
 import negotiationRouter from './routes/negotiation.js';
+import customCategoryRouter from './routes/customCategory.js';
+import customProductRouter from './routes/customProduct.js';
 import authContext from './middleware/authContext.js';
 
 dotenv.config();
@@ -29,6 +31,8 @@ app.use('/sales', saleRouter);
 app.use('/categories', categoryRouter);
 app.use('/products', productRouter);
 app.use('/negotiations', negotiationRouter);
+app.use('/custom-categories', customCategoryRouter);
+app.use('/custom-products', customProductRouter);
 
 const port = process.env.PORT || 3001;
 

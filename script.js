@@ -34,6 +34,7 @@
     '</header>';
   var simOpen = isActive('simular') || isActive('historico-simulacoes');
   var ofertaOpen = isActive('categorias') || isActive('produtos');
+  var customOpen = isActive('categoria-customizada') || isActive('produto-customizado');
   var sidebarHtml =
     '<nav class="sidebar">' +
       '<div class="sidebar-inner">' +
@@ -55,12 +56,20 @@
         '</div>' +
         '<div class="nav-title" style="display:' + (isAdmin ? 'flex' : 'none') + '">Ofertas</div>' +
         '<button id="ofertaToggle" class="nav-dropdown' + (ofertaOpen ? ' open' : '') + '" type="button" style="display:' + (isAdmin ? 'flex' : 'none') + ';">' +
-          '<div class="left"><i data-lucide="package"></i><span>Oferta Padrão</span></div>' +
+          '<div class="left"><i data-lucide="package"></i><span>Padrão</span></div>' +
           '<div class="chev"><i data-lucide="chevron-down"></i></div>' +
         '</button>' +
         '<div id="ofertaMenu" class="nav-subgroup" style="display:' + ((isAdmin && ofertaOpen) ? 'flex' : 'none') + ';">' +
           '<a href="categorias.html" class="nav-sublink' + (isActive('categorias') ? ' active' : '') + '"><i data-lucide="tags"></i><span>Categorias</span></a>' +
           '<a href="produtos.html" class="nav-sublink' + (isActive('produtos') ? ' active' : '') + '"><i data-lucide="shopping-bag"></i><span>Produtos</span></a>' +
+        '</div>' +
+        '<button id="customOfertaToggle" class="nav-dropdown' + (customOpen ? ' open' : '') + '" type="button" style="display:' + (isAdmin ? 'flex' : 'none') + ';">' +
+          '<div class="left"><i data-lucide="settings"></i><span>Customizada</span></div>' +
+          '<div class="chev"><i data-lucide="chevron-down"></i></div>' +
+        '</button>' +
+        '<div id="customOfertaMenu" class="nav-subgroup" style="display:' + ((isAdmin && customOpen) ? 'flex' : 'none') + ';">' +
+          '<a href="categoria-customizada.html" class="nav-sublink' + (isActive('categoria-customizada') ? ' active' : '') + '"><i data-lucide="tag"></i><span>Categorias</span></a>' +
+          '<a href="produto-customizado.html" class="nav-sublink' + (isActive('produto-customizado') ? ' active' : '') + '"><i data-lucide="shopping-cart"></i><span>Produtos</span></a>' +
         '</div>' +
         '<div class="nav-title" id="adminTitle" style="display:' + (isAdmin ? 'block' : 'none') + '">Admin</div>' +
         '<a id="navUsers" href="usuarios.html" class="nav-link' + (isActive('usuarios') ? ' active' : '') + '" style="display:' + (isAdmin ? 'flex' : 'none') + '"><i data-lucide="users"></i><span>Usuários</span></a>' +
@@ -154,6 +163,21 @@
       } else {
         ofertaBtn.classList.add('open');
         ofertaMenu.style.display = 'flex';
+      }
+      if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    });
+  }
+  var customBtn = document.getElementById('customOfertaToggle');
+  var customMenu = document.getElementById('customOfertaMenu');
+  if (customBtn && customMenu) {
+    customBtn.addEventListener('click', function () {
+      var isOpen = customBtn.classList.contains('open');
+      if (isOpen) {
+        customBtn.classList.remove('open');
+        customMenu.style.display = 'none';
+      } else {
+        customBtn.classList.add('open');
+        customMenu.style.display = 'flex';
       }
       if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
     });

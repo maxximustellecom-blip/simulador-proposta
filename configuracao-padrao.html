@@ -247,42 +247,34 @@
             const txt = String(s || '');
             const paren = txt.match(/\(([^)]+)\)/);
             const target = paren ? paren[1] : txt;
-            if (txt.includes('+')) {
-                const parts = target.split('+').map(p => p.trim());
-                let sum = 0;
-                let unit = null;
-                let any = false;
-                for (const part of parts) {
-                    const m = part.match(/(\d+(?:[\.,]\d+)?)\s*(GB|MB)?/i);
-                    if (!m) continue;
-                    any = true;
-                    const num = Number(String(m[1] || '0').replace(',', '.'));
-                    const u = (m[2] || '').toUpperCase();
-                    if (!unit && u) unit = u;
-                    if (unit) {
-                        const val = unit === 'GB'
-                            ? (u === 'MB' ? (num / 1024) : num)
-                            : (u === 'GB' ? (num * 1024) : num);
-                        sum += val;
-                    } else {
-                        sum += num;
-                    }
-                }
-                if (!any) return '';
-                const rounded = Math.round(sum * 100) / 100;
-                const out = (rounded % 1 === 0) ? String(Math.round(rounded)) : String(rounded).replace('.', ',');
-                return unit ? (out + unit) : out;
+            let dataSum = 0;
+            let dataUnit = '';
+            let smsSum = 0;
+            const dataRegex = /(\d+(?:[\.,]\d+)?)\s*(GB|MB|MEGA)\b/gi;
+            const smsRegex = /(\d+)\s*SMS\b/gi;
+            let dm;
+            while ((dm = dataRegex.exec(target)) !== null) {
+                const num = Number(String(dm[1] || '0').replace(',', '.'));
+                let u = (dm[2] || '').toUpperCase();
+                if (u === 'MEGA') u = 'MB';
+                if (!dataUnit && u) dataUnit = u;
+                const val = dataUnit === 'GB'
+                    ? (u === 'MB' ? (num / 1024) : num)
+                    : (u === 'GB' ? (num * 1024) : num);
+                dataSum += val;
             }
-            const m = txt.match(/(\d+(?:[\.,]\d+)?)\s*(GB|MB)/i);
-            if (m) {
-                const num = m[1].replace(',', '.');
-                const u = m[2].toUpperCase();
-                const n = Number(num);
-                const rounded = Math.round(n * 100) / 100;
-                const out = (rounded % 1 === 0) ? String(Math.round(rounded)) : String(rounded).replace('.', ',');
-                return out + u;
+            let sm;
+            while ((sm = smsRegex.exec(target)) !== null) {
+                smsSum += Number(sm[1] || 0);
             }
-            return '';
+            const parts = [];
+            if (dataSum > 0 && dataUnit) {
+                const rounded = Math.round(dataSum * 100) / 100;
+                const out = (rounded % 1 === 0) ? String(Math.round(rounded)) : String(rounded).replace('.', ',');
+                parts.push(out + dataUnit);
+            }
+            if (smsSum > 0) parts.push(String(smsSum) + 'SMS');
+            return parts.join(' + ');
         }
         let __categorias = [];
         let __produtos = [];
