@@ -30,6 +30,8 @@
                         <span id="clienteNome" style="font-weight:600;">-</span>
                         <span class="muted">CNPJ:</span>
                         <span id="clienteCnpj">-</span>
+                        <span class="muted">Tipo:</span>
+                        <span id="negTipo">-</span>
                         <span class="muted">Status:</span>
                         <span id="negStatusLabel">-</span>
                     </div>
@@ -291,6 +293,23 @@
         let __negociacaoInfo = null;
         let __clienteInfo = null;
         let __loadingTimer = null;
+        function normalizeTipo(val) {
+            const k = String(val || '').toLowerCase();
+            if (k === 'novo') return 'Novo';
+            if ((k.includes('1') && k.includes('venda')) || k.includes('primeira')) return 'Novo';
+            if (k === 'adtivo') return 'Adtivo';
+            if (k === 'renegociação' || k === 'renegociacao' || k === 'renovação' || k === 'renovacao') return 'Renegociação';
+            return '';
+        }
+        function getNegTipo() {
+            const n = __negociacaoInfo || {};
+            return normalizeTipo(n.tipo || '');
+        }
+        function getFilteredCategorias() {
+            const neg = getNegTipo();
+            if (!neg) return (__categorias || []).slice();
+            return (__categorias || []).filter(c => normalizeTipo(c.tipo) === neg);
+        }
         function setLoading(active) {
             const el = document.getElementById('loadingDots');
             if (active) {
@@ -316,7 +335,7 @@
                 ddd: '',
                 numeroPortar: '',
                 quantidade: 1,
-                categoria: (__categorias[0]?.nome || ''),
+                categoria: (getFilteredCategorias()[0]?.nome || (__categorias[0]?.nome || '')),
                 plano: '',
                 pct: '',
                 valorPlano: 0,
@@ -346,10 +365,14 @@
             } catch { __produtos = []; }
         }
         function construirMapa() {
+            const filteredCats = getFilteredCategorias();
+            const allowedIds = {};
+            filteredCats.forEach(c => { allowedIds[c.id] = true; });
             const byId = {};
-            __categorias.forEach(c => { byId[c.id] = c.nome; });
+            filteredCats.forEach(c => { byId[c.id] = c.nome; });
             const map = {};
             __produtos.forEach(p => {
+                if (!allowedIds[p.categoria_id]) return;
                 const catName = byId[p.categoria_id] || 'Sem categoria';
                 if (!map[catName]) map[catName] = [];
                 map[catName].push(p);
@@ -510,7 +533,7 @@
         }
         function renderTabela() {
             const tbody = document.getElementById('itensTbody');
-            const cats = __categorias.map(c => c.nome);
+            const cats = getFilteredCategorias().map(c => c.nome);
             if (!__categorias.length && !__produtos.length) {
                 tbody.innerHTML = `
                     <tr><td colspan="16">
