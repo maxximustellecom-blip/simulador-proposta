@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Sellers • Maxximus Telecom</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <main class="container">
+        <div class="card">
+            <div class="card-head">
+                <div class="card-title">
+                    <span>Top Sellers</span>
+                </div>
+                <div class="muted" style="display:flex; align-items:center; justify-content:flex-end;">
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <button id="prevPeriod" class="btn btn-ghost btn-icon" type="button" title="Anterior"><i data-lucide="chevron-left"></i></button>
+                        <span class="chip" id="periodLabel"><i data-lucide="calendar"></i><span>Mês atual</span></span>
+                        <button id="nextPeriod" class="btn btn-ghost btn-icon" type="button" title="Próximo"><i data-lucide="chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body" style="background-color: transparent;">
+                <section style="margin-top: 20px;">
+                    <div class="grid-3" id="sellersGrid">
+                        <div class="skeleton skel-row"></div>
+                        <div class="skeleton skel-row"></div>
+                        <div class="skeleton skel-row"></div>
+                        <div class="skeleton skel-row"></div>
+                        <div class="skeleton skel-row"></div>
+                        <div class="skeleton skel-row"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+    <script>
+        const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
+        async function api(path, options = {}) {
+            const authRaw = localStorage.getItem('authUser');
+            let headers = { 'Content-Type': 'application/json' };
+            try {
+                const u = JSON.parse(authRaw || '{}');
+                if (u && u.id) headers['x-user-id'] = String(u.id);
+                if (u && u.role) headers['x-user-role'] = String(u.role);
+                if (u && u.name) headers['x-user-name'] = String(u.name);
+            } catch {}
+            const res = await fetch(API_BASE + path, { headers, ...options });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || ('HTTP ' + res.status));
+            }
+            return res.json();
+        }
+        function currency(n) { return Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+        function formatMonthYearLabel(m, y) {
+            const names = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            const name = names[(Number(m) || 1) - 1] || '';
+            return name ? (name + ' de ' + String(y)) : String(y);
+        }
+        function parseBrDateToMonthYear(s) {
+            const str = String(s || '');
+            const datePart = str.split(',')[0] || '';
+            const [d,m,y] = datePart.split('/');
+            const mi = Number(m || 0);
+            const yi = Number(y || 0);
+            return { m: mi, y: yi };
+        }
+        function calcularNivelLocal(receitaNovos) {
+            if (receitaNovos < 700) return { nome: 'BLUE', fator: 0.6 };
+            if (receitaNovos < 900) return { nome: 'SILVER', fator: 0.8 };
+            if (receitaNovos < 1500) return { nome: 'PLATINUM', fator: 1.0 };
+            if (receitaNovos < 1900) return { nome: 'BLACK', fator: 1.5 };
+            return { nome: 'BLACK+', fator: 2.0 };
+        }
+        function mapTipoKey(tipo) {
+            const t = String(tipo || '').toUpperCase();
+            if (t.includes('1º')) return 'novos';
+            if (t.includes('RENEGOC')) return 'renovacao';
+            return 'novos';
+        }
+        function onlyDigits(s) {
+            return String(s || '').replace(/\D/g, '');
+        }
+        function calcularComissaoProdutoLocal(receitaBase, tipo, valorVenda) {
+            const nivel = calcularNivelLocal(receitaBase);
+            const taxas = {
+                'BLUE': { novos: 0.6, renovacao: 0.3, ultraFibra: 0.3, wttx: 0.6, m2m: 0.6 },
+                'SILVER': { novos: 0.8, renovacao: 0.3, ultraFibra: 0.3, wttx: 0.6, m2m: 0.6 },
+                'PLATINUM': { novos: 1.0, renovacao: 0.4, ultraFibra: 0.5, wttx: 1.0, m2m: 0.6 },
+                'BLACK': { novos: 1.5, renovacao: 0.5, ultraFibra: 0.7, wttx: 1.5, m2m: 0.6 },
+                'BLACK+': { novos: 2.0, renovacao: 0.6, ultraFibra: 0.8, wttx: 2.0, m2m: 0.6 }
+            };
+            const key = String(tipo || '').toLowerCase();
+            const taxa = taxas[nivel.nome][key] || 0;
+            return Number(valorVenda || 0) * Number(taxa || 0);
+        }
+        let __period = null;
+        function setPeriod(dt) {
+            __period = { m: dt.getMonth() + 1, y: dt.getFullYear() };
+            const el = document.getElementById('periodLabel');
+            if (el) el.innerHTML = `<i data-lucide="calendar"></i><span>${formatMonthYearLabel(__period.m, __period.y)}</span>`;
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        }
+        function changePeriod(deltaMonths) {
+            if (!__period) return;
+            let m = __period.m + deltaMonths;
+            let y = __period.y;
+            while (m <= 0) { m += 12; y -= 1; }
+            while (m > 12) { m -= 12; y += 1; }
+            __period = { m, y };
+            const el = document.getElementById('periodLabel');
+            if (el) el.innerHTML = `<i data-lucide="calendar"></i><span>${formatMonthYearLabel(__period.m, __period.y)}</span>`;
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        }
+        function filterByPeriod(sales) {
+            if (!__period) return sales || [];
+            return (sales || []).filter(s => {
+                const { m, y } = parseBrDateToMonthYear(s.data);
+                return Number(m) === Number(__period.m) && Number(y) === Number(__period.y);
+            });
+        }
+        function renderGrid(sales) {
+            const grid = document.getElementById('sellersGrid');
+            const byVend = {};
+            const validSales = (sales || []).filter(s => onlyDigits(s.cnpj) !== '00000000000000');
+            const vendors = Array.isArray(window.__vendors) ? window.__vendors.slice() : [];
+            vendors.forEach(v => { if (!byVend[v]) byVend[v] = []; });
+            validSales.forEach(s => {
+                const v = s.vendedor || '-';
+                if (!byVend[v]) byVend[v] = [];
+                byVend[v].push(s);
+            });
+            const cards = Object.keys(byVend).map(v => {
+                const list = byVend[v];
+                const receitaTotal = list.reduce((acc, x) => acc + Number(x.receita || 0), 0);
+                const receitaNovos = list.filter(x => mapTipoKey(x.tipo) === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
+                const nivel = calcularNivelLocal(receitaNovos);
+                const comissaoTotal = list.reduce((acc, x) => acc + calcularComissaoProdutoLocal(receitaNovos, mapTipoKey(x.tipo), Number(x.receita || 0)), 0);
+                return { vendedor: v, receitaTotal, receitaNovos, comissaoTotal, vendas: list.length, nivel };
+            }).sort((a,b) => b.receitaTotal - a.receitaTotal);
+            grid.innerHTML = cards.map((c, idx) => {
+                const isTop = idx === 0;
+                const icon = isTop ? 'crown' : (idx === 1 ? 'trophy' : 'award');
+                const bg = isTop ? 'linear-gradient(135deg, rgba(245,158,11,0.18), rgba(245,158,11,0.10))' : 'var(--surface)';
+                const border = isTop ? 'rgba(245,158,11,0.45)' : 'var(--border)';
+                const accent = isTop ? '#F59E0B' : 'var(--primary)';
+                const rank = idx + 1;
+                const rankTagColor = rank === 1 ? '#F59E0B' : (rank === 2 ? '#06B6D4' : (rank === 3 ? '#8B5CF6' : '#64748B'));
+                const rankTagBg = rank === 1 ? 'rgba(245,158,11,0.12)' : (rank === 2 ? 'rgba(6,182,212,0.12)' : (rank === 3 ? 'rgba(139,92,246,0.12)' : 'rgba(100,116,139,0.12)'));
+                return `
+                    <div class="card" style="border-color:${border}; background:${bg}; box-shadow:${isTop ? '0 0 0 2px rgba(245,158,11,0.35), 0 12px 22px rgba(245,158,11,0.18)' : 'var(--shadow)'};">
+                        <div class="card-head">
+                            <div class="card-title" style="display:flex; align-items:center; gap:0.5rem;">
+                                <i data-lucide="${icon}" style="color:${accent};"></i>
+                                <span>${c.vendedor}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:0.4rem;">
+                                <div class="chip" style="border-color:${rankTagColor}; color:${rankTagColor} !important; background:${rankTagBg};">${rank}º lugar</div>
+                                <div class="chip" style="border-color:#10B981; color:#10B981;">${c.nivel.nome}</div>
+                            </div>
+                        </div>
+                        <div class="card-body" style='margin-top: 20px;'>
+                            <div class="grid-3">
+                                <div class="kpi">
+                                    <div class="label">Receita</div>
+                                    <div class="value">${currency(c.receitaTotal)}</div>
+                                </div>
+                                <div class="kpi">
+                                    <div class="label">Comissão</div>
+                                    <div class="value">${currency(c.comissaoTotal)}</div>
+                                </div>
+                                <div class="kpi">
+                                    <div class="label">Vendas</div>
+                                    <div class="value">${c.vendas}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('') || `<div class="muted" style="padding:0.8rem;">Sem resultados no período</div>`;
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        }
+        document.addEventListener('DOMContentLoaded', async () => {
+            const auth = localStorage.getItem('authUser');
+            if (!auth) { window.location.href = 'login.html'; return; }
+            setPeriod(new Date());
+            const prev = document.getElementById('prevPeriod');
+            const next = document.getElementById('nextPeriod');
+            let salesAll = [];
+            window.__vendors = [];
+            try {
+                salesAll = await api('/sales', { method: 'GET' });
+            } catch {
+                salesAll = [];
+            }
+            try {
+                const users = await api('/auth/users', { method: 'GET' });
+                window.__vendors = Array.isArray(users) ? users.map(u => u.name).filter(Boolean) : [];
+            } catch {
+                window.__vendors = [];
+            }
+            function rerender() {
+                const filtered = filterByPeriod(salesAll);
+                renderGrid(filtered);
+            }
+            if (prev) prev.addEventListener('click', () => { changePeriod(-1); rerender(); });
+            if (next) next.addEventListener('click', () => { changePeriod(1); rerender(); });
+            rerender();
+        });
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

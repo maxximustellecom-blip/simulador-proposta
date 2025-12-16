@@ -398,8 +398,8 @@
             let total = 0;
             Object.keys(byMonthVendor).forEach(k => {
                 const list = byMonthVendor[k];
-                const receitaNovos = list.filter(x => x.tipo === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
-                total += list.reduce((acc, x) => acc + calcularComissaoProdutoLocal(receitaNovos, x.tipo, Number(x.receita || 0)), 0);
+                const receitaNovos = list.filter(x => mapTipoKey(x.tipo) === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
+                total += list.reduce((acc, x) => acc + calcularComissaoProdutoLocal(receitaNovos, mapTipoKey(x.tipo), Number(x.receita || 0)), 0);
             });
             return total;
         }
@@ -572,9 +572,10 @@
             scopeLabel.textContent = 'Usuário: suas negociações';
             const totalVendas = (sales || []).length;
             const receitaTotal = (sales || []).reduce((acc, s) => acc + Number(s.receita || 0), 0);
-            const receitaNovosTotal = (sales || []).filter(s => mapTipoKey(s.tipo) === 'novos').reduce((acc, s) => acc + Number(s.receita || 0), 0);
-            const nivelAtual = calcularNivelLocal(receitaNovosTotal);
             const concluded = (sales || []).filter(s => String(s.status || '') === 'Concluída');
+            console.log(concluded)
+            const receitaNovosConcluidas = (concluded || []).filter(s => mapTipoKey(s.tipo) === 'novos').reduce((acc, s) => acc + Number(s.receita || 0), 0);
+            const nivelAtual = calcularNivelLocal(receitaNovosConcluidas);
             const comissaoTotal = calcularComissaoTotalPorVendedorMes(concluded);
             const acessosPeriodoNovosAdt = await (async () => {
                 const alvo = (sales || []).filter(s => isTipoNovoOuAdtivo(s.tipo) && String(s.status || '') === 'Concluída');
@@ -604,6 +605,7 @@
                 const mm = dt.getMonth() + 1;
                 const yy = dt.getFullYear();
                 if (mm !== um || yy !== uy) return;
+                if (String(s.status || '') !== 'Concluída') return;
                 const dd = dt.getDate();
                 if (!byDayUser[dd]) byDayUser[dd] = [];
                 byDayUser[dd].push(s);
