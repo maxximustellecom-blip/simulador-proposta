@@ -13,7 +13,7 @@ export async function upsertClient(req, res) {
       return res.status(400).json({ error: 'name e cnpj são obrigatórios' });
     }
     const actor = req.user || null;
-    const [client] = await Client.findOrCreate({
+    const [client, created] = await Client.findOrCreate({
       where: { cnpj },
       defaults: {
         name, cnpj,
@@ -31,6 +31,16 @@ export async function upsertClient(req, res) {
         opening_date: opening_date || null
       }
     });
+    if (!created) {
+      const isAdmin = actor && actor.role === 'admin';
+      const isOwner = actor && actor.id && Number(client.created_by || 0) === Number(actor.id);
+      if (!isAdmin && !isOwner) {
+        return res.status(403).json({ error: 'forbidden' });
+      }
+    }
+    if (created && actor && actor.id && Number(client.created_by || 0) !== Number(actor.id)) {
+      client.created_by = Number(actor.id);
+    }
     let changed = false;
     if (client.name !== name) { client.name = name; changed = true; }
     if (client.fantasy_name !== (fantasy_name || null)) { client.fantasy_name = fantasy_name || null; changed = true; }
