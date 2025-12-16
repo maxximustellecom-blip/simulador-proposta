@@ -308,6 +308,23 @@
             const dt = new Date(Number(y), Number(m)-1, Number(d));
             return isNaN(dt.getTime()) ? null : dt;
         }
+        function daysInMonth(y, m) {
+            return new Date(Number(y), Number(m), 0).getDate();
+        }
+        function getAdminMonthYearDefault(sales) {
+            const fromEl = document.getElementById('fFrom');
+            const toEl = document.getElementById('fTo');
+            const from = fromEl ? fromEl.value : '';
+            const to = toEl ? toEl.value : '';
+            let dt = null;
+            if (from) dt = new Date(from);
+            else if (to) dt = new Date(to);
+            if (!dt) {
+                const dates = (sales || []).map(s => parseBrDateToDate(s.data)).filter(Boolean).sort((a,b) => (b?.getTime()||0) - (a?.getTime()||0));
+                dt = dates[0] || new Date();
+            }
+            return { m: dt.getMonth() + 1, y: dt.getFullYear() };
+        }
         function filterByControls(sales) {
             const vendorEl = document.getElementById('fVendor');
             const vendorSel = vendorEl ? vendorEl.value : 'Todos';
@@ -436,16 +453,31 @@
                 `<div class="kpi"><div class="label">Acessos Vendidos</div><div class="value">${acessosTotal}</div></div>`,
                 `<div class="kpi"><div class="label">Usuários</div><div class="value">${vendedoresUnicos}</div></div>`
             ].join('');
-            const byMonth = groupByMonth(sales);
-            const labelsMes = Object.keys(byMonth).sort((a,b) => a.localeCompare(b));
-            const dataMes = labelsMes.map(m => byMonth[m].reduce((acc, s) => acc + Number(s.receita || 0), 0));
+            const { m: am, y: ay } = getAdminMonthYearDefault(sales);
+            const totalDaysAdmin = daysInMonth(ay, am);
+            const labelsDiasAdmin = Array.from({ length: totalDaysAdmin }, (_, i) => String(i + 1));
+            const byDayAdmin = {};
+            (sales || []).forEach(s => {
+                const dt = parseBrDateToDate(s.data);
+                if (!dt) return;
+                const mm = dt.getMonth() + 1;
+                const yy = dt.getFullYear();
+                if (mm !== am || yy !== ay) return;
+                const dd = dt.getDate();
+                if (!byDayAdmin[dd]) byDayAdmin[dd] = [];
+                byDayAdmin[dd].push(s);
+            });
+            const dataReceitaDiasAdmin = labelsDiasAdmin.map(d => {
+                const list = byDayAdmin[Number(d)] || [];
+                return list.reduce((acc, s) => acc + Number(s.receita || 0), 0);
+            });
             const ctxMes = document.getElementById('chartReceitaMes');
             if (__charts['chartReceitaMes']) __charts['chartReceitaMes'].destroy();
             __charts['chartReceitaMes'] = new Chart(ctxMes, {
                 type: 'bar',
                 data: {
-                    labels: labelsMes,
-                    datasets: [{ label: 'Receita (R$)', data: dataMes, backgroundColor: 'rgba(37, 99, 235, 0.5)', borderColor: 'rgba(37, 99, 235, 1)', borderWidth: 1 }]
+                    labels: labelsDiasAdmin,
+                    datasets: [{ label: 'Receita (R$)', data: dataReceitaDiasAdmin, backgroundColor: 'rgba(37, 99, 235, 0.5)', borderColor: 'rgba(37, 99, 235, 1)', borderWidth: 1 }]
                 },
                 options: { responsive: true, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true } } }
             });
@@ -462,21 +494,34 @@
                 },
                 options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
             });
-            const dataComMes = labelsMes.map(m => {
-                const list = byMonth[m];
-                const receitaNovos = list.filter(x => mapTipoKey(x.tipo) === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
-                return list.reduce((acc, x) => acc + calcularComissaoProdutoLocal(receitaNovos, mapTipoKey(x.tipo), Number(x.receita || 0)), 0);
+            const dataComDiasAdmin = labelsDiasAdmin.map(d => {
+                const list = byDayAdmin[Number(d)] || [];
+                const byVend = {};
+                list.forEach(x => {
+                    const v = x.vendedor || '-';
+                    if (!byVend[v]) byVend[v] = [];
+                    byVend[v].push(x);
+                });
+                let total = 0;
+                Object.keys(byVend).forEach(v => {
+                    const vs = byVend[v];
+                    const receitaNovos = vs.filter(x => mapTipoKey(x.tipo) === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
+                    total += vs.reduce((acc, x) => acc + calcularComissaoProdutoLocal(receitaNovos, mapTipoKey(x.tipo), Number(x.receita || 0)), 0);
+                });
+                return total;
             });
             const ctxComMes = document.getElementById('chartComissaoMes');
             if (__charts['chartComissaoMes']) __charts['chartComissaoMes'].destroy();
             __charts['chartComissaoMes'] = new Chart(ctxComMes, {
                 type: 'line',
-                data: { labels: labelsMes, datasets: [{ label: 'Comissão (R$)', data: dataComMes, borderColor: 'rgba(16,185,129,1)', backgroundColor: 'rgba(16,185,129,0.2)', tension: 0.3 }] },
+                data: { labels: labelsDiasAdmin, datasets: [{ label: 'Comissão (R$)', data: dataComDiasAdmin, borderColor: 'rgba(16,185,129,1)', backgroundColor: 'rgba(16,185,129,0.2)', tension: 0.3 }] },
                 options: { responsive: true, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true } } }
             });
             const levelCounts = {};
-            labelsMes.forEach(m => {
-                const list = byMonth[m];
+            const byMonth2 = groupByMonth(sales);
+            const labelsMes2 = Object.keys(byMonth2).sort((a,b) => a.localeCompare(b));
+            labelsMes2.forEach(m => {
+                const list = byMonth2[m];
                 const byVend = {};
                 list.forEach(s => {
                     const v = s.vendedor || '-';
@@ -548,18 +593,42 @@
                 const base = String(nameLabel.textContent || '').split(' • ')[0];
                 nameLabel.textContent = `${base}`;
             }
-            const byMonth = groupByMonth(sales);
-            const labels = Object.keys(byMonth).sort((a,b) => a.localeCompare(b));
-            const data = labels.map(m => {
-                const list = byMonth[m];
-                const receitaNovos = list.filter(x => mapTipoKey(x.tipo) === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
-                return list.reduce((acc, x) => acc + calcularComissaoProdutoLocal(receitaNovos, mapTipoKey(x.tipo), Number(x.receita || 0)), 0);
+            const um = __userPeriod ? __userPeriod.m : (new Date().getMonth() + 1);
+            const uy = __userPeriod ? __userPeriod.y : (new Date().getFullYear());
+            const totalDaysUser = daysInMonth(uy, um);
+            const labelsDiasUser = Array.from({ length: totalDaysUser }, (_, i) => String(i + 1));
+            const byDayUser = {};
+            (sales || []).forEach(s => {
+                const dt = parseBrDateToDate(s.data);
+                if (!dt) return;
+                const mm = dt.getMonth() + 1;
+                const yy = dt.getFullYear();
+                if (mm !== um || yy !== uy) return;
+                const dd = dt.getDate();
+                if (!byDayUser[dd]) byDayUser[dd] = [];
+                byDayUser[dd].push(s);
+            });
+            const dataDiasUser = labelsDiasUser.map(d => {
+                const list = byDayUser[Number(d)] || [];
+                const byVend = {};
+                list.forEach(x => {
+                    const v = x.vendedor || '-';
+                    if (!byVend[v]) byVend[v] = [];
+                    byVend[v].push(x);
+                });
+                let total = 0;
+                Object.keys(byVend).forEach(v => {
+                    const vs = byVend[v];
+                    const receitaNovos = vs.filter(x => mapTipoKey(x.tipo) === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
+                    total += vs.reduce((acc, x) => acc + calcularComissaoProdutoLocal(receitaNovos, mapTipoKey(x.tipo), Number(x.receita || 0)), 0);
+                });
+                return total;
             });
             const ctx = document.getElementById('chartComissaoUser');
             if (__charts['chartComissaoUser']) __charts['chartComissaoUser'].destroy();
             __charts['chartComissaoUser'] = new Chart(ctx, {
                 type: 'line',
-                data: { labels, datasets: [{ label: 'Comissão (R$)', data, borderColor: 'rgba(16,185,129,1)', backgroundColor: 'rgba(16,185,129,0.2)', tension: 0.3 }] },
+                data: { labels: labelsDiasUser, datasets: [{ label: 'Comissão (R$)', data: dataDiasUser, borderColor: 'rgba(16,185,129,1)', backgroundColor: 'rgba(16,185,129,0.2)', tension: 0.3 }] },
                 options: { responsive: true, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true } } }
             });
             const byTipo = groupByTipo(sales);
