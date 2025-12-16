@@ -24,6 +24,15 @@
                 <section class="section" style="margin-top: 20px;">
                     <div id="filtersProdutos" class="filters">
                         <div>
+                            <div class="label">Tipo</div>
+                            <select id="fProdTipo" class="select">
+                                <option value="">Todos</option>
+                                <option value="Novo">Novo</option>
+                                <option value="Adtivo">Adtivo</option>
+                                <option value="Renegociação">Renegociação</option>
+                            </select>
+                        </div>
+                        <div>
                             <div class="label">Categoria</div>
                             <select id="fProdCategoria" class="select"><option value="">Todas</option></select>
                         </div>
@@ -31,11 +40,7 @@
                             <div class="label">Nome</div>
                             <input id="fProdNome" class="input" type="text" placeholder="Nome do produto" autocomplete="off">
                         </div>
-                        <div>
-                            <div class="label">Descrição</div>
-                            <input id="fProdDesc" class="input" type="text" placeholder="Descrição" autocomplete="off">
-                        </div>
-                        <div style="display:flex; align-items:flex-end; gap:0.5rem;">
+                        <div style="display:flex; align-items:flex-end; gap:0.5rem; margin-left:auto; justify-content:flex-end;">
                             <button id="prodBuscarBtn" class="btn btn-primary" type="button" title="Buscar"><i data-lucide="search"></i><span>Buscar</span></button>
                             <button id="prodLimparBtn" class="btn btn-ghost" type="button" title="Limpar"><i data-lucide="rotate-ccw"></i><span>Limpar</span></button>
                         </div>
@@ -51,13 +56,14 @@
                             <thead>
                                 <tr>
                                     <th>Categoria</th>
+                                    <th>Tipo</th>
                                     <th>Nome</th>
                                     <th>Preço&nbsp;(R$)</th>
                                     <th class="col-actions" style="min-width:160px;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="prodTbody">
-                                <tr><td colspan="4">
+                                <tr><td colspan="5">
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
@@ -104,6 +110,11 @@
         let __categoriasIdx = {};
         let __produtos = [];
         let __editingProdId = null;
+        function catOptionLabel(c) {
+            const tipo = String(c && c.tipo ? c.tipo : '-');
+            const nome = String(c ? (c.nome || c.name || '-') : '-');
+            return `[${tipo}] ${nome}`;
+        }
         async function carregarCategorias() {
             try {
                 const list = await api('/categories', { method: 'GET' }).catch(() => []);
@@ -111,9 +122,24 @@
                 __categoriasIdx = {};
                 __categorias.forEach(c => { __categoriasIdx[Number(c.id)] = (c.nome || c.name || '-'); });
                 const sel = document.getElementById('mProdCategoria');
-                if (sel) sel.innerHTML = ['<option value="">Selecione</option>'].concat(__categorias.map(c => `<option value="${c.id}">${c.nome || c.name || '-'}</option>`)).join('');
-                const fsel = document.getElementById('fProdCategoria');
-                if (fsel) fsel.innerHTML = ['<option value="">Todas</option>'].concat(__categorias.map(c => `<option value="${c.id}">${c.nome || c.name || '-'}</option>`)).join('');
+                if (sel) sel.innerHTML = ['<option value="">Selecione</option>'].concat(__categorias.map(c => `<option value="${c.id}">${catOptionLabel(c)}</option>`)).join('');
+                updateFiltroCategoriasOptions('');
+                const tipoSel = document.getElementById('fProdTipo');
+                if (tipoSel) {
+                    tipoSel.addEventListener('change', () => {
+                        updateFiltroCategoriasOptions(tipoSel.value || '');
+                        const fsel = document.getElementById('fProdCategoria');
+                        if (fsel) fsel.value = '';
+                    });
+                }
+                const tipoModalSel = document.getElementById('mProdTipo');
+                if (tipoModalSel) {
+                    tipoModalSel.addEventListener('change', () => {
+                        updateModalCategoriasOptions(tipoModalSel.value || '');
+                        const msel = document.getElementById('mProdCategoria');
+                        if (msel) msel.value = '';
+                    });
+                }
             } catch {
                 __categorias = [];
                 __categoriasIdx = {};
@@ -122,6 +148,26 @@
                 const fsel = document.getElementById('fProdCategoria');
                 if (fsel) fsel.innerHTML = '<option value="">Erro ao carregar</option>';
             }
+        }
+        function updateFiltroCategoriasOptions(tipoVal = '') {
+            const fsel = document.getElementById('fProdCategoria');
+            if (!fsel) return;
+            const base = ['<option value="">Todas</option>'];
+            const filtered = (__categorias || []).filter(c => {
+                if (!tipoVal) return true;
+                return String(c.tipo || '').toLowerCase() === String(tipoVal).toLowerCase();
+            });
+            fsel.innerHTML = base.concat(filtered.map(c => `<option value="${c.id}">${catOptionLabel(c)}</option>`)).join('');
+        }
+        function updateModalCategoriasOptions(tipoVal = '') {
+            const msel = document.getElementById('mProdCategoria');
+            if (!msel) return;
+            const base = ['<option value="">Selecione</option>'];
+            const filtered = (__categorias || []).filter(c => {
+                if (!tipoVal) return true;
+                return String(c.tipo || '').toLowerCase() === String(tipoVal).toLowerCase();
+            });
+            msel.innerHTML = base.concat(filtered.map(c => `<option value="${c.id}">${catOptionLabel(c)}</option>`)).join('');
         }
         async function carregarProdutos() {
             try {
@@ -135,12 +181,12 @@
         }
         function aplicarFiltroProdutos() {
             const cid = Number(document.getElementById('fProdCategoria').value || 0);
+            const tipo = String(document.getElementById('fProdTipo').value || '');
             const nome = String(document.getElementById('fProdNome').value || '').trim().toUpperCase();
-            const desc = String(document.getElementById('fProdDesc').value || '').trim().toUpperCase();
             let arr = (__produtos || []).slice();
             if (cid) arr = arr.filter(p => Number(p.categoria_id) === cid);
+            if (tipo) arr = arr.filter(p => String(p.category && p.category.tipo ? p.category.tipo : '').toLowerCase() === String(tipo).toLowerCase());
             if (nome) arr = arr.filter(p => String(p.nome || p.name || '').toUpperCase().includes(nome));
-            if (desc) arr = arr.filter(p => String(p.descricao || p.description || '').toUpperCase().includes(desc));
             renderProdutosTable(arr);
         }
         function renderProdutosTable(list) {
@@ -148,11 +194,21 @@
             const arr = Array.isArray(list) ? list : [];
             const countLabel = document.getElementById('prodCountLabel');
             if (countLabel) countLabel.textContent = arr.length + ' ' + (arr.length === 1 ? 'item' : 'itens');
+            function tipoChipStyle(t) {
+                const key = String(t || '').toLowerCase();
+                if (key === 'novo') return 'border-color: rgba(16,185,129,0.35); background: rgba(16,185,129,0.12);';
+                if (key === 'adtivo') return 'border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.12);';
+                if (key === 'renegociação' || key === 'renegociacao') return 'border-color: rgba(59,130,246,0.35); background: rgba(59,130,246,0.12);';
+                return 'border-color: rgba(156,163,175,0.35); background: rgba(156,163,175,0.12);';
+            }
             tbody.innerHTML = arr.map(p => {
-                const catName = (__categoriasIdx[Number(p.categoria_id)] || ((p && p.category && (p.category.nome || p.category.name)) || '-'));
+                const catName = (__categoriasIdx[Number(p.categoria_id)] ||
+                    ((p && p.category && (p.category.nome || p.category.name)) ? (p.category.nome || p.category.name) : '-'));
+                const tipoVal = (p && p.category && p.category.tipo) ? p.category.tipo : '-';
                 return `
                 <tr>
                     <td><span class="ellipsis">${catName}</span></td>
+                    <td><span class="chip" style="${tipoChipStyle(tipoVal)}">${tipoVal}</span></td>
                     <td><span class="ellipsis">${p.nome || p.name || '-'}</span></td>
                     <td>${currency(p.preco)}</td>
                     <td class="col-actions">
@@ -162,8 +218,8 @@
                         </div>
                     </td>
                 </tr>
-            `;
-            }).join('') || '<tr><td colspan="4" class="muted">Sem resultados</td></tr>';
+                `;
+            }).join('') || '<tr><td colspan="5" class="muted">Sem resultados</td></tr>';
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         }
         function openModal() { document.getElementById('produtoModal').classList.add('show'); }
@@ -172,9 +228,12 @@
             if (modal) modal.classList.remove('show');
             __editingProdId = null;
             const cat = document.getElementById('mProdCategoria');
+            const tipo = document.getElementById('mProdTipo');
             const nome = document.getElementById('mProdNome');
             const desc = document.getElementById('mProdDesc');
             const preco = document.getElementById('mProdPreco');
+            if (tipo) tipo.value = '';
+            updateModalCategoriasOptions('');
             if (cat) cat.value = '';
             if (nome) nome.value = '';
             if (desc) desc.value = '';
@@ -195,6 +254,9 @@
             const p = (__produtos || []).find(x => Number(x.id) === Number(id));
             if (!p) return;
             __editingProdId = Number(p.id);
+            const tipoEl = document.getElementById('mProdTipo');
+            if (tipoEl) tipoEl.value = (p.category && p.category.tipo) ? p.category.tipo : '';
+            updateModalCategoriasOptions(tipoEl ? (tipoEl.value || '') : '');
             document.getElementById('mProdCategoria').value = String(p.categoria_id || '');
             document.getElementById('mProdNome').value = p.nome || p.name || '';
             document.getElementById('mProdDesc').value = p.descricao || p.description || '';
@@ -248,6 +310,9 @@
             if (novoBtn) {
                 novoBtn.addEventListener('click', () => {
                     __editingProdId = null;
+                    const tipoEl = document.getElementById('mProdTipo');
+                    if (tipoEl) tipoEl.value = '';
+                    updateModalCategoriasOptions('');
                     document.getElementById('mProdCategoria').value = '';
                     document.getElementById('mProdNome').value = '';
                     document.getElementById('mProdDesc').value = '';
@@ -262,7 +327,6 @@
             if (limparBtn) limparBtn.addEventListener('click', () => {
                 document.getElementById('fProdCategoria').value = '';
                 document.getElementById('fProdNome').value = '';
-                document.getElementById('fProdDesc').value = '';
                 aplicarFiltroProdutos();
             });
             const mSalvar = document.getElementById('mProdSalvar');
@@ -314,6 +378,14 @@
             <div class="modal-head"><div>Produto</div><button id="mProdFechar" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
             <div class="modal-body">
                 <div class="grid-2-modal">
+                    <div class="field"><span class="label-inline">Tipo</span>
+                        <select id="mProdTipo" class="select">
+                            <option value="">Todos</option>
+                            <option value="Novo">Novo</option>
+                            <option value="Adtivo">Adtivo</option>
+                            <option value="Renegociação">Renegociação</option>
+                        </select>
+                    </div>
                     <div class="field"><span class="label-inline">Categoria</span><select id="mProdCategoria" class="select"><option value="">Carregando...</option></select></div>
                     <div class="field"><span class="label-inline">Nome</span><input id="mProdNome" class="input" type="text" placeholder="Nome do produto"></div>
                     <div class="field"><span class="label-inline">Descrição</span><input id="mProdDesc" class="input" type="text" placeholder="Descrição (opcional)"></div>
