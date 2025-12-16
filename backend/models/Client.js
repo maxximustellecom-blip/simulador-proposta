@@ -20,7 +20,10 @@ const Client = sequelize.define('Client', {
 }, {
   tableName: 'clients',
   timestamps: true,
-  underscored: true
+  underscored: true,
+  indexes: [
+    { unique: true, fields: ['cnpj', 'created_by'], name: 'clients_cnpj_created_by_unique' }
+  ]
 });
 
 export default Client;
