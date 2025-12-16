@@ -265,8 +265,8 @@
             const valorNaoFid = parseFloat(linha.valorNaoFidelizado) || 0;
             const desconto = parseFloat(linha.desconto) || 0;
             const planoFinal = valorNaoFid * (1 - desconto / 100);
-            const device = String(linha.temAparelho || '') === 'Sim' ? (parseFloat(linha.valorAparelho) || 0) : 0;
-            return planoFinal + device;
+            // O valor do aparelho não deve somar no preço final (solicitação do usuário)
+            return planoFinal;
         }
         function calcularEconomia(linha) {
             const precoAtual = parseFloat(linha.precoAtual) || 0;

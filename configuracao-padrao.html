@@ -528,8 +528,8 @@
             const q = Number(l.quantidade || 1);
             const v = Number(l.valorPlano || 0);
             const base = q * v;
-            const addDev = (l.temAparelho === 'Sim') ? (q * Number(l.valorAparelho || 0)) : 0;
-            return base + addDev;
+            // O valor do aparelho não deve somar no total da linha (solicitação do usuário)
+            return base;
         }
         function totalGeral() {
             return __linhas.reduce((acc, l) => acc + totalLinha(l), 0);
