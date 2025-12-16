@@ -57,9 +57,10 @@
                                     <th>Preço Final</th>
                                     <th>Economia</th>
                                     <th>Aparelho</th>
-                                    <th>Modelo</th>
                                     <th>Tipo Aparelho</th>
-                                    <th>Valor Aparelho</th>
+                                    <th>Modelo</th>
+                                    <th>R$ Total Aparelho</th>
+                                    <th>R$ da Parcela</th>
                                     <th class="col-actions" style="min-width:140px;">Ações</th>
                                 </tr>
                             </thead>
@@ -395,6 +396,14 @@
                 const economia = calcularEconomia(l);
                 const tipoAparelhoOpts = ['Comodato','VF 24x'];
                 const tipoAparelhoHtml = tipoAparelhoOpts.map(o => `<option value="${o}" ${String(l.tipoAparelho||'')===o?'selected':''}>${o}</option>`).join('');
+
+                const isVF24x = l.tipoAparelho === 'VF 24x';
+                const isComodato = l.tipoAparelho === 'Comodato';
+                const hasAparelho = l.temAparelho === 'Sim';
+
+                const styleValorAp = (isVF24x && !Number(l.valorAparelho)) ? 'border-color:#EF4444;' : '';
+                const styleValorParc = (isVF24x && !Number(l.valorParcela)) ? 'border-color:#EF4444; background-color:#f3f4f6;' : 'background-color:#f3f4f6;';
+
                 return `
                 <tr>
                     <td>${idx + 1}</td>
@@ -409,9 +418,10 @@
                     <td><span class="muted">${currency(precoFinal)}</span></td>
                     <td><span class="muted">${currency(economia)}</span></td>
                     <td><select class="select" data-id="${l.id}" data-field="temAparelho"><option value="Não" ${l.temAparelho==='Não'?'selected':''}>Não</option><option value="Sim" ${l.temAparelho==='Sim'?'selected':''}>Sim</option></select></td>
-                    <td><input type="text" class="input" placeholder="Ex: iPhone 15" value="${l.modeloAparelho || ''}" data-id="${l.id}" data-field="modeloAparelho" ${l.temAparelho!=='Sim'?'disabled':''}></td>
-                    <td><select class="select" data-id="${l.id}" data-field="tipoAparelho" ${l.temAparelho!=='Sim'?'disabled':''}>${tipoAparelhoHtml}</select></td>
-                    <td><input type="number" class="input" step="0.01" min="0" value="${l.valorAparelho || ''}" data-id="${l.id}" data-field="valorAparelho" ${String(l.tipoAparelho||'')==='Comodato'?'disabled':''}></td>
+                    <td><select class="select" data-id="${l.id}" data-field="tipoAparelho" ${!hasAparelho?'disabled':''}>${tipoAparelhoHtml}</select></td>
+                    <td><input type="text" class="input" placeholder="Ex: iPhone 15" value="${l.modeloAparelho || ''}" data-id="${l.id}" data-field="modeloAparelho" ${!hasAparelho?'disabled':''}></td>
+                    <td><input type="number" class="input" step="0.01" min="0" value="${l.valorAparelho || ''}" data-id="${l.id}" data-field="valorAparelho" style="${styleValorAp}" ${!hasAparelho || isComodato ?'disabled':''}></td>
+                    <td><input type="text" class="input" value="${currency(l.valorParcela)}" style="${styleValorParc}" readonly disabled></td>
                     <td class="col-actions">
                         <div class="table-actions">
                             <button type="button" class="btn btn-ghost btn-icon" title="Duplicar" data-id="${l.id}" data-action="dup"><i data-lucide="copy"></i></button>
@@ -489,7 +499,19 @@
                     }
                 }
                 if (field === 'tipoAparelho') {
-                    if (val === 'Comodato') novo.valorAparelho = 0;
+                    if (val === 'Comodato') {
+                        novo.valorAparelho = 0;
+                        novo.valorParcela = 0;
+                    } else if (val === 'VF 24x') {
+                        const v = Number(novo.valorAparelho || 0);
+                        if (v > 0) novo.valorParcela = v / 24;
+                    }
+                }
+                if (field === 'valorAparelho') {
+                    if (novo.tipoAparelho === 'VF 24x') {
+                        const v = Number(val || 0);
+                        novo.valorParcela = v / 24;
+                    }
                 }
                 return novo;
             });
@@ -693,7 +715,7 @@
                 });
                 doc.autoTable({
                     startY: doc.lastAutoTable.finalY + 12,
-                    head: [['Linha', 'Tipo', 'Plano', 'Pct', 'Não Fid.', 'Desc.', 'Final', 'Economia', 'Aparelho', 'Modelo', 'Tipo Aparelho', 'Valor Aparelho']],
+                    head: [['Linha', 'Tipo', 'Plano', 'Pct', 'Não Fid.', 'Desc.', 'Final', 'Economia', 'Aparelho', 'Modelo', 'Tipo Aparelho', 'R$ Total Aparelho', 'R$ da Parcela']],
                     body: linhas.map((l, idx) => [
                         String(idx + 1),
                         String(l.tipoNegociacao || '-'),
@@ -706,7 +728,8 @@
                         String(l.temAparelho || '-'),
                         String(l.modeloAparelho || '-'),
                         String(l.tipoAparelho || '-'),
-                        String(currency(l.valorAparelho || 0))
+                        String(currency(l.valorAparelho || 0)),
+                        String(currency(l.valorParcela || 0))
                     ]),
                     styles: { fontSize: 9, cellPadding: 3 },
                     headStyles: { fillColor: [243, 244, 246], textColor: [55, 65, 81] },
