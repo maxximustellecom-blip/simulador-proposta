@@ -138,7 +138,8 @@
                     <td class="col-actions">
                         <div class="table-actions">
                             <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditarCategoria(${c.id})"><i data-lucide="edit-3"></i></button>
-                            <button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="excluirCategoria(${c.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Duplicar" onclick="abrirConfirmDuplicarCategoria(${c.id})"><i data-lucide="copy"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="abrirConfirmExcluirCategoria(${c.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
                         </div>
                     </td>
                 </tr>
@@ -168,17 +169,42 @@
             openModal();
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         };
-        window.excluirCategoria = async function(id) {
+        function abrirConfirmExcluirCategoria(id) {
             try {
-                const ok = window.confirm('Confirmar exclusão?');
-                if (!ok) return;
-                await api('/custom-categories/' + id, { method: 'DELETE' });
-                toast('Categoria excluída', 'success');
-                carregarCategoriasList();
-            } catch {
-                toast('Erro ao excluir categoria', 'error');
-            }
-        };
+                const c = (__categorias || []).find(x => Number(x.id) === Number(id));
+                const txt = document.getElementById('confirmDeleteText');
+                if (txt) txt.textContent = `Deseja excluir a categoria "${c?.nome || c?.name || '-'}"?`;
+                const btn = document.getElementById('confirmDeleteConfirm');
+                if (btn) btn.dataset.id = String(id);
+                const modal = document.getElementById('confirmDeleteModal');
+                if (modal) modal.classList.add('show');
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+            } catch {}
+        }
+        function fecharConfirmExcluirCategoria() {
+            const btn = document.getElementById('confirmDeleteConfirm');
+            if (btn) btn.dataset.id = '';
+            const modal = document.getElementById('confirmDeleteModal');
+            if (modal) modal.classList.remove('show');
+        }
+        function abrirConfirmDuplicarCategoria(id) {
+            try {
+                const c = (__categorias || []).find(x => Number(x.id) === Number(id));
+                const txt = document.getElementById('confirmDuplicateText');
+                if (txt) txt.textContent = `Deseja duplicar a categoria "${c?.nome || c?.name || '-'}"?`;
+                const btn = document.getElementById('confirmDuplicateConfirm');
+                if (btn) btn.dataset.id = String(id);
+                const modal = document.getElementById('confirmDuplicateModal');
+                if (modal) modal.classList.add('show');
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+            } catch {}
+        }
+        function fecharConfirmDuplicarCategoria() {
+            const btn = document.getElementById('confirmDuplicateConfirm');
+            if (btn) btn.dataset.id = '';
+            const modal = document.getElementById('confirmDuplicateModal');
+            if (modal) modal.classList.remove('show');
+        }
         async function salvarCategoriaModal() {
             try {
                 const nome = String(document.getElementById('mCatNome').value || '').trim();
@@ -232,6 +258,45 @@
             const mFechar = document.getElementById('mCatFechar');
             if (mSalvar) mSalvar.addEventListener('click', salvarCategoriaModal);
             if (mFechar) mFechar.addEventListener('click', closeModal);
+            const confirmClose = document.getElementById('confirmDeleteClose');
+            const confirmCancel = document.getElementById('confirmDeleteCancel');
+            const confirmConfirm = document.getElementById('confirmDeleteConfirm');
+            if (confirmClose) confirmClose.addEventListener('click', fecharConfirmExcluirCategoria);
+            if (confirmCancel) confirmCancel.addEventListener('click', fecharConfirmExcluirCategoria);
+            if (confirmConfirm) confirmConfirm.addEventListener('click', async () => {
+                try {
+                    const id = Number(confirmConfirm.dataset.id || 0);
+                    if (!id) { toast('Categoria inválida', 'error'); return; }
+                    await api('/custom-categories/' + id, { method: 'DELETE' });
+                    toast('Categoria excluída', 'success');
+                    fecharConfirmExcluirCategoria();
+                    carregarCategoriasList();
+                } catch {
+                    toast('Erro ao excluir categoria', 'error');
+                }
+            });
+            const dupClose = document.getElementById('confirmDuplicateClose');
+            const dupCancel = document.getElementById('confirmDuplicateCancel');
+            const dupConfirm = document.getElementById('confirmDuplicateConfirm');
+            if (dupClose) dupClose.addEventListener('click', fecharConfirmDuplicarCategoria);
+            if (dupCancel) dupCancel.addEventListener('click', fecharConfirmDuplicarCategoria);
+            if (dupConfirm) dupConfirm.addEventListener('click', async () => {
+                try {
+                    const id = Number(dupConfirm.dataset.id || 0);
+                    if (!id) { toast('Categoria inválida', 'error'); return; }
+                    const c = (__categorias || []).find(x => Number(x.id) === Number(id));
+                    if (!c) { toast('Categoria não encontrada', 'error'); return; }
+                    const nome = String(c.nome || c.name || '') + ' (cópia)';
+                    const descricao = c.descricao || c.description || null;
+                    const tipo = c.tipo || 'Novo';
+                    await api('/custom-categories', { method: 'POST', body: JSON.stringify({ nome, descricao, tipo }) });
+                    toast('Categoria duplicada', 'success');
+                    fecharConfirmDuplicarCategoria();
+                    carregarCategoriasList();
+                } catch {
+                    toast('Erro ao duplicar categoria', 'error');
+                }
+            });
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         });
     </script>
@@ -258,6 +323,31 @@
             </div>
         </div>
     </div>
+    <div id="confirmDeleteModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Confirmar Exclusão</div><button id="confirmDeleteClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="label">Tem certeza que deseja excluir esta categoria?</div>
+                <div id="confirmDeleteText" class="muted" style="margin-top:0.5rem;"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmDeleteCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
+                <button id="confirmDeleteConfirm" class="btn btn-ghost" type="button" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i><span>Excluir</span></button>
+            </div>
+        </div>
+    </div>
+    <div id="confirmDuplicateModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Confirmar Duplicação</div><button id="confirmDuplicateClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="label">Deseja duplicar esta categoria?</div>
+                <div id="confirmDuplicateText" class="muted" style="margin-top:0.5rem;"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmDuplicateCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
+                <button id="confirmDuplicateConfirm" class="btn btn-primary" type="button"><i data-lucide="copy"></i><span>Duplicar</span></button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
-

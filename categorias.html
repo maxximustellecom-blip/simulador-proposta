@@ -95,6 +95,13 @@
         }
         let __categorias = [];
         let __editingCatId = null;
+        function tipoChipStyle(t) {
+            const key = String(t || '').toLowerCase();
+            if (key === 'novo') return 'border-color: rgba(16,185,129,0.35); background: rgba(16,185,129,0.12);';
+            if (key === 'adtivo') return 'border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.12);';
+            if (key === 'renegociação' || key === 'renegociacao') return 'border-color: rgba(59,130,246,0.35); background: rgba(59,130,246,0.12);';
+            return 'border-color: rgba(156,163,175,0.35); background: rgba(156,163,175,0.12);';
+        }
         function renderCategoriasTable(list) {
             const tbody = document.getElementById('catTbody');
             const arr = Array.isArray(list) ? list : [];
@@ -104,7 +111,7 @@
                 <tr>
                     <td><span class="ellipsis">${c.nome || c.name || '-'}</span></td>
                     <td><span class="ellipsis">${c.descricao || c.description || '-'}</span></td>
-                    <td><span class="ellipsis">${c.tipo || '-'}</span></td>
+                    <td><span class="chip" style="${tipoChipStyle(c.tipo)}">${c.tipo || '-'}</span></td>
                     <td class="col-actions">
                         <div class="table-actions">
                             <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditarCategoria(${c.id})"><i data-lucide="edit-3"></i></button>
