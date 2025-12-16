@@ -1,0 +1,564 @@
+import React, { useState } from 'react';
+import { Plus, Trash2, Save, Copy, FileText } from 'lucide-react';
+
+const GeradorProposta = () => {
+  const planosDisponiveis = {
+    'Geral (Todas UFs)': [
+      { nome: 'NV/ADP B 1GB + 20GB V0625 (Até 21GB)', pct: '21GB', valor: 39.99 },
+      { nome: 'NV/ADP B 20GB + 20GB V0524 (Até 40GB)', pct: '40GB', valor: 50.99 },
+      { nome: 'NV/ADP B 20GB + 50GB V0564 (Até 70GB)', pct: '70GB', valor: 59.99 },
+      { nome: 'AQ L 3GB (Liberty Web Empresa 3GB)', pct: '3GB', valor: 34.99 },
+      { nome: 'AQ L 10GB (Liberty Web Empresa 10GB)', pct: '10GB', valor: 49.99 },
+      { nome: 'AQ L 40GB (Liberty Web Empresa 40GB)', pct: '40GB', valor: 69.99 },
+      { nome: 'AQ L 100GB (Liberty Web Empresa 100GB)', pct: '100GB', valor: 89.99 },
+      { nome: 'WTTX 2MB_40GB', pct: '40GB', valor: 49.99 },
+      { nome: 'WTTX 5MB_80GB', pct: '80GB', valor: 89.90 },
+      { nome: 'WTTX 5MB_100GB', pct: '100GB', valor: 99.99 },
+      { nome: 'WTTX 5MB_500GB', pct: '500GB', valor: 149.99 },
+      { nome: 'TIM Liberty Web até 150GB + Roteador Intelbras GX 3000 – 5G', pct: '150GB', valor: 172.62 },
+      { nome: 'TIM Black Empresas até 150GB + Roteador Intelbras GX 3000 – 5G', pct: '150GB', valor: 236.12 },
+      { nome: 'TBP M2M 20MB', pct: '20MB', valor: 6.99 },
+      { nome: 'TBP M2M 50MB', pct: '50MB', valor: 8.99 },
+      { nome: 'TBP M2M 100MB', pct: '100MB', valor: 10.99 },
+      { nome: 'TBP M2M 2,5GB', pct: '2.5GB', valor: 44.99 },
+      { nome: 'SMS Avulso', pct: 'SMS', valor: 0.25 },
+      { nome: 'PACOTE 50 SMS', pct: '50 SMS', valor: 6.90 },
+      { nome: 'PACOTE 100 SMS', pct: '100 SMS', valor: 12.90 },
+      { nome: 'PACOTE 200 SMS', pct: '200 SMS', valor: 18.90 },
+      { nome: 'PACOTE 800 SMS', pct: '800 SMS', valor: 64.90 },
+      { nome: 'PACOTE 5.000 SMS', pct: '5000 SMS', valor: 349.90 },
+      { nome: 'TIM Monitor', pct: 'Monitor', valor: 4.90 },
+      { nome: 'TIM Segurança Digital Combo 1', pct: 'Segurança', valor: 19.90 },
+      { nome: 'TIM Segurança Digital Combo 2', pct: 'Segurança', valor: 29.90 },
+      { nome: 'TIM Segurança (Avulso)', pct: 'Segurança', valor: 8.90 },
+      { nome: 'RP 6GB 2024 (TIM BLACK 6GB)', pct: '6GB', valor: 39.99 },
+      { nome: 'RP 10GB 2024 (TIM BLACK 10GB)', pct: '10GB', valor: 44.99 },
+      { nome: 'RP 15GB 2024 (TIM BLACK 15GB)', pct: '15GB', valor: 59.99 },
+      { nome: 'RP 25GB 2024 (TIM BLACK 25GB)', pct: '25GB', valor: 64.99 },
+      { nome: 'RP 40GB 2024 (TIM BLACK 40GB)', pct: '40GB', valor: 69.99 },
+      { nome: 'RP 60GB 2024 (TIM BLACK 60GB)', pct: '60GB', valor: 119.99 },
+      { nome: 'RP 110GB 2024 (TIM BLACK 110GB)', pct: '110GB', valor: 169.99 },
+      { nome: 'RP 20GB 2024 (TIM BLACK 20GB)', pct: '20GB', valor: 59.99 },
+      { nome: 'RP 30GB 2024 (TIM BLACK 30GB)', pct: '30GB', valor: 64.99 },
+      { nome: 'RP 50GB 2024 (TIM BLACK 50GB)', pct: '50GB', valor: 69.99 },
+      { nome: 'RP 70GB 2024 (TIM BLACK 70GB)', pct: '70GB', valor: 119.99 }
+    ],
+    'TIM Black Empresa (Exceto PR/SC)': [
+      { nome: 'NV/AD B 1GB + 5GB V0625 (Até 6GB)', pct: '6GB', valor: 29.99 },
+      { nome: 'NV/AD B 2GB + 10GB V0625 (Até 12GB)', pct: '12GB', valor: 39.99 },
+      { nome: 'NV/AD B 10GB + 20GB V0325 (Até 30GB)', pct: '30GB', valor: 52.99 },
+      { nome: 'NV/AD B 20GB + 20GB V0925 (Até 40GB)', pct: '40GB', valor: 64.99 },
+      { nome: 'NV/AD B 30GB + 20GB V0325 (Até 50GB)', pct: '50GB', valor: 69.99 },
+      { nome: 'NV/AD B 30GB + 50GB V0325 (Até 80GB)', pct: '80GB', valor: 79.99 },
+      { nome: 'NV/AD B 50GB + 50GB V0325 (Até 100GB)', pct: '100GB', valor: 99.99 },
+      { nome: 'NV/AD B 100GB + 50GB V0325 (Até 150GB)', pct: '150GB', valor: 149.99 }
+    ],
+    'TIM Black Empresa (PR e SC)': [
+      { nome: 'NV/AD B 1GB + 5GB V0625 (Até 6GB)', pct: '6GB', valor: 29.99 },
+      { nome: 'NV/AD B 2GB + 10GB V0625 (Até 12GB)', pct: '12GB', valor: 44.99 },
+      { nome: 'NV/AD B 10GB + 20GB V0325 (Até 30GB)', pct: '30GB', valor: 52.99 },
+      { nome: 'NV/AD B 20GB + 20GB V0925 (Até 40GB)', pct: '40GB', valor: 64.99 },
+      { nome: 'NV/AD B 30GB + 20GB V0325 (Até 50GB)', pct: '50GB', valor: 69.99 },
+      { nome: 'NV/AD B 30GB + 50GB V0325 (Até 80GB)', pct: '80GB', valor: 79.99 },
+      { nome: 'NV/AD B 50GB + 50GB V0325 (Até 100GB)', pct: '100GB', valor: 99.99 },
+      { nome: 'NV/AD B 100GB + 50GB V0325 (Até 150GB)', pct: '150GB', valor: 149.99 }
+    ],
+    'TIM Controle - DDDs Específicos': [
+      { nome: 'TIM Controle C Express 35GB (sem Deezer)', pct: '35GB', valor: 60.99, fidelizado: false },
+      { nome: 'TIM Controle C Express 35GB (com Deezer)', pct: '35GB', valor: 65.99, fidelizado: true },
+      { nome: 'TIM Controle C Express 46GB (sem Deezer)', pct: '46GB', valor: 64.99, fidelizado: false },
+      { nome: 'TIM Controle C Express 46GB (com Deezer)', pct: '46GB', valor: 69.99, fidelizado: true },
+      { nome: 'TIM Controle OFERTA FOCO 35GB (sem Deezer)', pct: '35GB', valor: 55.99, fidelizado: false },
+      { nome: 'TIM Controle OFERTA FOCO 35GB (não fidelizado)', pct: '35GB', valor: 88.99, fidelizado: false },
+      { nome: 'TIM Controle REDES SOCIAIS 54GB (sem Deezer)', pct: '54GB', valor: 64.99, fidelizado: false },
+      { nome: 'TIM Controle REDES SOCIAIS 54GB (não fidelizado)', pct: '54GB', valor: 107.99, fidelizado: false },
+      { nome: 'TIM Controle PLUS 55GB (sem Deezer)', pct: '55GB', valor: 69.99, fidelizado: false },
+      { nome: 'TIM Controle PLUS 55GB (não fidelizado)', pct: '55GB', valor: 102.99, fidelizado: false },
+      { nome: 'TIM Controle PREMIUM 61GB (sem Deezer)', pct: '61GB', valor: 79.99, fidelizado: false },
+      { nome: 'TIM Controle PREMIUM 61GB (não fidelizado)', pct: '61GB', valor: 122.99, fidelizado: false },
+      { nome: 'Portabilidade 27GB (3GB Core + 20GB Promo + 4GB Especial)', pct: '27GB', valor: 51.99 },
+      { nome: 'Nacional Migração 19GB (3GB Core + 10GB Promo + 6GB Especial)', pct: '19GB', valor: 82.99 }
+    ],
+    'TIM Ultrafibra (SP/RS)': [
+      { nome: '400 MEGA', pct: '400MB', valorDacc: 79.99, valorFatura: 89.99 },
+      { nome: '600 MEGA+', pct: '600MB', valorDacc: 99.99, valorFatura: 109.99 },
+      { nome: '1 GIGA', pct: '1GB', valorDacc: 119.99, valorFatura: 129.99 },
+      { nome: '2 GIGA+', pct: '2GB', valorDacc: 369.99, valorFatura: 379.99 },
+      { nome: '400 MEGA', pct: '400MB', valorDacc: 99.99, valorFatura: 109.99 }
+    ],
+    'TIM Ultrafibra (Outras Regiões)': [
+      { nome: '600 MEGA+', pct: '600MB', valorDacc: 119.99, valorFatura: 129.99 },
+      { nome: '1 GIGA', pct: '1GB', valorDacc: 149.99, valorFatura: 159.99 },
+      { nome: '2 GIGA+', pct: '2GB', valorDacc: 369.99, valorFatura: 379.99 }
+    ],
+    'TIM Ultrafibra (Ofertas Especiais)': [
+      { nome: '300 MEGA', pct: '300MB', valorDacc: 89.99, valorFatura: 99.99 },
+      { nome: '300 MEGA (Oferta)', pct: '300MB', valorDacc: 79.99, valorFatura: 89.99 },
+      { nome: '600 MEGA', pct: '600MB', valorDacc: 89.99, valorFatura: 99.99 },
+      { nome: 'OFERTA FOCO RN 500 MEGA', pct: '500MB', valorDacc: 49.99, valorFatura: 59.99 }
+    ]
+  };
+
+  const [linhas, setLinhas] = useState([
+    {
+      id: 1,
+      quantidade: 1,
+      categoria: 'Geral (Todas UFs)',
+      plano: '',
+      pct: '',
+      valorPlano: '',
+      temAparelho: 'Não',
+      modelo: '',
+      tipoAparelho: 'Comodato',
+      valorAparelho: ''
+    }
+  ]);
+
+  const [mensagem, setMensagem] = useState('');
+  const [erro, setErro] = useState('');
+
+  const adicionarLinha = () => {
+    setLinhas([...linhas, {
+      id: Math.max(...linhas.map(l => l.id)) + 1,
+      quantidade: 1,
+      categoria: 'Geral (Todas UFs)',
+      plano: '',
+      pct: '',
+      valorPlano: '',
+      temAparelho: 'Não',
+      modelo: '',
+      tipoAparelho: 'Comodato',
+      valorAparelho: ''
+    }]);
+  };
+
+  const removerLinha = (id) => {
+    if (linhas.length > 1) {
+      setLinhas(linhas.filter(linha => linha.id !== id));
+    }
+  };
+
+  const atualizarLinha = (id, campo, valor) => {
+    setLinhas(linhas.map(linha => {
+      if (linha.id !== id) return linha;
+      
+      const novaLinha = { ...linha, [campo]: valor };
+      
+      if (campo === 'categoria') {
+        novaLinha.plano = '';
+        novaLinha.pct = '';
+        novaLinha.valorPlano = '';
+      }
+      
+      if (campo === 'plano') {
+        const planoSelecionado = planosDisponiveis[linha.categoria]?.find(p => p.nome === valor);
+        if (planoSelecionado) {
+          novaLinha.pct = planoSelecionado.pct;
+          novaLinha.valorPlano = planoSelecionado.valorDacc || planoSelecionado.valor;
+        }
+      }
+
+      if (campo === 'temAparelho' && valor === 'Não') {
+        novaLinha.modelo = '';
+        novaLinha.tipoAparelho = 'Comodato';
+        novaLinha.valorAparelho = '';
+      }
+
+      if (campo === 'tipoAparelho' && valor === 'Comodato') {
+        novaLinha.valorAparelho = '';
+      }
+      
+      return novaLinha;
+    }));
+  };
+
+  const calcularTotalLinha = (linha) => {
+    const quantidade = parseInt(linha.quantidade) || 1;
+    const valorPlano = parseFloat(linha.valorPlano) || 0;
+    const valorAparelho = linha.tipoAparelho === 'VF 24x' ? (parseFloat(linha.valorAparelho) || 0) : 0;
+    return quantidade * (valorPlano + valorAparelho);
+  };
+
+  const calcularTotal = () => {
+    return linhas.reduce((sum, l) => sum + calcularTotalLinha(l), 0);
+  };
+
+  const validarProposta = () => {
+    const erros = [];
+
+    linhas.forEach((linha, idx) => {
+      const quantidade = parseInt(linha.quantidade);
+      if (!quantidade || quantidade < 1) {
+        erros.push(`Linha ${idx + 1}: Quantidade deve ser pelo menos 1`);
+      }
+
+      if (!linha.plano) {
+        erros.push(`Linha ${idx + 1}: Selecione um plano`);
+      }
+
+      if (linha.temAparelho === 'Sim' && !linha.modelo) {
+        erros.push(`Linha ${idx + 1}: Informe o modelo do aparelho`);
+      }
+
+      if (linha.tipoAparelho === 'VF 24x' && !linha.valorAparelho) {
+        erros.push(`Linha ${idx + 1}: Informe o valor do aparelho para Venda Facilitada`);
+      }
+    });
+
+    return erros;
+  };
+
+  const gerarTexto = () => {
+    let texto = '=== NOVA PROPOSTA TIM ===\n\n';
+    texto += `Data: ${new Date().toLocaleDateString('pt-BR')}\n`;
+    texto += `Hora: ${new Date().toLocaleTimeString('pt-BR')}\n`;
+    texto += `Total de Linhas: ${linhas.reduce((sum, l) => sum + (parseInt(l.quantidade) || 1), 0)}\n\n`;
+    
+    texto += '--- DETALHAMENTO DA PROPOSTA ---\n';
+    linhas.forEach((linha, idx) => {
+      const quantidade = parseInt(linha.quantidade) || 1;
+      texto += `\n[ITEM ${idx + 1}]\n`;
+      texto += `Quantidade de Acessos: ${quantidade}\n`;
+      texto += `Categoria: ${linha.categoria}\n`;
+      texto += `Plano: ${linha.plano || 'Não selecionado'}\n`;
+      texto += `Pacote de Dados: ${linha.pct || 'N/A'}\n`;
+      texto += `Valor Mensal (unitário): R$ ${(parseFloat(linha.valorPlano) || 0).toFixed(2)}\n`;
+      texto += `Valor Total da Linha: R$ ${calcularTotalLinha(linha).toFixed(2)}\n`;
+      
+      if (linha.temAparelho === 'Sim') {
+        texto += `\nAPARELHO:\n`;
+        texto += `  Modelo: ${linha.modelo}\n`;
+        texto += `  Tipo: ${linha.tipoAparelho}\n`;
+        if (linha.tipoAparelho === 'VF 24x') {
+          texto += `  Valor Mensal: R$ ${(parseFloat(linha.valorAparelho) || 0).toFixed(2)}\n`;
+        } else {
+          texto += `  Valor: Sem custo adicional (Comodato)\n`;
+        }
+      }
+      texto += '─'.repeat(50) + '\n';
+    });
+    
+    const totalAcessos = linhas.reduce((sum, l) => sum + (parseInt(l.quantidade) || 1), 0);
+    texto += `\n--- RESUMO FINANCEIRO ---\n`;
+    texto += `Valor Total Mensal: R$ ${calcularTotal().toFixed(2)}\n`;
+    texto += `Total de Acessos: ${totalAcessos}\n`;
+    texto += `Linhas com Aparelho: ${linhas.filter(l => l.temAparelho === 'Sim').length}\n`;
+    
+    return texto;
+  };
+
+  const salvarProposta = () => {
+    const erros = validarProposta();
+    
+    if (erros.length > 0) {
+      setErro('Corrija os seguintes problemas: ' + erros.join('; '));
+      setTimeout(() => setErro(''), 5000);
+      return;
+    }
+
+    const resumo = gerarTexto();
+    const blob = new Blob([resumo], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `proposta_TIM_${new Date().getTime()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    setMensagem('Proposta salva com sucesso!');
+    setTimeout(() => setMensagem(''), 3000);
+  };
+
+  const copiarProposta = () => {
+    const erros = validarProposta();
+    
+    if (erros.length > 0) {
+      setErro('Corrija os seguintes problemas: ' + erros.join('; '));
+      setTimeout(() => setErro(''), 5000);
+      return;
+    }
+
+    const resumo = gerarTexto();
+    navigator.clipboard.writeText(resumo).then(() => {
+      setMensagem('Proposta copiada para a área de transferência!');
+      setTimeout(() => setMensagem(''), 3000);
+    });
+  };
+
+  const total = calcularTotal();
+
+  return (
+    <div className="max-w-full mx-auto p-6 bg-gray-50 min-h-screen">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-6 mb-6 text-white">
+        <div className="flex items-center gap-3">
+          <FileText size={36} />
+          <div>
+            <h1 className="text-3xl font-bold">Gerador de Proposta TIM Empresas</h1>
+            <p className="text-blue-100 mt-1">Monte propostas completas com todos os planos disponíveis</p>
+          </div>
+        </div>
+      </div>
+
+      {mensagem && (
+        <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6 rounded-lg shadow">
+          <p className="text-green-800 font-semibold">{mensagem}</p>
+        </div>
+      )}
+
+      {erro && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-lg shadow">
+          <p className="text-red-800 font-semibold">{erro}</p>
+        </div>
+      )}
+
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-blue-600 text-white">
+              <tr>
+                <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">Qtd</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">Categoria de Plano</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">Plano</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">Pct (GB)</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">Valor Plano</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">Total Linha</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">Aparelho</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">Modelo</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">Tipo Aparelho</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">Valor Aparelho</th>
+                <th className="px-4 py-3 text-center text-sm font-semibold">Ação</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {linhas.map((linha, idx) => (
+                <tr key={linha.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{idx + 1}</td>
+                  
+                  <td className="px-4 py-3">
+                    <input
+                      type="number"
+                      min="1"
+                      value={linha.quantidade}
+                      onChange={(e) => atualizarLinha(linha.id, 'quantidade', e.target.value)}
+                      className="w-20 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center font-semibold"
+                    />
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <select
+                      value={linha.categoria}
+                      onChange={(e) => atualizarLinha(linha.id, 'categoria', e.target.value)}
+                      className="w-56 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      {Object.keys(planosDisponiveis).map((cat, i) => (
+                        <option key={i} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <select
+                      value={linha.plano}
+                      onChange={(e) => atualizarLinha(linha.id, 'plano', e.target.value)}
+                      className={`w-80 px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        !linha.plano ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      }`}
+                    >
+                      <option value="">Selecione um plano...</option>
+                      {planosDisponiveis[linha.categoria]?.map((plano, i) => (
+                        <option key={i} value={plano.nome}>
+                          {plano.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <input
+                      type="text"
+                      value={linha.pct}
+                      readOnly
+                      className="w-24 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-medium text-center"
+                      placeholder="-"
+                    />
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <div className="text-sm font-semibold text-green-600">
+                      R$ {(parseFloat(linha.valorPlano) || 0).toFixed(2)}
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <div className="text-sm font-bold text-blue-600">
+                      R$ {calcularTotalLinha(linha).toFixed(2)}
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <select
+                      value={linha.temAparelho}
+                      onChange={(e) => atualizarLinha(linha.id, 'temAparelho', e.target.value)}
+                      className="w-24 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="Não">Não</option>
+                      <option value="Sim">Sim</option>
+                    </select>
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <input
+                      type="text"
+                      value={linha.modelo}
+                      onChange={(e) => atualizarLinha(linha.id, 'modelo', e.target.value)}
+                      disabled={linha.temAparelho === 'Não'}
+                      className={`w-40 px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        linha.temAparelho === 'Sim' && !linha.modelo ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      } ${linha.temAparelho === 'Não' ? 'bg-gray-100' : ''}`}
+                      placeholder="Ex: iPhone 15"
+                    />
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <select
+                      value={linha.tipoAparelho}
+                      onChange={(e) => atualizarLinha(linha.id, 'tipoAparelho', e.target.value)}
+                      disabled={linha.temAparelho === 'Não'}
+                      className={`w-32 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        linha.temAparelho === 'Não' ? 'bg-gray-100' : ''
+                      }`}
+                    >
+                      <option value="Comodato">Comodato</option>
+                      <option value="VF 24x">VF 24x</option>
+                    </select>
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={linha.valorAparelho}
+                      onChange={(e) => atualizarLinha(linha.id, 'valorAparelho', e.target.value)}
+                      disabled={linha.temAparelho === 'Não' || linha.tipoAparelho === 'Comodato'}
+                      className={`w-28 px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        linha.tipoAparelho === 'VF 24x' && !linha.valorAparelho ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      } ${(linha.temAparelho === 'Não' || linha.tipoAparelho === 'Comodato') ? 'bg-gray-100' : ''}`}
+                      placeholder="0.00"
+                    />
+                  </td>
+
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      onClick={() => removerLinha(linha.id)}
+                      disabled={linhas.length === 1}
+                      className="text-red-600 hover:text-red-800 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
+                      title="Remover linha"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="flex gap-4 mb-6">
+        <button
+          onClick={adicionarLinha}
+          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md font-semibold"
+        >
+          <Plus size={20} />
+          Adicionar Linha
+        </button>
+        <button
+          onClick={salvarProposta}
+          className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md font-semibold"
+        >
+          <Save size={20} />
+          Salvar Proposta
+        </button>
+        <button
+          onClick={copiarProposta}
+          className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-md font-semibold"
+        >
+          <Copy size={20} />
+          Copiar Proposta
+        </button>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Resumo da Proposta</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-700 mb-3">Itens Incluídos:</h3>
+            <div className="max-h-96 overflow-y-auto space-y-3">
+              {linhas.map((linha, idx) => (
+                <div key={linha.id} className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="flex justify-between items-start">
+                    <p className="font-semibold text-gray-800">{idx + 1}. {linha.plano || 'Plano não selecionado'}</p>
+                    <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-bold">
+                      {linha.quantidade}x
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">Categoria: {linha.categoria}</p>
+                  <p className="text-sm text-gray-600">Pacote: {linha.pct || 'N/A'}</p>
+                  <p className="text-sm text-gray-600">Valor Unitário: R$ {(parseFloat(linha.valorPlano) || 0).toFixed(2)}/mês</p>
+                  <p className="text-sm font-semibold text-blue-700 mt-1">Total da Linha: R$ {calcularTotalLinha(linha).toFixed(2)}/mês</p>
+                  {linha.temAparelho === 'Sim' && (
+                    <div className="mt-2 pt-2 border-t border-blue-300">
+                      <p className="text-sm text-gray-700 font-medium">Aparelho: {linha.modelo}</p>
+                      <p className="text-sm text-gray-600">{linha.tipoAparelho}</p>
+                      {linha.tipoAparelho === 'VF 24x' && (
+                        <p className="text-sm text-gray-600">R$ {(parseFloat(linha.valorAparelho) || 0).toFixed(2)}/mês</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-lg shadow-lg">
+              <h3 className="text-lg font-semibold mb-2">Valor Total Mensal</h3>
+              <p className="text-4xl font-bold">R$ {total.toFixed(2)}</p>
+              <p className="text-sm mt-2 text-green-100">{linhas.reduce((sum, l) => sum + (parseInt(l.quantidade) || 1), 0)} acessos incluídos</p>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Total de Acessos</p>
+                <p className="text-2xl font-bold text-blue-600">{linhas.reduce((sum, l) => sum + (parseInt(l.quantidade) || 1), 0)}</p>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Com Aparelho</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {linhas.filter(l => l.temAparelho === 'Sim').length}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <h4 className="font-semibold text-gray-800 mb-2">Categorias Utilizadas:</h4>
+              <div className="space-y-1">
+                {[...new Set(linhas.map(l => l.categoria))].map((cat, i) => (
+                  <p key={i} className="text-sm text-gray-700">
+                    • {cat} ({linhas.filter(l => l.categoria === cat).length})
+                  </p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default GeradorProposta;
