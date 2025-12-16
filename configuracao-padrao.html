@@ -756,6 +756,12 @@
                 doc.text('Relatório da Proposta', 40, 40);
                 doc.setFontSize(9);
                 doc.text('Gerado em ' + new Date().toLocaleString('pt-BR'), 40, 56);
+                try {
+                    const u = JSON.parse(localStorage.getItem('authUser') || '{}');
+                    if (u && u.name) {
+                        doc.text('Consultor: ' + u.name, 40, 68);
+                    }
+                } catch {}
                 doc.setFontSize(10);
                 doc.text('Total mensal: ' + total, 450, 40, { align: 'right' });
                 doc.autoTable({
