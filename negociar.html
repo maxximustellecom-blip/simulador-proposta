@@ -247,7 +247,15 @@
         };
         window.configurarNegociacao = function(id) {
             try {
-                window.location.href = 'configuracao-padrao.html?id=' + String(id);
+                const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
+                const proposta = String(n && n.proposta ? n.proposta : '').toUpperCase();
+                const isCustom =
+                    proposta.includes('CUSTOMIZADA') ||
+                    proposta.includes('COSTUMIZADA') ||
+                    proposta === 'PROPOSTA CUSTOMIZADA' ||
+                    proposta === 'PROPOSTA COSTUMIZADA';
+                const target = isCustom ? 'configuracao-custumizada.html' : 'configuracao-padrao.html';
+                window.location.href = target + '?id=' + String(id);
             } catch {}
         };
         window.excluirNegociacao = async function(id) {
