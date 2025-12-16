@@ -26,22 +26,14 @@ export async function createSimulation(req, res) {
     if (!req.user || !req.user.id) {
       return res.status(401).json({ error: 'unauthorized: usuário não autenticado' });
     }
-    const { cliente, vendas } = req.body || {};
-    if (!cliente || !vendas || !Array.isArray(vendas) || vendas.length === 0) {
-      return res.status(400).json({ error: 'payload inválido: cliente e vendas são obrigatórios' });
-    }
-    const { name, cnpj } = cliente;
-    if (!name || !cnpj) {
-      return res.status(400).json({ error: 'cliente inválido: name e cnpj são obrigatórios' });
+    const { vendas } = req.body || {};
+    if (!vendas || !Array.isArray(vendas) || vendas.length === 0) {
+      return res.status(400).json({ error: 'payload inválido: vendas são obrigatórias' });
     }
     const [client] = await Client.findOrCreate({
-      where: { cnpj },
-      defaults: { name, cnpj }
+      where: { cnpj: '00000000000000' },
+      defaults: { name: 'Cliente Fictício', cnpj: '00000000000000' }
     });
-    if (client.name !== name) {
-      client.name = name;
-      await client.save();
-    }
     const receitaNovos = vendas.filter(v => v.tipo === 'novos').reduce((acc, v) => acc + Number(v.receita || 0), 0);
     const receitaTotal = vendas.reduce((acc, v) => acc + Number(v.receita || 0), 0);
     const nivel = calcularNivel(receitaNovos);
