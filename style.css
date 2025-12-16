@@ -257,11 +257,9 @@ html, body {
 
 .kpis {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.75rem;
-}
-@media (max-width: 919px) {
-  .kpis { grid-template-columns: 1fr 1fr; }
+  width: 100%;
 }
 .kpi {
   background: var(--surface);
@@ -282,6 +280,26 @@ html, body {
   color: var(--text);
   font-size: 1.25rem;
   font-weight: 700;
+}
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  box-shadow: var(--shadow);
+  color: var(--text);
+  margin-bottom: 0.75rem;
+}
+.notice .label {
+  color: var(--muted);
+  font-weight: 600;
+}
+.notice i {
+  width: 18px;
+  height: 18px;
 }
 .toast {
   position: fixed;

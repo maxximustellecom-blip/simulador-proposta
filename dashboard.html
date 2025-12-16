@@ -81,6 +81,13 @@
                             <input id="fTo" class="input" type="date">
                             <button id="applyFilters" class="btn" type="button" title="Aplicar"><i data-lucide="filter"></i><span>Aplicar</span></button>
                         </div>
+                        <div class="notice">
+                            <i data-lucide="info"></i>
+                            <div>
+                                <div class="label">Aviso</div>
+                                <div>A receita, comissões e lucros só serão contabilizados quando o status da negociação estiver concluída.</div>
+                            </div>
+                        </div>
                         <div class="kpis" id="kpis"></div>
                         <div class="grid" style="margin-top:1rem;">
                             <div class="card">
@@ -151,6 +158,13 @@
                             <button id="prevPeriodUser" class="btn btn-ghost btn-icon" type="button" title="Anterior"><i data-lucide="chevron-left"></i></button>
                             <div id="periodLabelUser" class="chip" style="display:flex; align-items:center; gap:0.4rem; font-weight:600; padding:0.35rem 0.6rem; border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.06);"></div>
                             <button id="nextPeriodUser" class="btn btn-ghost btn-icon" type="button" title="Próximo"><i data-lucide="chevron-right"></i></button>
+                        </div>
+                        <div class="notice">
+                            <i data-lucide="info"></i>
+                            <div>
+                                <div class="label">Aviso</div>
+                                <div>A receita, comissões e lucros só serão contabilizados quando o status da negociação estiver concluída.</div>
+                            </div>
                         </div>
                         <div class="kpis" id="userKpis" style="margin-bottom:1rem;"></div>
                         <div class="grid">
@@ -372,7 +386,31 @@
             });
             return total;
         }
-        function renderAdminDashboard(sales) {
+        function isTipoNovoOuAdtivo(t) {
+            const k = String(t || '').toUpperCase();
+            return (k.includes('1º') || k.includes('VENDA') || k.includes('ADTIVO') || k.includes('ADITIVO'));
+        }
+        function isPropostaCustom(proposta) {
+            const p = String(proposta || '').toUpperCase();
+            return p.includes('CUSTOMIZADA') || p.includes('COSTUMIZADA') || p === 'PROPOSTA CUSTOMIZADA' || p === 'PROPOSTA COSTUMIZADA';
+        }
+        async function contarAcessosPorNegociacao(n) {
+            try {
+                const id = n && n.id ? n.id : null;
+                if (!id) return 0;
+                const custom = isPropostaCustom(n.proposta);
+                if (custom) {
+                    const data = await api(`/negotiations/${id}/custom-proposal`, { method: 'GET' }).catch(() => null);
+                    const linhas = (data && Array.isArray(data.linhas)) ? data.linhas : [];
+                    return linhas.length;
+                } else {
+                    const data = await api(`/negotiations/${id}/proposal`, { method: 'GET' }).catch(() => null);
+                    const linhas = (data && Array.isArray(data.linhas)) ? data.linhas : [];
+                    return linhas.reduce((acc, l) => acc + Number(l.quantidade || 0), 0);
+                }
+            } catch { return 0; }
+        }
+        async function renderAdminDashboard(sales) {
             const adminView = document.getElementById('adminView');
             adminView.style.display = 'block';
             const adminSkeleton = document.getElementById('adminSkeleton');
@@ -386,11 +424,16 @@
             const concluded = (sales || []).filter(s => String(s.status || '') === 'Concluída');
             const receitaTotal = concluded.reduce((acc, s) => acc + Number(s.receita || 0), 0);
             const comissaoTotal = calcularComissaoTotalPorVendedorMes(concluded);
+            const acessosTotal = await (async () => {
+                const counts = await Promise.all((concluded || []).map(contarAcessosPorNegociacao));
+                return counts.reduce((acc, c) => acc + Number(c || 0), 0);
+            })();
             const vendedoresUnicos = Array.from(new Set((sales || []).map(s => s.vendedor || '-'))).length;
             kpi.innerHTML = [
                 `<div class="kpi"><div class="label">Negociações</div><div class="value">${totalVendas}</div></div>`,
                 `<div class="kpi"><div class="label">Receita Total</div><div class="value">${currency(receitaTotal)}</div></div>`,
                 `<div class="kpi"><div class="label">Comissão Total</div><div class="value">${currency(comissaoTotal)}</div></div>`,
+                `<div class="kpi"><div class="label">Acessos Vendidos</div><div class="value">${acessosTotal}</div></div>`,
                 `<div class="kpi"><div class="label">Usuários</div><div class="value">${vendedoresUnicos}</div></div>`
             ].join('');
             const byMonth = groupByMonth(sales);
@@ -473,7 +516,7 @@
             });
             renderListaVendas('ultimasVendas', sortedRecent, 8);
         }
-        function renderUserDashboard(sales) {
+        async function renderUserDashboard(sales) {
             const userView = document.getElementById('userView');
             userView.style.display = 'block';
             const userSkeleton = document.getElementById('userSkeleton');
@@ -488,10 +531,16 @@
             const nivelAtual = calcularNivelLocal(receitaNovosTotal);
             const concluded = (sales || []).filter(s => String(s.status || '') === 'Concluída');
             const comissaoTotal = calcularComissaoTotalPorVendedorMes(concluded);
+            const acessosPeriodoNovosAdt = await (async () => {
+                const alvo = (sales || []).filter(s => isTipoNovoOuAdtivo(s.tipo) && String(s.status || '') === 'Concluída');
+                const counts = await Promise.all(alvo.map(contarAcessosPorNegociacao));
+                return counts.reduce((acc, c) => acc + Number(c || 0), 0);
+            })();
             document.getElementById('userKpis').innerHTML = [
                 `<div class="kpi"><div class="label">Negociações</div><div class="value">${totalVendas}</div></div>`,
                 `<div class="kpi"><div class="label">Receita</div><div class="value">${currency(concluded.reduce((acc, s) => acc + Number(s.receita || 0), 0))}</div></div>`,
                 `<div class="kpi"><div class="label">Comissão</div><div class="value">${currency(comissaoTotal)}</div></div>`,
+                `<div class="kpi"><div class="label">Acessos Vendidos (Período)</div><div class="value">${acessosPeriodoNovosAdt}</div></div>`,
                 `<div class="kpi"><div class="label">Nível</div><div class="value">${nivelAtual.nome}</div></div>`
             ].join('');
             const nameLabel = document.getElementById('userNameLabel');
@@ -565,6 +614,7 @@
                 if (isAdmin) {
                     document.getElementById('adminView').style.display = 'block';
                     const arr = Array.isArray(sales) ? sales.map(n => ({
+                        id: n.id,
                         data: n.data,
                         tipo: n.tipo,
                         receita: Number(n.valor || 0),
@@ -574,15 +624,16 @@
                         status: n.status
                     })) : [];
                     buildVendorOptions(arr);
-                    document.getElementById('applyFilters').addEventListener('click', () => {
+                    document.getElementById('applyFilters').addEventListener('click', async () => {
                         const filtered = filterByControls(arr);
-                        renderAdminDashboard(filtered);
+                        await renderAdminDashboard(filtered);
                         if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
                     });
-                    renderAdminDashboard(arr);
+                    await renderAdminDashboard(arr);
                 } else {
                     document.getElementById('userView').style.display = 'block';
                     const arr = Array.isArray(sales) ? sales.map(n => ({
+                        id: n.id,
                         data: n.data,
                         tipo: n.tipo,
                         receita: Number(n.valor || 0),
@@ -594,20 +645,20 @@
                     setUserPeriod(new Date());
                     const prev = document.getElementById('prevPeriodUser');
                     const next = document.getElementById('nextPeriodUser');
-                    if (prev) prev.addEventListener('click', () => {
+                    if (prev) prev.addEventListener('click', async () => {
                         changeUserPeriod(-1);
                         const filtered = filterByUserPeriod(arr);
-                        renderUserDashboard(filtered);
+                        await renderUserDashboard(filtered);
                         if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
                     });
-                    if (next) next.addEventListener('click', () => {
+                    if (next) next.addEventListener('click', async () => {
                         changeUserPeriod(1);
                         const filtered = filterByUserPeriod(arr);
-                        renderUserDashboard(filtered);
+                        await renderUserDashboard(filtered);
                         if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
                     });
                     const initial = filterByUserPeriod(arr);
-                    renderUserDashboard(initial);
+                    await renderUserDashboard(initial);
                 }
             } catch {
                 if (isAdmin) {
