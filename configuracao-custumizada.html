@@ -74,6 +74,16 @@
                     </div>
                 </section>
                 <section class="section" style="margin-top:1rem;">
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        <div class="label">Status da negociação</div>
+                        <select id="fStatus" class="select" style="width:220px;">
+                            <option value="Em andamento">Em andamento</option>
+                            <option value="Concluída">Concluída</option>
+                            <option value="Cancelada">Cancelada</option>
+                        </select>
+                    </div>
+                </section>
+                <section class="section" style="margin-top:1rem;">
                     <div class="label">Resumo</div>
                     <div class="grid-2" style="margin-top:0.5rem;">
                         <div class="card" style="padding:0.75rem; border:1px solid #e5e7eb;">
@@ -141,6 +151,27 @@
                 throw new Error(err.error || ('HTTP ' + res.status));
             }
             return res.json();
+        }
+        function toast(msg, type) {
+            const el = document.getElementById('toast');
+            if (!el) return;
+            el.textContent = msg;
+            if (type === 'success') {
+                el.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+                el.style.color = '#FFFFFF';
+                el.style.borderColor = 'transparent';
+            } else if (type === 'error') {
+                el.style.background = 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)';
+                el.style.color = '#FFFFFF';
+                el.style.borderColor = 'transparent';
+            } else {
+                el.style.background = 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)';
+                el.style.color = '#FFFFFF';
+                el.style.borderColor = 'transparent';
+            }
+            el.style.display = 'block';
+            clearTimeout(window.__toastTimer);
+            window.__toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2500);
         }
         function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
         function currency(v) { try { return (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })).format(Number(v || 0)); } catch { return 'R$ 0,00'; } }
@@ -231,7 +262,9 @@
         function calcularPrecoFinal(linha) {
             const valorNaoFid = parseFloat(linha.valorNaoFidelizado) || 0;
             const desconto = parseFloat(linha.desconto) || 0;
-            return valorNaoFid * (1 - desconto / 100);
+            const planoFinal = valorNaoFid * (1 - desconto / 100);
+            const device = String(linha.temAparelho || '') === 'Sim' ? (parseFloat(linha.valorAparelho) || 0) : 0;
+            return planoFinal + device;
         }
         function calcularEconomia(linha) {
             const precoAtual = parseFloat(linha.precoAtual) || 0;
@@ -359,12 +392,12 @@
             tbody.innerHTML = linhas.map((l, idx) => {
                 const precoFinal = calcularPrecoFinal(l);
                 const economia = calcularEconomia(l);
-                const tipoAparelhoOpts = ['Comodato','VF 24x','Compra'];
+                const tipoAparelhoOpts = ['Comodato','VF 24x'];
                 const tipoAparelhoHtml = tipoAparelhoOpts.map(o => `<option value="${o}" ${String(l.tipoAparelho||'')===o?'selected':''}>${o}</option>`).join('');
                 return `
                 <tr>
                     <td>${idx + 1}</td>
-                    <td><input type="text" class="input" placeholder="(00) 00000-0000" value="${l.acesso || ''}" data-id="${l.id}" data-field="acesso"></td>
+                    <td><input type="text" class="input" placeholder="(00) 00000-0000" value="${formatPhone(l.acesso || '')}" data-id="${l.id}" data-field="acesso"></td>
                     <td><select class="select" data-id="${l.id}" data-field="tipoNegociacao">${tipoOptionsHtml(l.tipoNegociacao)}</select></td>
                     <td><select class="select" data-id="${l.id}" data-field="planoAtualGB">${pctAtualOptionsHtml(l.planoAtualGB)}</select></td>
                     <td><input type="number" class="input" step="0.01" min="0" value="${l.precoAtual || ''}" data-id="${l.id}" data-field="precoAtual"></td>
@@ -377,7 +410,7 @@
                     <td><select class="select" data-id="${l.id}" data-field="temAparelho"><option value="Não" ${l.temAparelho==='Não'?'selected':''}>Não</option><option value="Sim" ${l.temAparelho==='Sim'?'selected':''}>Sim</option></select></td>
                     <td><input type="text" class="input" placeholder="Ex: iPhone 15" value="${l.modeloAparelho || ''}" data-id="${l.id}" data-field="modeloAparelho" ${l.temAparelho!=='Sim'?'disabled':''}></td>
                     <td><select class="select" data-id="${l.id}" data-field="tipoAparelho" ${l.temAparelho!=='Sim'?'disabled':''}>${tipoAparelhoHtml}</select></td>
-                    <td><input type="number" class="input" step="0.01" min="0" value="${l.valorAparelho || ''}" data-id="${l.id}" data-field="valorAparelho" ${String(l.tipoAparelho||'')!=='VF 24x'?'disabled':''}></td>
+                    <td><input type="number" class="input" step="0.01" min="0" value="${l.valorAparelho || ''}" data-id="${l.id}" data-field="valorAparelho" ${String(l.tipoAparelho||'')==='Comodato'?'disabled':''}></td>
                     <td class="col-actions">
                         <div class="table-actions">
                             <button type="button" class="btn btn-ghost btn-icon" title="Duplicar" data-id="${l.id}" data-action="dup"><i data-lucide="copy"></i></button>
@@ -391,6 +424,14 @@
             Array.from(document.querySelectorAll('#tableBody .input, #tableBody .select')).forEach(el => {
                 el.addEventListener('change', onFieldChange);
                 el.addEventListener('input', onFieldInput);
+            });
+            Array.from(document.querySelectorAll('#tableBody [data-field=\"acesso\"]')).forEach(el => {
+                el.addEventListener('input', () => {
+                    el.value = formatPhone(el.value);
+                });
+                el.addEventListener('blur', () => {
+                    el.value = formatPhone(el.value);
+                });
             });
             Array.from(document.querySelectorAll('#tableBody [data-action="dup"]')).forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -418,7 +459,8 @@
         function onFieldChange(e) {
             const id = Number(e.target.getAttribute('data-id') || 0);
             const field = String(e.target.getAttribute('data-field') || '');
-            const val = e.target.value;
+            let val = e.target.value;
+            if (field === 'acesso') val = onlyDigits(val);
             linhas = linhas.map(l => {
                 if (Number(l.id) !== id) return l;
                 const novo = { ...l, [field]: val };
@@ -531,9 +573,24 @@
             try {
                 if (!__negociacaoId) return;
                 const payload = { linhas };
-                await api(`/negotiations/${__negociacaoId}/custom-proposal`, { method: 'POST', body: JSON.stringify(payload) });
-                toast('Proposta salva', 'success');
+                const resp = await api(`/negotiations/${__negociacaoId}/custom-proposal`, { method: 'POST', body: JSON.stringify(payload) });
+                const totalProposto = resp && typeof resp.total_proposto !== 'undefined' ? Number(resp.total_proposto || 0) : calcularTotais().totalProposto;
+                await api('/negotiations/' + __negociacaoId, { method: 'PUT', body: JSON.stringify({ valor: totalProposto }) }).catch(() => {});
+                if (__negociacaoInfo) __negociacaoInfo.valor = totalProposto;
+                toast('Proposta salva • Total: ' + currency(totalProposto), 'success');
             } catch { toast('Erro ao salvar proposta', 'error'); }
+        }
+        async function atualizarStatusNegociacao() {
+            try {
+                if (!__negociacaoId) return;
+                const el = document.getElementById('fStatus');
+                const status = el ? el.value : 'Em andamento';
+                await api('/negotiations/' + __negociacaoId, { method: 'PUT', body: JSON.stringify({ status }) });
+                if (__negociacaoInfo) __negociacaoInfo.status = status;
+                const statusEl = document.getElementById('negStatusLabel');
+                if (statusEl) statusEl.textContent = status;
+                toast('Status atualizado para ' + status, 'success');
+            } catch { toast('Erro ao atualizar status', 'error'); }
         }
         function copiarProposta() {
             try {
@@ -658,11 +715,16 @@
                 const salvarBtn = document.getElementById('salvarBtn');
                 const copiarBtn = document.getElementById('copiarBtn');
                 const relatorioBtn = document.getElementById('relatorioBtn');
+                const statusSel = document.getElementById('fStatus');
                 const novaBtn = document.getElementById('novaBtn');
                 if (addLinhaBtn) addLinhaBtn.addEventListener('click', adicionarLinha);
                 if (salvarBtn) salvarBtn.addEventListener('click', salvarProposta);
                 if (copiarBtn) copiarBtn.addEventListener('click', copiarProposta);
                 if (relatorioBtn) relatorioBtn.addEventListener('click', gerarRelatorioPdf);
+                if (statusSel) {
+                    statusSel.value = (__negociacaoInfo && __negociacaoInfo.status) ? __negociacaoInfo.status : 'Em andamento';
+                    statusSel.addEventListener('change', atualizarStatusNegociacao);
+                }
                 if (novaBtn) {
                     const modal = document.getElementById('confirmResetModal');
                     const btnClose = document.getElementById('confirmResetClose');

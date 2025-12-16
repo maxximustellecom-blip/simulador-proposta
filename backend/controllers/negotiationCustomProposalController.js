@@ -12,7 +12,9 @@ function toNumber(x, d = 0) {
 function calcularPrecoFinal(l) {
   const v = toNumber(l.valorNaoFidelizado, 0);
   const desc = toNumber(l.desconto, 0);
-  return v * (1 - desc / 100);
+  const planoFinal = v * (1 - desc / 100);
+  const device = String(l.temAparelho || '') === 'Sim' ? toNumber(l.valorAparelho, 0) : 0;
+  return planoFinal + device;
 }
 
 export async function getCustomProposalForNegotiation(req, res) {
@@ -88,4 +90,3 @@ export async function saveCustomProposalForNegotiation(req, res) {
     return res.status(500).json({ error: 'erro ao salvar proposta customizada', details: String(err && err.message ? err.message : err) });
   }
 }
-
