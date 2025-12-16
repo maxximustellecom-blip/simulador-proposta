@@ -88,7 +88,8 @@ export async function listSalesFromNegotiations(req, res) {
       nome: n.client?.name || '',
       cnpj: n.cnpj || '',
       p2b: 0,
-      data: n.data || ''
+      data: n.data || '',
+      status: n.status || 'Em andamento'
     }));
     return res.json(result);
   } catch (err) {

@@ -210,7 +210,9 @@
                 window.__vendors = [];
             }
             function rerender() {
-                const filtered = filterByPeriod(salesAll);
+                // Filtra apenas negociações concluídas
+                const concluded = (salesAll || []).filter(s => String(s.status || '') === 'Concluída');
+                const filtered = filterByPeriod(concluded);
                 renderGrid(filtered);
             }
             if (prev) prev.addEventListener('click', () => { changePeriod(-1); rerender(); });

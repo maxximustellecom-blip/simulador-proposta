@@ -112,7 +112,6 @@
             
                 <div class="section-title" style="font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #e5e7eb; display:flex; justify-content:space-between; align-items:center;">
                     <span>GESTOR DE CONTA</span>
-                    <button type="button" id="btnDuplicarRep" class="btn btn-ghost btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.5rem; border: 1px solid rgba(255,255,255,0.1);">Duplicar Rep.</button>
                 </div>
                 <div class="grid-2-modal">
                     <div class="field"><span class="label-inline">Nome</span><input id="mGestorNome" class="input" type="text" placeholder="Nome Completo"></div>
@@ -478,17 +477,6 @@
             if (closeBtn) closeBtn.addEventListener('click', closeModal);
             if (salvarBtn) salvarBtn.addEventListener('click', salvarClienteModal);
             
-            const btnDuplicarRep = document.getElementById('btnDuplicarRep');
-            if (btnDuplicarRep) {
-                btnDuplicarRep.addEventListener('click', () => {
-                    document.getElementById('mGestorNome').value = document.getElementById('mRepNome').value;
-                    document.getElementById('mGestorCpf').value = document.getElementById('mRepCpf').value;
-                    document.getElementById('mGestorRg').value = document.getElementById('mRepRg').value;
-                    document.getElementById('mGestorTel1').value = document.getElementById('mRepTel1').value;
-                    document.getElementById('mGestorTel2').value = document.getElementById('mRepTel2').value;
-                });
-            }
-
             if (confirmClose) confirmClose.addEventListener('click', closeConfirm);
             if (confirmCancel) confirmCancel.addEventListener('click', closeConfirm);
             if (confirmConfirm) confirmConfirm.addEventListener('click', async () => {
