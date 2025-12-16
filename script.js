@@ -92,6 +92,29 @@
   }
   document.body.insertAdjacentHTML('afterbegin', headerHtml + sidebarHtml);
   document.body.insertAdjacentHTML('beforeend', bottomHtml);
+  var logoutModalHtml =
+    '<div id="logoutModal" class="modal">' +
+      '<div class="modal-card">' +
+        '<div class="modal-header">' +
+          '<div class="modal-title">Confirmar saída</div>' +
+          '<button id="logoutClose" class="btn btn-ghost btn-icon" type="button" title="Fechar"><i data-lucide="x"></i></button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+          '<div style="display:flex; align-items:center; gap:0.6rem;">' +
+            '<i data-lucide="power"></i>' +
+            '<div>' +
+              '<div class="label">Deseja sair da aplicação?</div>' +
+              '<div style="color: var(--muted); font-size: 0.9rem;">Você precisará fazer login novamente para retornar.</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="modal-actions">' +
+          '<button id="logoutCancel" class="btn" type="button">Cancelar</button>' +
+          '<button id="logoutConfirm" class="btn btn-primary" type="button">Sair</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  document.body.insertAdjacentHTML('beforeend', logoutModalHtml);
   var nameEl = document.getElementById('userNameLabel');
   if (nameEl) nameEl.textContent = isAdmin ? (userName + ' • Admin') : userName;
   var navUsersEl = document.getElementById('navUsers');
@@ -128,10 +151,35 @@
     });
   }
   var logoutBtn = document.getElementById('logoutBtn');
+  var logoutModal = document.getElementById('logoutModal');
+  var logoutClose = document.getElementById('logoutClose');
+  var logoutCancel = document.getElementById('logoutCancel');
+  var logoutConfirm = document.getElementById('logoutConfirm');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', function (e) {
       e.preventDefault();
+      if (logoutModal) {
+        logoutModal.classList.add('show');
+        if (menuEl) menuEl.style.display = 'none';
+        if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+      }
+    });
+  }
+  if (logoutClose && logoutModal) {
+    logoutClose.addEventListener('click', function () {
+      logoutModal.classList.remove('show');
+    });
+  }
+  if (logoutCancel && logoutModal) {
+    logoutCancel.addEventListener('click', function () {
+      logoutModal.classList.remove('show');
+    });
+  }
+  if (logoutConfirm && logoutModal) {
+    logoutConfirm.addEventListener('click', function () {
+      logoutModal.classList.remove('show');
       localStorage.removeItem('authUser');
+      window.location.href = 'login.html';
     });
   }
   if (window.lucide && typeof window.lucide.createIcons === 'function') {

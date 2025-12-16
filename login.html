@@ -1,33 +1,50 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login • Maxximus Telecom</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="auth-card">
-        <div class="brand">
-            <div class="brand-badge"></div>
-            <div>MAXXIMUS TELECOM</div>
+<body style="margin: 0;">
+    <div class="auth-layout">
+        <div class="auth-hero">
+            <div class="auth-hero-inner">
+                <div class="brand">
+                    <div class="brand-badge"></div>
+                    <div>MAXXIMUS TELECOM</div>
+                </div>
+                <h1>Bem-vindo ao CRM de negocioações</h1>
+                <p>Gerencie negociações, acompanhe KPIs em tempo real e gere propostas com rapidez.</p>
+            </div>
         </div>
-        <div class="subtitle">Entrar</div>
-        <div id="errorBox" class="error"></div>
-        <div class="form-group">
-            <div class="label">Email</div>
-            <input class="input" type="email" id="email" placeholder="seu@email.com">
+        <div class="auth-panel">
+            <div class="auth-card">
+                <div class="auth-title">Entrar</div>
+                <div class="auth-subtitle">Acesse sua conta</div>
+                <div id="errorBox" class="error"></div>
+                <div class="form-group">
+                    <div class="label">Email</div>
+                    <input class="input" type="email" id="email" placeholder="seu@email.com">
+                </div>
+                <div class="form-group input-group">
+                    <div class="label">Senha</div>
+                    <input class="input" type="password" id="password" placeholder="Digite sua senha">
+                    <button class="toggle" type="button" id="togglePassword">Mostrar</button>
+                </div>
+                <div class="auth-actions">
+                    <label class="checkbox"><input type="checkbox" id="remember"> Lembrar</label>
+                    <a class="link" href="register.html">Criar conta</a>
+                </div>
+                <div class="auth-actions-bottom">
+                    <button class="btn btn-primary btn-sm btn-tall" id="loginBtn">Entrar</button>
+                </div>
+                <div class="auth-links">
+                    <span class="muted">Esqueceu a senha?</span>
+                    <a class="link" href="register.html">Registre-se</a>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <div class="label">Senha</div>
-            <input class="input" type="password" id="password" placeholder="Digite sua senha">
-        </div>
-        <div class="actions">
-            <label class="checkbox"><input type="checkbox" id="remember"> Lembrar</label>
-            <a class="link" href="register.html">Criar conta</a>
-        </div>
-        <button class="btn btn-primary" id="loginBtn">Entrar</button>
-        <div class="helper">Entre com seu email e senha</div>
     </div>
     <script>
         const API = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
@@ -40,6 +57,12 @@
         function isValidEmail(e) {
             return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
         }
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const inp = document.getElementById('password');
+            const isText = inp.type === 'text';
+            inp.type = isText ? 'password' : 'text';
+            this.textContent = isText ? 'Mostrar' : 'Ocultar';
+        });
         document.getElementById('loginBtn').addEventListener('click', async function() {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();

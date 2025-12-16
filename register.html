@@ -1,39 +1,51 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar • Maxximus Telecom</title>
     <link rel="stylesheet" href="style.css">
     </head>
-<body>
-    <div class="auth-card">
-        <div class="brand">
-            <div class="brand-badge"></div>
-            <div>MAXXIMUS TELECOM</div>
+<body style="margin: 0;">
+    <div class="auth-layout">
+        <div class="auth-hero">
+            <div class="auth-hero-inner">
+                <div class="brand">
+                    <div class="brand-badge"></div>
+                    <div>MAXXIMUS TELECOM</div>
+                </div>
+                <h1>Crie sua conta e comece a negociar</h1>
+                <p>Cadastre-se para acessar o simulador, gerenciar clientes e acompanhar sua performance.</p>
+            </div>
         </div>
-        <div class="subtitle">Registrar</div>
-        <div id="errorBox" class="error"></div>
-        <div class="form-group">
-            <div class="label">Nome</div>
-            <input class="input" type="text" id="name" placeholder="Seu nome">
+        <div class="auth-panel">
+            <div class="auth-card">
+                <div class="auth-title">Registrar</div>
+                <div class="auth-subtitle">Preencha seus dados</div>
+                <div id="errorBox" class="error"></div>
+                <div class="form-group">
+                    <div class="label">Nome</div>
+                    <input class="input" type="text" id="name" placeholder="Seu nome">
+                </div>
+                <div class="form-group">
+                    <div class="label">Email</div>
+                    <input class="input" type="email" id="email" placeholder="seu@email.com">
+                </div>
+                <div class="form-group input-group">
+                    <div class="label">Senha</div>
+                    <input class="input" type="password" id="password" placeholder="Digite sua senha">
+                    <button class="toggle" type="button" id="togglePassword">Mostrar</button>
+                </div>
+                <input type="hidden" id="role" value="user">
+                <div class="auth-actions-bottom">
+                    <button class="btn btn-primary btn-sm btn-tall" id="registerBtn">Criar conta</button>
+                </div>
+                <div class="auth-links">
+                    <span class="muted">Já possui cadastro?</span>
+                    <a class="link" href="login.html">Entrar</a>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <div class="label">Email</div>
-            <input class="input" type="email" id="email" placeholder="seu@email.com">
-        </div>
-        <div class="form-group">
-            <div class="label">Senha</div>
-            <input class="input" type="password" id="password" placeholder="Digite sua senha">
-        </div>
-        <div class="form-group">
-            <div class="label">Perfil</div>
-            <select class="select" id="role">
-                <option value="user" selected>Usuário</option>
-            </select>
-        </div>
-        <button class="btn btn-primary" id="registerBtn">Criar conta</button>
-        <a class="link" href="login.html">Já tenho conta</a>
     </div>
     <script>
         const API = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
@@ -46,6 +58,12 @@
         function isValidEmail(e) {
             return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
         }
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const inp = document.getElementById('password');
+            const isText = inp.type === 'text';
+            inp.type = isText ? 'password' : 'text';
+            this.textContent = isText ? 'Mostrar' : 'Ocultar';
+        });
         document.getElementById('registerBtn').addEventListener('click', async function() {
             const name = document.getElementById('name').value.trim();
             const email = document.getElementById('email').value.trim();
