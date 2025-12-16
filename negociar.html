@@ -113,6 +113,17 @@
         let __clients = [];
         let __negociacoes = [];
         let __editingNegId = null;
+        let __userRole = '';
+        function statusClass(s) {
+            const k = String(s || '').toLowerCase();
+            if (k === 'concluída' || k === 'concluida') return 'chip-status concluded';
+            if (k === 'cancelada') return 'chip-status canceled';
+            return 'chip-status in-progress';
+        }
+        function statusChip(s) {
+            const txt = s || '-';
+            return `<span class="${statusClass(s)}">${txt}</span>`;
+        }
         function findClientByCnpj(cnpjDigits) {
             const d = onlyDigits(cnpjDigits || '');
             return (__clients || []).find(c => onlyDigits(c.cnpj) === d);
@@ -127,14 +138,14 @@
                     <td>${n.tipo || '-'}</td>
                     <td><span class="ellipsis">${n.proposta || '-'}</span></td>
                     <td>${(n.valor !== undefined && n.valor !== null) ? currency(n.valor) : '-'}</td>
-                    <td>${n.status || '-'}</td>
+                    <td>${statusChip(n.status || '-')}</td>
                     <td>${n.data || '-'}</td>
                     <td>${n.creator && n.creator.name ? n.creator.name : '-'}</td>
                     <td class="col-actions">
                         <div class="table-actions">
                             <button type="button" class="btn btn-ghost" title="Configurar" onclick="configurarNegociacao(${n.id})"><i data-lucide="settings"></i><span>Configurar</span></button>
-                            <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="editarNegociacao(${n.id})"><i data-lucide="edit-3"></i></button>
-                            <button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="excluirNegociacao(${n.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="editarNegociacao(${n.id})" ${(__userRole !== 'admin' && String(n.status) === 'Concluída') ? 'disabled' : ''}><i data-lucide="edit-3"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="excluirNegociacao(${n.id})" ${(__userRole !== 'admin' && String(n.status) === 'Concluída') ? 'disabled' : ''} style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
                         </div>
                     </td>
                 </tr>
@@ -197,12 +208,14 @@
             const mClienteDropdown = document.getElementById('mClienteDropdown');
             const mTipo = document.getElementById('mTipo');
             const mProposta = document.getElementById('mProposta');
+            const mStatus = document.getElementById('mStatus');
             const headTitleEl = document.querySelector('#negociarModal .modal-head div');
             if (mClienteHidden) mClienteHidden.value = '';
             if (mClienteSearch) mClienteSearch.value = '';
             if (mClienteDropdown) { mClienteDropdown.innerHTML = ''; mClienteDropdown.classList.remove('show', 'limited'); }
             if (mTipo) mTipo.value = '1º VENDA';
             if (mProposta) mProposta.value = 'PROPOSTA PADRÃO';
+            if (mStatus) mStatus.value = 'Em andamento';
             __editingNegId = null;
             if (headTitleEl) headTitleEl.textContent = 'Nova negociação';
         }
@@ -225,9 +238,11 @@
         }
         window.editarNegociacao = function(id) {
             const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
+            if (__userRole !== 'admin' && String(n?.status || '') === 'Concluída') return;
             setClienteSelected(n?.cnpj || '');
             document.getElementById('mTipo').value = n?.tipo || '1º VENDA';
             document.getElementById('mProposta').value = n?.proposta || 'PROPOSTA PADRÃO';
+            document.getElementById('mStatus').value = n?.status || 'Em andamento';
             __editingNegId = Number(id);
             const headTitleEl = document.querySelector('#negociarModal .modal-head div');
             if (headTitleEl) headTitleEl.textContent = 'Editar negociação';
@@ -261,6 +276,7 @@
         window.excluirNegociacao = async function(id) {
             try {
                 const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
+                if (__userRole !== 'admin' && String(n?.status || '') === 'Concluída') return;
                 const txt = (n ? ((n.tipo || '-') + ' • ' + (n.proposta || '-') + ' • ' + formatCnpj(n.cnpj || '')) : ('ID ' + String(id)));
                 const t = document.getElementById('confirmNegociacaoText');
                 if (t) t.textContent = txt;
@@ -276,8 +292,9 @@
                 const cnpj = onlyDigits(document.getElementById('mCliente').value || '');
                 const tipo = document.getElementById('mTipo').value;
                 const proposta = document.getElementById('mProposta').value;
+                const status = document.getElementById('mStatus').value;
                 if (!cnpj || !tipo || !proposta) return;
-                const payload = { cnpj, tipo, proposta };
+                const payload = { cnpj, tipo, proposta, status };
                 if (__editingNegId) {
                     await api('/negotiations/' + String(__editingNegId), { method: 'PUT', body: JSON.stringify(payload) });
                 } else {
@@ -291,6 +308,10 @@
             const auth = localStorage.getItem('authUser');
             if (!auth) { window.location.href = 'login.html'; return; }
             try {
+                try {
+                    const u = JSON.parse(auth || '{}');
+                    __userRole = String(u && u.role ? u.role : '');
+                } catch { __userRole = ''; }
                 await carregarClientes();
                 renderClienteDropdown('');
                 const params = new URLSearchParams(window.location.search || '');
@@ -302,6 +323,7 @@
                         setClienteSelected(c.cnpj || '');
                         document.getElementById('mTipo').value = '1º VENDA';
                         document.getElementById('mProposta').value = 'PROPOSTA PADRÃO';
+                        document.getElementById('mStatus').value = 'Em andamento';
                         openModal();
                         if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
                         try {
@@ -405,6 +427,14 @@
                         <select id="mProposta" class="select">
                             <option value="PROPOSTA PADRÃO">PROPOSTA PADRÃO</option>
                             <option value="PROPOSTA COSTUMIZADA">PROPOSTA COSTUMIZADA</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="label">Status</div>
+                        <select id="mStatus" class="select">
+                            <option value="Em andamento">Em andamento</option>
+                            <option value="Concluída">Concluída</option>
+                            <option value="Cancelada">Cancelada</option>
                         </select>
                     </div>
                 </div>

@@ -285,6 +285,7 @@
         let __negociacaoInfo = null;
         let __clienteInfo = null;
         let __loadingTimer = null;
+        let __isLocked = false;
         function normalizeTipo(val) {
             const k = String(val || '').toLowerCase();
             if (k === 'novo') return 'Novo';
@@ -376,6 +377,11 @@
             const salvarBtn = document.getElementById('salvarBtn');
             const copiarBtn = document.getElementById('copiarBtn');
             const relatorioBtn = document.getElementById('relatorioBtn');
+            try {
+                const u = JSON.parse(localStorage.getItem('authUser') || '{}');
+                const role = String(u && u.role ? u.role : '');
+                __isLocked = (role !== 'admin' && __negociacaoStatus === 'Concluída');
+            } catch { __isLocked = false; }
             if (addBtn) addBtn.addEventListener('click', () => {
                 const nextId = (__linhas.reduce((acc, l) => Math.max(acc, Number(l.id)), 0) || 0) + 1;
                 __linhas.push({
@@ -409,12 +415,30 @@
                             toast('Status atualizado', 'success');
                             const statusEl = document.getElementById('negStatusLabel');
                             if (statusEl) statusEl.textContent = __negociacaoStatus;
+                            try {
+                                const u = JSON.parse(localStorage.getItem('authUser') || '{}');
+                                const role = String(u && u.role ? u.role : '');
+                                __isLocked = (role !== 'admin' && __negociacaoStatus === 'Concluída');
+                            } catch { __isLocked = false; }
+                            if (__isLocked) {
+                                statusSel.disabled = true;
+                                const addBtn = document.getElementById('addLinhaBtn');
+                                const salvarBtn = document.getElementById('salvarBtn');
+                                if (addBtn) addBtn.disabled = true;
+                                if (salvarBtn) salvarBtn.disabled = true;
+                                renderTabela();
+                            }
                         } catch {
                             toast('Erro ao atualizar status', 'error');
                             statusSel.value = __negociacaoStatus;
                         }
                     });
-                }
+                if (__isLocked) statusSel.disabled = true;
+            }
+            if (__isLocked) {
+                if (addBtn) addBtn.disabled = true;
+                if (salvarBtn) salvarBtn.disabled = true;
+            }
         }
         function atualizarLinha(id, campo, valor) {
             __linhas = __linhas.map(l => {
@@ -621,6 +645,10 @@
                     atualizarLinha(id, field, val);
                 });
             });
+            if (__isLocked) {
+                Array.from(tbody.querySelectorAll('input[data-field], select[data-field]')).forEach(el => { el.disabled = true; });
+                Array.from(tbody.querySelectorAll('button[data-action="remover"], button[title="Copiar"]')).forEach(btn => { btn.disabled = true; });
+            }
             Array.from(tbody.querySelectorAll('input[data-field="numeroPortar"]')).forEach(el => {
                 el.addEventListener('input', (e) => {
                     const id = Number(e.currentTarget.getAttribute('data-id') || 0);

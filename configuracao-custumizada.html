@@ -195,6 +195,7 @@
         let __clienteInfo = null;
         let linhas = [];
         let nextId = 1;
+        let __isLocked = false;
         const pctsDadosDisponiveis = ['100MB','1GB','2GB','3GB','4GB','5GB','6GB','8GB','10GB','12GB','20GB','22GB','30GB','32GB','50GB','52GB','100GB','150GB','Voz (sem dados)'];
         let __customCategorias = [];
         let __customProdutos = [];
@@ -425,6 +426,10 @@
                 el.addEventListener('change', onFieldChange);
                 el.addEventListener('input', onFieldInput);
             });
+            if (__isLocked) {
+                Array.from(document.querySelectorAll('#tableBody .input, #tableBody .select')).forEach(el => { el.disabled = true; });
+                Array.from(document.querySelectorAll('#tableBody [data-action="dup"], #tableBody [data-action="del"]')).forEach(btn => { btn.disabled = true; });
+            }
             Array.from(document.querySelectorAll('#tableBody [data-field=\"acesso\"]')).forEach(el => {
                 el.addEventListener('input', () => {
                     el.value = formatPhone(el.value);
@@ -717,6 +722,12 @@
                 const relatorioBtn = document.getElementById('relatorioBtn');
                 const statusSel = document.getElementById('fStatus');
                 const novaBtn = document.getElementById('novaBtn');
+                try {
+                    const u = JSON.parse(localStorage.getItem('authUser') || '{}');
+                    const role = String(u && u.role ? u.role : '');
+                    const status = (__negociacaoInfo && __negociacaoInfo.status) ? __negociacaoInfo.status : 'Em andamento';
+                    __isLocked = (role !== 'admin' && status === 'Concluída');
+                } catch { __isLocked = false; }
                 if (addLinhaBtn) addLinhaBtn.addEventListener('click', adicionarLinha);
                 if (salvarBtn) salvarBtn.addEventListener('click', salvarProposta);
                 if (copiarBtn) copiarBtn.addEventListener('click', copiarProposta);
@@ -724,6 +735,13 @@
                 if (statusSel) {
                     statusSel.value = (__negociacaoInfo && __negociacaoInfo.status) ? __negociacaoInfo.status : 'Em andamento';
                     statusSel.addEventListener('change', atualizarStatusNegociacao);
+                    if (__isLocked) statusSel.disabled = true;
+                }
+                if (__isLocked) {
+                    if (addLinhaBtn) addLinhaBtn.disabled = true;
+                    if (salvarBtn) salvarBtn.disabled = true;
+                    if (novaBtn) novaBtn.disabled = true;
+                    renderTable();
                 }
                 if (novaBtn) {
                     const modal = document.getElementById('confirmResetModal');

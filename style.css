@@ -231,6 +231,29 @@ html, body {
   border: 1px solid var(--pill-border);
   color: var(--pill-text) !important;
 }
+.chip-status {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border: 1px solid var(--border);
+}
+.chip-status.in-progress {
+  background: rgba(59,130,246,0.12);
+  border-color: rgba(59,130,246,0.35);
+  color: #3B82F6;
+}
+.chip-status.concluded {
+  background: rgba(16,185,129,0.12);
+  border-color: rgba(16,185,129,0.35);
+  color: #10B981;
+}
+.chip-status.canceled {
+  background: rgba(239,68,68,0.12);
+  border-color: rgba(239,68,68,0.35);
+  color: #EF4444;
+}
 
 .kpis {
   display: grid;
@@ -422,6 +445,10 @@ select option[disabled], .select option[disabled] {
   background: var(--primary) !important;
   border-color: var(--primary) !important;
   color: #FFFFFF !important;
+}
+.btn[disabled], .btn:disabled, .btn-primary[disabled], .btn-ghost[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 .btn-danger {
   background: var(--danger) !important;
