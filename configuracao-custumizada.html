@@ -7,9 +7,123 @@
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-    <main class="container"></main>
+    <main class="container">
+        <div class="card">
+            <div class="card-head">
+                <div class="card-title">
+                    <span>Configuração Customizada</span>
+                    <span class="chip">Negociação</span>
+                </div>
+                <div class="muted">
+                    <button id="addLinhaBtn" class="btn btn-primary" type="button"><i data-lucide="plus"></i><span>Adicionar linha</span></button>
+                </div>
+            </div>
+            <div class="card-body">
+                <section class="section" style="margin-top: 20px;">
+                    <div class="label">Dados básicos do cliente</div>
+                    <div style="padding:0.4rem 0.0rem; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+                        <span class="muted">Cliente:</span>
+                        <span id="clienteNome" style="font-weight:600;">-</span>
+                        <span class="muted">CNPJ:</span>
+                        <span id="clienteCnpj">-</span>
+                        <span class="muted">Tipo:</span>
+                        <span id="negTipo">-</span>
+                        <span class="muted">Status:</span>
+                        <span id="negStatusLabel">-</span>
+                    </div>
+                </section>
+                <section class="section" style="margin-top: 20px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <div class="label">Linhas da proposta</div>
+                        <div class="muted" id="countLinhasLabel">0 itens</div>
+                    </div>
+                    <div class="table-container" style="margin-top:0.5rem;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Linha</th>
+                                    <th>Acesso</th>
+                                    <th>Tipo</th>
+                                    <th>Plano Atual</th>
+                                    <th>Preço Atual</th>
+                                    <th>% Desc.</th>
+                                    <th>Plano Proposto</th>
+                                    <th>Pct (GB)</th>
+                                    <th>Valor Não Fid.</th>
+                                    <th>Preço Final</th>
+                                    <th>Economia</th>
+                                    <th>Aparelho</th>
+                                    <th>Modelo</th>
+                                    <th>Tipo Aparelho</th>
+                                    <th>Valor Aparelho</th>
+                                    <th class="col-actions" style="min-width:140px;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                <tr><td colspan="16">
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                </td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                <section class="section" style="margin-top:1rem;">
+                    <div class="label">Resumo</div>
+                    <div class="grid-2" style="margin-top:0.5rem;">
+                        <div class="card" style="padding:0.75rem; border:1px solid #e5e7eb;">
+                            <div class="muted" style="font-weight:600;">Plano Atual</div>
+                            <div id="resumoAtualList" class="muted" style="margin-top:0.5rem;"></div>
+                            <div id="resumoAtualTotal" class="muted" style="margin-top:0.6rem; padding:0.5rem; background:#DBEAFE; color:#1D4ED8; font-weight:700; border-radius:6px;">Total: R$ 0,00</div>
+                        </div>
+                        <div class="card" style="padding:0.75rem; border:1px solid #86efac;">
+                            <div class="muted" style="font-weight:600; color:#15803d;">Nova Proposta</div>
+                            <div id="resumoPropostaList" class="muted" style="margin-top:0.5rem;"></div>
+                            <div id="resumoPropostaTotal" class="muted" style="margin-top:0.6rem; padding:0.5rem; background:#DCFCE7; color:#166534; font-weight:700; border-radius:6px;">Total: R$ 0,00</div>
+                        </div>
+                    </div>
+                    <div class="grid-2" style="margin-top:0.5rem;">
+                        <div class="card" style="padding:0.75rem;">
+                            <div class="muted">Total de Acessos</div>
+                            <div id="totalAcessos" style="font-size:1.6rem; font-weight:700; color: var(--primary);">0</div>
+                        </div>
+                        <div class="card" style="padding:0.75rem;">
+                            <div class="muted">Economia Total</div>
+                            <div id="totalEconomia" style="font-size:1.6rem; font-weight:700; color: var(--primary);">R$ 0,00</div>
+                        </div>
+                    </div>
+                    <div class="grid-2" style="margin-top:0.5rem;">
+                        <div class="card" style="padding:0.75rem;">
+                            <div class="muted">Percentual Economia</div>
+                            <div id="percentualEconomia" style="font-size:1.2rem; font-weight:700; color: var(--primary);">0%</div>
+                        </div>
+                        <div class="card" style="padding:0.75rem;">
+                            <div class="muted">Linhas com Aparelho</div>
+                            <div id="linhasAparelho" style="font-size:1.2rem; font-weight:700; color: var(--primary);">0</div>
+                        </div>
+                    </div>
+                </section>
+                <section style="margin-top:1rem;">
+                    <div id="alertWarning" class="card" style="padding:0.75rem; display:none;">
+                        <div id="warningContent" class="muted"></div>
+                    </div>
+                </section>
+                <section style="margin-top:1rem;">
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end;">
+                        <button id="novaBtn" class="btn btn-ghost" type="button"><i data-lucide="rotate-ccw"></i><span>Resetar Proposta</span></button>
+                        <button id="copiarBtn" class="btn btn-ghost" type="button"><i data-lucide="copy"></i><span>Copiar Proposta</span></button>
+                        <button id="relatorioBtn" class="btn btn-ghost" type="button" title="Gerar Relatório"><i data-lucide="file-text"></i><span>Gerar Relatório</span></button>
+                        <button id="salvarBtn" class="btn btn-primary" type="button"><i data-lucide="save"></i><span>Salvar</span></button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
     <script>
         const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
         async function api(path, options = {}) {
@@ -28,6 +142,504 @@
             }
             return res.json();
         }
+        function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
+        function currency(v) { try { return (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })).format(Number(v || 0)); } catch { return 'R$ 0,00'; } }
+        function formatCnpj(s) {
+            const d = onlyDigits(s);
+            const len = d.length;
+            if (len <= 2) return d;
+            if (len <= 5) return `${d.slice(0,2)}.${d.slice(2)}`;
+            if (len <= 8) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5)}`;
+            if (len <= 12) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8)}`;
+            return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8,12)}-${d.slice(12,14)}`;
+        }
+        function formatPhone(s) {
+            const p = onlyDigits(s);
+            if (p.length >= 11) return `(${p.slice(0,2)}) ${p.slice(2,7)}-${p.slice(7,11)}`;
+            if (p.length >= 10) return `(${p.slice(0,2)}) ${p.slice(2,6)}-${p.slice(6,10)}`;
+            return p;
+        }
+        let __negociacaoId = null;
+        let __negociacaoInfo = null;
+        let __clienteInfo = null;
+        let linhas = [];
+        let nextId = 1;
+        const pctsDadosDisponiveis = ['100MB','1GB','2GB','3GB','4GB','5GB','6GB','8GB','10GB','12GB','20GB','22GB','30GB','32GB','50GB','52GB','100GB','150GB','Voz (sem dados)'];
+        let __customCategorias = [];
+        let __customProdutos = [];
+        let __planosPorTipo = { novo: [], adtivo: [], renegociacao: [] };
+        let __pctsPorTipo = { novo: [], adtivo: [], renegociacao: [] };
+        function normalizeTipoKey(t) {
+            const k = String(t || '').toLowerCase();
+            if (k.includes('reneg')) return 'renegociacao';
+            if (k.includes('adti') || k.includes('adit')) return 'adtivo';
+            return 'novo';
+        }
+        function parsePctFromText(s) {
+            const txt = String(s || '');
+            const dataRegex = /(\d+(?:[\.,]\d+)?)\s*(GB|MB|MEGA)\b/gi;
+            const smsRegex = /(\d+(?:[\.,]\d+)?)\s*SMS\b/gi;
+            let dataMatch, smsMatch;
+            let dataSum = 0;
+            let dataUnit = null;
+            let smsSum = 0;
+            while ((dataMatch = dataRegex.exec(txt)) !== null) {
+                const num = Number(String(dataMatch[1] || '0').replace(',', '.'));
+                const u = (dataMatch[2] || '').toUpperCase();
+                const normalizedU = u === 'MEGA' ? 'MB' : u;
+                if (!dataUnit) dataUnit = normalizedU;
+                const val = dataUnit === 'GB' ? (normalizedU === 'MB' ? (num / 1024) : num) : (normalizedU === 'GB' ? (num * 1024) : num);
+                dataSum += val;
+            }
+            while ((smsMatch = smsRegex.exec(txt)) !== null) {
+                const num = Number(String(smsMatch[1] || '0').replace(',', '.'));
+                smsSum += num;
+            }
+            const dataOut = dataUnit ? `${Math.round(dataSum * 100) / 100}${dataUnit}` : '';
+            const smsOut = smsSum > 0 ? `${Math.round(smsSum * 100) / 100}SMS` : '';
+            if (dataOut && smsOut) return `${dataOut} + ${smsOut}`;
+            return dataOut || smsOut || '';
+        }
+        async function carregarCatalogoCustomizado() {
+            try {
+                const cats = await api('/custom-categories', { method: 'GET' }).catch(() => []);
+                const prods = await api('/custom-products', { method: 'GET' }).catch(() => []);
+                __customCategorias = Array.isArray(cats) ? cats : [];
+                __customProdutos = Array.isArray(prods) ? prods : [];
+                __planosPorTipo = { novo: [], adtivo: [], renegociacao: [] };
+                __pctsPorTipo = { novo: [], adtivo: [], renegociacao: [] };
+                const pctSets = { novo: new Set(), adtivo: new Set(), renegociacao: new Set() };
+                __customProdutos.forEach(p => {
+                    const tipo = normalizeTipoKey(p.category && p.category.tipo ? p.category.tipo : 'Novo');
+                    const nome = String(p.nome || p.name || '-');
+                    const baseTxt = p.descricao || p.description || nome;
+                    const pct = parsePctFromText(baseTxt);
+                    const valor = Number(p.preco || 0);
+                    __planosPorTipo[tipo].push({ nome, pct, valor });
+                    if (pct) pctSets[tipo].add(pct);
+                });
+                Object.keys(pctSets).forEach(k => {
+                    __pctsPorTipo[k] = Array.from(pctSets[k]);
+                });
+            } catch {
+                __customCategorias = [];
+                __customProdutos = [];
+                __planosPorTipo = { novo: [], adtivo: [], renegociacao: [] };
+                __pctsPorTipo = { novo: [], adtivo: [], renegociacao: [] };
+            }
+        }
+        function calcularPrecoFinal(linha) {
+            const valorNaoFid = parseFloat(linha.valorNaoFidelizado) || 0;
+            const desconto = parseFloat(linha.desconto) || 0;
+            return valorNaoFid * (1 - desconto / 100);
+        }
+        function calcularEconomia(linha) {
+            const precoAtual = parseFloat(linha.precoAtual) || 0;
+            const precoFinal = calcularPrecoFinal(linha);
+            return precoAtual - precoFinal;
+        }
+        function calcularTotais() {
+            const totalAtual = linhas.reduce((sum, l) => sum + (parseFloat(l.precoAtual) || 0), 0);
+            const totalProposto = linhas.reduce((sum, l) => sum + calcularPrecoFinal(l), 0);
+            const totalEconomia = totalAtual - totalProposto;
+            return { totalAtual, totalProposto, totalEconomia };
+        }
+        function validarProposta() {
+            const totais = calcularTotais();
+            const alertas = [];
+            const numAcessos = linhas.length;
+            if (numAcessos < 10 && totais.totalProposto < 350) {
+                alertas.push('Com menos de 10 acessos, o contrato deve atingir mínimo de R$ 350,00');
+            }
+            if (numAcessos < 20) {
+                const temAparelho = linhas.some(l => l.temAparelho === 'Sim');
+                if (!temAparelho) {
+                    alertas.push('Negociações com menos de 20 acessos devem incluir pelo menos um aparelho');
+                }
+            }
+            linhas.forEach((linha, idx) => {
+                const tipo = String(linha.tipoNegociacao || '').toLowerCase();
+                const isReneg = (tipo.includes('reneg') || tipo.includes('renegociação') || tipo.includes('renegociacao'));
+                if (isReneg) {
+                    if (!linha.planoAtualGB || !linha.precoAtual) {
+                        alertas.push(`Linha ${idx + 1}: Para Renegociação, Plano Atual e Preço Atual são obrigatórios`);
+                    }
+                    const pctAtual = linha.planoAtualGB ? parseFloat(String(linha.planoAtualGB).replace(/\D/g, '')) : 0;
+                    const pctNovo = linha.pctSelecionado ? parseFloat(String(linha.pctSelecionado).replace(/\D/g, '')) : 0;
+                    if (pctNovo > 0 && pctAtual > 0 && pctNovo < pctAtual) {
+                        alertas.push(`Linha ${idx + 1}: Não é permitido downgrade de pacote de dados (${linha.planoAtualGB} → ${linha.pctSelecionado})`);
+                    }
+                }
+                if (!linha.acesso) {
+                    alertas.push(`Linha ${idx + 1}: Recomendamos preencher o número do acesso`);
+                }
+                if (linha.temAparelho === 'Sim' && !linha.modeloAparelho) {
+                    alertas.push(`Linha ${idx + 1}: Modelo do aparelho é obrigatório quando há aparelho`);
+                }
+                if (String(linha.tipoAparelho || '') === 'VF 24x' && !linha.valorAparelho) {
+                    alertas.push(`Linha ${idx + 1}: Valor do aparelho é obrigatório para VF 24x`);
+                }
+            });
+            const box = document.getElementById('alertWarning');
+            const content = document.getElementById('warningContent');
+            if (alertas.length) {
+                content.innerHTML = '<div style="font-weight:600; margin-bottom:6px; color:#854d0e;">Atenção:</div>' + alertas.map(a => `<div style="font-size:14px; color:#713f12;">${a}</div>`).join('');
+                box.style.display = 'block';
+            } else {
+                content.innerHTML = '';
+                box.style.display = 'none';
+            }
+        }
+        function renderResumo() {
+            const totais = calcularTotais();
+            const acessos = linhas.length;
+            const economia = totais.totalEconomia;
+            const perc = (totais.totalAtual > 0) ? Math.round((economia / (totais.totalAtual)) * 10000) / 100 : 0;
+            const withDevice = linhas.filter(l => l.temAparelho === 'Sim').length;
+            const lblCount = document.getElementById('countLinhasLabel');
+            if (lblCount) lblCount.textContent = acessos + ' ' + (acessos === 1 ? 'item' : 'itens');
+            document.getElementById('totalAcessos').textContent = String(acessos);
+            document.getElementById('totalEconomia').textContent = currency(economia);
+            document.getElementById('percentualEconomia').textContent = String(perc) + '%';
+            document.getElementById('linhasAparelho').textContent = String(withDevice);
+            const atualListEl = document.getElementById('resumoAtualList');
+            const propostaListEl = document.getElementById('resumoPropostaList');
+            const atualTotalEl = document.getElementById('resumoAtualTotal');
+            const propostaTotalEl = document.getElementById('resumoPropostaTotal');
+            const atualItens = linhas.map((l, idx) => {
+                const ac = formatPhone(l.acesso || '') || 'N/A';
+                const plano = l.planoAtualGB || 'N/A';
+                const val = currency(l.precoAtual || 0);
+                return `<div style="background:#F3F4F6; padding:8px; border-radius:6px; margin-bottom:6px;">Linha ${idx + 1}: ${ac}<br>Plano: ${plano}<br>Valor: ${val}</div>`;
+            }).join('') || '<div class="muted">-</div>';
+            const propostaItens = linhas.map((l, idx) => {
+                const ac = formatPhone(l.acesso || '') || 'N/A';
+                const tipo = l.tipoNegociacao || '-';
+                const plano = l.planoSelecionado || '-';
+                const pct = l.pctSelecionado || '-';
+                const final = currency(calcularPrecoFinal(l));
+                return `<div style=\"background:#ECFDF5; padding:8px; border-radius:6px; margin-bottom:6px;\">Linha ${idx + 1}: ${ac}<br>Tipo: ${tipo}<br>Plano: ${plano}<br>Pct: ${pct}<br>Final: ${final}</div>`;
+            }).join('') || '<div class="muted">-</div>';
+            if (atualListEl) atualListEl.innerHTML = atualItens;
+            if (propostaListEl) propostaListEl.innerHTML = propostaItens;
+            if (atualTotalEl) atualTotalEl.textContent = 'Total: ' + currency(totais.totalAtual);
+            if (propostaTotalEl) propostaTotalEl.textContent = 'Total: ' + currency(totais.totalProposto);
+        }
+        function tipoOptionsHtml(sel) {
+            const opts = ['Novo','Adtivo','Renegociação'];
+            return opts.map(o => `<option value="${o}" ${String(sel||'')===o?'selected':''}>${o}</option>`).join('');
+        }
+        function pctAtualOptionsHtml(sel) {
+            return ['<option value="">Selecione</option>'].concat(pctsDadosDisponiveis.map(p => `<option value="${p}" ${String(sel||'')===p?'selected':''}>${p}</option>`)).join('');
+        }
+        function pctOptionsHtml(tipo, sel) {
+            const key = normalizeTipoKey(tipo);
+            const arr = (__pctsPorTipo[key] && __pctsPorTipo[key].length ? __pctsPorTipo[key] : pctsDadosDisponiveis);
+            return ['<option value="">Selecione</option>'].concat(arr.map(p => `<option value="${p}" ${String(sel||'')===p?'selected':''}>${p}</option>`)).join('');
+        }
+        function planoOptionsHtml(tipo, sel) {
+            const key = normalizeTipoKey(tipo);
+            const arr = __planosPorTipo[key] || [];
+            return ['<option value="">Selecione</option>'].concat(arr.map(p => `<option value="${p.nome}" ${String(sel||'')===p.nome?'selected':''}>${p.nome}</option>`)).join('');
+        }
+        function valorNaoFidByPlano(tipo, planoNome) {
+            const key = normalizeTipoKey(tipo);
+            const arr = __planosPorTipo[key] || [];
+            const sel = arr.find(p => p.nome === planoNome);
+            return sel ? Number(sel.valor || 0) : 0;
+        }
+        function pctByPlano(tipo, planoNome) {
+            const key = normalizeTipoKey(tipo);
+            const arr = __planosPorTipo[key] || [];
+            const sel = arr.find(p => p.nome === planoNome);
+            return sel ? String(sel.pct || '') : '';
+        }
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = linhas.map((l, idx) => {
+                const precoFinal = calcularPrecoFinal(l);
+                const economia = calcularEconomia(l);
+                const tipoAparelhoOpts = ['Comodato','VF 24x','Compra'];
+                const tipoAparelhoHtml = tipoAparelhoOpts.map(o => `<option value="${o}" ${String(l.tipoAparelho||'')===o?'selected':''}>${o}</option>`).join('');
+                return `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td><input type="text" class="input" placeholder="(00) 00000-0000" value="${l.acesso || ''}" data-id="${l.id}" data-field="acesso"></td>
+                    <td><select class="select" data-id="${l.id}" data-field="tipoNegociacao">${tipoOptionsHtml(l.tipoNegociacao)}</select></td>
+                    <td><select class="select" data-id="${l.id}" data-field="planoAtualGB">${pctAtualOptionsHtml(l.planoAtualGB)}</select></td>
+                    <td><input type="number" class="input" step="0.01" min="0" value="${l.precoAtual || ''}" data-id="${l.id}" data-field="precoAtual"></td>
+                    <td><input type="number" class="input" step="0.01" min="0" value="${l.desconto || 0}" data-id="${l.id}" data-field="desconto"></td>
+                    <td><select class="select" data-id="${l.id}" data-field="planoSelecionado">${planoOptionsHtml(l.tipoNegociacao, l.planoSelecionado)}</select></td>
+                    <td><span class="muted">${l.pctSelecionado || '-'}</span></td>
+                    <td><input type="number" class="input" step="0.01" min="0" value="${l.valorNaoFidelizado || ''}" data-id="${l.id}" data-field="valorNaoFidelizado"></td>
+                    <td><span class="muted">${currency(precoFinal)}</span></td>
+                    <td><span class="muted">${currency(economia)}</span></td>
+                    <td><select class="select" data-id="${l.id}" data-field="temAparelho"><option value="Não" ${l.temAparelho==='Não'?'selected':''}>Não</option><option value="Sim" ${l.temAparelho==='Sim'?'selected':''}>Sim</option></select></td>
+                    <td><input type="text" class="input" placeholder="Ex: iPhone 15" value="${l.modeloAparelho || ''}" data-id="${l.id}" data-field="modeloAparelho" ${l.temAparelho!=='Sim'?'disabled':''}></td>
+                    <td><select class="select" data-id="${l.id}" data-field="tipoAparelho" ${l.temAparelho!=='Sim'?'disabled':''}>${tipoAparelhoHtml}</select></td>
+                    <td><input type="number" class="input" step="0.01" min="0" value="${l.valorAparelho || ''}" data-id="${l.id}" data-field="valorAparelho" ${String(l.tipoAparelho||'')!=='VF 24x'?'disabled':''}></td>
+                    <td class="col-actions">
+                        <div class="table-actions">
+                            <button type="button" class="btn btn-ghost btn-icon" title="Duplicar" data-id="${l.id}" data-action="dup"><i data-lucide="copy"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Excluir" data-id="${l.id}" data-action="del" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                `;
+            }).join('') || '<tr><td colspan="16" class="muted">Sem linhas</td></tr>';
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+            Array.from(document.querySelectorAll('#tableBody .input, #tableBody .select')).forEach(el => {
+                el.addEventListener('change', onFieldChange);
+                el.addEventListener('input', onFieldInput);
+            });
+            Array.from(document.querySelectorAll('#tableBody [data-action="dup"]')).forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = Number(btn.getAttribute('data-id') || 0);
+                    const idx = linhas.findIndex(x => Number(x.id) === id);
+                    const orig = idx >= 0 ? linhas[idx] : null;
+                    if (!orig) return;
+                    const novo = { ...orig, id: nextId++, acesso: '' };
+                    linhas.splice(idx + 1, 0, novo);
+                    renderTable();
+                    renderResumo();
+                    validarProposta();
+                });
+            });
+            Array.from(document.querySelectorAll('#tableBody [data-action="del"]')).forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = Number(btn.getAttribute('data-id') || 0);
+                    linhas = linhas.filter(x => Number(x.id) !== id);
+                    renderTable();
+                    renderResumo();
+                    validarProposta();
+                });
+            });
+        }
+        function onFieldChange(e) {
+            const id = Number(e.target.getAttribute('data-id') || 0);
+            const field = String(e.target.getAttribute('data-field') || '');
+            const val = e.target.value;
+            linhas = linhas.map(l => {
+                if (Number(l.id) !== id) return l;
+                const novo = { ...l, [field]: val };
+                if (field === 'planoSelecionado') {
+                    novo.valorNaoFidelizado = valorNaoFidByPlano(novo.tipoNegociacao, val);
+                    novo.pctSelecionado = pctByPlano(novo.tipoNegociacao, val);
+                }
+                if (field === 'tipoNegociacao') {
+                    novo.planoSelecionado = '';
+                    novo.pctSelecionado = '';
+                    novo.valorNaoFidelizado = 0;
+                }
+                if (field === 'temAparelho') {
+                    if (val !== 'Sim') {
+                        novo.temAparelho = 'Não';
+                        novo.modeloAparelho = '';
+                        novo.tipoAparelho = 'Comodato';
+                        novo.valorAparelho = 0;
+                    } else {
+                        novo.temAparelho = 'Sim';
+                    }
+                }
+                if (field === 'tipoAparelho') {
+                    if (val === 'Comodato') novo.valorAparelho = 0;
+                }
+                return novo;
+            });
+            renderTable();
+            renderResumo();
+            validarProposta();
+        }
+        function onFieldInput() {
+            renderResumo();
+            validarProposta();
+        }
+        function novaProposta() {
+            linhas = [];
+            nextId = 1;
+            adicionarLinha();
+        }
+        function adicionarLinha() {
+            linhas.push({
+                id: nextId++,
+                acesso: '',
+                tipoNegociacao: 'Novo',
+                planoAtualGB: '',
+                precoAtual: '',
+                desconto: 0,
+                planoSelecionado: '',
+                pctSelecionado: '',
+                valorNaoFidelizado: '',
+                temAparelho: 'Não',
+                modeloAparelho: '',
+                tipoAparelho: 'Comodato',
+                valorAparelho: ''
+            });
+            renderTable();
+            renderResumo();
+            validarProposta();
+        }
+        async function carregarNegociacaoBasica() {
+            const list = await api('/negotiations', { method: 'GET' }).catch(() => []);
+            const arr = Array.isArray(list) ? list : [];
+            const n = arr.find(x => Number(x.id) === Number(__negociacaoId));
+            __negociacaoInfo = n || null;
+        }
+        async function carregarClienteBasico() {
+            try {
+                const cnpj = __negociacaoInfo ? (__negociacaoInfo.cnpj || '') : '';
+                if (!cnpj) { __clienteInfo = null; return; }
+                const list = await api('/clients?cnpj=' + encodeURIComponent(String(cnpj).replace(/\D/g, '')), { method: 'GET' }).catch(() => []);
+                __clienteInfo = Array.isArray(list) && list.length ? list[0] : null;
+            } catch { __clienteInfo = null; }
+        }
+        function renderClienteBasico() {
+            const nomeEl = document.getElementById('clienteNome');
+            const cnpjEl = document.getElementById('clienteCnpj');
+            const tipoEl = document.getElementById('negTipo');
+            const statusEl = document.getElementById('negStatusLabel');
+            const n = __negociacaoInfo || {};
+            const c = __clienteInfo || {};
+            if (nomeEl) nomeEl.textContent = c.name || '-';
+            if (cnpjEl) cnpjEl.textContent = formatCnpj(n.cnpj || c.cnpj || '');
+            if (tipoEl) tipoEl.textContent = n.tipo || '-';
+            if (statusEl) statusEl.textContent = n.status || 'Em andamento';
+        }
+        async function carregarPropostaSalva() {
+            try {
+                const data = await api(`/negotiations/${__negociacaoId}/custom-proposal`, { method: 'GET' }).catch(() => null);
+                const arr = (data && Array.isArray(data.linhas)) ? data.linhas : [];
+                linhas = arr.map((l, idx) => ({
+                    id: Number(l.id || idx + 1),
+                    acesso: l.acesso || '',
+                    tipoNegociacao: l.tipoNegociacao || 'Novo',
+                    planoAtualGB: l.planoAtualGB || '',
+                    precoAtual: l.precoAtual || '',
+                    desconto: l.desconto || 0,
+                    planoSelecionado: l.planoSelecionado || '',
+                    pctSelecionado: l.pctSelecionado || '',
+                    valorNaoFidelizado: l.valorNaoFidelizado || '',
+                    temAparelho: l.temAparelho || 'Não',
+                    modeloAparelho: l.modeloAparelho || '',
+                    tipoAparelho: l.tipoAparelho || 'Comodato',
+                    valorAparelho: l.valorAparelho || ''
+                }));
+                if (!linhas.length) adicionarLinha(); else { renderTable(); renderResumo(); validarProposta(); }
+            } catch { adicionarLinha(); }
+        }
+        async function salvarProposta() {
+            try {
+                if (!__negociacaoId) return;
+                const payload = { linhas };
+                await api(`/negotiations/${__negociacaoId}/custom-proposal`, { method: 'POST', body: JSON.stringify(payload) });
+                toast('Proposta salva', 'success');
+            } catch { toast('Erro ao salvar proposta', 'error'); }
+        }
+        function copiarProposta() {
+            try {
+                const totais = calcularTotais();
+                const acessos = linhas.length;
+                const totalAtual = currency(totais.totalAtual);
+                const totalProposto = currency(totais.totalProposto);
+                const economia = currency(totais.totalEconomia);
+                const header = [
+                    'Proposta Customizada',
+                    'Cliente: ' + ((document.getElementById('clienteNome').textContent) || '-'),
+                    'CNPJ: ' + ((document.getElementById('clienteCnpj').textContent) || '-'),
+                    'Tipo: ' + ((document.getElementById('negTipo').textContent) || '-'),
+                    'Status: ' + ((document.getElementById('negStatusLabel').textContent) || '-')
+                ].join('\n');
+                const linhasTxt = linhas.map((l, idx) => {
+                    return `• Linha ${idx + 1}: ${l.acesso || '-'} • ${l.tipoNegociacao || '-'} • Atual: ${l.planoAtualGB || '-'} ${currency(l.precoAtual || 0)} • Proposto: ${l.planoSelecionado || '-'} ${l.pctSelecionado || '-'} • Não Fid.: ${currency(l.valorNaoFidelizado || 0)} • Desc.: ${Number(l.desconto || 0)}% • Final: ${currency(calcularPrecoFinal(l))} • Economia: ${currency(calcularEconomia(l))}`;
+                }).join('\n');
+                const resumo = [
+                    '',
+                    'Resumo',
+                    `   • Receita Atual: ${totalAtual}`,
+                    `   • Receita Proposta: ${totalProposto}`,
+                    `   • Economia Total: ${economia}`,
+                    `   • Total de Acessos: ${acessos}`
+                ].join('\n');
+                const txt = header + '\n' + linhasTxt + '\n' + resumo;
+                navigator.clipboard.writeText(txt).then(() => { toast('Proposta copiada', 'success'); }).catch(() => { toast('Erro ao copiar proposta', 'error'); });
+            } catch { toast('Erro ao copiar proposta', 'error'); }
+        }
+        function gerarRelatorioPdf() {
+            try {
+                const lib = window.jspdf || {};
+                const jsPDF = lib.jsPDF;
+                if (!jsPDF || !document || !document.body) { toast('Biblioteca de PDF indisponível', 'error'); return; }
+                const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+                const n = __negociacaoInfo || {};
+                const c = __clienteInfo || {};
+                const totais = calcularTotais();
+                const acessos = linhas.length;
+                doc.setFontSize(14);
+                doc.text('Relatório da Proposta Customizada', 40, 40);
+                doc.setFontSize(9);
+                doc.text('Gerado em ' + new Date().toLocaleString('pt-BR'), 40, 56);
+                doc.setFontSize(10);
+                doc.text('Total Proposto: ' + currency(totais.totalProposto), 450, 40, { align: 'right' });
+                doc.autoTable({
+                    startY: 80,
+                    head: [['Campo', 'Valor']],
+                    body: [
+                        ['Nome', c.name || '-'],
+                        ['CNPJ', formatCnpj(n.cnpj || c.cnpj || '')],
+                        ['Telefone', formatPhone(c.phone || '') || '-'],
+                        ['Email', c.email || '-'],
+                        ['Tipo', n.tipo || '-'],
+                        ['Proposta', n.proposta || '-'],
+                        ['Status', n.status || 'Em andamento']
+                    ],
+                    styles: { fontSize: 9 },
+                    headStyles: { fillColor: [243, 244, 246], textColor: [55, 65, 81] },
+                    theme: 'grid',
+                    margin: { left: 40, right: 40 }
+                });
+                doc.autoTable({
+                    startY: doc.lastAutoTable.finalY + 12,
+                    head: [['Linha', 'Acesso', 'Plano Atual', 'Preço Atual']],
+                    body: linhas.map((l, idx) => [
+                        String(idx + 1),
+                        String(formatPhone(l.acesso || '') || '-'),
+                        String(l.planoAtualGB || '-'),
+                        String(currency(l.precoAtual || 0))
+                    ]),
+                    styles: { fontSize: 9 },
+                    headStyles: { fillColor: [243, 244, 246], textColor: [55, 65, 81] },
+                    theme: 'grid',
+                    margin: { left: 40, right: 40 }
+                });
+                doc.autoTable({
+                    startY: doc.lastAutoTable.finalY + 12,
+                    head: [['Linha', 'Tipo', 'Plano', 'Pct', 'Não Fid.', 'Desc.', 'Final', 'Economia', 'Aparelho', 'Modelo', 'Tipo Aparelho', 'Valor Aparelho']],
+                    body: linhas.map((l, idx) => [
+                        String(idx + 1),
+                        String(l.tipoNegociacao || '-'),
+                        String(l.planoSelecionado || '-'),
+                        String(l.pctSelecionado || '-'),
+                        String(currency(l.valorNaoFidelizado || 0)),
+                        String(Number(l.desconto || 0) + '%'),
+                        String(currency(calcularPrecoFinal(l))),
+                        String(currency(calcularEconomia(l))),
+                        String(l.temAparelho || '-'),
+                        String(l.modeloAparelho || '-'),
+                        String(l.tipoAparelho || '-'),
+                        String(currency(l.valorAparelho || 0))
+                    ]),
+                    styles: { fontSize: 9, cellPadding: 3 },
+                    headStyles: { fillColor: [243, 244, 246], textColor: [55, 65, 81] },
+                    showHead: 'firstPage',
+                    theme: 'grid',
+                    margin: { left: 40, right: 40 }
+                });
+                const y = doc.lastAutoTable.finalY + 16;
+                doc.setFontSize(9);
+                doc.text('Total de acessos: ' + String(acessos) + ' • Receita Atual: ' + currency(totais.totalAtual) + ' • Receita Proposta: ' + currency(totais.totalProposto) + ' • Economia: ' + currency(totais.totalEconomia), 40, y);
+                doc.save('relatorio_proposta_customizada.pdf');
+            } catch { toast('Erro ao gerar relatório', 'error'); }
+        }
         document.addEventListener('DOMContentLoaded', async () => {
             const auth = localStorage.getItem('authUser');
             if (!auth) { window.location.href = 'login.html'; return; }
@@ -35,10 +647,34 @@
                 const params = new URLSearchParams(window.location.search || '');
                 const idParam = Number(params.get('id') || 0);
                 if (!idParam) { window.location.href = 'negociar.html'; return; }
-                const list = await api('/negotiations', { method: 'GET' }).catch(() => []);
-                const arr = Array.isArray(list) ? list : [];
-                const exists = arr.find(n => Number(n.id) === Number(idParam));
-                if (!exists) { window.location.href = 'negociar.html'; return; }
+                __negociacaoId = idParam;
+                await carregarCatalogoCustomizado();
+                await carregarNegociacaoBasica();
+                if (!__negociacaoInfo) { window.location.href = 'negociar.html'; return; }
+                await carregarClienteBasico();
+                renderClienteBasico();
+                await carregarPropostaSalva();
+                const addLinhaBtn = document.getElementById('addLinhaBtn');
+                const salvarBtn = document.getElementById('salvarBtn');
+                const copiarBtn = document.getElementById('copiarBtn');
+                const relatorioBtn = document.getElementById('relatorioBtn');
+                const novaBtn = document.getElementById('novaBtn');
+                if (addLinhaBtn) addLinhaBtn.addEventListener('click', adicionarLinha);
+                if (salvarBtn) salvarBtn.addEventListener('click', salvarProposta);
+                if (copiarBtn) copiarBtn.addEventListener('click', copiarProposta);
+                if (relatorioBtn) relatorioBtn.addEventListener('click', gerarRelatorioPdf);
+                if (novaBtn) {
+                    const modal = document.getElementById('confirmResetModal');
+                    const btnClose = document.getElementById('confirmResetClose');
+                    const btnCancel = document.getElementById('confirmResetCancel');
+                    const btnConfirm = document.getElementById('confirmResetConfirm');
+                    const open = () => { if (modal) { modal.classList.add('show'); if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons(); } };
+                    const close = () => { if (modal) modal.classList.remove('show'); };
+                    novaBtn.addEventListener('click', open);
+                    if (btnClose) btnClose.addEventListener('click', close);
+                    if (btnCancel) btnCancel.addEventListener('click', close);
+                    if (btnConfirm) btnConfirm.addEventListener('click', () => { close(); novaProposta(); });
+                }
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             } catch {
                 window.location.href = 'negociar.html';
@@ -46,6 +682,19 @@
         });
     </script>
     <div id="toast" class="toast"></div>
+    <div id="confirmResetModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Confirmar Reset</div><button id="confirmResetClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="label">Tem certeza que deseja resetar a proposta?</div>
+                <div class="muted" style="margin-top:0.5rem;">Esta ação limpa todas as linhas atuais.</div>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmResetCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
+                <button id="confirmResetConfirm" class="btn btn-ghost" type="button" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="rotate-ccw"></i><span>Resetar</span></button>
+            </div>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>
