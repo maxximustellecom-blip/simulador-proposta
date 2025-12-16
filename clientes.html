@@ -150,7 +150,9 @@
         function renderClientsTable(clients) {
             const tbody = document.getElementById('clientsTbody');
             const arr = Array.isArray(clients) ? clients : [];
-            document.getElementById('countLabel').textContent = arr.length + ' ' + (arr.length === 1 ? 'item' : 'itens');
+            const countLabel = document.getElementById('countLabel');
+            const suffix = window.__isAdmin ? '' : ' • seus clientes';
+            countLabel.textContent = arr.length + ' ' + (arr.length === 1 ? 'item' : 'itens') + suffix;
             window.__clientsCache = arr.slice();
             tbody.innerHTML = arr.map(c => `
                 <tr>
@@ -194,6 +196,10 @@
                     isAdmin = (user && user.role === 'admin');
                     window.__isAdmin = isAdmin;
                     label.textContent = isAdmin ? (user.name + ' • Admin') : user.name;
+                }
+                const roleChip = document.getElementById('roleChip');
+                if (roleChip) {
+                    roleChip.textContent = isAdmin ? 'Leitura para todos • Edição admin' : 'Leitura dos seus clientes • Edição admin';
                 }
             } catch {}
             const umb = document.getElementById('userMenuBtn');
@@ -417,6 +423,9 @@
                 buscar();
             });
             await buscar();
+            if (!isAdmin) {
+                toast('Mostrando apenas seus clientes', 'success');
+            }
             if (window.lucide && typeof window.lucide.createIcons === 'function') {
                 window.lucide.createIcons();
             }

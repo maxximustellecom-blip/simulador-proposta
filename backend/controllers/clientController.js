@@ -11,10 +11,12 @@ export async function upsertClient(req, res) {
     if (!name || !cnpj) {
       return res.status(400).json({ error: 'name e cnpj são obrigatórios' });
     }
+    const actor = req.user || null;
     const [client] = await Client.findOrCreate({
       where: { cnpj },
       defaults: {
         name, cnpj,
+        created_by: actor && actor.id ? Number(actor.id) : null,
         fantasy_name: fantasy_name || null,
         email: email || null,
         phone: phone || null,
@@ -53,6 +55,10 @@ export async function getClients(req, res) {
     const { cnpj } = req.query || {};
     const where = {};
     if (cnpj) where.cnpj = cnpj;
+    const actor = req.user || null;
+    if (!actor || actor.role !== 'admin') {
+      where.created_by = actor && actor.id ? Number(actor.id) : -1;
+    }
     const clients = await Client.findAll({ where, order: [['name', 'ASC']] });
     return res.json(clients);
   } catch (err) {

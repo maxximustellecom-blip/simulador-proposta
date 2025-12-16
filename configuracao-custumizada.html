@@ -605,24 +605,36 @@
                 const totalProposto = currency(totais.totalProposto);
                 const economia = currency(totais.totalEconomia);
                 const header = [
-                    'Proposta Customizada',
-                    'Cliente: ' + ((document.getElementById('clienteNome').textContent) || '-'),
-                    'CNPJ: ' + ((document.getElementById('clienteCnpj').textContent) || '-'),
-                    'Tipo: ' + ((document.getElementById('negTipo').textContent) || '-'),
-                    'Status: ' + ((document.getElementById('negStatusLabel').textContent) || '-')
+                    '✨ Proposta Customizada • Maxximus Telecom',
+                    '🏢 Cliente: ' + ((document.getElementById('clienteNome').textContent) || '-'),
+                    '🧾 CNPJ: ' + ((document.getElementById('clienteCnpj').textContent) || '-'),
+                    '📌 Tipo: ' + ((document.getElementById('negTipo').textContent) || '-'),
+                    '🟢 Status: ' + ((document.getElementById('negStatusLabel').textContent) || '-'),
+                    '───────────────────────────────────'
                 ].join('\n');
                 const linhasTxt = linhas.map((l, idx) => {
-                    return `• Linha ${idx + 1}: ${l.acesso || '-'} • ${l.tipoNegociacao || '-'} • Atual: ${l.planoAtualGB || '-'} ${currency(l.precoAtual || 0)} • Proposto: ${l.planoSelecionado || '-'} ${l.pctSelecionado || '-'} • Não Fid.: ${currency(l.valorNaoFidelizado || 0)} • Desc.: ${Number(l.desconto || 0)}% • Final: ${currency(calcularPrecoFinal(l))} • Economia: ${currency(calcularEconomia(l))}`;
-                }).join('\n');
+                    const tipo = String(l.tipoNegociacao || '-').toLowerCase();
+                    const em = tipo.includes('reneg') ? '🔁' : (tipo.includes('adti') || tipo.includes('adit') ? '➕' : '🌟');
+                    const acessoFmt = formatPhone(l.acesso || '') || (l.acesso || '-');
+                    const atual = `${l.planoAtualGB || '-'} ${currency(l.precoAtual || 0)}`;
+                    const proposto = `${l.planoSelecionado || '-'} ${l.pctSelecionado || '-'}`;
+                    const nf = currency(l.valorNaoFidelizado || 0);
+                    const desc = Number(l.desconto || 0) + '%';
+                    const final = currency(calcularPrecoFinal(l));
+                    const econ = currency(calcularEconomia(l));
+                    return `${em} Linha ${idx + 1}\n   📞 Acesso: ${acessoFmt}\n   🔖 Tipo: ${l.tipoNegociacao || '-'}\n   📦 Atual: ${atual}\n   🧩 Proposto: ${proposto}\n   💸 Não Fid.: ${nf}\n   🔻 Desconto: ${desc}\n   💰 Preço Final: ${final}\n   🧮 Economia: ${econ}`;
+                }).join('\n\n');
                 const resumo = [
                     '',
-                    'Resumo',
-                    `   • Receita Atual: ${totalAtual}`,
-                    `   • Receita Proposta: ${totalProposto}`,
-                    `   • Economia Total: ${economia}`,
-                    `   • Total de Acessos: ${acessos}`
+                    '📊 Resumo',
+                    `   💰 Receita Atual: ${totalAtual}`,
+                    `   🧾 Receita Proposta: ${totalProposto}`,
+                    `   💵 Economia Total: ${economia}`,
+                    `   🔢 Total de Acessos: ${acessos}`,
+                    '',
+                    '🚀 Maxximus Telecom • Conectando sua empresa ao futuro'
                 ].join('\n');
-                const txt = header + '\n' + linhasTxt + '\n' + resumo;
+                const txt = header + '\n\n' + linhasTxt + '\n\n' + resumo;
                 navigator.clipboard.writeText(txt).then(() => { toast('Proposta copiada', 'success'); }).catch(() => { toast('Erro ao copiar proposta', 'error'); });
             } catch { toast('Erro ao copiar proposta', 'error'); }
         }
