@@ -141,7 +141,7 @@
             </div>
             <form id="vendaForm">
                 <div class="modal-body">
-                    <section class="section">
+                    <section id="clienteSection" class="section" style="display:none;">
                         <div class="label">Dados do Cliente</div>
                         <div class="grid-2-modal">
                             <div class="field">
@@ -154,10 +154,10 @@
                             </div>
                         </div>
                     </section>
-                    <section class="section" style="margin-top:0.75rem;">
+                    <section class="section" style="margin-top: 20px;">
                         <div class="label">Dados da Venda</div>
                         <div class="grid-2-modal">
-                            <div class="field">
+                            <div class="field" id="vendedorField" style="display:none;">
                                 <span class="label-inline">Vendedor</span>
                                 <select id="vendedor" class="select"><option>Carregando...</option></select>
                             </div>
@@ -171,19 +171,14 @@
                                     <option value="m2m">M2M</option>
                                 </select>
                             </div>
-                        </div>
-                        <div class="grid-2-modal" style="margin-top:0.75rem;">
-                            <div class="field">
-                                <span class="label-inline">P2B</span>
-                                <input id="p2b" class="input" type="number" step="1" min="0" placeholder="0">
-                            </div>
                             <div class="field">
                                 <span class="label-inline">Receita (R$)</span>
                                 <input id="receita" class="input" type="number" step="0.01" min="0" placeholder="0,00">
                             </div>
                         </div>
-                        <div class="actions" style="justify-content:flex-start; padding:0; border-top:none;">
-                            <button type="button" id="addItemBtn" class="btn btn-ghost">Adicionar item</button>
+                        <input id="p2b" type="hidden" value="">
+                        <div class="actions" style="justify-content:flex-end; padding:0; border-top:none;">
+                            <button type="button" id="addItemBtn" class="btn btn-primary"><i data-lucide="plus-circle"></i><span>Adicionar item</span></button>
                         </div>
                     </section>
                     <section id="itensResumoSection" class="section" style="margin-top:0.75rem; display:none;">
@@ -339,12 +334,16 @@
             document.getElementById('summary').style.display = 'block';
         }
         function adicionarItem() {
-            const vendedor = document.getElementById('vendedor').value;
+            let vendedor = '';
+            try {
+                const u = JSON.parse(localStorage.getItem('authUser') || '{}');
+                vendedor = String(u && u.name ? u.name : '').trim();
+            } catch {}
             const tipo = document.getElementById('tipo').value;
             const receita = Number(document.getElementById('receita').value || 0);
-            const p2b = Number(document.getElementById('p2b').value || 0);
-            if (!vendedor || !tipo || receita <= 0) {
-                toast('Informe vendedor, tipo e receita', 'error');
+            const p2b = Math.round(Number(receita || 0) * 0.1);
+            if (!tipo || receita <= 0) {
+                toast('Informe tipo e receita', 'error');
                 return;
             }
             vendasTemp.push({ vendedor, tipo, receita, p2b });
@@ -488,6 +487,8 @@
                     vendasTemp = [];
                     const list = document.getElementById('vendasList');
                     if (list) list.style.display = 'none';
+                    const modalRef = document.getElementById('novaSimulacaoModal');
+                    if (modalRef) modalRef.classList.remove('show');
                     toast('Venda salva e proposta copiada ✨', 'success');
                 } catch {
                     toast('Erro ao salvar venda', 'error');
@@ -496,7 +497,13 @@
             const openBtn = document.getElementById('openSimModal');
             const closeBtn = document.getElementById('closeSimModal');
             const modalEl = document.getElementById('novaSimulacaoModal');
-            if (openBtn && modalEl) openBtn.addEventListener('click', () => { modalEl.classList.add('show'); });
+            if (openBtn && modalEl) openBtn.addEventListener('click', () => {
+                modalEl.classList.add('show');
+                const nomeEl = document.getElementById('clienteNome');
+                const cnpjEl = document.getElementById('clienteCnpj');
+                if (nomeEl) nomeEl.value = 'EMPRESA TESTE LTDA';
+                if (cnpjEl) cnpjEl.value = formatCnpj('12345678000199');
+            });
             if (closeBtn && modalEl) closeBtn.addEventListener('click', () => { modalEl.classList.remove('show'); });
             if (modalEl) modalEl.addEventListener('click', (e) => { if (e.target === modalEl) modalEl.classList.remove('show'); });
             document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { const m = document.getElementById('novaSimulacaoModal'); if (m) m.classList.remove('show'); } });
