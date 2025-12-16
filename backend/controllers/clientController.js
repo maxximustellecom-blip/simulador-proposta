@@ -1,4 +1,5 @@
 import { Client } from '../models/index.js';
+import { Op } from 'sequelize';
 
 export async function upsertClient(req, res) {
   try {
@@ -53,12 +54,16 @@ export async function upsertClient(req, res) {
 export async function getClients(req, res) {
   try {
     const { cnpj } = req.query || {};
-    const where = {};
-    if (cnpj) where.cnpj = cnpj;
+    const and = [{ cnpj: { [Op.ne]: '00000000000000' } }];
+    if (cnpj) {
+      const clean = String(cnpj).replace(/\D/g, '');
+      and.push({ cnpj: clean });
+    }
     const actor = req.user || null;
     if (!actor || actor.role !== 'admin') {
-      where.created_by = actor && actor.id ? Number(actor.id) : -1;
+      and.push({ created_by: actor && actor.id ? Number(actor.id) : -1 });
     }
+    const where = { [Op.and]: and };
     const clients = await Client.findAll({ where, order: [['name', 'ASC']] });
     return res.json(clients);
   } catch (err) {
