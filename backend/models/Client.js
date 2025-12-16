@@ -4,7 +4,7 @@ import sequelize from '../config/database.js';
 const Client = sequelize.define('Client', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   name: { type: DataTypes.STRING(160), allowNull: false },
-  cnpj: { type: DataTypes.STRING(20), allowNull: false, unique: true },
+  cnpj: { type: DataTypes.STRING(20), allowNull: false },
   created_by: { type: DataTypes.INTEGER, allowNull: true },
   fantasy_name: { type: DataTypes.STRING(160), allowNull: true },
   email: { type: DataTypes.STRING(160), allowNull: true },

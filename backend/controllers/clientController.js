@@ -13,11 +13,12 @@ export async function upsertClient(req, res) {
       return res.status(400).json({ error: 'name e cnpj são obrigatórios' });
     }
     const actor = req.user || null;
+    const ownerId = actor && actor.id ? Number(actor.id) : null;
     const [client, created] = await Client.findOrCreate({
-      where: { cnpj },
+      where: { cnpj, created_by: ownerId },
       defaults: {
         name, cnpj,
-        created_by: actor && actor.id ? Number(actor.id) : null,
+        created_by: ownerId,
         fantasy_name: fantasy_name || null,
         email: email || null,
         phone: phone || null,
@@ -38,9 +39,7 @@ export async function upsertClient(req, res) {
         return res.status(403).json({ error: 'forbidden' });
       }
     }
-    if (created && actor && actor.id && Number(client.created_by || 0) !== Number(actor.id)) {
-      client.created_by = Number(actor.id);
-    }
+    // Caso seja admin criando com ownerId null, mantém null (admin-owned)
     let changed = false;
     if (client.name !== name) { client.name = name; changed = true; }
     if (client.fantasy_name !== (fantasy_name || null)) { client.fantasy_name = fantasy_name || null; changed = true; }
