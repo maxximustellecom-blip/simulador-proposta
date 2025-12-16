@@ -7,7 +7,11 @@ export async function upsertClient(req, res) {
       name, cnpj,
       fantasy_name, email, phone,
       cep, state, city, neighborhood, street, number, complement,
-      opening_date
+      opening_date,
+      rep_cpf, rep_rg, rep_tel1, rep_tel2,
+      gestor_cpf, gestor_rg, gestor_tel1, gestor_tel2,
+      auth1_nome, auth1_cpf, auth1_rg, auth1_contato,
+      auth2_nome, auth2_cpf, auth2_contato
     } = req.body || {};
     if (!name || !cnpj) {
       return res.status(400).json({ error: 'name e cnpj são obrigatórios' });
@@ -29,7 +33,22 @@ export async function upsertClient(req, res) {
         street: street || null,
         number: number || null,
         complement: complement || null,
-        opening_date: opening_date || null
+        opening_date: opening_date || null,
+        rep_cpf: rep_cpf || null,
+        rep_rg: rep_rg || null,
+        rep_tel1: rep_tel1 || null,
+        rep_tel2: rep_tel2 || null,
+        gestor_cpf: gestor_cpf || null,
+        gestor_rg: gestor_rg || null,
+        gestor_tel1: gestor_tel1 || null,
+        gestor_tel2: gestor_tel2 || null,
+        auth1_nome: auth1_nome || null,
+        auth1_cpf: auth1_cpf || null,
+        auth1_rg: auth1_rg || null,
+        auth1_contato: auth1_contato || null,
+        auth2_nome: auth2_nome || null,
+        auth2_cpf: auth2_cpf || null,
+        auth2_contato: auth2_contato || null
       }
     });
     if (!created) {
@@ -53,6 +72,21 @@ export async function upsertClient(req, res) {
     if (client.number !== (number || null)) { client.number = number || null; changed = true; }
     if (client.complement !== (complement || null)) { client.complement = complement || null; changed = true; }
     if (client.opening_date !== (opening_date || null)) { client.opening_date = opening_date || null; changed = true; }
+    if (client.rep_cpf !== (rep_cpf || null)) { client.rep_cpf = rep_cpf || null; changed = true; }
+    if (client.rep_rg !== (rep_rg || null)) { client.rep_rg = rep_rg || null; changed = true; }
+    if (client.rep_tel1 !== (rep_tel1 || null)) { client.rep_tel1 = rep_tel1 || null; changed = true; }
+    if (client.rep_tel2 !== (rep_tel2 || null)) { client.rep_tel2 = rep_tel2 || null; changed = true; }
+    if (client.gestor_cpf !== (gestor_cpf || null)) { client.gestor_cpf = gestor_cpf || null; changed = true; }
+    if (client.gestor_rg !== (gestor_rg || null)) { client.gestor_rg = gestor_rg || null; changed = true; }
+    if (client.gestor_tel1 !== (gestor_tel1 || null)) { client.gestor_tel1 = gestor_tel1 || null; changed = true; }
+    if (client.gestor_tel2 !== (gestor_tel2 || null)) { client.gestor_tel2 = gestor_tel2 || null; changed = true; }
+    if (client.auth1_nome !== (auth1_nome || null)) { client.auth1_nome = auth1_nome || null; changed = true; }
+    if (client.auth1_cpf !== (auth1_cpf || null)) { client.auth1_cpf = auth1_cpf || null; changed = true; }
+    if (client.auth1_rg !== (auth1_rg || null)) { client.auth1_rg = auth1_rg || null; changed = true; }
+    if (client.auth1_contato !== (auth1_contato || null)) { client.auth1_contato = auth1_contato || null; changed = true; }
+    if (client.auth2_nome !== (auth2_nome || null)) { client.auth2_nome = auth2_nome || null; changed = true; }
+    if (client.auth2_cpf !== (auth2_cpf || null)) { client.auth2_cpf = auth2_cpf || null; changed = true; }
+    if (client.auth2_contato !== (auth2_contato || null)) { client.auth2_contato = auth2_contato || null; changed = true; }
     if (changed) await client.save();
     return res.json(client);
   } catch (err) {

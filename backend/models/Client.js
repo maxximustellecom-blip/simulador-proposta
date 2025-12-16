@@ -16,7 +16,22 @@ const Client = sequelize.define('Client', {
   street: { type: DataTypes.STRING(160), allowNull: true },
   number: { type: DataTypes.STRING(40), allowNull: true },
   complement: { type: DataTypes.STRING(160), allowNull: true },
-  opening_date: { type: DataTypes.STRING(40), allowNull: true }
+  opening_date: { type: DataTypes.STRING(40), allowNull: true },
+  rep_cpf: { type: DataTypes.STRING(20), allowNull: true },
+  rep_rg: { type: DataTypes.STRING(20), allowNull: true },
+  rep_tel1: { type: DataTypes.STRING(40), allowNull: true },
+  rep_tel2: { type: DataTypes.STRING(40), allowNull: true },
+  gestor_cpf: { type: DataTypes.STRING(20), allowNull: true },
+  gestor_rg: { type: DataTypes.STRING(20), allowNull: true },
+  gestor_tel1: { type: DataTypes.STRING(40), allowNull: true },
+  gestor_tel2: { type: DataTypes.STRING(40), allowNull: true },
+  auth1_nome: { type: DataTypes.STRING(160), allowNull: true },
+  auth1_cpf: { type: DataTypes.STRING(20), allowNull: true },
+  auth1_rg: { type: DataTypes.STRING(20), allowNull: true },
+  auth1_contato: { type: DataTypes.STRING(160), allowNull: true },
+  auth2_nome: { type: DataTypes.STRING(160), allowNull: true },
+  auth2_cpf: { type: DataTypes.STRING(20), allowNull: true },
+  auth2_contato: { type: DataTypes.STRING(160), allowNull: true }
 }, {
   tableName: 'clients',
   timestamps: true,
