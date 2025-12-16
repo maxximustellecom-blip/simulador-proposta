@@ -48,6 +48,7 @@
                                 <tr>
                                     <th>Nome</th>
                                     <th>Descrição</th>
+                                    <th>Tipo</th>
                                     <th class="col-actions" style="min-width:160px;">Ações</th>
                                 </tr>
                             </thead>
@@ -103,6 +104,7 @@
                 <tr>
                     <td><span class="ellipsis">${c.nome || c.name || '-'}</span></td>
                     <td><span class="ellipsis">${c.descricao || c.description || '-'}</span></td>
+                    <td><span class="ellipsis">${c.tipo || '-'}</span></td>
                     <td class="col-actions">
                         <div class="table-actions">
                             <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditarCategoria(${c.id})"><i data-lucide="edit-3"></i></button>
@@ -110,7 +112,7 @@
                         </div>
                     </td>
                 </tr>
-            `).join('') || '<tr><td colspan="3" class="muted">Sem resultados</td></tr>';
+            `).join('') || '<tr><td colspan="4" class="muted">Sem resultados</td></tr>';
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         }
         async function carregarCategoriasList() {
@@ -138,8 +140,10 @@
             __editingCatId = null;
             const nome = document.getElementById('mCatNome');
             const desc = document.getElementById('mCatDesc');
+            const tipo = document.getElementById('mCatTipo');
             if (nome) nome.value = '';
             if (desc) desc.value = '';
+            if (tipo) tipo.value = 'Novo';
         }
         window.detalharCategoria = function(id) {
             const c = (__categorias || []).find(x => Number(x.id) === Number(id));
@@ -156,6 +160,8 @@
             __editingCatId = Number(c.id);
             document.getElementById('mCatNome').value = c.nome || c.name || '';
             document.getElementById('mCatDesc').value = c.descricao || c.description || '';
+            const tipoEl = document.getElementById('mCatTipo');
+            if (tipoEl) tipoEl.value = c.tipo || 'Novo';
             openModal();
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         };
@@ -174,12 +180,13 @@
             try {
                 const nome = String(document.getElementById('mCatNome').value || '').trim();
                 const descricao = String(document.getElementById('mCatDesc').value || '').trim() || null;
+                const tipo = String(document.getElementById('mCatTipo').value || 'Novo');
                 if (!nome) { toast('Informe o nome da categoria', 'error'); return; }
                 if (__editingCatId) {
-                    await api('/categories/' + __editingCatId, { method: 'PUT', body: JSON.stringify({ nome, descricao }) });
+                    await api('/categories/' + __editingCatId, { method: 'PUT', body: JSON.stringify({ nome, descricao, tipo }) });
                     toast('Categoria atualizada', 'success');
                 } else {
-                    await api('/categories', { method: 'POST', body: JSON.stringify({ nome, descricao }) });
+                    await api('/categories', { method: 'POST', body: JSON.stringify({ nome, descricao, tipo }) });
                     toast('Categoria registrada', 'success');
                 }
                 closeModal();
@@ -266,6 +273,13 @@
                 <div class="grid-2-modal">
                     <div class="field"><span class="label-inline">Nome</span><input id="mCatNome" class="input" type="text" placeholder="Nome da categoria"></div>
                     <div class="field"><span class="label-inline">Descrição</span><input id="mCatDesc" class="input" type="text" placeholder="Descrição (opcional)"></div>
+                    <div class="field"><span class="label-inline">Tipo</span>
+                        <select id="mCatTipo" class="select">
+                            <option value="Novo">Novo</option>
+                            <option value="Adtivo">Adtivo</option>
+                            <option value="Renegociação">Renegociação</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="modal-actions">

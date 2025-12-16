@@ -465,7 +465,7 @@
                 const receitaNovosTotal = (sales || []).filter(s => String(s.tipo).toLowerCase() === 'novos')
                     .reduce((acc, s) => acc + Number(s.receita || 0), 0);
                 const nivel = calcularNivelLocal(receitaNovosTotal);
-                label.textContent = u.name + ' • ' + nivel.nome;
+                label.textContent = u.name;
             } catch {}
         }
         async function buscar() {

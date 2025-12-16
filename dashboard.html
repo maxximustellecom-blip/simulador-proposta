@@ -147,10 +147,10 @@
                         </div>
                     </div>
                     <div id="userContent" style="display:none;">
-                        <div id="userFilters" class="filters">
-                            <input id="fFromUser" class="input" type="date">
-                            <input id="fToUser" class="input" type="date">
-                            <button id="applyFiltersUser" class="btn" type="button" title="Aplicar"><i data-lucide="filter"></i><span>Aplicar</span></button>
+                        <div id="userFilters" class="filters" style="display:flex; align-items:center; gap:0.5rem; border: 0; padding-left: 0;">
+                            <button id="prevPeriodUser" class="btn btn-ghost btn-icon" type="button" title="Anterior"><i data-lucide="chevron-left"></i></button>
+                            <div id="periodLabelUser" class="chip" style="display:flex; align-items:center; gap:0.4rem; font-weight:600; padding:0.35rem 0.6rem; border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.06);"></div>
+                            <button id="nextPeriodUser" class="btn btn-ghost btn-icon" type="button" title="Próximo"><i data-lucide="chevron-right"></i></button>
                         </div>
                         <div class="kpis" id="userKpis" style="margin-bottom:1rem;"></div>
                         <div class="grid">
@@ -229,6 +229,44 @@
             const key = String(tipo || '').toLowerCase();
             const taxa = taxas[nivel.nome][key] || 0;
             return Number(valorVenda || 0) * Number(taxa || 0);
+        }
+        function formatMonthYearLabel(m, y) {
+            const names = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            const name = names[(Number(m) || 1) - 1] || '';
+            return name ? (name + ' de ' + String(y)) : String(y);
+        }
+        function parseBrDateToMonthYear(s) {
+            const str = String(s || '');
+            const datePart = str.split(',')[0] || '';
+            const [d,m,y] = datePart.split('/');
+            const mi = Number(m || 0);
+            const yi = Number(y || 0);
+            return { m: mi, y: yi };
+        }
+        let __userPeriod = null;
+        function setUserPeriod(dt) {
+            __userPeriod = { m: dt.getMonth() + 1, y: dt.getFullYear() };
+            const el = document.getElementById('periodLabelUser');
+            if (el) el.innerHTML = `<i data-lucide="calendar"></i><span>${formatMonthYearLabel(__userPeriod.m, __userPeriod.y)}</span>`;
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        }
+        function changeUserPeriod(deltaMonths) {
+            if (!__userPeriod) return;
+            let m = __userPeriod.m + deltaMonths;
+            let y = __userPeriod.y;
+            while (m <= 0) { m += 12; y -= 1; }
+            while (m > 12) { m -= 12; y += 1; }
+            __userPeriod = { m, y };
+            const el = document.getElementById('periodLabelUser');
+            if (el) el.innerHTML = `<i data-lucide="calendar"></i><span>${formatMonthYearLabel(__userPeriod.m, __userPeriod.y)}</span>`;
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        }
+        function filterByUserPeriod(sales) {
+            if (!__userPeriod) return sales || [];
+            return (sales || []).filter(s => {
+                const { m, y } = parseBrDateToMonthYear(s.data);
+                return Number(m) === Number(__userPeriod.m) && Number(y) === Number(__userPeriod.y);
+            });
         }
         function groupByMonth(arr) {
             const map = {};
@@ -457,7 +495,7 @@
             const nameLabel = document.getElementById('userNameLabel');
             if (nameLabel) {
                 const base = String(nameLabel.textContent || '').split(' • ')[0];
-                nameLabel.textContent = `${base} • ${nivelAtual.nome}`;
+                nameLabel.textContent = `${base}`;
             }
             const byMonth = groupByMonth(sales);
             const labels = Object.keys(byMonth).sort((a,b) => a.localeCompare(b));
@@ -551,15 +589,23 @@
                         proposta: n.proposta,
                         status: n.status
                     })) : [];
-                    const btn = document.getElementById('applyFiltersUser');
-                    if (btn) {
-                        btn.addEventListener('click', () => {
-                            const filtered = filterByControls(arr);
-                            renderUserDashboard(filtered);
-                            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-                        });
-                    }
-                    renderUserDashboard(arr);
+                    setUserPeriod(new Date());
+                    const prev = document.getElementById('prevPeriodUser');
+                    const next = document.getElementById('nextPeriodUser');
+                    if (prev) prev.addEventListener('click', () => {
+                        changeUserPeriod(-1);
+                        const filtered = filterByUserPeriod(arr);
+                        renderUserDashboard(filtered);
+                        if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+                    });
+                    if (next) next.addEventListener('click', () => {
+                        changeUserPeriod(1);
+                        const filtered = filterByUserPeriod(arr);
+                        renderUserDashboard(filtered);
+                        if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+                    });
+                    const initial = filterByUserPeriod(arr);
+                    renderUserDashboard(initial);
                 }
             } catch {
                 if (isAdmin) {
