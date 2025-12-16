@@ -14,7 +14,7 @@ export async function upsertClient(req, res) {
     }
     const actor = req.user || null;
     const [client] = await Client.findOrCreate({
-      where: { },
+      where: { cnpj },
       defaults: {
         name, cnpj,
         created_by: actor && actor.id ? Number(actor.id) : null,
