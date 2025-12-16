@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Proposta Customizada</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f9fafb;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 30px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #6b7280;
+        }
+
+        .alert {
+            padding: 16px;
+            margin-bottom: 24px;
+            border-radius: 4px;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background-color: #f0fdf4;
+            border-color: #4ade80;
+            color: #166534;
+        }
+
+        .alert-error {
+            background-color: #fef2f2;
+            border-color: #f87171;
+            color: #991b1b;
+        }
+
+        .alert-warning {
+            background-color: #fefce8;
+            border-color: #fbbf24;
+            color: #854d0e;
+            display: flex;
+        }
+
+        .alert-warning-icon {
+            margin-right: 12px;
+            margin-top: 4px;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        input, select {
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        input:disabled, select:disabled {
+            background-color: #f3f4f6;
+            cursor: not-allowed;
+        }
+
+        .input-error {
+            border-color: #ef4444;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-orange {
+            background-color: #ea580c;
+            color: white;
+        }
+
+        .btn-orange:hover {
+            background-color: #c2410c;
+        }
+
+        .btn-blue {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .btn-blue:hover {
+            background-color: #1d4ed8;
+        }
+
+        .btn-green {
+            background-color: #16a34a;
+            color: white;
+        }
+
+        .btn-green:hover {
+            background-color: #15803d;
+        }
+
+        .btn-purple {
+            background-color: #9333ea;
+            color: white;
+        }
+
+        .btn-purple:hover {
+            background-color: #7e22ce;
+        }
+
+        .btn-icon {
+            padding: 4px;
+            background: none;
+            color: #2563eb;
+            box-shadow: none;
+        }
+
+        .btn-icon:hover {
+            color: #1d4ed8;
+            transform: none;
+        }
+
+        .btn-icon.red {
+            color: #dc2626;
+        }
+
+        .btn-icon.red:hover {
+            color: #991b1b;
+        }
+
+        .summary {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 24px;
+        }
+
+        .summary h2 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 24px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .summary-card {
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .summary-card.green {
+            border-color: #22c55e;
+        }
+
+        .summary-card h3 {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+
+        .line-item {
+            background-color: #f9fafb;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
+
+        .line-item.green {
+            background-color: #f0fdf4;
+        }
+
+        .line-item p {
+            font-size: 14px;
+            color: #4b5563;
+            margin-bottom: 4px;
+        }
+
+        .totals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .total-card {
+            padding: 16px;
+            border-radius: 8px;
+        }
+
+        .total-card.gray {
+            background-color: #f9fafb;
+        }
+
+        .total-card.purple {
+            background-color: #faf5ff;
+        }
+
+        .total-card.blue {
+            background-color: #eff6ff;
+        }
+
+        .total-card.orange {
+            background-color: #fff7ed;
+        }
+
+        .total-card p:first-child {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .total-card p:last-child {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        svg {
+            width: 20px;
+            height: 20px;
+        }
+        #proposta-pdf.pdf-clean {
+            max-width: unset !important;
+            width: 210mm !important;
+            margin: 0 !important;
+            padding: 8mm !important;
+            border: none !important;
+            box-shadow: none !important;
+            background: #ffffff !important;
+        }
+        #proposta-pdf.pdf-clean table,
+        #proposta-pdf.pdf-clean tr,
+        #proposta-pdf.pdf-clean td,
+        #proposta-pdf.pdf-clean .line-item {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        #proposta-pdf.pdf-clean table {
+            table-layout: fixed;
+            width: 100%;
+        }
+        #proposta-pdf.pdf-clean thead th,
+        #proposta-pdf.pdf-clean td {
+            font-size: 10px;
+            padding: 6px !important;
+            white-space: normal !important;
+            word-break: break-word;
+        }
+        #proposta-pdf.pdf-clean h1,
+        #proposta-pdf.pdf-clean h2,
+        #proposta-pdf.pdf-clean p,
+        #proposta-pdf.pdf-clean div {
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+        #proposta-pdf .pdf-cover {
+            height: 297mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1e3a8a, #2563eb, #60a5fa);
+            color: #ffffff;
+        }
+        #proposta-pdf .pdf-cover-content {
+            text-align: center;
+            padding: 20mm;
+        }
+        #proposta-pdf .pdf-brand {
+            font-weight: 800;
+            font-size: 28px;
+            letter-spacing: 2px;
+        }
+        #proposta-pdf .pdf-cover h1 {
+            font-size: 28px;
+            margin: 8px 0 4px;
+        }
+        #proposta-pdf .pdf-cover p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        #proposta-pdf .pdf-badges {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        #proposta-pdf .pdf-badges .badge {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 8px;
+            padding: 8px 12px;
+            min-width: 140px;
+        }
+        #proposta-pdf .pdf-badges .badge span {
+            font-size: 12px;
+        }
+        #proposta-pdf .pdf-badges .badge strong {
+            display: block;
+            font-size: 16px;
+            margin-top: 4px;
+        }
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .header { padding: 16px; }
+            .header h1 { font-size: 22px; }
+            .summary h2 { font-size: 20px; margin-bottom: 16px; }
+            .summary-grid { grid-template-columns: 1fr; gap: 16px; }
+            .totals-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+            .button-group { flex-direction: column; gap: 12px; }
+            .button-group button { width: 100%; justify-content: center; }
+            .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            #mainTable { min-width: 960px; }
+            #mainTable th, #mainTable td { white-space: nowrap; }
+            #mainTable td input, #mainTable td select { width: 100% !important; min-width: 120px; }
+        }
+        @media (max-width: 480px) {
+            body { padding: 8px; }
+            .header h1 { font-size: 20px; }
+            .button-group { gap: 8px; }
+            #mainTable { min-width: 900px; }
+            #mainTable td input, #mainTable td select { min-width: 100px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Simulador de Proposta Customizada</h1>
+            <p>Preencha os dados para simular sua proposta</p>
+        </div>
+
+        <div id="alertSuccess" class="alert alert-success hidden"></div>
+        <div id="alertError" class="alert alert-error hidden"></div>
+        <div id="alertWarning" class="alert alert-warning hidden">
+            <div class="alert-warning-icon">⚠️</div>
+            <div id="warningContent"></div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-wrapper">
+                <table id="mainTable">
+                    <thead>
+                        <tr>
+                            <th>Linha</th>
+                            <th>Acesso</th>
+                            <th>Tipo</th>
+                            <th>Plano Atual</th>
+                            <th>Preço Atual</th>
+                            <th>% Desc.</th>
+                            <th>Plano Proposto</th>
+                            <th>Pct (GB)</th>
+                            <th>Valor Não Fid.</th>
+                            <th>Preço Final</th>
+                            <th>Economia</th>
+                            <th>Aparelho</th>
+                            <th>Modelo</th>
+                            <th>Tipo Aparelho</th>
+                            <th>Valor Aparelho</th>
+                            <th style="text-align: center;">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-orange" onclick="novaProposta()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Nova Proposta
+            </button>
+            <button class="btn-blue" onclick="adicionarLinha()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Adicionar Linha
+            </button>
+            <button class="btn-green" onclick="salvarProposta()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                Salvar Proposta
+            </button>
+            <button class="btn-purple" onclick="copiarProposta()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                Copiar Proposta
+            </button>
+            <button class="btn-green" onclick="salvarProposta()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Baixar Proposta
+            </button>
+        </div>
+
+        <div class="summary">
+            <h2>Resumo da Proposta</h2>
+            
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h3 style="color: #374151;">Plano Atual</h3>
+                    <div id="resumoAtual"></div>
+                </div>
+
+                <div class="summary-card green">
+                    <h3 style="color: #15803d;">Nova Proposta</h3>
+                    <div id="resumoProposta"></div>
+                </div>
+            </div>
+
+            <div class="totals-grid">
+                <div class="total-card gray">
+                    <p>Total de Acessos</p>
+                    <p id="totalAcessos" style="color: #111827;">0</p>
+                </div>
+                <div class="total-card purple">
+                    <p>Economia Total</p>
+                    <p id="totalEconomia" style="color: #9333ea;">R$ 0.00</p>
+                </div>
+                <div class="total-card blue">
+                    <p>Percentual Economia</p>
+                    <p id="percentualEconomia" style="color: #2563eb;">0%</p>
+                </div>
+                <div class="total-card orange">
+                    <p>Linhas com Aparelho</p>
+                    <p id="linhasAparelho" style="color: #ea580c;">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Proposta PDF (oculto) -->
+    <div id="proposta-pdf" style="position: fixed; left: -10000px; top: -10000px; opacity: 0; pointer-events: none; max-width: 800px; margin: 24px auto; padding: 24px; font-family: Arial, Helvetica, sans-serif; color: #111827; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+      <div id="pdf-capa" class="pdf-cover">
+        <div class="pdf-cover-content">
+          <div class="pdf-brand">TIM</div>
+          <h1>Proposta Comercial</h1>
+          <p id="capaData">Data</p>
+          <div class="pdf-badges">
+            <div class="badge"><span>Acessos</span><strong id="capaAcessos">0</strong></div>
+            <div class="badge"><span>Receita Atual</span><strong id="capaTotalAtual">R$ 0,00</strong></div>
+            <div class="badge"><span>Receita Proposta</span><strong id="capaTotalProposto">R$ 0,00</strong></div>
+          </div>
+        </div>
+      </div>
+      <div class="html2pdf__page-break"></div>
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e5e7eb; padding-bottom: 12px; margin-bottom: 16px;">
+        <div>
+          <h1 style="font-size: 22px; margin: 0;">Proposta Comercial</h1>
+          <p id="pdfData" style="font-size: 12px; color: #6b7280; margin: 4px 0 0;">Data</p>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-weight: 700; color: #2563eb;">TIM</div>
+          <div style="font-size: 12px; color: #6b7280;">Simulador</div>
+        </div>
+      </div>
+
+      <div id="pdfResumo" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;"></div>
+
+      <div>
+        <h2 style="font-size: 16px; margin: 16px 0 8px;">Resumo da Nova Proposta</h2>
+        <div id="pdfResumoProposta"></div>
+      </div>
+
+      <div>
+        <h2 style="font-size: 16px; margin: 0 0 8px;">Detalhamento das Linhas</h2>
+        <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+          <colgroup>
+            <col style="width:6%;">
+            <col style="width:16%;">
+            <col style="width:12%;">
+            <col style="width:20%;">
+            <col style="width:8%;">
+            <col style="width:12%;">
+            <col style="width:8%;">
+            <col style="width:9%;">
+            <col style="width:9%;">
+          </colgroup>
+          <thead>
+            <tr style="background: #f3f4f6;">
+              <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Linha</th>
+              <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Acesso</th>
+              <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Tipo</th>
+              <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Plano</th>
+              <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">GB</th>
+              <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Não Fid.</th>
+              <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Desc.</th>
+              <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Preço Final</th>
+              <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Economia</th>
+            </tr>
+          </thead>
+          <tbody id="pdfLinhas"></tbody>
+        </table>
+      </div>
+
+      <div style="display:flex; gap:12px; margin-top:16px;">
+        <div style="flex:1; background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:12px;">
+          <div style="font-size:12px; color:#6b7280;">Receita Atual</div>
+          <div id="pdfTotalAtual" style="font-size:16px; font-weight:600;">R$ 0,00</div>
+        </div>
+        <div style="flex:1; background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:12px;">
+          <div style="font-size:12px; color:#6b7280;">Receita Proposta</div>
+          <div id="pdfTotalProposto" style="font-size:16px; font-weight:600;">R$ 0,00</div>
+        </div>
+        <div style="flex:1; background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:12px;">
+          <div style="font-size:12px; color:#6b7280;">Economia Total</div>
+          <div id="pdfTotalEconomia" style="font-size:16px; font-weight:600; color:#16a34a;">R$ 0,00</div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        const pctsDadosDisponiveis = [
+            '100MB', '1GB', '2GB', '3GB', '4GB', '5GB', '6GB', '8GB', '10GB', 
+            '12GB', '20GB', '22GB', '30GB', '32GB', '50GB', '52GB', '100GB', 
+            '150GB', 'Voz (sem dados)'
+        ];
+
+        const planosDisponiveis = {
+            'Reneg': [
+                { nome: 'RNC B 100MB REV22', pct: '100MB', valor: 35.99 },
+                { nome: 'RNC B 1GB REV22', pct: '1GB', valor: 52.99 },
+                { nome: 'RNC B 2GB REV22', pct: '2GB', valor: 55.99 },
+                { nome: 'RNC B 1GB + 2GB REV22', pct: '3GB', valor: 52.99 },
+                { nome: 'RNC B 3GB REV22', pct: '3GB', valor: 60.99 },
+                { nome: 'RNC B 2GB + 2GB REV22', pct: '4GB', valor: 55.99 },
+                { nome: 'RNC B 4GB REV22', pct: '4GB', valor: 62.99 },
+                { nome: 'RNC B 3GB + 2GB REV22', pct: '5GB', valor: 60.99 },
+                { nome: 'RNC B 4GB + 2GB REV22', pct: '6GB', valor: 62.99 },
+                { nome: 'RNC B 6GB REV22', pct: '6GB', valor: 70.99 },
+                { nome: 'RNC B 6GB + 2GB REV22', pct: '8GB', valor: 70.99 },
+                { nome: 'RNC B 10GB REV22', pct: '10GB', valor: 90.99 },
+                { nome: 'RNC B 10GB + 2GB REV22', pct: '12GB', valor: 90.99 },
+                { nome: 'RNC B 20GB REV22', pct: '20GB', valor: 130.99 },
+                { nome: 'RNC B 20GB + 2GB REV22', pct: '22GB', valor: 130.99 },
+                { nome: 'RNC B 30GB REV22', pct: '30GB', valor: 159.99 },
+                { nome: 'RNC B 30GB + 2GB REV22', pct: '32GB', valor: 159.99 },
+                { nome: 'RNC B 50GB REV22', pct: '50GB', valor: 180.99 },
+                { nome: 'RNC B 50GB + 2GB REV22', pct: '52GB', valor: 180.99 },
+                { nome: 'RNC B 100GB REV22', pct: '100GB', valor: 199.99 }
+            ],
+            'Novo': [
+                { nome: 'CS NV/AD B 1GB + GW', pct: '1GB', valor: 35.99 },
+                { nome: 'CS NV/AD B 2GB + GW', pct: '2GB', valor: 40.99 },
+                { nome: 'CS NV/AD B 3GB + GW', pct: '3GB', valor: 40.99 },
+                { nome: 'CS NV/AD B 4GB + GW', pct: '4GB', valor: 45.99 },
+                { nome: 'CS NV/AD B 4GB + APPS + GW', pct: '4GB', valor: 50.99 },
+                { nome: 'CS NV/AD B 6GB + GW', pct: '6GB', valor: 50.99 },
+                { nome: 'CS NV/AD B 6GB + APPS + GW', pct: '6GB', valor: 52.99 },
+                { nome: 'CS NV/AD B 10GB + APPS + GW', pct: '10GB', valor: 53.99 },
+                { nome: 'CS NV/AD B 20GB + APPS + GW', pct: '20GB', valor: 65.99 },
+                { nome: 'CS NV/AD B 30GB + APPS + GW', pct: '30GB', valor: 70.99 },
+                { nome: 'CS NV/AD B 50GB + APPS + GW', pct: '50GB', valor: 120.99 },
+                { nome: 'CS NV/AD B 100GB + APPS + GW', pct: '100GB', valor: 170.99 },
+                { nome: 'CS NV/AD B 150GB + APPS + GW', pct: '150GB', valor: 200.99 },
+                { nome: 'CS NV/AD B VOZ + GW', pct: 'Voz (sem dados)', valor: 30.99 }
+            ],
+            'Aditivo': [
+                { nome: 'CS NV/AD B 1GB + GW', pct: '1GB', valor: 35.99 },
+                { nome: 'CS NV/AD B 2GB + GW', pct: '2GB', valor: 40.99 },
+                { nome: 'CS NV/AD B 3GB + GW', pct: '3GB', valor: 40.99 },
+                { nome: 'CS NV/AD B 4GB + GW', pct: '4GB', valor: 45.99 },
+                { nome: 'CS NV/AD B 4GB + APPS + GW', pct: '4GB', valor: 50.99 },
+                { nome: 'CS NV/AD B 6GB + GW', pct: '6GB', valor: 50.99 },
+                { nome: 'CS NV/AD B 6GB + APPS + GW', pct: '6GB', valor: 52.99 },
+                { nome: 'CS NV/AD B 10GB + APPS + GW', pct: '10GB', valor: 53.99 },
+                { nome: 'CS NV/AD B 20GB + APPS + GW', pct: '20GB', valor: 65.99 },
+                { nome: 'CS NV/AD B 30GB + APPS + GW', pct: '30GB', valor: 70.99 },
+                { nome: 'CS NV/AD B 50GB + APPS + GW', pct: '50GB', valor: 120.99 },
+                { nome: 'CS NV/AD B 100GB + APPS + GW', pct: '100GB', valor: 170.99 },
+                { nome: 'CS NV/AD B 150GB + APPS + GW', pct: '150GB', valor: 200.99 },
+                { nome: 'CS NV/AD B VOZ + GW', pct: 'Voz (sem dados)', valor: 30.99 }
+            ]
+        };
+
+        let linhas = [{
+            id: 1,
+            acesso: '',
+            tipoNegociacao: 'Reneg',
+            planoAtualGB: '',
+            precoAtual: '',
+            desconto: 0,
+            planoSelecionado: '',
+            pctSelecionado: '',
+            valorNaoFidelizado: '',
+            temAparelho: 'Nao',
+            modeloAparelho: '',
+            tipoAparelho: 'Comodato',
+            valorAparelho: ''
+        }];
+
+        let nextId = 2;
+
+        function mostrarAlerta(tipo, mensagem, tempo = 6000) {
+            const alertElement = document.getElementById(`alert${tipo}`);
+            alertElement.textContent = mensagem;
+            alertElement.classList.remove('hidden');
+            let dontShowAlert = false;
+            if(!dontShowAlert){
+                    setTimeout(() => alertElement.classList.add('hidden'), tempo);
+            }
+        }
+
+        function mostrarAlertas(alertas) {
+            const warningDiv = document.getElementById('alertWarning');
+            const contentDiv = document.getElementById('warningContent');
+            
+            if (alertas.length === 0) {
+                warningDiv.classList.add('hidden');
+                return;
+            }
+
+            let html = '<h3 style="font-weight: 600; color: #854d0e; margin-bottom: 8px;">Atenção:</h3>';
+            alertas.forEach(alerta => {
+                html += `<p style="font-size: 14px; color: #713f12; margin-bottom: 4px;">${alerta}</p>`;
+            });
+            contentDiv.innerHTML = html;
+            warningDiv.classList.remove('hidden');
+        }
+
+        function calcularPrecoFinal(linha) {
+            const valorNaoFid = parseFloat(linha.valorNaoFidelizado) || 0;
+            const desconto = linha.desconto || 0;
+            return valorNaoFid * (1 - desconto / 100);
+        }
+
+        function calcularEconomia(linha) {
+            const precoAtual = parseFloat(linha.precoAtual) || 0;
+            const precoFinal = calcularPrecoFinal(linha);
+            return precoAtual - precoFinal;
+        }
+        function apenasDigitos(v) {
+            return (v || '').toString().replace(/\D/g, '');
+        }
+        function formatarCelular(v) {
+            const d = apenasDigitos(v).slice(0, 11);
+            if (d.length <= 2) return d;
+            if (d.length <= 6) return `(${d.slice(0,2)}) ${d.slice(2)}`;
+            if (d.length <= 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+            return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+        }
+
+        function calcularTotais() {
+            const totalAtual = linhas.reduce((sum, l) => sum + (parseFloat(l.precoAtual) || 0), 0);
+            const totalProposto = linhas.reduce((sum, l) => sum + calcularPrecoFinal(l), 0);
+            const totalEconomia = totalAtual - totalProposto;
+            return { totalAtual, totalProposto, totalEconomia };
+        }
+
+        function validarProposta() {
+            const totais = calcularTotais();
+            const alertas = [];
+            
+            if (totais.totalProposto < totais.totalAtual) {
+                alertas.push('O valor total da nova proposta não pode ser inferior ao valor atual');
+            }
+            
+            const numAcessos = linhas.length;
+            if (numAcessos < 10 && totais.totalProposto < 350) {
+                alertas.push('Com menos de 10 acessos, o contrato deve atingir mínimo de R$ 350,00');
+            }
+            
+            if (numAcessos < 20) {
+                const temAparelho = linhas.some(l => l.temAparelho === 'Sim');
+                if (!temAparelho) {
+                    alertas.push('Negociações com menos de 20 acessos devem incluir pelo menos um aparelho');
+                }
+            }
+            
+            const descontoMaximo = linhas.some(l => (l.desconto || 0) > 60);
+            if (descontoMaximo) {
+                alertas.push('Desconto não pode exceder 60%');
+            }
+
+            linhas.forEach((linha, idx) => {
+                if (linha.tipoNegociacao === 'Reneg') {
+                    if (!linha.planoAtualGB || !linha.precoAtual) {
+                        alertas.push(`Linha ${idx + 1}: Para Renegociação, Plano Atual e Preço Atual são obrigatórios`);
+                    }
+                    
+                    const pctAtual = linha.planoAtualGB ? parseFloat(linha.planoAtualGB.replace(/\D/g, '')) : 0;
+                    const pctNovo = linha.pctSelecionado ? parseFloat(linha.pctSelecionado.replace(/\D/g, '')) : 0;
+                    
+                    if (pctNovo > 0 && pctAtual > 0 && pctNovo < pctAtual) {
+                        alertas.push(`Linha ${idx + 1}: Não é permitido downgrade de pacote de dados (${linha.planoAtualGB} → ${linha.pctSelecionado})`);
+                    }
+                }
+
+                if (!linha.acesso) {
+                    alertas.push(`Linha ${idx + 1}: Recomendamos preencher o número do acesso`);
+                }
+
+                if (linha.temAparelho === 'Sim' && !linha.modeloAparelho) {
+                    alertas.push(`Linha ${idx + 1}: Modelo do aparelho é obrigatório quando há aparelho`);
+                }
+
+                if (linha.tipoAparelho === 'VF 24x' && !linha.valorAparelho) {
+                    alertas.push(`Linha ${idx + 1}: Valor do aparelho é obrigatório para Venda Facilitada`);
+                }
+            });
+            
+            return alertas;
+        }
+
+        function atualizarLinha(id, campo, valor) {
+            linhas = linhas.map(linha => {
+                if (linha.id !== id) return linha;
+                
+                const novaLinha = { ...linha, [campo]: valor };
+                
+                if (campo === 'tipoNegociacao') {
+                    novaLinha.planoSelecionado = '';
+                    novaLinha.pctSelecionado = '';
+                    novaLinha.valorNaoFidelizado = '';
+                }
+                
+                if (campo === 'planoSelecionado') {
+                    const plano = planosDisponiveis[linha.tipoNegociacao]?.find(p => p.nome === valor);
+                    if (plano) {
+                        novaLinha.pctSelecionado = plano.pct;
+                        novaLinha.valorNaoFidelizado = plano.valor;
+                    }
+                }
+                
+                if (campo === 'pctSelecionado') {
+                    const plano = planosDisponiveis[linha.tipoNegociacao]?.find(p => p.pct === valor);
+                    if (plano) {
+                        novaLinha.planoSelecionado = plano.nome;
+                        novaLinha.valorNaoFidelizado = plano.valor;
+                    }
+                }
+
+                if (campo === 'temAparelho' && valor === 'Nao') {
+                    novaLinha.modeloAparelho = '';
+                    novaLinha.tipoAparelho = 'Comodato';
+                    novaLinha.valorAparelho = '';
+                }
+
+                if (campo === 'tipoAparelho' && valor === 'Comodato') {
+                    novaLinha.valorAparelho = '';
+                }
+                
+                return novaLinha;
+            });
+            
+            renderizarTabela();
+        }
+
+        function adicionarLinha() {
+            linhas.push({
+                id: nextId++,
+                acesso: '',
+                tipoNegociacao: 'Aditivo',
+                planoAtualGB: '',
+                precoAtual: '',
+                desconto: 0,
+                planoSelecionado: '',
+                pctSelecionado: '',
+                valorNaoFidelizado: '',
+                temAparelho: 'Nao',
+                modeloAparelho: '',
+                tipoAparelho: 'Comodato',
+                valorAparelho: ''
+            });
+            renderizarTabela();
+        }
+
+        function removerLinha(id) {
+            if (linhas.length > 1) {
+                linhas = linhas.filter(l => l.id !== id);
+                renderizarTabela();
+            }
+        }
+
+        function duplicarLinha(id) {
+            const original = linhas.find(l => l.id === id);
+            if (original) {
+                linhas.push({
+                    ...original,
+                    id: nextId++,
+                    acesso: ''
+                });
+                renderizarTabela();
+            }
+        }
+
+        function novaProposta() {
+            if (confirm('Deseja realmente criar uma nova proposta? Todos os dados atuais serão perdidos.')) {
+                linhas = [{
+                    id: nextId++,
+                    acesso: '',
+                    tipoNegociacao: 'Reneg',
+                    planoAtualGB: '',
+                    precoAtual: '',
+                    desconto: 0,
+                    planoSelecionado: '',
+                    pctSelecionado: '',
+                    valorNaoFidelizado: '',
+                    temAparelho: 'Nao',
+                    modeloAparelho: '',
+                    tipoAparelho: 'Comodato',
+                    valorAparelho: ''
+                }];
+                renderizarTabela();
+                mostrarAlerta('Success', 'Nova proposta criada!');
+            }
+        }
+
+        function gerarResumoTexto() {
+            const totais = calcularTotais();
+            
+            let texto = '=== PROPOSTA CUSTOMIZADA ===\n\n';
+            texto += `Data: ${new Date().toLocaleDateString('pt-BR')}\n`;
+            texto += `Total de Acessos: ${linhas.length}\n\n`;
+            
+            texto += '--- PLANO ATUAL ---\n';
+            linhas.forEach((linha, idx) => {
+                texto += `\nLinha ${idx + 1}:\n`;
+                texto += `  Acesso: ${linha.acesso || 'N/A'}\n`;
+                texto += `  Plano Atual: ${linha.planoAtualGB || 'N/A'}\n`;
+                texto += `  Preço Atual: R$ ${(parseFloat(linha.precoAtual) || 0).toFixed(2)}\n`;
+            });
+            texto += `\nTotal Receita Atual: R$ ${totais.totalAtual.toFixed(2)}\n`;
+            
+            texto += '\n--- NOVA PROPOSTA ---\n';
+            linhas.forEach((linha, idx) => {
+                const precoFinal = calcularPrecoFinal(linha);
+                const economia = calcularEconomia(linha);
+                texto += `\nLinha ${idx + 1}:\n`;
+                texto += `  Acesso: ${linha.acesso || 'N/A'}\n`;
+                texto += `  Tipo: ${linha.tipoNegociacao}\n`;
+                texto += `  Plano Proposto: ${linha.planoSelecionado || 'N/A'}\n`;
+                texto += `  Pct (GB): ${linha.pctSelecionado || 'N/A'}\n`;
+                texto += `  Valor Não Fidelizado: R$ ${(parseFloat(linha.valorNaoFidelizado) || 0).toFixed(2)}\n`;
+                texto += `  Desconto: ${linha.desconto}%\n`;
+                texto += `  Preço Final: R$ ${precoFinal.toFixed(2)}\n`;
+                texto += `  Economia: R$ ${economia.toFixed(2)}\n`;
+                if (linha.temAparelho === 'Sim') {
+                    texto += `  Aparelho: Sim\n`;
+                    texto += `  Modelo: ${linha.modeloAparelho}\n`;
+                    texto += `  Tipo: ${linha.tipoAparelho}\n`;
+                    if (linha.tipoAparelho === 'VF 24x') {
+                        texto += `  Valor Aparelho: R$ ${(parseFloat(linha.valorAparelho) || 0).toFixed(2)}\n`;
+                    }
+                }
+            });
+            
+            texto += `\n--- TOTAIS ---\n`;
+            texto += `Receita Atual: R$ ${totais.totalAtual.toFixed(2)}\n`;
+            texto += `Receita Proposta: R$ ${totais.totalProposto.toFixed(2)}\n`;
+            texto += `Economia Total: R$ ${totais.totalEconomia.toFixed(2)}\n`;
+            
+            return texto;
+        }
+
+        function salvarProposta() {
+            const erros = validarProposta().filter(a => 
+                a.includes('obrigatório') || 
+                a.includes('não pode ser inferior') ||
+                a.includes('mínimo de R$ 350') ||
+                a.includes('pelo menos um aparelho') ||
+                a.includes('não pode exceder') ||
+                a.includes('downgrade')
+            );
+            
+            if (erros.length > 0) {
+                mostrarAlerta('Error', 'Não é possível salvar. Corrija os problemas: ' + erros.join('; '), 5000);
+                return;
+            }
+
+            const totais = calcularTotais();
+            const dataStr = new Date().toLocaleDateString('pt-BR');
+            const pdfDataEl = document.getElementById('pdfData');
+            const pdfResumoEl = document.getElementById('pdfResumo');
+            const pdfLinhasTbody = document.getElementById('pdfLinhas');
+            const pdfResumoPropostaEl = document.getElementById('pdfResumoProposta');
+            const pdfCapaDataEl = document.getElementById('capaData');
+            const pdfCapaAcessosEl = document.getElementById('capaAcessos');
+            const pdfCapaTotalAtualEl = document.getElementById('capaTotalAtual');
+            const pdfCapaTotalPropostoEl = document.getElementById('capaTotalProposto');
+
+            if (!pdfDataEl || !pdfResumoEl || !pdfLinhasTbody) {
+                mostrarAlerta('Error', 'Layout do PDF não encontrado.');
+                return;
+            }
+
+            pdfDataEl.textContent = `Data: ${dataStr}`;
+            if (pdfCapaDataEl) pdfCapaDataEl.textContent = `Data: ${dataStr}`;
+            if (pdfCapaAcessosEl) pdfCapaAcessosEl.textContent = `${linhas.length}`;
+            if (pdfCapaTotalAtualEl) pdfCapaTotalAtualEl.textContent = `R$ ${totais.totalAtual.toFixed(2)}`;
+            if (pdfCapaTotalPropostoEl) pdfCapaTotalPropostoEl.textContent = `R$ ${totais.totalProposto.toFixed(2)}`;
+            pdfResumoEl.innerHTML = `
+                <div>
+                    <div style="font-size:12px; color:#6b7280;">Acessos</div>
+                    <div style="font-size:16px; font-weight:600;">${linhas.length}</div>
+                </div>
+                <div>
+                    <div style="font-size:12px; color:#6b7280;">Receita Atual</div>
+                    <div style="font-size:16px; font-weight:600;">R$ ${totais.totalAtual.toFixed(2)}</div>
+                </div>
+                <div>
+                    <div style="font-size:12px; color:#6b7280;">Receita Proposta</div>
+                    <div style="font-size:16px; font-weight:600;">R$ ${totais.totalProposto.toFixed(2)}</div>
+                </div>
+            `;
+
+            // Popular a listagem da 'Nova Proposta' com o conteúdo já renderizado na UI
+            if (pdfResumoPropostaEl) {
+                const resumoUI = document.getElementById('resumoProposta');
+                pdfResumoPropostaEl.innerHTML = resumoUI ? resumoUI.innerHTML : '';
+            }
+
+            pdfLinhasTbody.innerHTML = '';
+            linhas.forEach((linha, idx) => {
+                const precoFinal = calcularPrecoFinal(linha);
+                const economia = calcularEconomia(linha);
+                const tr = document.createElement('tr');
+                tr.className = 'pdf-row';
+                tr.innerHTML = `
+                    <td style="padding:8px; border-bottom:1px solid #e5e7eb;">${idx + 1}</td>
+                    <td style="padding:8px; border-bottom:1px solid #e5e7eb;">${linha.acesso || '-'}</td>
+                    <td style="padding:8px; border-bottom:1px solid #e5e7eb;">${linha.tipoNegociacao}</td>
+                    <td style="padding:8px; border-bottom:1px solid #e5e7eb;">${linha.planoSelecionado || '-'}</td>
+                    <td style="padding:8px; border-bottom:1px solid #e5e7eb;">${linha.pctSelecionado || '-'}</td>
+                    <td style="padding:8px; border-bottom:1px solid #e5e7eb;">R$ ${(parseFloat(linha.valorNaoFidelizado)||0).toFixed(2)}</td>
+                    <td style="padding:8px; border-bottom:1px solid #e5e7eb;">${linha.desconto}%</td>
+                    <td style="padding:8px; border-bottom:1px solid #e5e7eb;">R$ ${precoFinal.toFixed(2)}</td>
+                    <td style="padding:8px; border-bottom:1px solid #e5e7eb;">R$ ${economia.toFixed(2)}</td>
+                `;
+                pdfLinhasTbody.appendChild(tr);
+            });
+
+            const pdfTotalAtualEl = document.getElementById('pdfTotalAtual');
+            const pdfTotalPropostoEl = document.getElementById('pdfTotalProposto');
+            const pdfTotalEconomiaEl = document.getElementById('pdfTotalEconomia');
+
+            if (pdfTotalAtualEl && pdfTotalPropostoEl && pdfTotalEconomiaEl) {
+                pdfTotalAtualEl.textContent = `R$ ${totais.totalAtual.toFixed(2)}`;
+                pdfTotalPropostoEl.textContent = `R$ ${totais.totalProposto.toFixed(2)}`;
+                pdfTotalEconomiaEl.textContent = `R$ ${totais.totalEconomia.toFixed(2)}`;
+            }
+
+            const element = document.getElementById('proposta-pdf');
+            element.classList.add('pdf-clean');
+            const opt = {
+                margin: 0,
+                filename: `proposta_${new Date().toISOString().slice(0,19).replace(/[-:T]/g,'')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                pagebreak: { mode: ['css', 'legacy'], avoid: ['table', 'tr', '.line-item', '.pdf-row'] },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save()
+                .then(() => {
+                    mostrarAlerta('Success', 'PDF da proposta gerado!');
+                })
+                .catch(err => {
+                    console.error(err);
+                    mostrarAlerta('Error', 'Falha ao gerar o PDF. Tente novamente.');
+                })
+                .finally(() => {
+                    element.classList.remove('pdf-clean');
+                });
+        }
+
+        function copiarProposta() {
+            const erros = validarProposta().filter(a => 
+                a.includes('obrigatório') || 
+                a.includes('não pode ser inferior') ||
+                a.includes('mínimo de R$ 350') ||
+                a.includes('pelo menos um aparelho') ||
+                a.includes('não pode exceder') ||
+                a.includes('downgrade')
+            );
+            
+            if (erros.length > 0) {
+                mostrarAlerta('Error', 'Não é possível copiar. Corrija os problemas: ' + erros.join('; '), 5000);
+                return;
+            }
+
+            const resumo = gerarResumoTexto();
+            navigator.clipboard.writeText(resumo).then(() => {
+                mostrarAlerta('Success', 'Proposta copiada para a área de transferência!');
+            });
+        }
+
+        function renderizarTabela() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            linhas.forEach((linha, idx) => {
+                const precoFinal = calcularPrecoFinal(linha);
+                const economia = calcularEconomia(linha);
+                const isAditivoOuNovo = linha.tipoNegociacao === 'Aditivo' || linha.tipoNegociacao === 'Novo';
+                const isReneg = linha.tipoNegociacao === 'Reneg';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 500;">${idx + 1}</td>
+                    <td>
+                        <input type="text" value="${formatarCelular(linha.acesso)}" 
+                            oninput="this.value = formatarCelular(this.value)"
+                            onchange="atualizarLinha(${linha.id}, 'acesso', apenasDigitos(this.value))"
+                            ${isAditivoOuNovo ? 'disabled' : ''}
+                            placeholder="Número" style="width: 96px;">
+                    </td>
+                    <td>
+                        <select onchange="atualizarLinha(${linha.id}, 'tipoNegociacao', this.value)" style="width: 96px;">
+                            <option value="Reneg" ${linha.tipoNegociacao === 'Reneg' ? 'selected' : ''}>Reneg</option>
+                            <option value="Novo" ${linha.tipoNegociacao === 'Novo' ? 'selected' : ''}>Novo</option>
+                            <option value="Aditivo" ${linha.tipoNegociacao === 'Aditivo' ? 'selected' : ''}>Aditivo</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select onchange="atualizarLinha(${linha.id}, 'planoAtualGB', this.value)" 
+                            ${isAditivoOuNovo ? 'disabled' : ''}
+                            class="${isReneg && !linha.planoAtualGB ? 'input-error' : ''}"
+                            style="width: 128px;">
+                            <option value="">Selecione...</option>
+                            ${pctsDadosDisponiveis.map(pct => 
+                                `<option value="${pct}" ${linha.planoAtualGB === pct ? 'selected' : ''}>${pct}</option>`
+                            ).join('')}
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" value="${linha.precoAtual}" 
+                            onchange="atualizarLinha(${linha.id}, 'precoAtual', this.value)"
+                            ${isAditivoOuNovo ? 'disabled' : ''}
+                            class="${isReneg && !linha.precoAtual ? 'input-error' : ''}"
+                            placeholder="0.00" style="width: 96px;">
+                    </td>
+                    <td>
+                        <input type="number" min="0" max="100" value="${linha.desconto}" 
+                            onchange="atualizarLinha(${linha.id}, 'desconto', parseFloat(this.value) || 0)"
+                            style="width: 64px;">
+                    </td>
+                    <td>
+                        <select onchange="atualizarLinha(${linha.id}, 'planoSelecionado', this.value)" style="width: 192px;">
+                            <option value="">Selecione...</option>
+                            ${(planosDisponiveis[linha.tipoNegociacao] || []).map(plano => 
+                                `<option value="${plano.nome}" ${linha.planoSelecionado === plano.nome ? 'selected' : ''}>${plano.nome}</option>`
+                            ).join('')}
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" value="${linha.pctSelecionado}" readonly 
+                            style="width: 80px; background-color: #f3f4f6; color: #374151;" placeholder="-">
+                    </td>
+                    <td style="font-weight: 500; color: #374151;">R$ ${(parseFloat(linha.valorNaoFidelizado) || 0).toFixed(2)}</td>
+                    <td style="font-weight: 600; color: #16a34a;">R$ ${precoFinal.toFixed(2)}</td>
+                    <td style="font-weight: 600; color: #2563eb;">R$ ${economia.toFixed(2)}</td>
+                    <td>
+                        <select onchange="atualizarLinha(${linha.id}, 'temAparelho', this.value)" style="width: 80px;">
+                            <option value="Nao" ${linha.temAparelho === 'Nao' ? 'selected' : ''}>Não</option>
+                            <option value="Sim" ${linha.temAparelho === 'Sim' ? 'selected' : ''}>Sim</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" value="${linha.modeloAparelho}" 
+                            onchange="atualizarLinha(${linha.id}, 'modeloAparelho', this.value)"
+                            ${linha.temAparelho === 'Nao' ? 'disabled' : ''}
+                            class="${linha.temAparelho === 'Sim' && !linha.modeloAparelho ? 'input-error' : ''}"
+                            placeholder="Modelo" style="width: 128px;">
+                    </td>
+                    <td>
+                        <select onchange="atualizarLinha(${linha.id}, 'tipoAparelho', this.value)"
+                            ${linha.temAparelho === 'Nao' ? 'disabled' : ''}
+                            style="width: 112px;">
+                            <option value="Comodato" ${linha.tipoAparelho === 'Comodato' ? 'selected' : ''}>Comodato</option>
+                            <option value="VF 24x" ${linha.tipoAparelho === 'VF 24x' ? 'selected' : ''}>VF 24x</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" value="${linha.valorAparelho}" 
+                            onchange="atualizarLinha(${linha.id}, 'valorAparelho', this.value)"
+                            ${linha.temAparelho === 'Nao' || linha.tipoAparelho === 'Comodato' ? 'disabled' : ''}
+                            class="${linha.tipoAparelho === 'VF 24x' && !linha.valorAparelho ? 'input-error' : ''}"
+                            placeholder="0.00" style="width: 96px;">
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="action-buttons">
+                            <button class="btn-icon" onclick="duplicarLinha(${linha.id})" title="Duplicar">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            </button>
+                            <button class="btn-icon red" onclick="removerLinha(${linha.id})" 
+                                ${linhas.length === 1 ? 'disabled' : ''} title="Remover">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            atualizarResumo();
+            mostrarAlertas(validarProposta());
+        }
+
+        function atualizarResumo() {
+            const totais = calcularTotais();
+            
+            // Resumo Atual
+            let htmlAtual = '';
+            linhas.forEach((linha, idx) => {
+                htmlAtual += `
+                    <div class="line-item">
+                        <p style="font-weight: 600; color: #374151;">Linha ${idx + 1}: ${linha.acesso || 'N/A'}</p>
+                        <p>Plano: ${linha.planoAtualGB || 'N/A'}</p>
+                        <p>Valor: R$ ${(parseFloat(linha.precoAtual) || 0).toFixed(2)}</p>
+                    </div>
+                `;
+            });
+            htmlAtual += `
+                <div class="line-item" style="background-color: #dbeafe; margin-top: 16px;">
+                    <p style="font-size: 18px; font-weight: bold; color: #1e40af;">Total: R$ ${totais.totalAtual.toFixed(2)}</p>
+                </div>
+            `;
+            document.getElementById('resumoAtual').innerHTML = htmlAtual;
+
+            // Resumo Proposta
+            let htmlProposta = '';
+            linhas.forEach((linha, idx) => {
+                htmlProposta += `
+                    <div class="line-item green">
+                        <p style="font-weight: 600; color: #374151;">Linha ${idx + 1}: ${linha.acesso || 'N/A'}</p>
+                        <p>Tipo: ${linha.tipoNegociacao}</p>
+                        <p>Plano: ${linha.planoSelecionado || 'N/A'}</p>
+                        <p>Pct: ${linha.pctSelecionado || 'N/A'}</p>
+                        <p style="font-weight: 600; color: #15803d;">Final: R$ ${calcularPrecoFinal(linha).toFixed(2)}</p>
+                    </div>
+                `;
+            });
+            htmlProposta += `
+                <div class="line-item" style="background-color: #bbf7d0; margin-top: 16px;">
+                    <p style="font-size: 18px; font-weight: bold; color: #15803d;">Total: R$ ${totais.totalProposto.toFixed(2)}</p>
+                </div>
+            `;
+            document.getElementById('resumoProposta').innerHTML = htmlProposta;
+
+            // Totais
+            document.getElementById('totalAcessos').textContent = linhas.length;
+            document.getElementById('totalEconomia').textContent = `R$ ${totais.totalEconomia.toFixed(2)}`;
+            document.getElementById('percentualEconomia').textContent = 
+                totais.totalAtual > 0 ? `${((totais.totalEconomia / totais.totalAtual) * 100).toFixed(1)}%` : '0%';
+            document.getElementById('linhasAparelho').textContent = linhas.filter(l => l.temAparelho === 'Sim').length;
+        }
+
+        // Inicializar
+        renderizarTabela();
+    </script>
+</body>
+</html>
