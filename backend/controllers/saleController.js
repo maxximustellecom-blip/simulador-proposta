@@ -1,4 +1,4 @@
-import { Client, Simulation, Sale } from '../models/index.js';
+import { Client, Simulation, Sale, Negotiation, User } from '../models/index.js';
 
 function calcularNivel(receitaTotal) {
   if (receitaTotal < 700) return { nome: 'BLUE', fator: 0.6 };
@@ -40,6 +40,60 @@ async function recomputeSimulation(simulationId) {
     comissao_total: comissaoTotal
   }, { where: { id: simulationId } });
   return await Simulation.findByPk(simulationId);
+}
+
+function mapTipoKeyNegotiation(tipo) {
+  const t = String(tipo || '').toUpperCase();
+  if (t.includes('1º') || t.includes('NOVO') || t.includes('ADIT') || t.includes('ADTIVO')) return 'novos';
+  if (t.includes('REN') || t.includes('RENEGOC') || t.includes('RENOVA')) return 'renovacao';
+  if (t.includes('ULTRA')) return 'ultraFibra';
+  if (t.includes('WTTX')) return 'wttx';
+  if (t.includes('M2M')) return 'm2m';
+  return 'novos';
+}
+
+export async function listSalesFromNegotiations(req, res) {
+  try {
+    const { vendedor, razao, cnpj, data } = req.query || {};
+    let list = await Negotiation.findAll({
+      include: [
+        { model: User, as: 'creator', attributes: ['id', 'name'] },
+        { model: Client, as: 'client' }
+      ],
+      order: [['created_at', 'DESC']]
+    });
+    if (req.user && req.user.role === 'user' && req.user.id) {
+      list = list.filter(n => Number(n.created_by || 0) === Number(req.user.id));
+    }
+    if (vendedor) {
+      list = list.filter(n => (n.creator?.name || '') === String(vendedor));
+    }
+    if (razao) {
+      const needle = String(razao).trim().toUpperCase();
+      list = list.filter(n => (n.client?.name || '').toUpperCase().includes(needle));
+    }
+    if (cnpj) {
+      const clean = String(cnpj).replace(/\D/g, '');
+      list = list.filter(n => String(n.cnpj || '').replace(/\D/g, '').includes(clean));
+    }
+    if (data) {
+      const br = String(data).split('-').reverse().join('/');
+      list = list.filter(n => String(n.data || '').includes(br));
+    }
+    const result = list.map(n => ({
+      id: n.id,
+      tipo: mapTipoKeyNegotiation(n.tipo),
+      receita: n.valor !== null && n.valor !== undefined ? Number(n.valor) : 0,
+      vendedor: n.creator?.name || '-',
+      nome: n.client?.name || '',
+      cnpj: n.cnpj || '',
+      p2b: 0,
+      data: n.data || ''
+    }));
+    return res.json(result);
+  } catch (err) {
+    return res.status(500).json({ error: 'erro ao listar vendas de negociações', details: String(err && err.message ? err.message : err) });
+  }
 }
 
 export async function updateSale(req, res) {

@@ -407,6 +407,23 @@
             const k = String(t || '').toUpperCase();
             return (k.includes('1º') || k.includes('VENDA') || k.includes('ADTIVO') || k.includes('ADITIVO'));
         }
+        function calcularComissaoTotalUsuarioMes(sales) {
+            const byMonthVendor = {};
+            (sales || []).forEach(s => {
+                const month = getMonthLabel(s.data);
+                const vendor = s.vendedor || '-';
+                const key = month + '|' + vendor;
+                if (!byMonthVendor[key]) byMonthVendor[key] = [];
+                byMonthVendor[key].push(s);
+            });
+            let total = 0;
+            Object.keys(byMonthVendor).forEach(k => {
+                const list = byMonthVendor[k];
+                const receitaBase = list.filter(x => isTipoNovoOuAdtivo(x.tipo)).reduce((acc, x) => acc + Number(x.receita || 0), 0);
+                total += list.reduce((acc, x) => acc + calcularComissaoProdutoLocal(receitaBase, mapTipoKey(x.tipo), Number(x.receita || 0)), 0);
+            });
+            return total;
+        }
         function isPropostaCustom(proposta) {
             const p = String(proposta || '').toUpperCase();
             return p.includes('CUSTOMIZADA') || p.includes('COSTUMIZADA') || p === 'PROPOSTA CUSTOMIZADA' || p === 'PROPOSTA COSTUMIZADA';
@@ -574,9 +591,9 @@
             const receitaTotal = (sales || []).reduce((acc, s) => acc + Number(s.receita || 0), 0);
             const concluded = (sales || []).filter(s => String(s.status || '') === 'Concluída');
             console.log(concluded)
-            const receitaNovosConcluidas = (concluded || []).filter(s => mapTipoKey(s.tipo) === 'novos').reduce((acc, s) => acc + Number(s.receita || 0), 0);
+            const receitaNovosConcluidas = (concluded || []).filter(s => isTipoNovoOuAdtivo(s.tipo)).reduce((acc, s) => acc + Number(s.receita || 0), 0);
             const nivelAtual = calcularNivelLocal(receitaNovosConcluidas);
-            const comissaoTotal = calcularComissaoTotalPorVendedorMes(concluded);
+            const comissaoTotal = calcularComissaoTotalUsuarioMes(concluded);
             const acessosPeriodoNovosAdt = await (async () => {
                 const alvo = (sales || []).filter(s => isTipoNovoOuAdtivo(s.tipo) && String(s.status || '') === 'Concluída');
                 const counts = await Promise.all(alvo.map(contarAcessosPorNegociacao));
@@ -621,8 +638,8 @@
                 let total = 0;
                 Object.keys(byVend).forEach(v => {
                     const vs = byVend[v];
-                    const receitaNovos = vs.filter(x => mapTipoKey(x.tipo) === 'novos').reduce((acc, x) => acc + Number(x.receita || 0), 0);
-                    total += vs.reduce((acc, x) => acc + calcularComissaoProdutoLocal(receitaNovos, mapTipoKey(x.tipo), Number(x.receita || 0)), 0);
+                    const receitaBase = vs.filter(x => isTipoNovoOuAdtivo(x.tipo)).reduce((acc, x) => acc + Number(x.receita || 0), 0);
+                    total += vs.reduce((acc, x) => acc + calcularComissaoProdutoLocal(receitaBase, mapTipoKey(x.tipo), Number(x.receita || 0)), 0);
                 });
                 return total;
             });
