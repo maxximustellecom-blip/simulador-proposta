@@ -541,6 +541,7 @@
                     renderTable();
                     renderResumo();
                     validarProposta();
+                    salvarProposta();
                 });
             });
             Array.from(document.querySelectorAll('#tableBody [data-action="del"]')).forEach(btn => {
@@ -550,6 +551,7 @@
                     renderTable();
                     renderResumo();
                     validarProposta();
+                    salvarProposta();
                 });
             });
         }
@@ -629,6 +631,7 @@
             renderTable();
             renderResumo();
             validarProposta();
+            salvarProposta();
         }
         function onFieldInput() {
             renderResumo();
@@ -663,6 +666,7 @@
             renderTable();
             renderResumo();
             validarProposta();
+            salvarProposta();
         }
         async function carregarNegociacaoBasica() {
             const list = await api('/negotiations', { method: 'GET' }).catch(() => []);

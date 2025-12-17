@@ -103,6 +103,7 @@
                 </section>
                 <section style="margin-top:1rem;">
                     <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end;">
+                        <button id="novaBtn" class="btn btn-ghost" type="button"><i data-lucide="rotate-ccw"></i><span>Resetar Proposta</span></button>
                         <button id="copiarBtn" class="btn btn-ghost" type="button" title="Copiar proposta"><i data-lucide="copy"></i><span>Copiar Proposta</span></button>
                         <button id="relatorioBtn" class="btn btn-ghost" type="button" title="Gerar Relatório"><i data-lucide="file-text"></i><span>Gerar Relatório</span></button>
                         <button id="salvarBtn" class="btn btn-primary" type="button" title="Salvar"><i data-lucide="save"></i><span>Salvar</span></button>
@@ -112,6 +113,19 @@
         </div>
     </main>
     <div id="toast" class="toast"></div>
+    <div id="confirmResetModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Confirmar Reset</div><button id="confirmResetClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="label">Tem certeza que deseja resetar a proposta?</div>
+                <div class="muted" style="margin-top:0.5rem;">Esta ação limpa todas as linhas atuais e restaura o padrão inicial.</div>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmResetCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
+                <button id="confirmResetConfirm" class="btn btn-ghost" type="button" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="rotate-ccw"></i><span>Resetar</span></button>
+            </div>
+        </div>
+    </div>
     <script src="script.js"></script>
     <script>
         const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
@@ -398,6 +412,7 @@
             const salvarBtn = document.getElementById('salvarBtn');
             const copiarBtn = document.getElementById('copiarBtn');
             const relatorioBtn = document.getElementById('relatorioBtn');
+            const novaBtn = document.getElementById('novaBtn');
             try {
                 const u = JSON.parse(localStorage.getItem('authUser') || '{}');
                 const role = String(u && u.role ? u.role : '');
@@ -424,10 +439,23 @@
                 });
                 renderTabela();
                 renderResumo();
+                salvarProposta(null, false);
             });
             if (salvarBtn) salvarBtn.addEventListener('click', salvarProposta);
             if (copiarBtn) copiarBtn.addEventListener('click', copiarProposta);
             if (relatorioBtn) relatorioBtn.addEventListener('click', gerarRelatorioPdf);
+            if (novaBtn) {
+                const modal = document.getElementById('confirmResetModal');
+                const btnClose = document.getElementById('confirmResetClose');
+                const btnCancel = document.getElementById('confirmResetCancel');
+                const btnConfirm = document.getElementById('confirmResetConfirm');
+                const open = () => { if (modal) { modal.classList.add('show'); if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons(); } };
+                const close = () => { if (modal) modal.classList.remove('show'); };
+                novaBtn.addEventListener('click', open);
+                if (btnClose) btnClose.addEventListener('click', close);
+                if (btnCancel) btnCancel.addEventListener('click', close);
+                if (btnConfirm) btnConfirm.addEventListener('click', () => { close(); novaProposta(); });
+            }
             const statusSel = document.getElementById('fStatus');
             if (statusSel) {
                 statusSel.value = __negociacaoStatus || 'Em andamento';
@@ -450,8 +478,10 @@
                                 statusSel.disabled = true;
                                 const addBtn = document.getElementById('addLinhaBtn');
                                 const salvarBtn = document.getElementById('salvarBtn');
+                                const novaBtn = document.getElementById('novaBtn');
                                 if (addBtn) addBtn.disabled = true;
                                 if (salvarBtn) salvarBtn.disabled = true;
+                                if (novaBtn) novaBtn.disabled = true;
                                 renderTabela();
                             }
                         } catch {
@@ -464,6 +494,7 @@
             if (__isLocked) {
                 if (addBtn) addBtn.disabled = true;
                 if (salvarBtn) salvarBtn.disabled = true;
+                if (novaBtn) novaBtn.disabled = true;
             }
         }
         function atualizarLinha(id, campo, valor) {
@@ -550,12 +581,14 @@
             });
             renderTabela();
             renderResumo();
+            salvarProposta(null, false);
         }
         function removerLinha(id) {
             if (__linhas.length <= 1) return;
             __linhas = __linhas.filter(l => Number(l.id) !== Number(id));
             renderTabela();
             renderResumo();
+            salvarProposta(null, false);
         }
         function totalLinha(l) {
             const q = Number(l.quantidade || 1);
@@ -598,6 +631,7 @@
             });
             renderTabela();
             renderResumo();
+            salvarProposta(null, false);
         }
         function renderTabela() {
             const tbody = document.getElementById('itensTbody');
@@ -954,7 +988,7 @@
                 toast('Erro ao gerar relatório', 'error');
             }
         }
-        function salvarProposta() {
+        function salvarProposta(evt, shouldReload = true) {
             const erros = validar();
             if (erros.length) {
                 toast('Corrija os seguintes problemas: ' + erros.join('; '), 'error');
@@ -976,11 +1010,38 @@
                     if (__negociacaoInfo) __negociacaoInfo.valor = totalNeg;
 
                     toast('Proposta salva', 'success');
-                    await carregarPropostaSalva();
-                    renderTabela();
+                    if (shouldReload) {
+                        await carregarPropostaSalva();
+                        renderTabela();
+                    }
                     renderResumo();
                 }).catch(() => { toast('Erro ao salvar proposta', 'error'); });
             } catch {}
+        }
+        function novaProposta() {
+            __linhas = [{
+                id: 1,
+                portabilidade: 'Não',
+                operadoraDoadora: '',
+                ddd: '',
+                tipoNegociacao: 'Novo',
+                planoAtualGB: '',
+                precoAtual: 0,
+                numeroPortar: '',
+                quantidade: 1,
+                categoria: (getFilteredCategorias('Novo')[0]?.nome || (__categorias[0]?.nome || '')),
+                plano: '',
+                pct: '',
+                valorPlano: 0,
+                temAparelho: 'Não',
+                modeloAparelho: '',
+                tipoAparelho: '',
+                valorAparelho: 0,
+                valorParcela: 0
+            }];
+            renderTabela();
+            renderResumo();
+            salvarProposta(null, false);
         }
         function copiarProposta() {
             const erros = validar();
