@@ -197,6 +197,8 @@
                             operadoraDoadora: l.operadoraDoadora || '',
                             ddd: l.ddd || '',
                             tipoNegociacao: tipoNeg,
+                            planoAtualGB: l.planoAtualGB || '',
+                            precoAtual: Number(l.precoAtual || 0),
                             numeroPortar: l.numeroPortar || '',
                             quantidade: Number(l.quantidade || 1),
                             categoria: cat,
@@ -964,6 +966,15 @@
                     method: 'POST',
                     body: JSON.stringify({ linhas: __linhas })
                 }).then(async () => {
+                    const totalNeg = __linhas.reduce((acc, l) => {
+                        const q = Number(l.quantidade || 1);
+                        const v = Number(l.valorPlano || 0);
+                        // const p = Number(l.valorParcela || 0); // Removido para bater com o totalGeral visual
+                        return acc + (q * v);
+                    }, 0);
+                    await api(`/negotiations/${__negociacaoId}`, { method: 'PUT', body: JSON.stringify({ valor: totalNeg }) }).catch(() => {});
+                    if (__negociacaoInfo) __negociacaoInfo.valor = totalNeg;
+
                     toast('Proposta salva', 'success');
                     await carregarPropostaSalva();
                     renderTabela();

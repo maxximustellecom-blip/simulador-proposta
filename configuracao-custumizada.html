@@ -300,55 +300,72 @@
         }
         function calcularTotais() {
             const totalAtual = linhas.reduce((sum, l) => sum + ((parseFloat(l.precoAtual) || 0) * (Number(l.quantidade) || 1)), 0);
-            const totalProposto = linhas.reduce((sum, l) => sum + (calcularPrecoFinal(l) * (Number(l.quantidade) || 1)), 0);
+            const totalProposto = linhas.reduce((sum, l) => {
+                const qtd = Number(l.quantidade) || 1;
+                const preco = calcularPrecoFinal(l);
+                // const parc = Number(l.valorParcela) || 0; // Ajuste: Total não inclui parcelas de aparelhos
+                return sum + (qtd * preco);
+            }, 0);
             const totalEconomia = totalAtual - totalProposto;
             return { totalAtual, totalProposto, totalEconomia };
         }
         function validarProposta() {
             const totais = calcularTotais();
-            const alertas = [];
+            const erros = [];
+            const avisos = [];
             const numAcessos = linhas.reduce((acc, l) => acc + (Number(l.quantidade) || 1), 0);
             if (numAcessos < 10 && totais.totalProposto < 350) {
-                alertas.push('Com menos de 10 acessos, o contrato deve atingir mínimo de R$ 350,00');
+                erros.push('Com menos de 10 acessos, o contrato deve atingir mínimo de R$ 350,00');
             }
             if (numAcessos < 20) {
                 const temAparelho = linhas.some(l => l.temAparelho === 'Sim');
                 if (!temAparelho) {
-                    alertas.push('Negociações com menos de 20 acessos devem incluir pelo menos um aparelho');
+                    erros.push('Negociações com menos de 20 acessos devem incluir pelo menos um aparelho');
                 }
             }
             linhas.forEach((linha, idx) => {
+                if (!linha.plano) {
+                    erros.push(`Linha ${idx + 1}: Selecione um plano`);
+                }
+                const qtd = Number(linha.quantidade || 0);
+                if (qtd < 1) {
+                    erros.push(`Linha ${idx + 1}: Quantidade deve ser pelo menos 1`);
+                }
+
                 const tipo = String(linha.tipoNegociacao || '').toLowerCase();
                 const isReneg = (tipo.includes('reneg') || tipo.includes('renegociação') || tipo.includes('renegociacao'));
                 if (isReneg) {
                     if (!linha.planoAtualGB || !linha.precoAtual) {
-                        alertas.push(`Linha ${idx + 1}: Para Renegociação, Plano Atual e Preço Atual são obrigatórios`);
+                        erros.push(`Linha ${idx + 1}: Para Renegociação, Plano Atual e Preço Atual são obrigatórios`);
                     }
                     const pctAtual = linha.planoAtualGB ? parseFloat(String(linha.planoAtualGB).replace(/\D/g, '')) : 0;
                     const pctNovo = linha.pct ? parseFloat(String(linha.pct).replace(/\D/g, '')) : 0;
                     if (pctNovo > 0 && pctAtual > 0 && pctNovo < pctAtual) {
-                        alertas.push(`Linha ${idx + 1}: Não é permitido downgrade de pacote de dados (${linha.planoAtualGB} → ${linha.pct})`);
+                        erros.push(`Linha ${idx + 1}: Não é permitido downgrade de pacote de dados (${linha.planoAtualGB} → ${linha.pct})`);
                     }
                 }
                 if (!linha.ddd) {
-                    alertas.push(`Linha ${idx + 1}: Recomendamos preencher o DDD`);
+                    avisos.push(`Linha ${idx + 1}: Recomendamos preencher o DDD`);
                 }
                 if (linha.temAparelho === 'Sim' && !linha.modeloAparelho) {
-                    alertas.push(`Linha ${idx + 1}: Modelo do aparelho é obrigatório quando há aparelho`);
+                    erros.push(`Linha ${idx + 1}: Modelo do aparelho é obrigatório quando há aparelho`);
                 }
                 if (String(linha.tipoAparelho || '') === 'VF 24x' && !linha.valorAparelho) {
-                    alertas.push(`Linha ${idx + 1}: Valor do aparelho é obrigatório para VF 24x`);
+                    erros.push(`Linha ${idx + 1}: Valor do aparelho é obrigatório para VF 24x`);
                 }
             });
             const box = document.getElementById('alertWarning');
             const content = document.getElementById('warningContent');
-            if (alertas.length) {
-                content.innerHTML = '<div style="font-weight:600; margin-bottom:6px; color:#854d0e;">Atenção:</div>' + alertas.map(a => `<div style="font-size:14px; color:#713f12;">${a}</div>`).join('');
+            const todasMensagens = [...erros, ...avisos];
+
+            if (todasMensagens.length) {
+                content.innerHTML = '<div style="font-weight:600; margin-bottom:6px; color:#854d0e;">Atenção:</div>' + todasMensagens.map(a => `<div style="font-size:14px; color:#713f12;">${a}</div>`).join('');
                 box.style.display = 'block';
             } else {
                 content.innerHTML = '';
                 box.style.display = 'none';
             }
+            return erros;
         }
         function renderResumo() {
             const totais = calcularTotais();
@@ -541,6 +558,7 @@
             const field = String(e.target.getAttribute('data-field') || '');
             let val = e.target.value;
             if (field === 'ddd') val = onlyDigits(val).slice(0, 2);
+            if (field === 'precoAtual') val = Number(val || 0);
             linhas = linhas.map(l => {
                 if (Number(l.id) !== id) return l;
                 const novo = { ...l, [field]: val };
@@ -682,7 +700,7 @@
                     ddd: l.ddd || '',
                     tipoNegociacao: l.tipoNegociacao || 'Novo',
                     planoAtualGB: l.planoAtualGB || '',
-                    precoAtual: l.precoAtual || '',
+                    precoAtual: Number(l.precoAtual || 0),
                     portabilidade: l.portabilidade || 'Não',
                     operadoraDoadora: l.operadoraDoadora || '',
                     numeroPortar: l.numeroPortar || '',
@@ -701,11 +719,17 @@
             } catch { adicionarLinha(); }
         }
         async function salvarProposta() {
+            const erros = validarProposta();
+            if (erros.length) {
+                toast('Corrija os seguintes problemas: ' + erros.join('; '), 'error');
+                return;
+            }
             try {
                 if (!__negociacaoId) return;
                 const payload = { linhas };
                 const resp = await api(`/negotiations/${__negociacaoId}/custom-proposal`, { method: 'POST', body: JSON.stringify(payload) });
-                const totalProposto = resp && typeof resp.total_proposto !== 'undefined' ? Number(resp.total_proposto || 0) : calcularTotais().totalProposto;
+                // Força o uso do cálculo local para garantir consistência com o visual (ignorando possível cálculo divergente do backend)
+                const totalProposto = calcularTotais().totalProposto;
                 await api('/negotiations/' + __negociacaoId, { method: 'PUT', body: JSON.stringify({ valor: totalProposto }) }).catch(() => {});
                 if (__negociacaoInfo) __negociacaoInfo.valor = totalProposto;
                 toast('Proposta salva • Total: ' + currency(totalProposto), 'success');
@@ -724,6 +748,11 @@
             } catch { toast('Erro ao atualizar status', 'error'); }
         }
         function copiarProposta() {
+            const erros = validarProposta();
+            if (erros.length) {
+                toast('Corrija os seguintes problemas: ' + erros.join('; '), 'error');
+                return;
+            }
             try {
                 const totais = calcularTotais();
                 const acessos = linhas.length;
