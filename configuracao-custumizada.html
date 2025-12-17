@@ -796,7 +796,7 @@
                 });
                 doc.autoTable({
                     startY: doc.lastAutoTable.finalY + 12,
-                    head: [['Linha', 'Qtd', 'Tipo', 'Categoria', 'Plano', 'Pct', 'Valor Base', 'Desc.', 'Final', 'Economia', 'Aparelho', 'Modelo', 'Tipo Aparelho', 'R$ Total Aparelho', 'R$ da Parcela']],
+                    head: [['Linha', 'Qtd', 'Tipo', 'Categoria', 'Plano', 'Pct', 'Valor Plano', 'Total Linha', 'Valor Não Fid.', '% Desc.', 'Valor c/Desc.', 'Economia', 'Aparelho', 'Modelo', 'Tipo Aparelho', 'R$ Total Aparelho', 'R$ da Parcela']],
                     body: linhas.map((l, idx) => [
                         String(idx + 1),
                         String(l.quantidade || 1),
@@ -805,6 +805,8 @@
                         String(l.plano || '-'),
                         String(l.pct || '-'),
                         String(currency(l.valorPlano || 0)),
+                        String(currency((Number(l.quantidade)||1) * (Number(l.valorPlano)||0))),
+                        String(currency(l.valorNaoFidelizado || 0)),
                         String(Number(l.desconto || 0) + '%'),
                         String(currency(calcularPrecoFinal(l))),
                         String(currency(calcularEconomia(l))),
