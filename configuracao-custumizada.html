@@ -54,11 +54,14 @@
                                     <th>Portabilidade</th>
                                     <th>Operadora Doadora</th>
                                     <th>Número a Portar</th>
-                                    <th>% Desc.</th>
-                                    <th>Plano Proposto</th>
-                                    <th>Pct (GB)</th>
+                                    <th>Categoria</th>
+                                    <th>Plano</th>
+                                    <th>Pct</th>
+                                    <th>Valor Plano</th>
+                                    <th>Total Linha</th>
                                     <th>Valor Não Fid.</th>
-                                    <th>Preço Final</th>
+                                    <th>% Desc.</th>
+                                    <th>Valor c/Desc.</th>
                                     <th>Economia</th>
                                     <th>Aparelho</th>
                                     <th>Tipo Aparelho</th>
@@ -207,6 +210,7 @@
         let __customProdutos = [];
         let __planosPorTipo = { novo: [], adtivo: [], renegociacao: [] };
         let __pctsPorTipo = { novo: [], adtivo: [], renegociacao: [] };
+        let __map = {};
         function normalizeTipoKey(t) {
             const k = String(t || '').toLowerCase();
             if (k.includes('reneg')) return 'renegociacao';
@@ -267,11 +271,9 @@
             }
         }
         function calcularPrecoFinal(linha) {
-            const valorNaoFid = parseFloat(linha.valorNaoFidelizado) || 0;
-            const desconto = parseFloat(linha.desconto) || 0;
-            const planoFinal = valorNaoFid * (1 - desconto / 100);
-            // O valor do aparelho não deve somar no preço final (solicitação do usuário)
-            return planoFinal;
+            const v = parseFloat(linha.valorNaoFidelizado) || 0;
+            const d = parseFloat(linha.desconto) || 0;
+            return v * (1 - d / 100);
         }
         function calcularEconomia(linha) {
             const precoAtual = parseFloat(linha.precoAtual) || 0;
@@ -305,9 +307,9 @@
                         alertas.push(`Linha ${idx + 1}: Para Renegociação, Plano Atual e Preço Atual são obrigatórios`);
                     }
                     const pctAtual = linha.planoAtualGB ? parseFloat(String(linha.planoAtualGB).replace(/\D/g, '')) : 0;
-                    const pctNovo = linha.pctSelecionado ? parseFloat(String(linha.pctSelecionado).replace(/\D/g, '')) : 0;
+                    const pctNovo = linha.pct ? parseFloat(String(linha.pct).replace(/\D/g, '')) : 0;
                     if (pctNovo > 0 && pctAtual > 0 && pctNovo < pctAtual) {
-                        alertas.push(`Linha ${idx + 1}: Não é permitido downgrade de pacote de dados (${linha.planoAtualGB} → ${linha.pctSelecionado})`);
+                        alertas.push(`Linha ${idx + 1}: Não é permitido downgrade de pacote de dados (${linha.planoAtualGB} → ${linha.pct})`);
                     }
                 }
                 if (!linha.ddd) {
@@ -355,8 +357,8 @@
             const propostaItens = linhas.map((l, idx) => {
                 const ac = l.ddd ? `DDD ${l.ddd}` : 'N/A';
                 const tipo = l.tipoNegociacao || '-';
-                const plano = l.planoSelecionado || '-';
-                const pct = l.pctSelecionado || '-';
+                const plano = l.plano || '-';
+                const pct = l.pct || '-';
                 const final = currency(calcularPrecoFinal(l));
                 return `<div style=\"background:#ECFDF5; padding:8px; border-radius:6px; margin-bottom:6px;\">Linha ${idx + 1}: ${ac}<br>Tipo: ${tipo}<br>Plano: ${plano}<br>Pct: ${pct}<br>Final: ${final}</div>`;
             }).join('') || '<div class="muted">-</div>';
@@ -364,6 +366,18 @@
             if (propostaListEl) propostaListEl.innerHTML = propostaItens;
             if (atualTotalEl) atualTotalEl.textContent = 'Total: ' + currency(totais.totalAtual);
             if (propostaTotalEl) propostaTotalEl.textContent = 'Total: ' + currency(totais.totalProposto);
+        }
+        function getFilteredCategorias(tipoNegociacao) {
+            const t = normalizeTipoKey(tipoNegociacao);
+            return __customCategorias.filter(c => normalizeTipoKey(c.tipo) === t);
+        }
+        function categoriaOptionsHtml(tipo, sel) {
+            const cats = getFilteredCategorias(tipo);
+            return ['<option value="">Selecione</option>'].concat(cats.map(c => `<option value="${c.nome}" ${String(sel||'')===c.nome?'selected':''}>${c.nome}</option>`)).join('');
+        }
+        function planoByCatOptionsHtml(catNome, sel) {
+            const arr = __map[catNome] || [];
+            return ['<option value="">Selecione</option>'].concat(arr.map(p => `<option value="${p.nome}" ${String(sel||'')===p.nome?'selected':''}>${p.nome}</option>`)).join('');
         }
         function tipoOptionsHtml(sel) {
             const opts = ['Novo','Adtivo','Renegociação'];
@@ -440,10 +454,13 @@
                         <input type="text" class="input" placeholder="00000-0000" style="min-width:120px; text-align:center; ${styleNumPortar}"
                                value="${l.numeroPortar || ''}" data-id="${l.id}" data-field="numeroPortar" ${!isPort ? 'disabled' : ''} maxlength="10">
                     </td>
-                    <td><input type="number" class="input" step="0.01" min="0" value="${l.desconto || 0}" data-id="${l.id}" data-field="desconto"></td>
-                    <td><select class="select" data-id="${l.id}" data-field="planoSelecionado">${planoOptionsHtml(l.tipoNegociacao, l.planoSelecionado)}</select></td>
-                    <td><span class="muted">${l.pctSelecionado || '-'}</span></td>
-                    <td><input type="number" class="input" step="0.01" min="0" value="${l.valorNaoFidelizado || ''}" data-id="${l.id}" data-field="valorNaoFidelizado"></td>
+                    <td><select class="select" data-id="${l.id}" data-field="categoria" style="min-width:120px;">${categoriaOptionsHtml(l.tipoNegociacao, l.categoria)}</select></td>
+                    <td><select class="select" data-id="${l.id}" data-field="plano" style="min-width:180px;">${planoByCatOptionsHtml(l.categoria, l.plano)}</select></td>
+                    <td><span class="muted">${l.pct || '-'}</span></td>
+                    <td><input type="number" class="input" step="0.01" min="0" value="${l.valorPlano || ''}" data-id="${l.id}" data-field="valorPlano"></td>
+                    <td><strong style="color: var(--primary);">${currency((Number(l.quantidade)||1) * (Number(l.valorPlano)||0))}</strong></td>
+                    <td><input type="number" class="input" step="0.01" min="0" value="${l.valorNaoFidelizado || ''}" data-id="${l.id}" data-field="valorNaoFidelizado" style="width:100px; text-align:center;"></td>
+                    <td><input type="number" class="input" step="0.01" min="0" value="${l.desconto || 0}" data-id="${l.id}" data-field="desconto" style="width:80px; text-align:center;"></td>
                     <td><span class="muted">${currency(precoFinal)}</span></td>
                     <td><span class="muted">${currency(economia)}</span></td>
                     <td><select class="select" data-id="${l.id}" data-field="temAparelho"><option value="Não" ${l.temAparelho==='Não'?'selected':''}>Não</option><option value="Sim" ${l.temAparelho==='Sim'?'selected':''}>Sim</option></select></td>
@@ -505,9 +522,18 @@
             linhas = linhas.map(l => {
                 if (Number(l.id) !== id) return l;
                 const novo = { ...l, [field]: val };
-                if (field === 'planoSelecionado') {
-                    novo.valorNaoFidelizado = valorNaoFidByPlano(novo.tipoNegociacao, val);
-                    novo.pctSelecionado = pctByPlano(novo.tipoNegociacao, val);
+                if (field === 'categoria') {
+                    novo.plano = '';
+                    novo.pct = '';
+                    novo.valorPlano = 0;
+                    novo.valorNaoFidelizado = 0;
+                }
+                if (field === 'plano') {
+                    const arr = __map[novo.categoria] || [];
+                    const p = arr.find(x => x.nome === val);
+                    novo.pct = p ? (p.pct || '') : '';
+                    novo.valorPlano = p ? (Number(p.valor) || 0) : 0;
+                    novo.valorNaoFidelizado = novo.valorPlano;
                 }
                 if (field === 'portabilidade') {
                     if (val !== 'Sim') {
@@ -523,8 +549,10 @@
                     novo.numeroPortar = (digs.length > 5) ? (digs.slice(0, 5) + '-' + digs.slice(5)) : digs;
                 }
                 if (field === 'tipoNegociacao') {
-                    novo.planoSelecionado = '';
-                    novo.pctSelecionado = '';
+                    novo.categoria = '';
+                    novo.plano = '';
+                    novo.pct = '';
+                    novo.valorPlano = 0;
                     novo.valorNaoFidelizado = 0;
                 }
                 if (field === 'temAparelho') {
@@ -577,10 +605,12 @@
                 portabilidade: 'Não',
                 operadoraDoadora: '',
                 numeroPortar: '',
-                desconto: 0,
-                planoSelecionado: '',
-                pctSelecionado: '',
+                categoria: '',
+                plano: '',
+                pct: '',
+                valorPlano: '',
                 valorNaoFidelizado: '',
+                desconto: 0,
                 temAparelho: 'Não',
                 modeloAparelho: '',
                 tipoAparelho: 'Comodato',
@@ -630,10 +660,12 @@
                     portabilidade: l.portabilidade || 'Não',
                     operadoraDoadora: l.operadoraDoadora || '',
                     numeroPortar: l.numeroPortar || '',
+                    categoria: l.categoria || '',
+                    plano: l.plano || l.planoSelecionado || '',
+                    pct: l.pct || l.pctSelecionado || '',
+                    valorPlano: l.valorPlano || '',
+                    valorNaoFidelizado: l.valorNaoFidelizado || l.valorPlano || '',
                     desconto: l.desconto || 0,
-                    planoSelecionado: l.planoSelecionado || '',
-                    pctSelecionado: l.pctSelecionado || '',
-                    valorNaoFidelizado: l.valorNaoFidelizado || '',
                     temAparelho: l.temAparelho || 'Não',
                     modeloAparelho: l.modeloAparelho || '',
                     tipoAparelho: l.tipoAparelho || 'Comodato',
@@ -685,8 +717,8 @@
                     const em = tipo.includes('reneg') ? '🔁' : (tipo.includes('adti') || tipo.includes('adit') ? '➕' : '🌟');
                     const acessoFmt = l.ddd ? `DDD ${l.ddd}` : '-';
                     const atual = `${l.planoAtualGB || '-'} ${currency(l.precoAtual || 0)}`;
-                    const proposto = `${l.planoSelecionado || '-'} ${l.pctSelecionado || '-'}`;
-                    const nf = currency(l.valorNaoFidelizado || 0);
+                    const proposto = `${l.plano || '-'} ${l.pct || '-'}`;
+                    const nf = currency(l.valorPlano || 0);
                     const desc = Number(l.desconto || 0) + '%';
                     const final = currency(calcularPrecoFinal(l));
                     const econ = currency(calcularEconomia(l));
@@ -764,14 +796,15 @@
                 });
                 doc.autoTable({
                     startY: doc.lastAutoTable.finalY + 12,
-                    head: [['Linha', 'Qtd', 'Tipo', 'Plano', 'Pct', 'Não Fid.', 'Desc.', 'Final', 'Economia', 'Aparelho', 'Modelo', 'Tipo Aparelho', 'R$ Total Aparelho', 'R$ da Parcela']],
+                    head: [['Linha', 'Qtd', 'Tipo', 'Categoria', 'Plano', 'Pct', 'Valor Base', 'Desc.', 'Final', 'Economia', 'Aparelho', 'Modelo', 'Tipo Aparelho', 'R$ Total Aparelho', 'R$ da Parcela']],
                     body: linhas.map((l, idx) => [
                         String(idx + 1),
                         String(l.quantidade || 1),
                         String(l.tipoNegociacao || '-'),
-                        String(l.planoSelecionado || '-'),
-                        String(l.pctSelecionado || '-'),
-                        String(currency(l.valorNaoFidelizado || 0)),
+                        String(l.categoria || '-'),
+                        String(l.plano || '-'),
+                        String(l.pct || '-'),
+                        String(currency(l.valorPlano || 0)),
                         String(Number(l.desconto || 0) + '%'),
                         String(currency(calcularPrecoFinal(l))),
                         String(currency(calcularEconomia(l))),
