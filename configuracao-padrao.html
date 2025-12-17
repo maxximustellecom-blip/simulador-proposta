@@ -59,9 +59,6 @@
                                     <th>Pct</th>
                                     <th>Valor Plano</th>
                                     <th>Total Linha</th>
-                                    <th>Valor Não Fid.</th>
-                                    <th>% Desc.</th>
-                                    <th>Valor c/Desc.</th>
                                     <th>Aparelho</th>
                                     <th>Tipo Aparelho</th>
                                     <th>Modelo</th>
@@ -201,8 +198,6 @@
                             plano: planoNome,
                             pct: pctNorm,
                             valorPlano: Number(l.valorPlano || (sel ? Number(sel.preco || 0) : 0)),
-                            valorNaoFidelizado: Number(l.valorNaoFidelizado || 0),
-                            desconto: Number(l.desconto || 0),
                             temAparelho: l.temAparelho || 'Não',
                             modeloAparelho: l.modeloAparelho || '',
                             tipoAparelho: l.tipoAparelho || '',
@@ -356,8 +351,6 @@
                 plano: '',
                 pct: '',
                 valorPlano: 0,
-                valorNaoFidelizado: 0,
-                desconto: 0,
                 temAparelho: 'Não',
                 modeloAparelho: '',
                 tipoAparelho: '',
@@ -422,8 +415,6 @@
                     plano: '',
                     pct: '',
                     valorPlano: 0,
-                    valorNaoFidelizado: 0,
-                    desconto: 0,
                     temAparelho: 'Não',
                     modeloAparelho: '',
                     tipoAparelho: '',
@@ -490,11 +481,9 @@
                         const baseTxt = sel.descricao || sel.nome || '';
                         novo.pct = parsePctFromText(baseTxt);
                         novo.valorPlano = Number(sel.preco || 0);
-                        if (!novo.valorNaoFidelizado) novo.valorNaoFidelizado = novo.valorPlano;
                     } else {
                         novo.pct = '';
                         novo.valorPlano = 0;
-                        novo.valorNaoFidelizado = 0;
                     }
                 }
                 if (campo === 'quantidade') {
@@ -518,14 +507,6 @@
                 }
                 if (campo === 'numeroPortar') {
                     novo.numeroPortar = formatNumeroPortar(valor);
-                }
-                if (campo === 'valorNaoFidelizado') {
-                    const v = Number(valor || 0);
-                    novo.valorNaoFidelizado = (isFinite(v) && v >= 0) ? v : 0;
-                }
-                if (campo === 'desconto') {
-                    const v = Number(valor || 0);
-                    novo.desconto = (isFinite(v) && v >= 0) ? v : 0;
                 }
                 if (campo === 'temAparelho') {
                     if (valor !== 'Sim') {
@@ -574,7 +555,7 @@
             return base;
         }
         function totalGeral() {
-            return __linhas.reduce((acc, l) => acc + (calcularValorComDesconto(l) * (Number(l.quantidade) || 1)), 0);
+            return __linhas.reduce((acc, l) => acc + totalLinha(l), 0);
         }
         function formatNumeroPortar(valor) {
             const digs = String(valor || '').replace(/\D/g, '').slice(0, 9);
@@ -599,8 +580,6 @@
                 plano: src.plano || '',
                 pct: src.pct || '',
                 valorPlano: src.valorPlano || 0,
-                valorNaoFidelizado: src.valorNaoFidelizado || 0,
-                desconto: src.desconto || 0,
                 temAparelho: src.temAparelho || 'Não',
                 modeloAparelho: src.modeloAparelho || '',
                 tipoAparelho: src.tipoAparelho || '',
@@ -690,15 +669,6 @@
                         <td><span class="muted">${currency(l.valorPlano)}</span></td>
                         <td><strong style="color: var(--primary);">${currency(totalLinha(l))}</strong></td>
                         <td>
-                            <input type="number" class="input" step="0.01" min="0" value="${l.valorNaoFidelizado || ''}" data-id="${l.id}" data-field="valorNaoFidelizado" style="width:100px; text-align:center;">
-                        </td>
-                        <td>
-                            <input type="number" class="input" step="0.01" min="0" value="${l.desconto || 0}" data-id="${l.id}" data-field="desconto" style="width:80px; text-align:center;">
-                        </td>
-                        <td>
-                            <span class="muted">${currency(calcularValorComDesconto(l))}</span>
-                        </td>
-                        <td>
                             <select class="select" data-id="${l.id}" data-field="temAparelho" style="width:90px;">
                                 <option value="Não" ${!hasAparelho ? 'selected' : ''}>Não</option>
                                 <option value="Sim" ${hasAparelho ? 'selected' : ''}>Sim</option>
@@ -761,12 +731,6 @@
             });
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         }
-        function calcularValorComDesconto(l) {
-            const v = Number(l.valorNaoFidelizado || 0);
-            const d = Number(l.desconto || 0);
-            return v * (1 - d / 100);
-        }
-        function calcularPrecoFinal(linha) { return calcularValorComDesconto(linha); } // Alias for compatibility
         function renderResumo() {
             const total = totalGeral();
             const acessos = __linhas.reduce((acc, l) => acc + Number(l.quantidade || 0), 0);
@@ -950,9 +914,6 @@
                                 ['Pct', String(l.pct || '-')],
                                 ['Valor Plano', String(currency(l.valorPlano))],
                                 ['Total Linha', String(currency(totalLinha(l)))],
-                                ['Valor Não Fid.', String(currency(l.valorNaoFidelizado || 0))],
-                                ['% Desc.', String(Number(l.desconto || 0) + '%')],
-                                ['Valor c/Desc.', String(currency(calcularValorComDesconto(l)))],
                                 ['Aparelho', String(l.temAparelho || '-')],
                                 ['Modelo', String(l.modeloAparelho || '-')],
                                 ['Tipo Aparelho', String(l.tipoAparelho || '-')],
