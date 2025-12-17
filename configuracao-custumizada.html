@@ -46,7 +46,8 @@
                             <thead>
                                 <tr>
                                     <th>Linha</th>
-                                    <th>Acesso</th>
+                                    <th>Qtd</th>
+                                    <th>DDD</th>
                                     <th>Tipo</th>
                                     <th>Plano Atual</th>
                                     <th>Preço Atual</th>
@@ -198,6 +199,7 @@
         let nextId = 1;
         let __isLocked = false;
         const pctsDadosDisponiveis = ['100MB','1GB','2GB','3GB','4GB','5GB','6GB','8GB','10GB','12GB','20GB','22GB','30GB','32GB','50GB','52GB','100GB','150GB','Voz (sem dados)'];
+        const ddds = [11,12,13,14,15,16,17,18,19,21,22,24,27,28,31,32,33,34,35,37,38,41,42,43,44,45,46,47,48,49,51,53,54,55,61,62,63,64,65,66,67,68,69,71,73,74,75,77,79,81,82,83,84,85,86,87,88,89,91,92,93,94,95,96,97,98,99];
         let __customCategorias = [];
         let __customProdutos = [];
         let __planosPorTipo = { novo: [], adtivo: [], renegociacao: [] };
@@ -274,15 +276,15 @@
             return precoAtual - precoFinal;
         }
         function calcularTotais() {
-            const totalAtual = linhas.reduce((sum, l) => sum + (parseFloat(l.precoAtual) || 0), 0);
-            const totalProposto = linhas.reduce((sum, l) => sum + calcularPrecoFinal(l), 0);
+            const totalAtual = linhas.reduce((sum, l) => sum + ((parseFloat(l.precoAtual) || 0) * (Number(l.quantidade) || 1)), 0);
+            const totalProposto = linhas.reduce((sum, l) => sum + (calcularPrecoFinal(l) * (Number(l.quantidade) || 1)), 0);
             const totalEconomia = totalAtual - totalProposto;
             return { totalAtual, totalProposto, totalEconomia };
         }
         function validarProposta() {
             const totais = calcularTotais();
             const alertas = [];
-            const numAcessos = linhas.length;
+            const numAcessos = linhas.reduce((acc, l) => acc + (Number(l.quantidade) || 1), 0);
             if (numAcessos < 10 && totais.totalProposto < 350) {
                 alertas.push('Com menos de 10 acessos, o contrato deve atingir mínimo de R$ 350,00');
             }
@@ -305,8 +307,8 @@
                         alertas.push(`Linha ${idx + 1}: Não é permitido downgrade de pacote de dados (${linha.planoAtualGB} → ${linha.pctSelecionado})`);
                     }
                 }
-                if (!linha.acesso) {
-                    alertas.push(`Linha ${idx + 1}: Recomendamos preencher o número do acesso`);
+                if (!linha.ddd) {
+                    alertas.push(`Linha ${idx + 1}: Recomendamos preencher o DDD`);
                 }
                 if (linha.temAparelho === 'Sim' && !linha.modeloAparelho) {
                     alertas.push(`Linha ${idx + 1}: Modelo do aparelho é obrigatório quando há aparelho`);
@@ -327,7 +329,7 @@
         }
         function renderResumo() {
             const totais = calcularTotais();
-            const acessos = linhas.length;
+            const acessos = linhas.reduce((acc, l) => acc + (Number(l.quantidade) || 1), 0);
             const economia = totais.totalEconomia;
             const perc = (totais.totalAtual > 0) ? Math.round((economia / (totais.totalAtual)) * 10000) / 100 : 0;
             const withDevice = linhas.filter(l => l.temAparelho === 'Sim').length;
@@ -342,13 +344,13 @@
             const atualTotalEl = document.getElementById('resumoAtualTotal');
             const propostaTotalEl = document.getElementById('resumoPropostaTotal');
             const atualItens = linhas.map((l, idx) => {
-                const ac = formatPhone(l.acesso || '') || 'N/A';
+                const ac = l.ddd ? `DDD ${l.ddd}` : 'N/A';
                 const plano = l.planoAtualGB || 'N/A';
                 const val = currency(l.precoAtual || 0);
                 return `<div style="background:#F3F4F6; padding:8px; border-radius:6px; margin-bottom:6px;">Linha ${idx + 1}: ${ac}<br>Plano: ${plano}<br>Valor: ${val}</div>`;
             }).join('') || '<div class="muted">-</div>';
             const propostaItens = linhas.map((l, idx) => {
-                const ac = formatPhone(l.acesso || '') || 'N/A';
+                const ac = l.ddd ? `DDD ${l.ddd}` : 'N/A';
                 const tipo = l.tipoNegociacao || '-';
                 const plano = l.planoSelecionado || '-';
                 const pct = l.pctSelecionado || '-';
@@ -396,6 +398,8 @@
                 const economia = calcularEconomia(l);
                 const tipoAparelhoOpts = ['Comodato','VF 24x'];
                 const tipoAparelhoHtml = tipoAparelhoOpts.map(o => `<option value="${o}" ${String(l.tipoAparelho||'')===o?'selected':''}>${o}</option>`).join('');
+                
+                const dddOpts = ['<option value="">DDD</option>'].concat(ddds.map(d => `<option value="${d}" ${String(d) === String(l.ddd || '') ? 'selected' : ''}>${d}</option>`)).join('');
 
                 const isVF24x = l.tipoAparelho === 'VF 24x';
                 const isComodato = l.tipoAparelho === 'Comodato';
@@ -407,7 +411,8 @@
                 return `
                 <tr>
                     <td>${idx + 1}</td>
-                    <td><input type="text" class="input" placeholder="(00) 00000-0000" value="${formatPhone(l.acesso || '')}" data-id="${l.id}" data-field="acesso"></td>
+                    <td><input type="number" min="1" class="input" style="width:60px; text-align:center;" value="${l.quantidade || 1}" data-id="${l.id}" data-field="quantidade"></td>
+                    <td><select class="select" data-id="${l.id}" data-field="ddd" style="min-width:70px;">${dddOpts}</select></td>
                     <td><select class="select" data-id="${l.id}" data-field="tipoNegociacao">${tipoOptionsHtml(l.tipoNegociacao)}</select></td>
                     <td><select class="select" data-id="${l.id}" data-field="planoAtualGB">${pctAtualOptionsHtml(l.planoAtualGB)}</select></td>
                     <td><input type="number" class="input" step="0.01" min="0" value="${l.precoAtual || ''}" data-id="${l.id}" data-field="precoAtual"></td>
@@ -440,12 +445,9 @@
                 Array.from(document.querySelectorAll('#tableBody .input, #tableBody .select')).forEach(el => { el.disabled = true; });
                 Array.from(document.querySelectorAll('#tableBody [data-action="dup"], #tableBody [data-action="del"]')).forEach(btn => { btn.disabled = true; });
             }
-            Array.from(document.querySelectorAll('#tableBody [data-field=\"acesso\"]')).forEach(el => {
+            Array.from(document.querySelectorAll('#tableBody [data-field="ddd"]')).forEach(el => {
                 el.addEventListener('input', () => {
-                    el.value = formatPhone(el.value);
-                });
-                el.addEventListener('blur', () => {
-                    el.value = formatPhone(el.value);
+                    el.value = onlyDigits(el.value).slice(0, 2);
                 });
             });
             Array.from(document.querySelectorAll('#tableBody [data-action="dup"]')).forEach(btn => {
@@ -454,7 +456,7 @@
                     const idx = linhas.findIndex(x => Number(x.id) === id);
                     const orig = idx >= 0 ? linhas[idx] : null;
                     if (!orig) return;
-                    const novo = { ...orig, id: nextId++, acesso: '' };
+                    const novo = { ...orig, id: nextId++, ddd: '' };
                     linhas.splice(idx + 1, 0, novo);
                     renderTable();
                     renderResumo();
@@ -475,7 +477,7 @@
             const id = Number(e.target.getAttribute('data-id') || 0);
             const field = String(e.target.getAttribute('data-field') || '');
             let val = e.target.value;
-            if (field === 'acesso') val = onlyDigits(val);
+            if (field === 'ddd') val = onlyDigits(val).slice(0, 2);
             linhas = linhas.map(l => {
                 if (Number(l.id) !== id) return l;
                 const novo = { ...l, [field]: val };
@@ -531,7 +533,7 @@
         function adicionarLinha() {
             linhas.push({
                 id: nextId++,
-                acesso: '',
+                ddd: '',
                 tipoNegociacao: 'Novo',
                 planoAtualGB: '',
                 precoAtual: '',
@@ -580,7 +582,8 @@
                 const arr = (data && Array.isArray(data.linhas)) ? data.linhas : [];
                 linhas = arr.map((l, idx) => ({
                     id: Number(l.id || idx + 1),
-                    acesso: l.acesso || '',
+                    quantidade: Number(l.quantidade || 1),
+                    ddd: l.ddd || '',
                     tipoNegociacao: l.tipoNegociacao || 'Novo',
                     planoAtualGB: l.planoAtualGB || '',
                     precoAtual: l.precoAtual || '',
@@ -637,14 +640,14 @@
                 const linhasTxt = linhas.map((l, idx) => {
                     const tipo = String(l.tipoNegociacao || '-').toLowerCase();
                     const em = tipo.includes('reneg') ? '🔁' : (tipo.includes('adti') || tipo.includes('adit') ? '➕' : '🌟');
-                    const acessoFmt = formatPhone(l.acesso || '') || (l.acesso || '-');
+                    const acessoFmt = l.ddd ? `DDD ${l.ddd}` : '-';
                     const atual = `${l.planoAtualGB || '-'} ${currency(l.precoAtual || 0)}`;
                     const proposto = `${l.planoSelecionado || '-'} ${l.pctSelecionado || '-'}`;
                     const nf = currency(l.valorNaoFidelizado || 0);
                     const desc = Number(l.desconto || 0) + '%';
                     const final = currency(calcularPrecoFinal(l));
                     const econ = currency(calcularEconomia(l));
-                    return `${em} Linha ${idx + 1}\n   📞 Acesso: ${acessoFmt}\n   🔖 Tipo: ${l.tipoNegociacao || '-'}\n   📦 Atual: ${atual}\n   🧩 Proposto: ${proposto}\n   💸 Não Fid.: ${nf}\n   🔻 Desconto: ${desc}\n   💰 Preço Final: ${final}\n   🧮 Economia: ${econ}`;
+                    return `${em} Linha ${idx + 1}\n   📞 DDD: ${acessoFmt}\n   🔖 Tipo: ${l.tipoNegociacao || '-'}\n   📦 Atual: ${atual}\n   🧩 Proposto: ${proposto}\n   💸 Não Fid.: ${nf}\n   🔻 Desconto: ${desc}\n   💰 Preço Final: ${final}\n   🧮 Economia: ${econ}`;
                 }).join('\n\n');
                 const resumo = [
                     '',
@@ -701,10 +704,10 @@
                 });
                 doc.autoTable({
                     startY: doc.lastAutoTable.finalY + 12,
-                    head: [['Linha', 'Acesso', 'Plano Atual', 'Preço Atual']],
+                    head: [['Linha', 'DDD', 'Plano Atual', 'Preço Atual']],
                     body: linhas.map((l, idx) => [
                         String(idx + 1),
-                        String(formatPhone(l.acesso || '') || '-'),
+                        String(l.ddd || '-'),
                         String(l.planoAtualGB || '-'),
                         String(currency(l.precoAtual || 0))
                     ]),
@@ -715,9 +718,10 @@
                 });
                 doc.autoTable({
                     startY: doc.lastAutoTable.finalY + 12,
-                    head: [['Linha', 'Tipo', 'Plano', 'Pct', 'Não Fid.', 'Desc.', 'Final', 'Economia', 'Aparelho', 'Modelo', 'Tipo Aparelho', 'R$ Total Aparelho', 'R$ da Parcela']],
+                    head: [['Linha', 'Qtd', 'Tipo', 'Plano', 'Pct', 'Não Fid.', 'Desc.', 'Final', 'Economia', 'Aparelho', 'Modelo', 'Tipo Aparelho', 'R$ Total Aparelho', 'R$ da Parcela']],
                     body: linhas.map((l, idx) => [
                         String(idx + 1),
+                        String(l.quantidade || 1),
                         String(l.tipoNegociacao || '-'),
                         String(l.planoSelecionado || '-'),
                         String(l.pctSelecionado || '-'),

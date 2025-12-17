@@ -49,11 +49,11 @@ export async function saveCustomProposalForNegotiation(req, res) {
     if (!canAccess(req.user, negotiation)) return res.status(403).json({ error: 'forbidden' });
     const { linhas } = req.body || {};
     if (!Array.isArray(linhas) || linhas.length === 0) return res.status(400).json({ error: 'linhas inválidas' });
-    const total_atual = linhas.reduce((acc, l) => acc + toNumber(l.precoAtual, 0), 0);
-    const total_proposto = linhas.reduce((acc, l) => acc + calcularPrecoFinal(l), 0);
+    const total_atual = linhas.reduce((acc, l) => acc + (toNumber(l.precoAtual, 0) * toNumber(l.quantidade || 1, 1)), 0);
+    const total_proposto = linhas.reduce((acc, l) => acc + (calcularPrecoFinal(l) * toNumber(l.quantidade || 1, 1)), 0);
     const total_economia = total_atual - total_proposto;
     const percentual_economia = total_atual > 0 ? (total_economia / total_atual) * 100 : 0;
-    const total_acessos = linhas.length;
+    const total_acessos = linhas.reduce((acc, l) => acc + toNumber(l.quantidade || 1, 1), 0);
     let prop = await NegociacaoPropostaCustomizada.findOne({ where: { negotiation_id: id } });
     if (!prop) {
       prop = await NegociacaoPropostaCustomizada.create({

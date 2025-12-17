@@ -45,11 +45,11 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>#</th>
+                                    <th>Linha</th>
                                     <th>Qtd</th>
+                                    <th>DDD</th>
                                     <th>Portabilidade</th>
                                     <th>Operadora Doadora</th>
-                                    <th>DDD</th>
                                     <th>Número a Portar</th>
                                     <th>Categoria</th>
                                     <th>Plano</th>
@@ -605,6 +605,11 @@
                                    data-id="${l.id}" data-field="quantidade">
                         </td>
                         <td>
+                            <select class="select" data-id="${l.id}" data-field="ddd" style="width:110px;">
+                                ${dddOpts}
+                            </select>
+                        </td>
+                        <td>
                             <select class="select" data-id="${l.id}" data-field="portabilidade" style="width:110px;">
                                 <option value="Não" ${l.portabilidade === 'Não' ? 'selected' : ''}>Não</option>
                                 <option value="Sim" ${l.portabilidade === 'Sim' ? 'selected' : ''}>Sim</option>
@@ -613,11 +618,6 @@
                         <td>
                             <select class="select" data-id="${l.id}" data-field="operadoraDoadora" style="width:160px;" ${!isPort ? 'disabled' : ''}>
                                 ${opOpts}
-                            </select>
-                        </td>
-                        <td>
-                            <select class="select" data-id="${l.id}" data-field="ddd" style="width:110px;">
-                                ${dddOpts}
                             </select>
                         </td>
                         <td>
@@ -753,7 +753,8 @@
                 ''
             ].join('\n');
             const linhasTxt = __linhas.map((l, idx) => {
-                return `🔹 Item ${idx + 1}: ${Number(l.quantidade || 1)}x ${l.plano || '-'} (${l.categoria || '-'}) • ${l.pct || 'N/A'} • ${currency(l.valorPlano)} • Total: ${currency(totalLinha(l))}`;
+                const dddTxt = l.ddd ? ` (DDD ${l.ddd})` : '';
+                return `🔹 Item ${idx + 1}: ${Number(l.quantidade || 1)}x${dddTxt} ${l.plano || '-'} (${l.categoria || '-'}) • ${l.pct || 'N/A'} • ${currency(l.valorPlano)} • Total: ${currency(totalLinha(l))}`;
             }).join('\n');
             const counts = {};
             __linhas.forEach(l => {
@@ -823,13 +824,13 @@
                     theme: 'grid',
                     margin: { left: 40, right: 40 }
                 });
-                const head = [['#','Qtd','Portabilidade','Operadora Doadora','DDD','Número a Portar','Categoria','Plano','Pct','Valor Plano','Total Linha','Aparelho','Modelo','Tipo Aparelho','Valor Aparelho']];
+                const head = [['#','Qtd','DDD','Portabilidade','Operadora Doadora','Número a Portar','Categoria','Plano','Pct','Valor Plano','Total Linha','Aparelho','Modelo','Tipo Aparelho','Valor Aparelho']];
                 const body = (__linhas || []).map((l, idx) => ([
                     String(idx + 1),
                     String(Number(l.quantidade || 0)),
+                    String(l.ddd || '-'),
                     String(l.portabilidade || '-'),
                     String(l.operadoraDoadora || '-'),
-                    String(l.ddd || '-'),
                     String(l.numeroPortar || '-'),
                     String(l.categoria || '-'),
                     String(l.plano || '-'),
@@ -865,9 +866,9 @@
                             body: [
                                 ['Item', String(idx + 1)],
                                 ['Qtd', String(Number(l.quantidade || 0))],
+                                ['DDD', String(l.ddd || '-')],
                                 ['Portabilidade', String(l.portabilidade || '-')],
                                 ['Operadora Doadora', String(l.operadoraDoadora || '-')],
-                                ['DDD', String(l.ddd || '-')],
                                 ['Número a Portar', String(l.numeroPortar || '-')],
                                 ['Categoria', String(l.categoria || '-')],
                                 ['Plano', String(l.plano || '-')],
