@@ -10,6 +10,7 @@ const NegociacaoPropostaCustomizada = sequelize.define('NegociacaoPropostaCustom
   total_economia: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
   percentual_economia: { type: DataTypes.DECIMAL(6, 2), allowNull: false, defaultValue: 0 },
   total_acessos: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+  anotacoes: { type: DataTypes.TEXT, allowNull: true },
   created_by: { type: DataTypes.INTEGER, allowNull: true }
 }, {
   tableName: 'negotiation_custom_proposals',

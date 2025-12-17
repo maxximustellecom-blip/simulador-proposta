@@ -126,6 +126,10 @@
                         </div>
                     </div>
                 </section>
+                <section class="section" style="margin-top:1rem;">
+                    <div class="label">Anotações</div>
+                    <textarea id="fAnotacoes" class="input" style="width:100%; min-height:80px; margin-top:0.5rem;" placeholder="Observações gerais sobre a proposta..."></textarea>
+                </section>
                 <section style="margin-top:1rem;">
                     <div id="alertWarning" class="card" style="padding:0.75rem; display:none;">
                         <div id="warningContent" class="muted"></div>
@@ -660,6 +664,8 @@
                 tipoAparelho: 'Comodato',
                 valorAparelho: ''
             });
+            const anotacoesEl = document.getElementById('fAnotacoes');
+            if (anotacoesEl) anotacoesEl.value = '';
             renderTable();
             renderResumo();
             salvarProposta(true);
@@ -719,6 +725,8 @@
         async function carregarPropostaSalva() {
             try {
                 const data = await api(`/negotiations/${__negociacaoId}/custom-proposal`, { method: 'GET' }).catch(() => null);
+                const anotacoesEl = document.getElementById('fAnotacoes');
+                if (anotacoesEl) anotacoesEl.value = (data && data.anotacoes) ? data.anotacoes : '';
                 const arr = (data && Array.isArray(data.linhas)) ? data.linhas : [];
                 linhas = arr.map((l, idx) => ({
                     id: Number(l.id || idx + 1),
@@ -754,7 +762,8 @@
             }
             try {
                 if (!__negociacaoId) return;
-                const payload = { linhas };
+                const anotacoes = document.getElementById('fAnotacoes').value || '';
+                const payload = { linhas, anotacoes };
                 const resp = await api(`/negotiations/${__negociacaoId}/custom-proposal`, { method: 'POST', body: JSON.stringify(payload) });
                 // Força o uso do cálculo local para garantir consistência com o visual (ignorando possível cálculo divergente do backend)
                 const totalProposto = calcularTotais().totalProposto;

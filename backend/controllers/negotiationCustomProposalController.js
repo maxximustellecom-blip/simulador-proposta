@@ -33,7 +33,8 @@ export async function getCustomProposalForNegotiation(req, res) {
       total_proposto: Number(prop.total_proposto || 0),
       total_economia: Number(prop.total_economia || 0),
       percentual_economia: Number(prop.percentual_economia || 0),
-      total_acessos: Number(prop.total_acessos || 0)
+      total_acessos: Number(prop.total_acessos || 0),
+      anotacoes: prop.anotacoes || ''
     });
   } catch (err) {
     return res.status(500).json({ error: 'erro ao buscar proposta customizada', details: String(err && err.message ? err.message : err) });
@@ -47,7 +48,7 @@ export async function saveCustomProposalForNegotiation(req, res) {
     const negotiation = await Negotiation.findByPk(id);
     if (!negotiation) return res.status(404).json({ error: 'negociação não encontrada' });
     if (!canAccess(req.user, negotiation)) return res.status(403).json({ error: 'forbidden' });
-    const { linhas } = req.body || {};
+    const { linhas, anotacoes } = req.body || {};
     if (!Array.isArray(linhas) || linhas.length === 0) return res.status(400).json({ error: 'linhas inválidas' });
     const total_atual = linhas.reduce((acc, l) => acc + (toNumber(l.precoAtual, 0) * toNumber(l.quantidade || 1, 1)), 0);
     const total_proposto = linhas.reduce((acc, l) => acc + (calcularPrecoFinal(l) * toNumber(l.quantidade || 1, 1)), 0);
@@ -64,6 +65,7 @@ export async function saveCustomProposalForNegotiation(req, res) {
         total_economia,
         percentual_economia,
         total_acessos,
+        anotacoes: anotacoes || null,
         created_by: req.user ? req.user.id : null
       });
     } else {
@@ -73,6 +75,7 @@ export async function saveCustomProposalForNegotiation(req, res) {
       prop.total_economia = total_economia;
       prop.percentual_economia = percentual_economia;
       prop.total_acessos = total_acessos;
+      if (anotacoes !== undefined) prop.anotacoes = anotacoes;
       await prop.save();
     }
     negotiation.valor = total_proposto;
@@ -84,7 +87,8 @@ export async function saveCustomProposalForNegotiation(req, res) {
       total_proposto: Number(prop.total_proposto || 0),
       total_economia: Number(prop.total_economia || 0),
       percentual_economia: Number(prop.percentual_economia || 0),
-      total_acessos: Number(prop.total_acessos || 0)
+      total_acessos: Number(prop.total_acessos || 0),
+      anotacoes: prop.anotacoes || ''
     });
   } catch (err) {
     return res.status(500).json({ error: 'erro ao salvar proposta customizada', details: String(err && err.message ? err.message : err) });

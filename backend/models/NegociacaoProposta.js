@@ -7,6 +7,7 @@ const NegociacaoProposta = sequelize.define('NegociacaoProposta', {
   linhas: { type: DataTypes.JSON, allowNull: false },
   total_valor: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
   total_acessos: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+  anotacoes: { type: DataTypes.TEXT, allowNull: true },
   created_by: { type: DataTypes.INTEGER, allowNull: true }
 }, {
   tableName: 'negotiation_proposals',
