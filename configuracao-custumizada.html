@@ -128,7 +128,7 @@
                 </section>
                 <section class="section" style="margin-top:1rem;">
                     <div class="label">Anotações</div>
-                    <textarea id="fAnotacoes" class="input" style="width:100%; min-height:80px; margin-top:0.5rem;" placeholder="Observações gerais sobre a proposta..."></textarea>
+                    <textarea id="fAnotacoes" class="input" style="width:100%; min-height:80px; margin-top:0.5rem; padding: 0px; resize: none;" placeholder="Observações gerais sobre a proposta..."></textarea>
                 </section>
                 <section style="margin-top:1rem;">
                     <div id="alertWarning" class="card" style="padding:0.75rem; display:none;">
@@ -673,6 +673,7 @@
         function adicionarLinha() {
             linhas.push({
                 id: nextId++,
+                qtd: 1,
                 ddd: '',
                 tipoNegociacao: 'Novo',
                 planoAtualGB: '',
@@ -974,6 +975,8 @@
                     if (btnCancel) btnCancel.addEventListener('click', close);
                     if (btnConfirm) btnConfirm.addEventListener('click', () => { close(); novaProposta(); });
                 }
+                const anotacoesEl = document.getElementById('fAnotacoes');
+                if (anotacoesEl) anotacoesEl.addEventListener('blur', () => salvarProposta());
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             } catch {
                 window.location.href = 'negociar.html';
