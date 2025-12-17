@@ -342,9 +342,16 @@
                 return true;
             });
         }
-        function buildVendorOptions(sales) {
+        async function buildVendorOptions(sales) {
             const sel = document.getElementById('fVendor');
-            const names = Array.from(new Set((sales || []).map(s => s.vendedor || '-'))).sort((a,b) => a.localeCompare(b));
+            let users = [];
+            try {
+                users = await api('/auth/users', { method: 'GET' });
+            } catch {}
+            const fromSales = new Set((sales || []).map(s => s.vendedor || '-').filter(v => v !== '-'));
+            const fromUsers = new Set((Array.isArray(users) ? users : []).map(u => u.name));
+            const allNames = new Set([...fromSales, ...fromUsers]);
+            const names = Array.from(allNames).sort((a,b) => a.localeCompare(b));
             sel.innerHTML = ['<option value="Todos">Todos</option>'].concat(names.map(n => `<option value="${n}">${n}</option>`)).join('');
         }
         function topVendedoresByComissao(sales, limit = 5) {
@@ -462,7 +469,11 @@
                 const counts = await Promise.all((concluded || []).map(contarAcessosPorNegociacao));
                 return counts.reduce((acc, c) => acc + Number(c || 0), 0);
             })();
-            const vendedoresUnicos = Array.from(new Set((sales || []).map(s => s.vendedor || '-'))).length;
+            let vendedoresUnicos = 0;
+            try {
+                const uAll = await api('/auth/users', { method: 'GET' });
+                vendedoresUnicos = Array.isArray(uAll) ? uAll.length : 0;
+            } catch { vendedoresUnicos = 0; }
             kpi.innerHTML = [
                 `<div class="kpi"><div class="label">Negociações</div><div class="value">${totalVendas}</div></div>`,
                 `<div class="kpi"><div class="label">Receita Total</div><div class="value">${currency(receitaTotal)}</div></div>`,
@@ -711,7 +722,7 @@
                         proposta: n.proposta,
                         status: n.status
                     })) : [];
-                    buildVendorOptions(arr);
+                    await buildVendorOptions(arr);
                     document.getElementById('applyFilters').addEventListener('click', async () => {
                         const filtered = filterByControls(arr);
                         await renderAdminDashboard(filtered);
