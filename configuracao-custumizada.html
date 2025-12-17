@@ -270,6 +270,24 @@
                 __pctsPorTipo = { novo: [], adtivo: [], renegociacao: [] };
             }
         }
+        function construirMapaCustomizado() {
+            const map = {};
+            (__customProdutos || []).forEach(p => {
+                const catObj = p.category || {};
+                const catId = catObj.id;
+                if (!catId) return;
+
+                if (!map[catId]) map[catId] = [];
+                
+                const nome = String(p.nome || p.name || '-');
+                const baseTxt = p.descricao || p.description || nome;
+                const pct = parsePctFromText(baseTxt);
+                const valor = Number(p.preco || 0);
+                
+                map[catId].push({ nome, pct, valor });
+            });
+            __map = map;
+        }
         function calcularPrecoFinal(linha) {
             const v = parseFloat(linha.valorNaoFidelizado) || 0;
             const d = parseFloat(linha.desconto) || 0;
@@ -375,10 +393,7 @@
             const cats = getFilteredCategorias(tipo);
             return ['<option value="">Selecione</option>'].concat(cats.map(c => `<option value="${c.nome}" ${String(sel||'')===c.nome?'selected':''}>${c.nome}</option>`)).join('');
         }
-        function planoByCatOptionsHtml(catNome, sel) {
-            const arr = __map[catNome] || [];
-            return ['<option value="">Selecione</option>'].concat(arr.map(p => `<option value="${p.nome}" ${String(sel||'')===p.nome?'selected':''}>${p.nome}</option>`)).join('');
-        }
+
         function tipoOptionsHtml(sel) {
             const opts = ['Novo','Adtivo','Renegociação'];
             return opts.map(o => `<option value="${o}" ${String(sel||'')===o?'selected':''}>${o}</option>`).join('');
@@ -411,6 +426,13 @@
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = linhas.map((l, idx) => {
+                const cats = getFilteredCategorias(l.tipoNegociacao);
+                const currentCat = cats.find(c => c.nome === l.categoria);
+                const planos = currentCat ? (__map[currentCat.id] || []) : [];
+                const planoOpts = ['<option value="">Selecione</option>'].concat(
+                    planos.map(p => `<option value="${p.nome}" ${String(l.plano||'')===p.nome?'selected':''}>${p.nome}</option>`)
+                ).join('');
+
                 const precoFinal = calcularPrecoFinal(l);
                 const economia = calcularEconomia(l);
                 const tipoAparelhoOpts = ['Comodato','VF 24x'];
@@ -455,7 +477,7 @@
                                value="${l.numeroPortar || ''}" data-id="${l.id}" data-field="numeroPortar" ${!isPort ? 'disabled' : ''} maxlength="10">
                     </td>
                     <td><select class="select" data-id="${l.id}" data-field="categoria" style="min-width:120px;">${categoriaOptionsHtml(l.tipoNegociacao, l.categoria)}</select></td>
-                    <td><select class="select" data-id="${l.id}" data-field="plano" style="min-width:180px;">${planoByCatOptionsHtml(l.categoria, l.plano)}</select></td>
+                    <td><select class="select" data-id="${l.id}" data-field="plano" style="min-width:180px;">${planoOpts}</select></td>
                     <td><span class="muted">${l.pct || '-'}</span></td>
                     <td><input type="number" class="input" step="0.01" min="0" value="${l.valorPlano || ''}" data-id="${l.id}" data-field="valorPlano"></td>
                     <td><strong style="color: var(--primary);">${currency((Number(l.quantidade)||1) * (Number(l.valorPlano)||0))}</strong></td>
@@ -522,6 +544,14 @@
             linhas = linhas.map(l => {
                 if (Number(l.id) !== id) return l;
                 const novo = { ...l, [field]: val };
+                if (field === 'tipoNegociacao') {
+                    const cats = getFilteredCategorias(val);
+                    novo.categoria = (cats[0]?.nome || '');
+                    novo.plano = '';
+                    novo.pct = '';
+                    novo.valorPlano = 0;
+                    novo.valorNaoFidelizado = 0;
+                }
                 if (field === 'categoria') {
                     novo.plano = '';
                     novo.pct = '';
@@ -529,12 +559,15 @@
                     novo.valorNaoFidelizado = 0;
                 }
                 if (field === 'plano') {
-                    const arr = __map[novo.categoria] || [];
-                    const p = arr.find(x => x.nome === val);
-                    novo.pct = p ? (p.pct || '') : '';
-                    novo.valorPlano = p ? (Number(p.valor) || 0) : 0;
-                    novo.valorNaoFidelizado = novo.valorPlano;
-                }
+                const cats = getFilteredCategorias(novo.tipoNegociacao);
+                const catObj = cats.find(c => c.nome === novo.categoria);
+                const arr = catObj ? (__map[catObj.id] || []) : [];
+                
+                const p = arr.find(x => x.nome === val);
+                novo.pct = p ? (p.pct || '') : '';
+                novo.valorPlano = p ? (Number(p.valor) || 0) : 0;
+                novo.valorNaoFidelizado = novo.valorPlano;
+            }
                 if (field === 'portabilidade') {
                     if (val !== 'Sim') {
                         novo.portabilidade = 'Não';
@@ -547,13 +580,6 @@
                 if (field === 'numeroPortar') {
                     const digs = String(val || '').replace(/\D/g, '').slice(0, 9);
                     novo.numeroPortar = (digs.length > 5) ? (digs.slice(0, 5) + '-' + digs.slice(5)) : digs;
-                }
-                if (field === 'tipoNegociacao') {
-                    novo.categoria = '';
-                    novo.plano = '';
-                    novo.pct = '';
-                    novo.valorPlano = 0;
-                    novo.valorNaoFidelizado = 0;
                 }
                 if (field === 'temAparelho') {
                     if (val !== 'Sim') {
@@ -605,7 +631,7 @@
                 portabilidade: 'Não',
                 operadoraDoadora: '',
                 numeroPortar: '',
-                categoria: '',
+                categoria: (getFilteredCategorias('Novo')[0]?.nome || ''),
                 plano: '',
                 pct: '',
                 valorPlano: '',
@@ -837,6 +863,7 @@
                 if (!idParam) { window.location.href = 'negociar.html'; return; }
                 __negociacaoId = idParam;
                 await carregarCatalogoCustomizado();
+                construirMapaCustomizado();
                 await carregarNegociacaoBasica();
                 if (!__negociacaoInfo) { window.location.href = 'negociar.html'; return; }
                 await carregarClienteBasico();
