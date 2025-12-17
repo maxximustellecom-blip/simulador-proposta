@@ -48,6 +48,9 @@
                                     <th>Linha</th>
                                     <th>Qtd</th>
                                     <th>DDD</th>
+                                    <th>Tipo</th>
+                                    <th>Plano Atual</th>
+                                    <th>Preço Atual</th>
                                     <th>Portabilidade</th>
                                     <th>Operadora Doadora</th>
                                     <th>Número a Portar</th>
@@ -188,6 +191,7 @@
                             portabilidade: l.portabilidade || 'Não',
                             operadoraDoadora: l.operadoraDoadora || '',
                             ddd: l.ddd || '',
+                            tipoNegociacao: l.tipoNegociacao || 'Novo',
                             numeroPortar: l.numeroPortar || '',
                             quantidade: Number(l.quantidade || 1),
                             categoria: cat,
@@ -281,6 +285,7 @@
             return parts.join(' + ');
         }
         let __categorias = [];
+        const pctsDadosDisponiveis = ['100MB','1GB','2GB','3GB','4GB','5GB','6GB','8GB','10GB','12GB','20GB','22GB','30GB','32GB','50GB','52GB','100GB','150GB','Voz (sem dados)'];
         let __produtos = [];
         let __map = {}; // categoria.nome -> produtos
         let __linhas = [];
@@ -297,6 +302,13 @@
             if (k === 'adtivo') return 'Adtivo';
             if (k === 'renegociação' || k === 'renegociacao' || k === 'renovação' || k === 'renovacao') return 'Renegociação';
             return '';
+        }
+        function tipoOptionsHtml(sel) {
+            const opts = ['Novo','Adtivo','Renegociação'];
+            return opts.map(o => `<option value="${o}" ${String(sel||'')===o?'selected':''}>${o}</option>`).join('');
+        }
+        function pctAtualOptionsHtml(sel) {
+            return ['<option value="">Selecione</option>'].concat(pctsDadosDisponiveis.map(p => `<option value="${p}" ${String(sel||'')===p?'selected':''}>${p}</option>`)).join('');
         }
         function getNegTipo() {
             const n = __negociacaoInfo || {};
@@ -330,6 +342,9 @@
                 portabilidade: 'Não',
                 operadoraDoadora: '',
                 ddd: '',
+                tipoNegociacao: 'Novo',
+                planoAtualGB: '',
+                precoAtual: 0,
                 numeroPortar: '',
                 quantidade: 1,
                 categoria: (getFilteredCategorias()[0]?.nome || (__categorias[0]?.nome || '')),
@@ -392,6 +407,10 @@
                 __linhas.push({
                     id: nextId,
                     quantidade: 1,
+                    ddd: '',
+                    tipoNegociacao: 'Novo',
+                    planoAtualGB: '',
+                    precoAtual: 0,
                     categoria: (__categorias[0]?.nome || ''),
                     plano: '',
                     pct: '',
@@ -471,6 +490,10 @@
                     const q = Number(valor || 1);
                     novo.quantidade = (isFinite(q) && q > 0) ? q : 1;
                 }
+                if (campo === 'precoAtual') {
+                    const v = Number(valor || 0);
+                    novo.precoAtual = (isFinite(v) && v >= 0) ? v : 0;
+                }
                 if (campo === 'portabilidade') {
                     const v = String(valor || 'Não');
                     if (v !== 'Sim') {
@@ -548,6 +571,9 @@
                 portabilidade: src.portabilidade || 'Não',
                 operadoraDoadora: src.operadoraDoadora || '',
                 ddd: src.ddd || '',
+                tipoNegociacao: src.tipoNegociacao || 'Novo',
+                planoAtualGB: src.planoAtualGB || '',
+                precoAtual: Number(src.precoAtual || 0),
                 numeroPortar: src.numeroPortar || '',
                 quantidade: Number(src.quantidade || 1),
                 categoria: src.categoria || (__categorias[0]?.nome || ''),
@@ -608,6 +634,15 @@
                             <select class="select" data-id="${l.id}" data-field="ddd" style="width:110px;">
                                 ${dddOpts}
                             </select>
+                        </td>
+                        <td>
+                            <select class="select" data-id="${l.id}" data-field="tipoNegociacao" style="width:110px;">${tipoOptionsHtml(l.tipoNegociacao)}</select>
+                        </td>
+                        <td>
+                            <select class="select" data-id="${l.id}" data-field="planoAtualGB" style="width:110px;">${pctAtualOptionsHtml(l.planoAtualGB)}</select>
+                        </td>
+                        <td>
+                            <input type="number" class="input" step="0.01" min="0" value="${l.precoAtual || ''}" data-id="${l.id}" data-field="precoAtual" style="width:100px; text-align:center;">
                         </td>
                         <td>
                             <select class="select" data-id="${l.id}" data-field="portabilidade" style="width:110px;">
@@ -824,11 +859,12 @@
                     theme: 'grid',
                     margin: { left: 40, right: 40 }
                 });
-                const head = [['#','Qtd','DDD','Portabilidade','Operadora Doadora','Número a Portar','Categoria','Plano','Pct','Valor Plano','Total Linha','Aparelho','Modelo','Tipo Aparelho','Valor Aparelho']];
+                const head = [['#','Qtd','DDD','Tipo','Portabilidade','Operadora Doadora','Número a Portar','Categoria','Plano','Pct','Valor Plano','Total Linha','Aparelho','Modelo','Tipo Aparelho','Valor Aparelho']];
                 const body = (__linhas || []).map((l, idx) => ([
                     String(idx + 1),
                     String(Number(l.quantidade || 0)),
                     String(l.ddd || '-'),
+                    String(l.tipoNegociacao || '-'),
                     String(l.portabilidade || '-'),
                     String(l.operadoraDoadora || '-'),
                     String(l.numeroPortar || '-'),
@@ -867,6 +903,9 @@
                                 ['Item', String(idx + 1)],
                                 ['Qtd', String(Number(l.quantidade || 0))],
                                 ['DDD', String(l.ddd || '-')],
+                                ['Tipo', String(l.tipoNegociacao || '-')],
+                                ['Plano Atual', String(l.planoAtualGB || '-')],
+                                ['Preço Atual', String(currency(l.precoAtual))],
                                 ['Portabilidade', String(l.portabilidade || '-')],
                                 ['Operadora Doadora', String(l.operadoraDoadora || '-')],
                                 ['Número a Portar', String(l.numeroPortar || '-')],

@@ -51,6 +51,9 @@
                                     <th>Tipo</th>
                                     <th>Plano Atual</th>
                                     <th>Preço Atual</th>
+                                    <th>Portabilidade</th>
+                                    <th>Operadora Doadora</th>
+                                    <th>Número a Portar</th>
                                     <th>% Desc.</th>
                                     <th>Plano Proposto</th>
                                     <th>Pct (GB)</th>
@@ -404,7 +407,13 @@
                 const isVF24x = l.tipoAparelho === 'VF 24x';
                 const isComodato = l.tipoAparelho === 'Comodato';
                 const hasAparelho = l.temAparelho === 'Sim';
+                const isPort = l.portabilidade === 'Sim';
 
+                const ops = ['Claro','Vivo','TIM','Oi'];
+                const opOpts = ['<option value="">Selecione...</option>'].concat(ops.map(o => `<option value="${o}" ${o === l.operadoraDoadora ? 'selected' : ''}>${o}</option>`)).join('');
+                
+                // Styles for validation
+                const styleNumPortar = (isPort && !l.numeroPortar) ? 'border-color:#EF4444;' : '';
                 const styleValorAp = (isVF24x && !Number(l.valorAparelho)) ? 'border-color:#EF4444;' : '';
                 const styleValorParc = (isVF24x && !Number(l.valorParcela)) ? 'border-color:#EF4444; background-color:#f3f4f6;' : 'background-color:#f3f4f6;';
 
@@ -416,6 +425,21 @@
                     <td><select class="select" data-id="${l.id}" data-field="tipoNegociacao">${tipoOptionsHtml(l.tipoNegociacao)}</select></td>
                     <td><select class="select" data-id="${l.id}" data-field="planoAtualGB">${pctAtualOptionsHtml(l.planoAtualGB)}</select></td>
                     <td><input type="number" class="input" step="0.01" min="0" value="${l.precoAtual || ''}" data-id="${l.id}" data-field="precoAtual"></td>
+                    <td>
+                        <select class="select" data-id="${l.id}" data-field="portabilidade" style="min-width:70px;">
+                            <option value="Não" ${l.portabilidade === 'Não' ? 'selected' : ''}>Não</option>
+                            <option value="Sim" ${l.portabilidade === 'Sim' ? 'selected' : ''}>Sim</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="select" data-id="${l.id}" data-field="operadoraDoadora" style="min-width:120px;" ${!isPort ? 'disabled' : ''}>
+                            ${opOpts}
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" class="input" placeholder="00000-0000" style="min-width:120px; text-align:center; ${styleNumPortar}"
+                               value="${l.numeroPortar || ''}" data-id="${l.id}" data-field="numeroPortar" ${!isPort ? 'disabled' : ''} maxlength="10">
+                    </td>
                     <td><input type="number" class="input" step="0.01" min="0" value="${l.desconto || 0}" data-id="${l.id}" data-field="desconto"></td>
                     <td><select class="select" data-id="${l.id}" data-field="planoSelecionado">${planoOptionsHtml(l.tipoNegociacao, l.planoSelecionado)}</select></td>
                     <td><span class="muted">${l.pctSelecionado || '-'}</span></td>
@@ -485,6 +509,19 @@
                     novo.valorNaoFidelizado = valorNaoFidByPlano(novo.tipoNegociacao, val);
                     novo.pctSelecionado = pctByPlano(novo.tipoNegociacao, val);
                 }
+                if (field === 'portabilidade') {
+                    if (val !== 'Sim') {
+                        novo.portabilidade = 'Não';
+                        novo.operadoraDoadora = '';
+                        novo.numeroPortar = '';
+                    } else {
+                        novo.portabilidade = 'Sim';
+                    }
+                }
+                if (field === 'numeroPortar') {
+                    const digs = String(val || '').replace(/\D/g, '').slice(0, 9);
+                    novo.numeroPortar = (digs.length > 5) ? (digs.slice(0, 5) + '-' + digs.slice(5)) : digs;
+                }
                 if (field === 'tipoNegociacao') {
                     novo.planoSelecionado = '';
                     novo.pctSelecionado = '';
@@ -537,6 +574,9 @@
                 tipoNegociacao: 'Novo',
                 planoAtualGB: '',
                 precoAtual: '',
+                portabilidade: 'Não',
+                operadoraDoadora: '',
+                numeroPortar: '',
                 desconto: 0,
                 planoSelecionado: '',
                 pctSelecionado: '',
@@ -587,6 +627,9 @@
                     tipoNegociacao: l.tipoNegociacao || 'Novo',
                     planoAtualGB: l.planoAtualGB || '',
                     precoAtual: l.precoAtual || '',
+                    portabilidade: l.portabilidade || 'Não',
+                    operadoraDoadora: l.operadoraDoadora || '',
+                    numeroPortar: l.numeroPortar || '',
                     desconto: l.desconto || 0,
                     planoSelecionado: l.planoSelecionado || '',
                     pctSelecionado: l.pctSelecionado || '',
@@ -704,12 +747,15 @@
                 });
                 doc.autoTable({
                     startY: doc.lastAutoTable.finalY + 12,
-                    head: [['Linha', 'DDD', 'Plano Atual', 'Preço Atual']],
+                    head: [['Linha', 'DDD', 'Plano Atual', 'Preço Atual', 'Portabilidade', 'Op. Doadora', 'Num. Portar']],
                     body: linhas.map((l, idx) => [
                         String(idx + 1),
                         String(l.ddd || '-'),
                         String(l.planoAtualGB || '-'),
-                        String(currency(l.precoAtual || 0))
+                        String(currency(l.precoAtual || 0)),
+                        String(l.portabilidade || '-'),
+                        String(l.operadoraDoadora || '-'),
+                        String(l.numeroPortar || '-')
                     ]),
                     styles: { fontSize: 9 },
                     headStyles: { fillColor: [243, 244, 246], textColor: [55, 65, 81] },
