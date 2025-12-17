@@ -178,8 +178,13 @@
                 if (data && Array.isArray(data.linhas)) {
                     const linhas = data.linhas.map((l, idx) => {
                         const cat = l.categoria || (__categorias[0]?.nome || '');
+                        const tipoNeg = l.tipoNegociacao || 'Novo';
                         const planoNome = l.plano || '';
-                        const planos = __map[cat] || [];
+
+                        const catsByTipo = getFilteredCategorias(tipoNeg);
+                        const catObj = catsByTipo.find(c => c.nome === cat);
+                        const planos = catObj ? (__map[catObj.id] || []) : [];
+
                         const sel = planos.find(p => p.nome === planoNome);
                         const baseTxt = sel ? (sel.descricao || sel.nome || '') : '';
                         let pctNorm = parsePctFromText(baseTxt);
@@ -191,7 +196,7 @@
                             portabilidade: l.portabilidade || 'Não',
                             operadoraDoadora: l.operadoraDoadora || '',
                             ddd: l.ddd || '',
-                            tipoNegociacao: l.tipoNegociacao || 'Novo',
+                            tipoNegociacao: tipoNeg,
                             numeroPortar: l.numeroPortar || '',
                             quantidade: Number(l.quantidade || 1),
                             categoria: cat,
@@ -314,10 +319,10 @@
             const n = __negociacaoInfo || {};
             return normalizeTipo(n.tipo || '');
         }
-        function getFilteredCategorias() {
-            const neg = getNegTipo();
-            if (!neg) return (__categorias || []).slice();
-            return (__categorias || []).filter(c => normalizeTipo(c.tipo) === neg);
+        function getFilteredCategorias(tipoLinha) {
+            const key = normalizeTipo(tipoLinha || '');
+            if (!key) return (__categorias || []).slice();
+            return (__categorias || []).filter(c => normalizeTipo(c.tipo) === key);
         }
         function setLoading(active) {
             const el = document.getElementById('loadingDots');
@@ -347,7 +352,7 @@
                 precoAtual: 0,
                 numeroPortar: '',
                 quantidade: 1,
-                categoria: (getFilteredCategorias()[0]?.nome || (__categorias[0]?.nome || '')),
+                categoria: (getFilteredCategorias('Novo')[0]?.nome || (__categorias[0]?.nome || '')),
                 plano: '',
                 pct: '',
                 valorPlano: 0,
@@ -378,17 +383,11 @@
             } catch { __produtos = []; }
         }
         function construirMapa() {
-            const filteredCats = getFilteredCategorias();
-            const allowedIds = {};
-            filteredCats.forEach(c => { allowedIds[c.id] = true; });
-            const byId = {};
-            filteredCats.forEach(c => { byId[c.id] = c.nome; });
             const map = {};
             __produtos.forEach(p => {
-                if (!allowedIds[p.categoria_id]) return;
-                const catName = byId[p.categoria_id] || 'Sem categoria';
-                if (!map[catName]) map[catName] = [];
-                map[catName].push(p);
+                const catId = p.categoria_id;
+                if (!map[catId]) map[catId] = [];
+                map[catId].push(p);
             });
             __map = map;
         }
@@ -411,7 +410,7 @@
                     tipoNegociacao: 'Novo',
                     planoAtualGB: '',
                     precoAtual: 0,
-                    categoria: (__categorias[0]?.nome || ''),
+                    categoria: (getFilteredCategorias('Novo')[0]?.nome || (__categorias[0]?.nome || '')),
                     plano: '',
                     pct: '',
                     valorPlano: 0,
@@ -469,13 +468,22 @@
             __linhas = __linhas.map(l => {
                 if (Number(l.id) !== Number(id)) return l;
                 const novo = { ...l, [campo]: valor };
+                if (campo === 'tipoNegociacao') {
+                    const catsByTipo = getFilteredCategorias(valor);
+                    novo.categoria = (catsByTipo[0]?.nome || '');
+                    novo.plano = '';
+                    novo.pct = '';
+                    novo.valorPlano = 0;
+                }
                 if (campo === 'categoria') {
                     novo.plano = '';
                     novo.pct = '';
                     novo.valorPlano = 0;
                 }
                 if (campo === 'plano') {
-                    const planos = __map[l.categoria] || [];
+                    const catsByTipo = getFilteredCategorias(l.tipoNegociacao);
+                    const catObj = catsByTipo.find(c => c.nome === l.categoria);
+                    const planos = catObj ? (__map[catObj.id] || []) : [];
                     const sel = planos.find(p => p.nome === valor);
                     if (sel) {
                         const baseTxt = sel.descricao || sel.nome || '';
@@ -591,7 +599,6 @@
         }
         function renderTabela() {
             const tbody = document.getElementById('itensTbody');
-            const cats = getFilteredCategorias().map(c => c.nome);
             if (!__categorias.length && !__produtos.length) {
                 tbody.innerHTML = `
                     <tr><td colspan="16">
@@ -603,11 +610,15 @@
             }
             setLoading(false);
             const rows = __linhas.map((l, idx) => {
-                const planos = __map[l.categoria] || [];
+                const catsByTipo = getFilteredCategorias(l.tipoNegociacao);
+                const currentCat = catsByTipo.find(c => c.nome === l.categoria);
+                const planos = currentCat ? (__map[currentCat.id] || []) : [];
+                
                 const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
                     planos.map(p => `<option value="${p.nome}" ${p.nome === l.plano ? 'selected' : ''}>${p.nome}</option>`)
                 ).join('');
-                const catOpts = cats.map(n => `<option value="${n}" ${n === l.categoria ? 'selected' : ''}>${n}</option>`).join('');
+                
+                const catOpts = catsByTipo.map(c => `<option value="${c.nome}" ${c.nome === l.categoria ? 'selected' : ''}>${c.nome}</option>`).join('');
                 const ops = ['Claro','Vivo','TIM','Oi'];
                 const opOpts = ['<option value="">Selecione...</option>'].concat(ops.map(o => `<option value="${o}" ${o === l.operadoraDoadora ? 'selected' : ''}>${o}</option>`)).join('');
                 const ddds = [11,12,13,14,15,16,17,18,19,21,22,24,27,28,31,32,33,34,35,37,38,41,42,43,44,45,46,47,48,49,51,53,54,55,61,62,63,64,65,66,67,68,69,71,73,74,75,77,79,81,82,83,84,85,86,87,88,89,91,92,93,94,95,96,97,98,99];
