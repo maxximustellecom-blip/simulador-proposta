@@ -660,10 +660,10 @@
                             <select class="select" data-id="${l.id}" data-field="tipoNegociacao" style="width:110px;">${tipoOptionsHtml(l.tipoNegociacao)}</select>
                         </td>
                         <td>
-                            <select class="select" data-id="${l.id}" data-field="planoAtualGB" style="width:110px;">${pctAtualOptionsHtml(l.planoAtualGB)}</select>
+                            <select class="select" data-id="${l.id}" data-field="planoAtualGB" style="width:110px;" ${['Novo','Adtivo'].includes(l.tipoNegociacao) ? 'disabled' : ''}>${pctAtualOptionsHtml(l.planoAtualGB)}</select>
                         </td>
                         <td>
-                            <input type="number" class="input" step="0.01" min="0" value="${l.precoAtual || ''}" data-id="${l.id}" data-field="precoAtual" style="width:100px; text-align:center;">
+                            <input type="number" class="input" step="0.01" min="0" value="${l.precoAtual || ''}" data-id="${l.id}" data-field="precoAtual" style="width:100px; text-align:center;" ${['Novo','Adtivo'].includes(l.tipoNegociacao) ? 'disabled' : ''}>
                         </td>
                         <td>
                             <select class="select" data-id="${l.id}" data-field="portabilidade" style="width:110px;">

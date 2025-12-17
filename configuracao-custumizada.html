@@ -437,8 +437,8 @@
                     <td><input type="number" min="1" class="input" style="width:60px; text-align:center;" value="${l.quantidade || 1}" data-id="${l.id}" data-field="quantidade"></td>
                     <td><select class="select" data-id="${l.id}" data-field="ddd" style="min-width:70px;">${dddOpts}</select></td>
                     <td><select class="select" data-id="${l.id}" data-field="tipoNegociacao">${tipoOptionsHtml(l.tipoNegociacao)}</select></td>
-                    <td><select class="select" data-id="${l.id}" data-field="planoAtualGB">${pctAtualOptionsHtml(l.planoAtualGB)}</select></td>
-                    <td><input type="number" class="input" step="0.01" min="0" value="${l.precoAtual || ''}" data-id="${l.id}" data-field="precoAtual"></td>
+                    <td><select class="select" data-id="${l.id}" data-field="planoAtualGB" ${['Novo','Adtivo'].includes(l.tipoNegociacao) ? 'disabled' : ''}>${pctAtualOptionsHtml(l.planoAtualGB)}</select></td>
+                    <td><input type="number" class="input" step="0.01" min="0" value="${l.precoAtual || ''}" data-id="${l.id}" data-field="precoAtual" ${['Novo','Adtivo'].includes(l.tipoNegociacao) ? 'disabled' : ''}></td>
                     <td>
                         <select class="select" data-id="${l.id}" data-field="portabilidade" style="min-width:70px;">
                             <option value="Não" ${l.portabilidade === 'Não' ? 'selected' : ''}>Não</option>
