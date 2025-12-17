@@ -54,8 +54,8 @@
                                     <th>Portabilidade</th>
                                     <th>Operadora Doadora</th>
                                     <th>Número a Portar</th>
-                                    <th>Categoria</th>
                                     <th>Plano</th>
+                                    <th>Oferta</th>
                                     <th>Pct</th>
                                     <th>Valor Plano</th>
                                     <th>Total Linha</th>
@@ -988,11 +988,13 @@
                 toast('Erro ao gerar relatório', 'error');
             }
         }
-        function salvarProposta(evt, shouldReload = true) {
-            const erros = validar();
-            if (erros.length) {
-                toast('Corrija os seguintes problemas: ' + erros.join('; '), 'error');
-                return;
+        function salvarProposta(evt, shouldReload = true, skipValidation = false) {
+            if (!skipValidation) {
+                const erros = validar();
+                if (erros.length) {
+                    toast('Corrija os seguintes problemas: ' + erros.join('; '), 'error');
+                    return;
+                }
             }
             try {
                 if (!__negociacaoId) return;
@@ -1041,7 +1043,7 @@
             }];
             renderTabela();
             renderResumo();
-            salvarProposta(null, false);
+            salvarProposta(null, false, true);
         }
         function copiarProposta() {
             const erros = validar();

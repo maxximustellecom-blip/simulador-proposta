@@ -295,10 +295,23 @@
                 const status = document.getElementById('mStatus').value;
                 if (!cnpj || !tipo || !proposta) return;
                 const payload = { cnpj, tipo, proposta, status };
+                let res;
                 if (__editingNegId) {
-                    await api('/negotiations/' + String(__editingNegId), { method: 'PUT', body: JSON.stringify(payload) });
+                    res = await api('/negotiations/' + String(__editingNegId), { method: 'PUT', body: JSON.stringify(payload) });
                 } else {
-                    await api('/negotiations', { method: 'POST', body: JSON.stringify(payload) });
+                    res = await api('/negotiations', { method: 'POST', body: JSON.stringify(payload) });
+                }
+                const savedId = (res && res.id) ? res.id : (__editingNegId || null);
+                if (savedId) {
+                    const propStr = String(proposta || '').toUpperCase();
+                    const isCustom =
+                        propStr.includes('CUSTOMIZADA') ||
+                        propStr.includes('COSTUMIZADA') ||
+                        propStr === 'PROPOSTA CUSTOMIZADA' ||
+                        propStr === 'PROPOSTA COSTUMIZADA';
+                    const target = isCustom ? 'configuracao-custumizada.html' : 'configuracao-padrao.html';
+                    window.location.href = target + '?id=' + String(savedId);
+                    return;
                 }
                 closeModal();
                 buscar();

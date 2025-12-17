@@ -54,8 +54,8 @@
                                     <th>Portabilidade</th>
                                     <th>Operadora Doadora</th>
                                     <th>Número a Portar</th>
-                                    <th>Categoria</th>
                                     <th>Plano</th>
+                                    <th>Oferta</th>
                                     <th>Pct</th>
                                     <th>Valor Plano</th>
                                     <th>Total Linha</th>
@@ -640,7 +640,29 @@
         function novaProposta() {
             linhas = [];
             nextId = 1;
-            adicionarLinha();
+            linhas.push({
+                id: nextId++,
+                ddd: '',
+                tipoNegociacao: 'Novo',
+                planoAtualGB: '',
+                precoAtual: '',
+                portabilidade: 'Não',
+                operadoraDoadora: '',
+                numeroPortar: '',
+                categoria: (getFilteredCategorias('Novo')[0]?.nome || ''),
+                plano: '',
+                pct: '',
+                valorPlano: '',
+                valorNaoFidelizado: '',
+                desconto: 0,
+                temAparelho: 'Não',
+                modeloAparelho: '',
+                tipoAparelho: 'Comodato',
+                valorAparelho: ''
+            });
+            renderTable();
+            renderResumo();
+            salvarProposta(true);
         }
         function adicionarLinha() {
             linhas.push({
@@ -722,11 +744,13 @@
                 if (!linhas.length) adicionarLinha(); else { renderTable(); renderResumo(); validarProposta(); }
             } catch { adicionarLinha(); }
         }
-        async function salvarProposta() {
-            const erros = validarProposta();
-            if (erros.length) {
-                toast('Corrija os seguintes problemas: ' + erros.join('; '), 'error');
-                return;
+        async function salvarProposta(skipValidation = false) {
+            if (!skipValidation) {
+                const erros = validarProposta();
+                if (erros.length) {
+                    toast('Corrija os seguintes problemas: ' + erros.join('; '), 'error');
+                    return;
+                }
             }
             try {
                 if (!__negociacaoId) return;
@@ -736,7 +760,7 @@
                 const totalProposto = calcularTotais().totalProposto;
                 await api('/negotiations/' + __negociacaoId, { method: 'PUT', body: JSON.stringify({ valor: totalProposto }) }).catch(() => {});
                 if (__negociacaoInfo) __negociacaoInfo.valor = totalProposto;
-                toast('Proposta salva • Total: ' + currency(totalProposto), 'success');
+                toast('Salvando...', 'success');
             } catch { toast('Erro ao salvar proposta', 'error'); }
         }
         async function atualizarStatusNegociacao() {
