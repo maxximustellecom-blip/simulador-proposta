@@ -4,14 +4,18 @@ import { Op } from 'sequelize';
 
 export async function register(req, res) {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, matricula } = req.body;
     if (!name || !email || !password) return res.status(400).json({ error: 'missing' });
     const validRole = role === 'admin' ? 'admin' : 'user';
     const exists = await User.findOne({ where: { email } });
     if (exists) return res.status(409).json({ error: 'exists' });
+    if (matricula) {
+      const existsMat = await User.findOne({ where: { matricula } });
+      if (existsMat) return res.status(409).json({ error: 'matricula_exists' });
+    }
     const hash = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hash, role: validRole });
-    return res.status(201).json({ id: user.id, name: user.name, email: user.email, role: user.role });
+    const user = await User.create({ name, email, password: hash, role: validRole, matricula });
+    return res.status(201).json({ id: user.id, name: user.name, email: user.email, role: user.role, matricula: user.matricula });
   } catch (e) {
     return res.status(500).json({ error: e });
   }
@@ -21,11 +25,11 @@ export async function login(req, res) {
   try {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'missing' });
-    const user = await User.findOne({ where: { email } });
+    const user = await User.findOne({ where: { [Op.or]: [{ email }, { matricula: email }] } });
     if (!user) return res.status(401).json({ error: 'invalid' });
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ error: 'invalid' });
-    return res.json({ id: user.id, name: user.name, email: user.email, role: user.role });
+    return res.json({ id: user.id, name: user.name, email: user.email, role: user.role, matricula: user.matricula });
   } catch (e) {
     return res.status(500).json({ error: 'server_error' });
   }
@@ -37,7 +41,7 @@ export async function listUsers(req, res) {
     const where = {};
     if (role) where.role = role;
     const users = await User.findAll({ where, order: [['name', 'ASC']] });
-    return res.json(users.map(u => ({ id: u.id, name: u.name, email: u.email, role: u.role })));
+    return res.json(users.map(u => ({ id: u.id, name: u.name, email: u.email, role: u.role, matricula: u.matricula })));
   } catch (e) {
     return res.status(500).json({ error: 'server_error' });
   }
@@ -51,20 +55,25 @@ export async function updateUser(req, res) {
     if (!id) return res.status(400).json({ error: 'missing_id' });
     const user = await User.findByPk(id);
     if (!user) return res.status(404).json({ error: 'not_found' });
-    const { name, email, role, password } = req.body || {};
+    const { name, email, role, password, matricula } = req.body || {};
     if (email && email !== user.email) {
       const exists = await User.findOne({ where: { email } });
       if (exists) return res.status(409).json({ error: 'email_exists' });
     }
+    if (matricula && matricula !== user.matricula) {
+      const existsMat = await User.findOne({ where: { matricula } });
+      if (existsMat) return res.status(409).json({ error: 'matricula_exists' });
+    }
     if (name) user.name = name;
     if (email) user.email = email;
+    if (matricula !== undefined) user.matricula = matricula;
     if (role) user.role = role === 'admin' ? 'admin' : 'user';
     if (password) {
       const hash = await bcrypt.hash(password, 10);
       user.password = hash;
     }
     await user.save();
-    return res.json({ id: user.id, name: user.name, email: user.email, role: user.role });
+    return res.json({ id: user.id, name: user.name, email: user.email, role: user.role, matricula: user.matricula });
   } catch (e) {
     return res.status(500).json({ error: 'server_error' });
   }

@@ -24,8 +24,8 @@
                 <div class="auth-subtitle">Acesse sua conta</div>
                 <div id="errorBox" class="error"></div>
                 <div class="form-group">
-                    <div class="label">Email</div>
-                    <input class="input" type="email" id="email" placeholder="seu@email.com">
+                    <div class="label">Email ou Matrícula</div>
+                    <input class="input" type="text" id="email" placeholder="Email ou Matrícula">
                 </div>
                 <div class="form-group input-group">
                     <div class="label">Senha</div>
@@ -67,8 +67,8 @@
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
             const remember = document.getElementById('remember').checked;
-            if (!email || !password) { showError('Preencha email e senha'); return; }
-            if (!isValidEmail(email)) { showError('Email inválido'); return; }
+            if (!email || !password) { showError('Preencha email/matrícula e senha'); return; }
+            // if (!isValidEmail(email)) { showError('Email inválido'); return; }
             try {
                 const res = await fetch(`${API}/auth/login`, {
                     method: 'POST',
