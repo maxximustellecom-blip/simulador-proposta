@@ -1010,7 +1010,49 @@
         }
 
         async function deleteAttachment(id) {
-            if (!confirm('Deseja excluir este anexo?')) return;
+            const modal = document.getElementById('confirmAttachmentDeleteModal');
+            const btnClose = document.getElementById('confirmAttachmentDeleteClose');
+            const btnCancel = document.getElementById('confirmAttachmentDeleteCancel');
+            const btnConfirm = document.getElementById('confirmAttachmentDeleteConfirm');
+
+            if (!modal) {
+                if (confirm('Deseja excluir este anexo?')) {
+                    proceedDelete(id);
+                }
+                return;
+            }
+
+            const closeModal = () => {
+                modal.classList.remove('show');
+                // Clean up listeners to avoid duplicates
+                btnConfirm.replaceWith(btnConfirm.cloneNode(true));
+            };
+
+            const openModal = () => {
+                modal.classList.add('show');
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+            };
+
+            // Re-select confirm button after clone
+            const newBtnConfirm = document.getElementById('confirmAttachmentDeleteConfirm');
+            
+            newBtnConfirm.addEventListener('click', () => {
+                closeModal();
+                proceedDelete(id);
+            });
+            
+            // Add listeners for closing (using replaceWith to avoid duplicates not strictly necessary for close buttons but good practice if reusing)
+             if (btnClose) {
+                btnClose.onclick = closeModal;
+            }
+            if (btnCancel) {
+                btnCancel.onclick = closeModal;
+            }
+
+            openModal();
+        }
+
+        async function proceedDelete(id) {
             try {
                 await api(`/negotiations/${__negociacaoId}/custom-attachments/${id}`, { method: 'DELETE' });
                 toast('Anexo excluído', 'success');
@@ -1035,6 +1077,7 @@
                 await carregarClienteBasico();
                 renderClienteBasico();
                 await carregarPropostaSalva();
+                loadAttachments();
                 const addLinhaBtn = document.getElementById('addLinhaBtn');
                 const salvarBtn = document.getElementById('salvarBtn');
                 const copiarBtn = document.getElementById('copiarBtn');
@@ -1096,6 +1139,19 @@
             <div class="modal-actions">
                 <button id="confirmResetCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
                 <button id="confirmResetConfirm" class="btn btn-ghost" type="button" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="rotate-ccw"></i><span>Resetar</span></button>
+            </div>
+        </div>
+    </div>
+    <div id="confirmAttachmentDeleteModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Excluir Anexo</div><button id="confirmAttachmentDeleteClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="label">Tem certeza que deseja excluir este anexo?</div>
+                <div class="muted" style="margin-top:0.5rem;">Esta ação não poderá ser desfeita.</div>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmAttachmentDeleteCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
+                <button id="confirmAttachmentDeleteConfirm" class="btn btn-ghost" type="button" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i><span>Excluir</span></button>
             </div>
         </div>
     </div>
