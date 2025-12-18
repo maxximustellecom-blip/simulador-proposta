@@ -49,6 +49,7 @@
                                     <th>Qtd</th>
                                     <th>DDD</th>
                                     <th>Tipo</th>
+                                    <th>Número</th>
                                     <th>Plano Atual</th>
                                     <th>Preço Atual</th>
                                     <th>Portabilidade</th>
@@ -490,6 +491,7 @@
                     <td><input type="number" min="1" class="input" style="width:60px; text-align:center;" value="${l.quantidade || 1}" data-id="${l.id}" data-field="quantidade"></td>
                     <td><select class="select" data-id="${l.id}" data-field="ddd" style="min-width:70px;">${dddOpts}</select></td>
                     <td><select class="select" data-id="${l.id}" data-field="tipoNegociacao">${tipoOptionsHtml(l.tipoNegociacao)}</select></td>
+                    <td><input type="text" class="input" placeholder="00000-0000" style="min-width:110px; text-align:center;" value="${l.numero || ''}" data-id="${l.id}" data-field="numero" ${!isReneg ? 'disabled' : ''} maxlength="10"></td>
                     <td><select class="select" data-id="${l.id}" data-field="planoAtualGB" ${['Novo','Adtivo'].includes(l.tipoNegociacao) ? 'disabled' : ''}>${pctAtualOptionsHtml(l.planoAtualGB)}</select></td>
                     <td><input type="number" class="input" step="0.01" min="0" value="${l.precoAtual || ''}" data-id="${l.id}" data-field="precoAtual" ${['Novo','Adtivo'].includes(l.tipoNegociacao) ? 'disabled' : ''}></td>
                     <td>
@@ -619,6 +621,10 @@
                     const digs = String(val || '').replace(/\D/g, '').slice(0, 9);
                     novo.numeroPortar = (digs.length > 5) ? (digs.slice(0, 5) + '-' + digs.slice(5)) : digs;
                 }
+                if (field === 'numero') {
+                    const digs = String(val || '').replace(/\D/g, '').slice(0, 9);
+                    novo.numero = (digs.length > 5) ? (digs.slice(0, 5) + '-' + digs.slice(5)) : digs;
+                }
                 if (field === 'temAparelho') {
                     if (val !== 'Sim') {
                         novo.temAparelho = 'Não';
@@ -663,6 +669,7 @@
                 quantidade: 1,
                 ddd: '',
                 tipoNegociacao: 'Novo',
+                numero: '',
                 planoAtualGB: '',
                 precoAtual: '',
                 portabilidade: 'Não',
@@ -691,6 +698,7 @@
                 quantidade: 1,
                 ddd: '',
                 tipoNegociacao: 'Novo',
+                numero: '',
                 planoAtualGB: '',
                 precoAtual: '',
                 portabilidade: 'Não',
@@ -749,6 +757,7 @@
                     quantidade: Number(l.quantidade) || 1,
                     ddd: l.ddd || '',
                     tipoNegociacao: l.tipoNegociacao || 'Novo',
+                    numero: l.numero || '',
                     planoAtualGB: l.planoAtualGB || '',
                     precoAtual: Number(l.precoAtual || 0),
                     portabilidade: l.portabilidade || 'Não',
@@ -828,13 +837,14 @@
                     const tipo = String(l.tipoNegociacao || '-').toLowerCase();
                     const em = tipo.includes('reneg') ? '🔁' : (tipo.includes('adti') || tipo.includes('adit') ? '➕' : '🌟');
                     const acessoFmt = l.ddd ? `DDD ${l.ddd}` : '-';
+                    const numFmt = l.numero ? `\n   📱 Número: ${l.numero}` : '';
                     const atual = `${l.planoAtualGB || '-'} ${currency(l.precoAtual || 0)}`;
                     const proposto = `${l.plano || '-'} ${l.pct || '-'}`;
                     const nf = currency(l.valorPlano || 0);
                     const desc = Number(l.desconto || 0) + '%';
                     const final = currency(calcularPrecoFinal(l));
                     const econ = currency(calcularEconomia(l));
-                    return `${em} Linha ${idx + 1}\n   📞 DDD: ${acessoFmt}\n   🔖 Tipo: ${l.tipoNegociacao || '-'}\n   📦 Atual: ${atual}\n   🧩 Proposto: ${proposto}\n   💸 Não Fid.: ${nf}\n   🔻 Desconto: ${desc}\n   💰 Preço Final: ${final}\n   🧮 Economia: ${econ}`;
+                    return `${em} Linha ${idx + 1}\n   📞 DDD: ${acessoFmt}${numFmt}\n   🔖 Tipo: ${l.tipoNegociacao || '-'}\n   📦 Atual: ${atual}\n   🧩 Proposto: ${proposto}\n   💸 Não Fid.: ${nf}\n   🔻 Desconto: ${desc}\n   💰 Preço Final: ${final}\n   🧮 Economia: ${econ}`;
                 }).join('\n\n');
                 const resumo = [
                     '',
@@ -891,10 +901,11 @@
                 });
                 doc.autoTable({
                     startY: doc.lastAutoTable.finalY + 12,
-                    head: [['Linha', 'DDD', 'Plano Atual', 'Preço Atual', 'Portabilidade', 'Op. Doadora', 'Num. Portar']],
+                    head: [['Linha', 'DDD', 'Número', 'Plano Atual', 'Preço Atual', 'Portabilidade', 'Op. Doadora', 'Num. Portar']],
                     body: linhas.map((l, idx) => [
                         String(idx + 1),
                         String(l.ddd || '-'),
+                        String(l.numero || '-'),
                         String(l.planoAtualGB || '-'),
                         String(currency(l.precoAtual || 0)),
                         String(l.portabilidade || '-'),

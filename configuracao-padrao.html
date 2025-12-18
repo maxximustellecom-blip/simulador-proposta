@@ -49,6 +49,7 @@
                                     <th>Qtd</th>
                                     <th>DDD</th>
                                     <th>Tipo</th>
+                                    <th>Número</th>
                                     <th>Plano Atual</th>
                                     <th>Preço Atual</th>
                                     <th>Portabilidade</th>
@@ -371,6 +372,7 @@
                             operadoraDoadora: l.operadoraDoadora || '',
                             ddd: l.ddd || '',
                             tipoNegociacao: tipoNeg,
+                            numero: l.numero || '',
                             planoAtualGB: l.planoAtualGB || '',
                             precoAtual: Number(l.precoAtual || 0),
                             numeroPortar: l.numeroPortar || '',
@@ -524,6 +526,7 @@
                 operadoraDoadora: '',
                 ddd: '',
                 tipoNegociacao: 'Novo',
+                numero: '',
                 planoAtualGB: '',
                 precoAtual: 0,
                 numeroPortar: '',
@@ -585,6 +588,7 @@
                     quantidade: 1,
                     ddd: '',
                     tipoNegociacao: 'Novo',
+                    numero: '',
                     planoAtualGB: '',
                     precoAtual: 0,
                     categoria: (getFilteredCategorias('Novo')[0]?.nome || (__categorias[0]?.nome || '')),
@@ -711,6 +715,9 @@
                 if (campo === 'numeroPortar') {
                     novo.numeroPortar = formatNumeroPortar(valor);
                 }
+                if (campo === 'numero') {
+                    novo.numero = formatNumeroPortar(valor);
+                }
                 if (campo === 'temAparelho') {
                     if (valor !== 'Sim') {
                         novo.temAparelho = 'Não';
@@ -780,6 +787,7 @@
                 operadoraDoadora: src.operadoraDoadora || '',
                 ddd: src.ddd || '',
                 tipoNegociacao: src.tipoNegociacao || 'Novo',
+                numero: src.numero || '',
                 planoAtualGB: src.planoAtualGB || '',
                 precoAtual: Number(src.precoAtual || 0),
                 numeroPortar: src.numeroPortar || '',
@@ -829,6 +837,7 @@
                 const isComodato = l.tipoAparelho === 'Comodato';
                 const hasAparelho = l.temAparelho === 'Sim';
                 const isPort = l.portabilidade === 'Sim';
+                const isReneg = String(l.tipoNegociacao || '').toLowerCase().includes('reneg');
                 
                 // Styles for validation
                 const styleNumPortar = (isPort && !l.numeroPortar) ? 'border-color:#EF4444;' : '';
@@ -849,6 +858,9 @@
                         </td>
                         <td>
                             <select class="select" data-id="${l.id}" data-field="tipoNegociacao" style="width:110px;">${tipoOptionsHtml(l.tipoNegociacao)}</select>
+                        </td>
+                        <td>
+                            <input type="text" class="input" placeholder="00000-0000" style="width:110px; text-align:center;" value="${l.numero || ''}" data-id="${l.id}" data-field="numero" ${!isReneg ? 'disabled' : ''} maxlength="10">
                         </td>
                         <td>
                             <select class="select" data-id="${l.id}" data-field="planoAtualGB" style="width:110px;" ${['Novo','Adtivo'].includes(l.tipoNegociacao) ? 'disabled' : ''}>${pctAtualOptionsHtml(l.planoAtualGB)}</select>
@@ -1001,7 +1013,8 @@
             ].join('\n');
             const linhasTxt = __linhas.map((l, idx) => {
                 const dddTxt = l.ddd ? ` (DDD ${l.ddd})` : '';
-                return `🔹 Item ${idx + 1}: ${Number(l.quantidade || 1)}x${dddTxt} ${l.plano || '-'} (${l.categoria || '-'}) • ${l.pct || 'N/A'} • ${currency(l.valorPlano)} • Total: ${currency(totalLinha(l))}`;
+                const numTxt = l.numero ? ` [${l.numero}]` : '';
+                return `🔹 Item ${idx + 1}: ${Number(l.quantidade || 1)}x${dddTxt}${numTxt} ${l.plano || '-'} (${l.categoria || '-'}) • ${l.pct || 'N/A'} • ${currency(l.valorPlano)} • Total: ${currency(totalLinha(l))}`;
             }).join('\n');
             const counts = {};
             __linhas.forEach(l => {
@@ -1077,6 +1090,7 @@
                     String(Number(l.quantidade || 0)),
                     String(l.ddd || '-'),
                     String(l.tipoNegociacao || '-'),
+                    String(l.numero || '-'),
                     String(l.portabilidade || '-'),
                     String(l.operadoraDoadora || '-'),
                     String(l.numeroPortar || '-'),
@@ -1193,6 +1207,7 @@
                 operadoraDoadora: '',
                 ddd: '',
                 tipoNegociacao: 'Novo',
+                numero: '',
                 planoAtualGB: '',
                 precoAtual: 0,
                 numeroPortar: '',
