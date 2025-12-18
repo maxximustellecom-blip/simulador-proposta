@@ -33,12 +33,12 @@
                             </select>
                         </div>
                         <div>
-                            <div class="label">Categoria</div>
+                            <div class="label">Plano</div>
                             <select id="fProdCategoria" class="select"><option value="">Todas</option></select>
                         </div>
                         <div>
                             <div class="label">Nome</div>
-                            <input id="fProdNome" class="input" type="text" placeholder="Nome do produto" autocomplete="off">
+                            <input id="fProdNome" class="input" type="text" placeholder="Nome da oferta" autocomplete="off">
                         </div>
                         <div style="display:flex; align-items:flex-end; gap:0.5rem; margin-left:auto; justify-content:flex-end;">
                             <button id="prodBuscarBtn" class="btn btn-primary" type="button" title="Buscar"><i data-lucide="search"></i><span>Buscar</span></button>
@@ -364,7 +364,7 @@
     <script src="script.js"></script>
     <div id="produtoModal" class="modal">
         <div class="modal-card">
-            <div class="modal-head"><div>Produto</div><button id="mProdFechar" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-head"><div>Oferta</div><button id="mProdFechar" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
             <div class="modal-body">
                 <div class="grid-2-modal">
                     <div class="field"><span class="label-inline">Tipo</span>
@@ -375,8 +375,8 @@
                             <option value="Renegociação">Renegociação</option>
                         </select>
                     </div>
-                    <div class="field"><span class="label-inline">Categoria</span><select id="mProdCategoria" class="select"><option value="">Carregando...</option></select></div>
-                    <div class="field"><span class="label-inline">Nome</span><input id="mProdNome" class="input" type="text" placeholder="Nome do produto"></div>
+                    <div class="field"><span class="label-inline">Plano</span><select id="mProdCategoria" class="select"><option value="">Carregando...</option></select></div>
+                    <div class="field"><span class="label-inline">Nome</span><input id="mProdNome" class="input" type="text" placeholder="Nome da oferta"></div>
                     <div class="field"><span class="label-inline">Descrição</span><input id="mProdDesc" class="input" type="text" placeholder="Descrição (opcional)"></div>
                     <div class="field"><span class="label-inline">Preço (R$)</span><input id="mProdPreco" class="input" type="number" step="0.01" min="0" placeholder="0,00"></div>
                 </div>
