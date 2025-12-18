@@ -592,7 +592,10 @@
             salvarProposta(null, false);
         }
         function removerLinha(id) {
-            if (__linhas.length <= 1) return;
+            if (__linhas.length <= 1) {
+                toast('Não é possível excluir a única linha.', 'error');
+                return;
+            }
             __linhas = __linhas.filter(l => Number(l.id) !== Number(id));
             renderTabela();
             renderResumo();
@@ -750,7 +753,7 @@
                         <td class="col-actions">
                             <div class="table-actions">
                                 <button type="button" class="btn btn-ghost btn-icon" title="Copiar" onclick="copiarLinha(${l.id})"><i data-lucide="copy"></i></button>
-                                <button type="button" class="btn btn-ghost btn-icon" title="Remover" data-id="${l.id}" data-action="remover"><i data-lucide="trash-2"></i></button>
+                                <button type="button" class="btn btn-ghost btn-icon" title="Remover" data-id="${l.id}" data-action="remover" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;" ${__linhas.length <= 1 ? 'disabled' : ''}><i data-lucide="trash-2"></i></button>
                             </div>
                         </td>
                     </tr>

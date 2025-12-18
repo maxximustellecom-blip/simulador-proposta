@@ -514,7 +514,7 @@
                     <td class="col-actions">
                         <div class="table-actions">
                             <button type="button" class="btn btn-ghost btn-icon" title="Duplicar" data-id="${l.id}" data-action="dup"><i data-lucide="copy"></i></button>
-                            <button type="button" class="btn btn-ghost btn-icon" title="Excluir" data-id="${l.id}" data-action="del" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Excluir" data-id="${l.id}" data-action="del" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;" ${linhas.length <= 1 ? 'disabled' : ''}><i data-lucide="trash-2"></i></button>
                         </div>
                     </td>
                 </tr>
@@ -550,6 +550,10 @@
             });
             Array.from(document.querySelectorAll('#tableBody [data-action="del"]')).forEach(btn => {
                 btn.addEventListener('click', () => {
+                    if (linhas.length <= 1) {
+                        toast('Não é possível excluir a única linha.', 'error');
+                        return;
+                    }
                     const id = Number(btn.getAttribute('data-id') || 0);
                     linhas = linhas.filter(x => Number(x.id) !== id);
                     renderTable();
@@ -754,13 +758,13 @@
             } catch { adicionarLinha(); }
         }
         async function salvarProposta(skipValidation = false) {
-            if (!skipValidation) {
+            //if (!skipValidation) {
                 const erros = validarProposta();
                 if (erros.length) {
                     toast('Corrija os seguintes problemas: ' + erros.join('; '), 'error');
                     return;
                 }
-            }
+           //}
             try {
                 if (!__negociacaoId) return;
                 const anotacoes = document.getElementById('fAnotacoes').value || '';
