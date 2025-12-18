@@ -865,20 +865,36 @@
                 const totalAtual = currency(totais.totalAtual);
                 const totalProposto = currency(totais.totalProposto);
                 
+                const c = __clienteInfo || {};
+                const endParts = [];
+                if (c.street) endParts.push(c.street);
+                if (c.number) endParts.push(c.number);
+                if (c.neighborhood) endParts.push(c.neighborhood);
+                if (c.city) endParts.push(c.city + (c.state ? '-' + c.state : ''));
+                if (c.cep) endParts.push(c.cep);
+                const endereco = endParts.join(', ');
+
+                const contatoParts = [];
+                if (c.phone) contatoParts.push(formatPhone(c.phone));
+                if (c.email) contatoParts.push(c.email);
+                const contato = contatoParts.join(' • ');
+
                 const header = [
                     '✨ Proposta Customizada • Maxximus Telecom',
                     '🏢 Cliente: ' + ((document.getElementById('clienteNome').textContent) || '-'),
                     '🧾 CNPJ: ' + ((document.getElementById('clienteCnpj').textContent) || '-'),
+                    (endereco ? '📍 Endereço: ' + endereco : ''),
+                    (contato ? '📞 Contato: ' + contato : ''),
                     '📌 Tipo: ' + ((document.getElementById('negTipo').textContent) || '-'),
                     '🟢 Status: ' + ((document.getElementById('negStatusLabel').textContent) || '-'),
                     '───────────────────────────────────'
-                ].join('\n');
+                ].filter(l => l !== '').join('\n');
                 
                 const linhasTxt = linhas.map((l, idx) => {
                     const tipo = String(l.tipoNegociacao || '-').toLowerCase();
                     const em = tipo.includes('reneg') ? '🔁' : (tipo.includes('adti') || tipo.includes('adit') ? '➕' : '🌟');
                     const acessoFmt = l.ddd ? `DDD ${l.ddd}` : '-';
-                    const numFmt = l.numero ? `\n   📱 Número: ${l.numero}` : '';
+                    const numFmt = l.numero ? `\n    Número: ${l.numero}` : '';
                     const atual = `${l.planoAtualGB || '-'} ${currency(l.precoAtual || 0)}`;
                     const proposto = `${l.plano || '-'} ${l.pct || '-'}`;
                     
@@ -887,14 +903,14 @@
                     const desc = Number(l.desconto || 0) + '%';
                     
                     return `${em} Linha ${idx + 1}
-   🔢 Qtd: ${l.quantidade}
-   📞 DDD: ${acessoFmt}${numFmt}
-   🔖 Tipo: ${l.tipoNegociacao || '-'}
-   📦 Atual: ${atual}
-   🧩 Proposto: ${proposto}
-   🔻 Desconto: ${desc}
-   💲 Unitário: ${unitario}
-   💰 Total: ${totalLinha}`;
+    Qtd: ${l.quantidade}
+    DDD: ${acessoFmt}${numFmt}
+    Tipo: ${l.tipoNegociacao || '-'}
+    Atual: ${atual}
+    Proposto: ${proposto}
+    Desconto: ${desc}
+    Unitário: ${unitario}
+    Total: ${totalLinha}`;
                 }).join('\n\n');
                 
                 const resumo = [

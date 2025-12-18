@@ -1037,19 +1037,35 @@
                 totalDadosAtualMB += extractMB(l.planoAtualGB) * qtd;
             });
 
+            const c = __clienteInfo || {};
+            const endParts = [];
+            if (c.street) endParts.push(c.street);
+            if (c.number) endParts.push(c.number);
+            if (c.neighborhood) endParts.push(c.neighborhood);
+            if (c.city) endParts.push(c.city + (c.state ? '-' + c.state : ''));
+            if (c.cep) endParts.push(c.cep);
+            const endereco = endParts.join(', ');
+
+            const contatoParts = [];
+            if (c.phone) contatoParts.push(formatPhone(c.phone));
+            if (c.email) contatoParts.push(c.email);
+            const contato = contatoParts.join(' • ');
+
             const header = [
                 '✨ Proposta Padrão • Maxximus Telecom',
                 '🏢 Cliente: ' + ((document.getElementById('clienteNome').textContent) || '-'),
                 '🧾 CNPJ: ' + ((document.getElementById('clienteCnpj').textContent) || '-'),
+                (endereco ? '📍 Endereço: ' + endereco : ''),
+                (contato ? '📞 Contato: ' + contato : ''),
                 '� Tipo: ' + ((document.getElementById('negTipo').textContent) || '-'),
                 '� Status: ' + ((document.getElementById('negStatusLabel').textContent) || '-'),
                 '───────────────────────────────────'
-            ].join('\n');
+            ].filter(l => l !== '').join('\n');
             const linhasTxt = __linhas.map((l, idx) => {
                 const tipo = String(l.tipoNegociacao || 'Novo').toLowerCase();
                 const em = tipo.includes('reneg') ? '🔁' : (tipo.includes('adti') || tipo.includes('adit') ? '➕' : '🌟');
                 const dddTxt = l.ddd ? `DDD ${l.ddd}` : '-';
-                const numTxt = l.numero ? `\n   📱 Número: ${l.numero}` : '';
+                const numTxt = l.numero ? `\n    Número: ${l.numero}` : '';
                 
                 // Na proposta padrão não temos "Atual" detalhado, então omitimos ou deixamos traço
                 const atual = `- R$ 0,00`; 
@@ -1080,12 +1096,12 @@
                 const totalLinhaVal = currency(totalLinha(l));
                 
                 return `${em} Linha ${idx + 1}
-   🔢 Qtd: ${l.quantidade}
-   📞 DDD: ${dddTxt}${numTxt}
-   🔖 Tipo: ${l.tipoNegociacao || '-'}
-   🧩 Proposto: ${proposto}
-   💲 Unitário: ${unitario}
-   💰 Total: ${totalLinhaVal}`;
+    Qtd: ${l.quantidade}
+    DDD: ${dddTxt}${numTxt}
+    Tipo: ${l.tipoNegociacao || '-'}
+    Proposto: ${proposto}
+    Unitário: ${unitario}
+    Total: ${totalLinhaVal}`;
             }).join('\n\n');
             
             const resumo = [
