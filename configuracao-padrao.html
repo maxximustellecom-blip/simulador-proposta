@@ -1008,35 +1008,97 @@
         }
         function gerarMensagemBonita() {
             const total = currency(totalGeral());
-            const acessos = __linhas.reduce((acc, l) => acc + Number(l.quantidade || 0), 0);
+            
+            const extractMB = (str) => {
+                if (!str) return 0;
+                const match = str.match(/(\d+(?:[.,]\d+)?)\s*(GB|MB|KB)/i);
+                if (!match) return 0;
+                let val = parseFloat(match[1].replace(',', '.'));
+                const unit = match[2].toUpperCase();
+                if (unit === 'GB') return val * 1024;
+                if (unit === 'MB') return val;
+                if (unit === 'KB') return val / 1024;
+                return 0;
+            };
+            const formatMB = (mb) => {
+                if (mb <= 0) return '0 GB';
+                if (mb >= 1024) {
+                    const gb = mb / 1024;
+                    return (gb % 1 === 0 ? gb.toFixed(0) + ' GB' : gb.toFixed(1).replace('.', ',') + ' GB');
+                }
+                return Math.round(mb) + ' MB';
+            };
+
+            let totalDadosNovoMB = 0;
+            let totalDadosAtualMB = 0;
+            __linhas.forEach(l => {
+                const qtd = Number(l.quantidade || 1);
+                totalDadosNovoMB += extractMB(l.plano) * qtd;
+                totalDadosAtualMB += extractMB(l.planoAtualGB) * qtd;
+            });
+
             const header = [
-                '🧾 Proposta Padrão',
-                `📅 ${new Date().toLocaleString('pt-BR')}`,
-                `🔢 Linhas: ${__linhas.length}`,
-                ''
+                '✨ Proposta Padrão • Maxximus Telecom',
+                '🏢 Cliente: ' + ((document.getElementById('clienteNome').textContent) || '-'),
+                '🧾 CNPJ: ' + ((document.getElementById('clienteCnpj').textContent) || '-'),
+                '� Tipo: ' + ((document.getElementById('negTipo').textContent) || '-'),
+                '� Status: ' + ((document.getElementById('negStatusLabel').textContent) || '-'),
+                '───────────────────────────────────'
             ].join('\n');
             const linhasTxt = __linhas.map((l, idx) => {
-                const dddTxt = l.ddd ? ` (DDD ${l.ddd})` : '';
-                const numTxt = l.numero ? ` [${l.numero}]` : '';
-                return `🔹 Item ${idx + 1}: ${Number(l.quantidade || 1)}x${dddTxt}${numTxt} ${l.plano || '-'} (${l.categoria || '-'}) • ${l.pct || 'N/A'} • ${currency(l.valorPlano)} • Total: ${currency(totalLinha(l))}`;
-            }).join('\n');
-            const counts = {};
-            __linhas.forEach(l => {
-                const k = l.categoria || '-';
-                const q = Number(l.quantidade || 0);
-                counts[k] = (counts[k] || 0) + q;
-            });
-            const itens = Object.entries(counts).map(([k, v]) => `• ${k}: ${v}`).join('\n') || '-';
+                const tipo = String(l.tipoNegociacao || 'Novo').toLowerCase();
+                const em = tipo.includes('reneg') ? '🔁' : (tipo.includes('adti') || tipo.includes('adit') ? '➕' : '🌟');
+                const dddTxt = l.ddd ? `DDD ${l.ddd}` : '-';
+                const numTxt = l.numero ? `\n   📱 Número: ${l.numero}` : '';
+                
+                // Na proposta padrão não temos "Atual" detalhado, então omitimos ou deixamos traço
+                const atual = `- R$ 0,00`; 
+                const proposto = `${l.plano || '-'} ${l.pct || '-'}`;
+                const desc = '0%'; // Padrão não tem calculo explicito de desconto visualizado na tabela da mesma forma, mas se tiver pct, poderia ser. Vamos deixar fixo ou ajustavel se precisar.
+                // Ajustando para o template solicitado
+                // Campos solicitados anteriormente: Quantidade, Unitário, Total.
+                // O template do usuário mostra: Tipo, Atual, Proposto, Não Fid, Desconto, Preço Final, Economia.
+                // Mas o usuário pediu "ajuste os textos que te falei" (colocar quantidade, preço unitario, preço total, retirar valor nao fidelizado, retirar economia...).
+                // Então vou mesclar o DESIGN do template com os DADOS que ele pediu.
+                
+                /*
+                   Pedido anterior:
+                   - colocar quantidade
+                   - colocar preço unitario
+                   - colocar preço total
+                   - retirar valor nao fidelizado
+                   - retirar economia
+                   - resumo: receita atual -> plano atual
+                   - resumo: proposta -> nova proposta
+                   - resumo: retirar economia
+                   - resumo: retirar total de acessos
+                   - resumo: colocar total de dados atual
+                   - resumo: colocar total de dados nova proposta
+                */
+
+                const unitario = currency(l.valorPlano);
+                const totalLinhaVal = currency(totalLinha(l));
+                
+                return `${em} Linha ${idx + 1}
+   🔢 Qtd: ${l.quantidade}
+   📞 DDD: ${dddTxt}${numTxt}
+   🔖 Tipo: ${l.tipoNegociacao || '-'}
+   🧩 Proposto: ${proposto}
+   💲 Unitário: ${unitario}
+   💰 Total: ${totalLinhaVal}`;
+            }).join('\n\n');
+            
             const resumo = [
                 '',
-                '💰 Resumo Financeiro',
-                `   • Valor Total Mensal: ${total}`,
-                `   • Total de Acessos: ${acessos}`,
+                '📊 Resumo',
+                `   💰 Proposta Atual: R$ 0,00`, // Na padrão não temos valor atual detalhado
+                `   🧾 Nova Proposta: ${total}`,
+                `   📦 Total de dados atual: ${formatMB(totalDadosAtualMB)}`,
+                `   🔢 Total de dados da nova proposta: ${formatMB(totalDadosNovoMB)}`,
                 '',
-                '📋 Itens',
-                itens
+                '🚀 Maxximus Telecom • Conectando sua empresa ao futuro'
             ].join('\n');
-            return header + linhasTxt + '\n' + resumo + '\n✅ Proposta copiada!';
+            return header + '\n\n' + linhasTxt + '\n\n' + resumo;
         }
         function gerarRelatorioPdf() {
             try {
@@ -1242,6 +1304,7 @@
                 const txt = gerarMensagemBonita();
                 if (navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
                     navigator.clipboard.writeText(txt);
+                    toast('Proposta copiada', 'success');
                 }
             } catch {}
         }

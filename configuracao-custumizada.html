@@ -488,6 +488,9 @@
                 const ops = ['Claro','Vivo','TIM','Oi'];
                 const opOpts = ['<option value="">Selecione...</option>'].concat(ops.map(o => `<option value="${o}" ${o === l.operadoraDoadora ? 'selected' : ''}>${o}</option>`)).join('');
                 
+                const tipo = String(l.tipoNegociacao || '').toLowerCase();
+                const isReneg = (tipo.includes('reneg') || tipo.includes('renegociação') || tipo.includes('renegociacao'));
+
                 // Styles for validation
                 const styleNumPortar = (isPort && !l.numeroPortar) ? 'border-color:#EF4444;' : '';
                 const styleValorAp = (isVF24x && !Number(l.valorAparelho)) ? 'border-color:#EF4444;' : '';
@@ -829,10 +832,39 @@
             }
             try {
                 const totais = calcularTotais();
-                const acessos = linhas.length;
+                
+                const extractMB = (str) => {
+                    if (!str) return 0;
+                    const match = str.match(/(\d+(?:[.,]\d+)?)\s*(GB|MB|KB)/i);
+                    if (!match) return 0;
+                    let val = parseFloat(match[1].replace(',', '.'));
+                    const unit = match[2].toUpperCase();
+                    if (unit === 'GB') return val * 1024;
+                    if (unit === 'MB') return val;
+                    if (unit === 'KB') return val / 1024;
+                    return 0;
+                };
+                const formatMB = (mb) => {
+                    if (mb <= 0) return '0 GB';
+                    if (mb >= 1024) {
+                        const gb = mb / 1024;
+                        return (gb % 1 === 0 ? gb.toFixed(0) + ' GB' : gb.toFixed(1).replace('.', ',') + ' GB');
+                    }
+                    return Math.round(mb) + ' MB';
+                };
+
+                let totalDadosAtualMB = 0;
+                let totalDadosNovoMB = 0;
+
+                linhas.forEach(l => {
+                    const qtd = Number(l.quantidade || 1);
+                    totalDadosAtualMB += extractMB(l.planoAtualGB) * qtd;
+                    totalDadosNovoMB += extractMB(l.plano) * qtd;
+                });
+
                 const totalAtual = currency(totais.totalAtual);
                 const totalProposto = currency(totais.totalProposto);
-                const economia = currency(totais.totalEconomia);
+                
                 const header = [
                     '✨ Proposta Customizada • Maxximus Telecom',
                     '🏢 Cliente: ' + ((document.getElementById('clienteNome').textContent) || '-'),
@@ -841,6 +873,7 @@
                     '🟢 Status: ' + ((document.getElementById('negStatusLabel').textContent) || '-'),
                     '───────────────────────────────────'
                 ].join('\n');
+                
                 const linhasTxt = linhas.map((l, idx) => {
                     const tipo = String(l.tipoNegociacao || '-').toLowerCase();
                     const em = tipo.includes('reneg') ? '🔁' : (tipo.includes('adti') || tipo.includes('adit') ? '➕' : '🌟');
@@ -848,22 +881,33 @@
                     const numFmt = l.numero ? `\n   📱 Número: ${l.numero}` : '';
                     const atual = `${l.planoAtualGB || '-'} ${currency(l.precoAtual || 0)}`;
                     const proposto = `${l.plano || '-'} ${l.pct || '-'}`;
-                    const nf = currency(l.valorPlano || 0);
+                    
+                    const unitario = currency(calcularPrecoFinal(l));
+                    const totalLinha = currency(calcularPrecoFinal(l) * (Number(l.quantidade) || 1));
                     const desc = Number(l.desconto || 0) + '%';
-                    const final = currency(calcularPrecoFinal(l));
-                    const econ = currency(calcularEconomia(l));
-                    return `${em} Linha ${idx + 1}\n   📞 DDD: ${acessoFmt}${numFmt}\n   🔖 Tipo: ${l.tipoNegociacao || '-'}\n   📦 Atual: ${atual}\n   🧩 Proposto: ${proposto}\n   💸 Não Fid.: ${nf}\n   🔻 Desconto: ${desc}\n   💰 Preço Final: ${final}\n   🧮 Economia: ${econ}`;
+                    
+                    return `${em} Linha ${idx + 1}
+   🔢 Qtd: ${l.quantidade}
+   📞 DDD: ${acessoFmt}${numFmt}
+   🔖 Tipo: ${l.tipoNegociacao || '-'}
+   📦 Atual: ${atual}
+   🧩 Proposto: ${proposto}
+   🔻 Desconto: ${desc}
+   💲 Unitário: ${unitario}
+   💰 Total: ${totalLinha}`;
                 }).join('\n\n');
+                
                 const resumo = [
                     '',
                     '📊 Resumo',
-                    `   💰 Receita Atual: ${totalAtual}`,
-                    `   🧾 Receita Proposta: ${totalProposto}`,
-                    `   💵 Economia Total: ${economia}`,
-                    `   🔢 Total de Acessos: ${acessos}`,
+                    `   💰 Proposta Atual: ${totalAtual}`,
+                    `   🧾 Nova Proposta: ${totalProposto}`,
+                    `   📦 Total de dados atual: ${formatMB(totalDadosAtualMB)}`,
+                    `   🔢 Total de dados da nova proposta: ${formatMB(totalDadosNovoMB)}`,
                     '',
                     '🚀 Maxximus Telecom • Conectando sua empresa ao futuro'
                 ].join('\n');
+                
                 const txt = header + '\n\n' + linhasTxt + '\n\n' + resumo;
                 navigator.clipboard.writeText(txt).then(() => { toast('Proposta copiada', 'success'); }).catch(() => { toast('Erro ao copiar proposta', 'error'); });
             } catch { toast('Erro ao copiar proposta', 'error'); }

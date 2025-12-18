@@ -17,7 +17,7 @@
                     <span class="chip">Padrão</span>
                 </div>
                 <div class="muted">
-                    <button id="novaCategoriaBtn" class="btn btn-primary" type="button"><i data-lucide="plus"></i><span>Nova categoria</span></button>
+                    <button id="novaCategoriaBtn" class="btn btn-primary" type="button"><i data-lucide="plus"></i><span>Novo plano</span></button>
                 </div>
             </div>
             <div class="card-body">
@@ -25,7 +25,7 @@
                     <div id="filtersCategorias" class="filters">
                         <div>
                             <div class="label">Nome</div>
-                            <input id="fCatNome" class="input" type="text" placeholder="Nome da categoria" autocomplete="off">
+                            <input id="fCatNome" class="input" type="text" placeholder="Nome do plano" autocomplete="off">
                         </div>
                         <div>
                             <div class="label">Descrição</div>
@@ -39,7 +39,7 @@
                 </section>
                 <section class="section" style="margin-top: 10px;">
                     <div style="display:flex; align-items:center; justify-content:space-between;">
-                        <div class="label">Lista de categorias</div>
+                        <div class="label">Lista de planos</div>
                         <div class="muted" id="catCountLabel">0 itens</div>
                     </div>
                     <div class="table-container" style="margin-top:0.6rem;">
@@ -189,7 +189,7 @@
                 const nome = String(document.getElementById('mCatNome').value || '').trim();
                 const descricao = String(document.getElementById('mCatDesc').value || '').trim() || null;
                 const tipo = String(document.getElementById('mCatTipo').value || 'Novo');
-                if (!nome) { toast('Informe o nome da categoria', 'error'); return; }
+                if (!nome) { toast('Informe o nome do plano', 'error'); return; }
                 if (__editingCatId) {
                     await api('/categories/' + __editingCatId, { method: 'PUT', body: JSON.stringify({ nome, descricao, tipo }) });
                     toast('Categoria atualizada', 'success');
@@ -316,10 +316,10 @@
     <script src="script.js"></script>
     <div id="categoriaModal" class="modal">
         <div class="modal-card">
-            <div class="modal-head"><div>Categoria</div><button id="mCatFechar" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-head"><div>Plano</div><button id="mCatFechar" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
             <div class="modal-body">
                 <div class="grid-2-modal">
-                    <div class="field"><span class="label-inline">Nome</span><input id="mCatNome" class="input" type="text" placeholder="Nome da categoria"></div>
+                    <div class="field"><span class="label-inline">Nome</span><input id="mCatNome" class="input" type="text" placeholder="Nome do plano"></div>
                     <div class="field"><span class="label-inline">Descrição</span><input id="mCatDesc" class="input" type="text" placeholder="Descrição (opcional)"></div>
                     <div class="field"><span class="label-inline">Tipo</span>
                         <select id="mCatTipo" class="select">
@@ -339,7 +339,7 @@
         <div class="modal-card">
             <div class="modal-head"><div>Confirmar Exclusão</div><button id="confirmDeleteClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
             <div class="modal-body">
-                <div class="label">Tem certeza que deseja excluir esta categoria?</div>
+                <div class="label">Tem certeza que deseja excluir este plano?</div>
                 <div id="confirmDeleteText" class="muted" style="margin-top:0.5rem;"></div>
             </div>
             <div class="modal-actions">
@@ -352,7 +352,7 @@
         <div class="modal-card">
             <div class="modal-head"><div>Confirmar Duplicação</div><button id="confirmDuplicateClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
             <div class="modal-body">
-                <div class="label">Deseja duplicar esta categoria?</div>
+                <div class="label">Deseja duplicar este plano?</div>
                 <div id="confirmDuplicateText" class="muted" style="margin-top:0.5rem;"></div>
             </div>
             <div class="modal-actions">
