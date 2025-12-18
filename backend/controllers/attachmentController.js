@@ -16,15 +16,26 @@ export async function listAttachments(req, res) {
 export async function uploadAttachment(req, res) {
   try {
     const negotiationId = req.params.id;
-    const { fileName, fileType, fileData } = req.body; // fileData is base64 string
+    let fileName, fileType, buffer;
 
-    if (!fileName || !fileData) {
-      return res.status(400).json({ error: 'Nome do arquivo e dados são obrigatórios' });
+    if (req.file) {
+      fileName = req.file.originalname;
+      fileType = req.file.mimetype;
+      buffer = req.file.buffer;
+    } else {
+      const body = req.body;
+      fileName = body.fileName;
+      fileType = body.fileType;
+      const fileData = body.fileData;
+      if (fileData) {
+        const base64Data = fileData.replace(/^data:(.*,)?/, '');
+        buffer = Buffer.from(base64Data, 'base64');
+      }
     }
 
-    // Remove header if present (e.g., "data:image/png;base64,")
-    const base64Data = fileData.replace(/^data:(.*,)?/, '');
-    const buffer = Buffer.from(base64Data, 'base64');
+    if (!fileName || !buffer) {
+      return res.status(400).json({ error: 'Nome do arquivo e dados são obrigatórios' });
+    }
 
     const attachment = await NegociacaoPropostaAnexos.create({
       negotiation_id: negotiationId,
@@ -95,14 +106,26 @@ export async function listCustomAttachments(req, res) {
 export async function uploadCustomAttachment(req, res) {
   try {
     const negotiationId = req.params.id;
-    const { fileName, fileType, fileData } = req.body;
+    let fileName, fileType, buffer;
 
-    if (!fileName || !fileData) {
-      return res.status(400).json({ error: 'Nome do arquivo e dados são obrigatórios' });
+    if (req.file) {
+      fileName = req.file.originalname;
+      fileType = req.file.mimetype;
+      buffer = req.file.buffer;
+    } else {
+      const body = req.body;
+      fileName = body.fileName;
+      fileType = body.fileType;
+      const fileData = body.fileData;
+      if (fileData) {
+        const base64Data = fileData.replace(/^data:(.*,)?/, '');
+        buffer = Buffer.from(base64Data, 'base64');
+      }
     }
 
-    const base64Data = fileData.replace(/^data:(.*,)?/, '');
-    const buffer = Buffer.from(base64Data, 'base64');
+    if (!fileName || !buffer) {
+      return res.status(400).json({ error: 'Nome do arquivo e dados são obrigatórios' });
+    }
 
     const attachment = await NegociacaoPropostaCustomizadaAnexos.create({
       negotiation_id: negotiationId,
