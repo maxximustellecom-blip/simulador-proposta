@@ -341,7 +341,7 @@
                 if (!linha.plano) {
                     erros.push(`Linha ${idx + 1}: Selecione um plano`);
                 }
-                const qtd = Number(linha.quantidade || 0);
+                const qtd = Number(linha.quantidade) || 1;
                 if (qtd < 1) {
                     erros.push(`Linha ${idx + 1}: Quantidade deve ser pelo menos 1`);
                 }
@@ -660,6 +660,7 @@
             nextId = 1;
             linhas.push({
                 id: nextId++,
+                quantidade: 1,
                 ddd: '',
                 tipoNegociacao: 'Novo',
                 planoAtualGB: '',
@@ -687,7 +688,7 @@
         function adicionarLinha() {
             linhas.push({
                 id: nextId++,
-                qtd: 1,
+                quantidade: 1,
                 ddd: '',
                 tipoNegociacao: 'Novo',
                 planoAtualGB: '',
@@ -745,7 +746,7 @@
                 const arr = (data && Array.isArray(data.linhas)) ? data.linhas : [];
                 linhas = arr.map((l, idx) => ({
                     id: Number(l.id || idx + 1),
-                    quantidade: Number(l.quantidade || 1),
+                    quantidade: Number(l.quantidade) || 1,
                     ddd: l.ddd || '',
                     tipoNegociacao: l.tipoNegociacao || 'Novo',
                     planoAtualGB: l.planoAtualGB || '',
@@ -764,6 +765,10 @@
                     tipoAparelho: l.tipoAparelho || 'Comodato',
                     valorAparelho: l.valorAparelho || ''
                 }));
+                if (linhas.length > 0) {
+                    const maxId = linhas.reduce((max, l) => Math.max(max, l.id), 0);
+                    nextId = maxId + 1;
+                }
                 if (!linhas.length) adicionarLinha(); else { renderTable(); renderResumo(); validarProposta(); }
             } catch { adicionarLinha(); }
         }
