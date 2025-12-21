@@ -1,4 +1,4 @@
-import { Negotiation, User } from '../models/index.js';
+import { Negotiation, User, PedidoDeVenda } from '../models/index.js';
 
 function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
 
@@ -59,6 +59,12 @@ export async function createNegotiation(req, res) {
       data: data ? String(data).split('-').reverse().join('/') : new Date().toLocaleDateString('pt-BR'),
       created_by: req.user.id
     });
+
+    await PedidoDeVenda.create({
+      negotiation_id: negotiation.id,
+      status: '1-Entrada'
+    });
+
     return res.status(201).json({
       id: negotiation.id,
       cnpj: negotiation.cnpj,
