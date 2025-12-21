@@ -510,18 +510,24 @@
                         const qtd = parseFloat(linha.quantidade || 1);
                         // Determine valorPlano
                         let valorPlano = 0;
-                        if (linha.valorPlano) valorPlano = parseFloat(linha.valorPlano);
-                        else if (linha.valorNaoFidelizado) valorPlano = parseFloat(linha.valorNaoFidelizado);
-
-                        // If customization and has discount
-                        if (linha.desconto) {
-                             const v = parseFloat(linha.valorNaoFidelizado || 0);
-                             const d = parseFloat(linha.desconto) || 0;
-                             valorPlano = v * (1 - d/100);
+                        if (linha.valorPlano !== undefined) {
+                            valorPlano = parseFloat(linha.valorPlano);
+                        } else if (linha.valorNaoFidelizado !== undefined) {
+                            let v = parseFloat(linha.valorNaoFidelizado);
+                            if (linha.desconto) {
+                                v = v * (1 - parseFloat(linha.desconto)/100);
+                            }
+                            valorPlano = v;
                         }
-                        
+
                         const fatura = (valorPlano * qtd).toFixed(2).replace('.', ',');
                         const valorPlanoStr = valorPlano.toFixed(2).replace('.', ',');
+                        
+                        // Determine Aparelho
+                        let aparelhoStr = '';
+                        if (String(linha.temAparelho).toLowerCase() === 'sim') {
+                            aparelhoStr = linha.modeloAparelho || linha.aparelho || 'Sim';
+                        }
 
                         return {
                             id: Date.now() + index,
@@ -532,7 +538,10 @@
                             tipoVenda: detalhes.tipo || 'Novo', 
                             razaoSocial: detalhes.razaoSocial || '', 
                             cnpj: detalhes.cnpj || '',
-                            telefone: '', contato: '', consultorSupervisor: '', sede: '',
+                            telefone: '', 
+                            contato: '', 
+                            consultorSupervisor: '', 
+                            sede: '',
                             qtdAcessos: String(qtd), 
                             plano: linha.plano || linha.servico || '', 
                             regiaoValidade: '',
@@ -540,8 +549,13 @@
                             pct: linha.desconto ? String(linha.desconto) : '', 
                             valorPlano: valorPlanoStr, 
                             faturaTotal: fatura,
-                            portabilidade: 'NÃO', operadora: '', acesso: '', dataAgendamento: '',
-                            fastChip: 'NÃO', iccid: '', aparelhos: linha.temAparelho === 'Sim' ? (linha.aparelho || 'Sim') : '', 
+                            portabilidade: linha.portabilidade ? linha.portabilidade.toUpperCase() : 'NÃO', 
+                            operadora: linha.operadoraDoadora || '', 
+                            acesso: linha.numero || '', 
+                            dataAgendamento: '',
+                            fastChip: 'NÃO', 
+                            iccid: '', 
+                            aparelhos: aparelhoStr, 
                             observacao: ''
                         };
                     });

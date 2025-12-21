@@ -7,7 +7,8 @@ const Product = sequelize.define('Product', {
   categoria_id: { type: DataTypes.INTEGER, allowNull: false },
   nome: { type: DataTypes.STRING(200), allowNull: false },
   descricao: { type: DataTypes.STRING(255), allowNull: true },
-  preco: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 }
+  preco: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
+  regiao: { type: DataTypes.STRING(1000), allowNull: true }
 }, {
   tableName: 'products',
   timestamps: true,
