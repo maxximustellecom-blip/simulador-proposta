@@ -225,60 +225,64 @@
                         </tbody>
                     </table>
                 </div>
-            </section>
-
-            
+            </section> 
         </div>
 
-        <div class="action-buttons mb-6">
-            <button class="btn btn-blue" onclick="adicionarVenda()">
-                <i data-lucide="plus" size="18"></i> Nova Venda
-            </button>
-            <button class="btn btn-green" onclick="exportarDados()">
-                <i data-lucide="download" size="18"></i> Exportar CSV
-            </button>
-        </div>
+        <div id="cardConfiguracao" class="card mb-6" style="display: none;">
+            <div class="card-head">
+                <div class="card-title">
+                    <span>Configuração do Cliente: <span id="nomeClienteConfiguracao">[cliente]</span></span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="action-buttons mb-6">
+                    <button class="btn btn-blue" onclick="adicionarVenda()">
+                        <i data-lucide="plus" size="18"></i> Nova Venda
+                    </button>
+                    <button class="btn btn-green" onclick="exportarDados()">
+                        <i data-lucide="download" size="18"></i> Exportar CSV
+                    </button>
+                </div>
 
-        <!-- Consolidated Table (Hidden by default) - REMOVED -->
-        
-        <!-- Main Table -->
-        <div class="table-container">
-            <table id="tabelaVendas">
-                <thead>
-                    <tr>
-                        <th style="min-width: 180px;">Status do Pedido</th>
-                        <th style="min-width: 120px;">Data Entrada</th>
-                        <th style="min-width: 120px;">Data Input</th>
-                        <th style="min-width: 120px;">Data Ativação</th>
-                        <th style="min-width: 100px;">Nº P2B</th>
-                        <th style="min-width: 100px;">Nº Radar</th>
-                        <th style="min-width: 100px;">Tipo</th>
-                        <th style="min-width: 200px;">Razão Social</th>
-                        <th style="min-width: 140px;">CNPJ</th>
-                        <th style="min-width: 130px;">Telefone</th>
-                        <th style="min-width: 150px;">Contato</th>
-                        <th style="min-width: 150px;">Consultor</th>
-                        <th style="min-width: 100px;">Sede</th>
-                        <th style="min-width: 80px;">Qtd</th>
-                        <th style="min-width: 200px;">Plano</th>
-                        <th style="min-width: 150px;">Região</th>
-                        <th style="min-width: 200px;">Oferta</th>
-                        <th style="min-width: 80px;">Pct</th>
-                        <th style="min-width: 100px;">Valor</th>
-                        <th style="min-width: 100px;">Total</th>
-                        <th style="min-width: 80px;">Port-in</th>
-                        <th style="min-width: 100px;">Op. Doadora</th>
-                        <th style="min-width: 100px;">Acesso</th>
-                        <th style="min-width: 120px;">Data Port-in</th>
-                        <th style="min-width: 80px;">Fast Chip</th>
-                        <th style="min-width: 150px;">ICCID</th>
-                        <th style="min-width: 150px;">Aparelhos</th>
-                        <th style="min-width: 200px;">Observação</th>
-                        <th style="min-width: 100px;">Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="tbodyVendas"></tbody>
-            </table>
+                <div class="table-container">
+                    <table id="tabelaVendas">
+                        <thead>
+                            <tr>
+                                <th style="min-width: 180px;">Status do Pedido</th>
+                                <th style="min-width: 120px;">Data Entrada</th>
+                                <th style="min-width: 120px;">Data Input</th>
+                                <th style="min-width: 120px;">Data Ativação</th>
+                                <th style="min-width: 100px;">Nº P2B</th>
+                                <th style="min-width: 100px;">Nº Radar</th>
+                                <th style="min-width: 100px;">Tipo</th>
+                                <th style="min-width: 200px;">Razão Social</th>
+                                <th style="min-width: 140px;">CNPJ</th>
+                                <th style="min-width: 130px;">Telefone</th>
+                                <th style="min-width: 150px;">Contato</th>
+                                <th style="min-width: 150px;">Consultor</th>
+                                <th style="min-width: 100px;">Sede</th>
+                                <th style="min-width: 80px;">Qtd</th>
+                                <th style="min-width: 200px;">Plano</th>
+                                <th style="min-width: 150px;">Região</th>
+                                <th style="min-width: 200px;">Oferta</th>
+                                <th style="min-width: 80px;">Pct</th>
+                                <th style="min-width: 100px;">Valor</th>
+                                <th style="min-width: 100px;">Total</th>
+                                <th style="min-width: 80px;">Port-in</th>
+                                <th style="min-width: 100px;">Op. Doadora</th>
+                                <th style="min-width: 100px;">Acesso</th>
+                                <th style="min-width: 120px;">Data Port-in</th>
+                                <th style="min-width: 80px;">Fast Chip</th>
+                                <th style="min-width: 150px;">ICCID</th>
+                                <th style="min-width: 150px;">Aparelhos</th>
+                                <th style="min-width: 200px;">Observação</th>
+                                <th style="min-width: 100px;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyVendas"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </main>
     <script src="script.js"></script>
@@ -425,9 +429,9 @@
             const colorClass = type === 'success' ? 'text-green-600' : 'text-red-600';
             
             t.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <i data-lucide="${icon}" class="${colorClass}"></i>
-                    <span class="font-medium">${msg}</span>
+                <div class="flex items-center gap-2" style='align-items: center; display: flex;'>
+                    <div style='font-size: 10pt; align-items: center; display: flex;'><i data-lucide="${icon}" class="${colorClass}"></i></div>&nbsp;
+                    <div class="font-medium">${msg}</div>
                 </div>
             `;
             
@@ -467,8 +471,8 @@
                     <td><span class="chip-status in-progress">Entrada</span></td>
                     <td>${item.data || '-'}</td>
                     <td>
-                        <button class="btn btn-ghost btn-sm" title="Operar" style="gap: 5px;" onclick="operarPedido('${item.id}')">
-                            <i data-lucide="settings"></i>Operar
+                        <button class="btn btn-ghost btn-sm" title="Configurar" style="gap: 5px;" onclick="configurarPedido('${item.id}')">
+                            <i data-lucide="settings"></i>Configurar
                         </button>
                     </td>
                 </tr>
@@ -491,8 +495,81 @@
             renderBackendTable(filtered);
         }
 
-        function operarPedido(id) {
-            showMessage('Operação iniciada para o pedido: ' + id);
+        async function configurarPedido(id) {
+            const item = backendData.find(i => String(i.id) === String(id));
+            if (!item) {
+                toast('Pedido não encontrado', 'error');
+                return;
+            }
+
+            try {
+                const detalhes = await api(`/pedidos-venda/${id}/detalhes`);
+                
+                if (detalhes.linhas && detalhes.linhas.length > 0) {
+                    vendas = detalhes.linhas.map((linha, index) => {
+                        const qtd = parseFloat(linha.quantidade || 1);
+                        // Determine valorPlano
+                        let valorPlano = 0;
+                        if (linha.valorPlano) valorPlano = parseFloat(linha.valorPlano);
+                        else if (linha.valorNaoFidelizado) valorPlano = parseFloat(linha.valorNaoFidelizado);
+
+                        // If customization and has discount
+                        if (linha.desconto) {
+                             const v = parseFloat(linha.valorNaoFidelizado || 0);
+                             const d = parseFloat(linha.desconto) || 0;
+                             valorPlano = v * (1 - d/100);
+                        }
+                        
+                        const fatura = (valorPlano * qtd).toFixed(2).replace('.', ',');
+                        const valorPlanoStr = valorPlano.toFixed(2).replace('.', ',');
+
+                        return {
+                            id: Date.now() + index,
+                            status: '1-Entrada',
+                            dataEntrada: new Date().toISOString().split('T')[0],
+                            dataInput: '', dataAtivacao: '', numP2B: '', numRadar: '',
+                            linha: String(index + 1), 
+                            tipoVenda: detalhes.tipo || 'Novo', 
+                            razaoSocial: detalhes.razaoSocial || '', 
+                            cnpj: detalhes.cnpj || '',
+                            telefone: '', contato: '', consultorSupervisor: '', sede: '',
+                            qtdAcessos: String(qtd), 
+                            plano: linha.plano || linha.servico || '', 
+                            regiaoValidade: '',
+                            oferta: '', 
+                            pct: linha.desconto ? String(linha.desconto) : '', 
+                            valorPlano: valorPlanoStr, 
+                            faturaTotal: fatura,
+                            portabilidade: 'NÃO', operadora: '', acesso: '', dataAgendamento: '',
+                            fastChip: 'NÃO', iccid: '', aparelhos: linha.temAparelho === 'Sim' ? (linha.aparelho || 'Sim') : '', 
+                            observacao: ''
+                        };
+                    });
+                    
+                    toast('Dados carregados com sucesso!');
+                } else {
+                    vendas = [];
+                    toast('Nenhum detalhe encontrado (linhas vazias).', 'error');
+                }
+
+                salvarVendas(); // Update UI
+
+                const card = document.getElementById('cardConfiguracao');
+                const titulo = document.getElementById('nomeClienteConfiguracao');
+                
+                if (titulo) {
+                    titulo.textContent = detalhes.razaoSocial || 'Cliente';
+                }
+                
+                if (card) {
+                    card.style.display = 'block';
+                    setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                }
+
+            } catch (e) {
+                console.error(e);
+                toast('Erro ao carregar detalhes: ' + e.message, 'error');
+            }
         }
 
         // --- CORE LOGIC ---
@@ -535,7 +612,7 @@
             vendas.unshift(nova);
             editando[nova.id] = true;
             salvarVendas();
-            showMessage('Venda duplicada com sucesso!');
+            toast('Venda duplicada com sucesso!');
         }
 
         function removerVenda(id) {
@@ -643,8 +720,8 @@
             link.href = URL.createObjectURL(blob);
             link.download = `vendas_tim_${new Date().toISOString().split('T')[0]}.csv`;
             link.click();
-            showMessage('Dados exportados com sucesso!');
-        }
+            toast('Dados exportados com sucesso!');
+}
 
         function updateConsolidados() {
             // Functionality removed as per user request (consolidadosContainer removed)
