@@ -36,6 +36,7 @@ app.use('/negotiations', negotiationRouter);
 app.use('/custom-categories', customCategoryRouter);
 app.use('/custom-products', customProductRouter);
 app.use('/access-profiles', accessProfileRouter);
+app.use('/pedidos-venda', pedidoDeVendaRouter);
 
 const port = process.env.PORT || 3001;
 

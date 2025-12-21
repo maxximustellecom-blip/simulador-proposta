@@ -1,0 +1,1269 @@
+import React, { useState, useEffect } from 'react';
+import { Plus, Trash2, Save, Download, Search, Filter, FileText, Edit2, Copy, Check, X, Eye, BarChart3 } from 'lucide-react';
+
+const SistemaVendas = () => {
+  const [vendas, setVendas] = useState([]);
+  const [filtro, setFiltro] = useState('');
+  const [filtroStatus, setFiltroStatus] = useState('Todos');
+  const [filtroContrato, setFiltroContrato] = useState('');
+  const [mensagem, setMensagem] = useState('');
+  const [erro, setErro] = useState('');
+  const [editando, setEditando] = useState({});
+  const [mostrarTotalizadores, setMostrarTotalizadores] = useState(true);
+
+  const statusPedido = [
+    '1-Entrada',
+    '2-Pendente (P2B Status)',
+    '0-Aguardando Assinatura',
+    '1-Entrada (Análise Boc)',
+    '2-Pendente Sistema P2B (Aguardando Status)',
+    '3-Validado Documentação (TIM)',
+    '4-Pendência Documentação (Aguardando)',
+    '5-Emissão de documentos (LMS)',
+    '7-Contratos Ativos',
+    '8-Reprovado (Crédito ou Erro)',
+    '9-Devolver para consultor (Correções)'
+  ];
+
+  const tipoVenda = ['Novo', 'Aditivo', 'Renovação'];
+
+  const planosTIM = {
+    'TIM Black Empresa': {
+      'Todas as UFs, exceto PR e SC': [
+        'NV/ADP B 1GB + 5GB V0625 (Até 6GB)',
+        'NV/ADP B 2GB + 10GB V0625 (Até 12GB)',
+        'NV/ADP B 10GB + 20GB V0325 (Até 30GB)',
+        'NV/ADP B 20GB + 20GB V0925 (Até 40GB)',
+        'NV/ADP B 30GB + 20GB V0325 (Até 50GB)',
+        'NV/ADP B 30GB + 50GB V0325 (Até 80GB)',
+        'NV/ADP B 50GB + 50GB V0325 (Até 100GB)',
+        'NV/ADP B 100GB + 50GB V0325 (Até 150GB)'
+      ],
+      'PR e SC': [
+        'NV/ADP B 1GB + 5GB V0625 (Até 6GB)',
+        'NV/ADP B 2GB + 10GB V0625 (Até 12GB)',
+        'NV/ADP B 10GB + 20GB V0325 (Até 30GB)',
+        'NV/ADP B 20GB + 20GB V0925 (Até 40GB)',
+        'NV/ADP B 30GB + 20GB V0325 (Até 50GB)',
+        'NV/ADP B 30GB + 50GB V0325 (Até 80GB)',
+        'NV/ADP B 50GB + 50GB V0325 (Até 100GB)',
+        'NV/ADP B 100GB + 50GB V0325 (Até 150GB)'
+      ]
+    },
+    'TIM Controle': {
+      'DDDs 11,12,13,14,15,16,17,18,19,21,24,44,61,63,67,68,71,74,77,86,95': [
+        'TIM Controle J Express 35GB',
+        'TIM Controle C Express 46GB'
+      ],
+      'DDDs 22,27,28,31,32,33,34,35,37,38,41,42,43,45,46,47,48,49,51,53,54,55,62,64,65,66,69,73,75,79,81,82,83,84,85,87,88,89,91,92,93,94,96,97,98,99': [
+        'TIM Controle C Express 46GB'
+      ],
+      'DDDs 71,74,77,86': [
+        'TIM Controle OFERTA FOCO 35GB',
+        'TIM Controle REDES SOCIAIS 54GB',
+        'TIM Controle PLUS 55GB',
+        'TIM Controle PREMIUM 61GB'
+      ],
+      'DDDs 73,75,79,81,82,83,84,85,87,88,89': [
+        'TIM Controle OFERTA FOCO 35GB',
+        'TIM Controle REDES SOCIAIS 54GB',
+        'TIM Controle PLUS 55GB',
+        'TIM Controle PREMIUM 61GB'
+      ],
+      'DDDs 21,24,44,61,63,67,68,95': [
+        'TIM Controle OFERTA FOCO 35GB',
+        'TIM Controle REDES SOCIAIS 54GB',
+        'TIM Controle PLUS 55GB',
+        'TIM Controle PREMIUM 61GB'
+      ],
+      'DDDs 11,12,13,14,15,16,17,18,19': [
+        'TIM Controle OFERTA FOCO 35GB',
+        'TIM Controle REDES SOCIAIS 54GB',
+        'TIM Controle PLUS 55GB',
+        'TIM Controle PREMIUM 61GB'
+      ],
+      'DDDs 22,41,42,43,45,46,62,64,69,91,92,93,94,96,97,98,99': [
+        'TIM Controle OFERTA FOCO 35GB',
+        'TIM Controle REDES SOCIAIS 54GB',
+        'TIM Controle PLUS 55GB',
+        'TIM Controle PREMIUM 61GB'
+      ],
+      'DDDs 27,28,31,32,33,34,35,37,38,47,48,49,51,53,54,55,66': [
+        'TIM Controle OFERTA FOCO 35GB',
+        'TIM Controle REDES SOCIAIS 54GB',
+        'TIM Controle PLUS 55GB',
+        'TIM Controle PREMIUM 61GB'
+      ],
+      'TSP, TSE, TSU, TCN, TNE (Portabilidade)': [
+        'Portabilidade 27GB (3GB Core + 20GB Promo + 4GB Especial) + Redes Sociais Inclusas'
+      ],
+      'Nacional (Migração, Gross ou Troca)': [
+        'Migração, Gross ou Troca 19GB (3GB Core + 10GB Promo + 6GB Especial) + Redes Sociais Inclusas'
+      ]
+    },
+    'TIM Ultrafibra': {
+      'SP / RS (exceto Caxias do Sul e Passo Fundo)': [
+        '400 MEGA',
+        '600 MEGA+',
+        '1 GIGA',
+        '2 GIGA+'
+      ],
+      'AC, AM, BA, CE, DF, GO, MA, MT, MS MG, PA, PR, PE, RJ, RO (Porto Velho), RR, RS (Caxias/Passo Fundo), SC': [
+        '400 MEGA',
+        '600 MEGA+',
+        '1 GIGA',
+        '2 GIGA+'
+      ],
+      'Exclusiva TO (Juiz de Fora (MG), Montes Carlos (MG), Andirá (PR), Cornélio Procópio (PR), Santo Antônio da Platina (PR), Petrópolis (RJ), Teresópolis (RJ), Caxias do Sul (RS), Passo Fundo (RS), Florianópolis (SC), Joinville (SC), Palhoça (SC) e São José (SC))': [
+        '300 MEGA'
+      ],
+      'Exclusiva AN (Ilhéus (BA), Divinópolis (MG), Pouso Alegre (MG), Varginha (MG), Caruaru (PE), Olinda (PE), Cascavel (PR), Fazenda Rio Grande (PR), Ibiporã (PR), Medianeira (PR), Telêmaco Borba (PR), Toledo (PR), União da Vitória (PR) e Chapecó (SC))': [
+        '300 MEGA',
+        '600 MEGA',
+        'OFERTA FOCO RN 500 MEGA'
+      ]
+    },
+    'Serviços': {
+      'Válido para Todas as UFs (Geral)': [
+        'NV/ADP 6 1GB + 20GB V0625 (Até 21GB)',
+        'NV/ADP 6 20GB + 20GB V0524 (Até 40GB)',
+        'NV/ADP 6 20GB + 50GB V0564 (Até 70GB)',
+        'AGL 3GB (Liberty Web Empresa 3GB)',
+        'AGL 10GB (Liberty Web Empresa 10GB)',
+        'AGL 40GB (Liberty Web Empresa 40GB)',
+        'AGL 100GB (Liberty Web Empresa 100GB)',
+        'WTTX 2MB_40GB',
+        'WTTX 5MB_80GB',
+        'WTTX 5MB_100GB',
+        'WTTX 5MB_500GB',
+        'TIM Liberty Web até 150GB + Roteador Intelbrás GX 3000 – 5G',
+        'TIM Black Empresas até 150GB + Roteador Intelbrás GX 3000 – 5G',
+        'TBP M2M 20MB',
+        'TBP M2M 50MB',
+        'TBP M2M 100MB',
+        'TBP M2M 2.5GB',
+        'SMS Avulso',
+        'PACOTE 50 SMS',
+        'PACOTE 100 SMS',
+        'PACOTE 200 SMS',
+        'PACOTE 800 SMS',
+        'PACOTE 5.000 SMS',
+        'TIM Monitor',
+        'TIM Segurança Digital Combo 1',
+        'TIM Segurança Digital Combo 2',
+        'TIM Segurança (Avulso)',
+        'RP 6GB 2024 (TIM BLACK 6GB)',
+        'RP 10GB 2024 (TIM BLACK 10GB)',
+        'RP 15GB 2024 (TIM BLACK 15GB)',
+        'RP 25GB 2024 (TIM BLACK 25GB)',
+        'RP 40GB 2024 (TIM BLACK 40GB)',
+        'RP 60GB 2024 (TIM BLACK 60GB)',
+        'RP 110GB 2024 (TIM BLACK 110GB)',
+        'RP 20GB 2024 (TIM BLACK 20GB)',
+        'RP 30GB 2024 (TIM BLACK 30GB)',
+        'RP 50GB 2024 (TIM BLACK 50GB)',
+        'RP 70GB 2024 (TIM BLACK 70GB)'
+      ]
+    }
+  };
+
+  const getRegioesPorPlano = (plano) => {
+    return Object.keys(planosTIM[plano] || {});
+  };
+
+  const getOfertasPorPlanoRegiao = (plano, regiao) => {
+    if (!plano || !regiao) return [];
+    return planosTIM[plano]?.[regiao] || [];
+  };
+
+  useEffect(() => {
+    carregarVendas();
+  }, []);
+
+  const carregarVendas = async () => {
+    try {
+      const dados = await window.storage.list('venda:');
+      if (dados && dados.keys) {
+        const vendasCarregadas = await Promise.all(
+          dados.keys.map(async (key) => {
+            try {
+              const resultado = await window.storage.get(key);
+              return resultado ? JSON.parse(resultado.value) : null;
+            } catch {
+              return null;
+            }
+          })
+        );
+        setVendas(vendasCarregadas.filter(v => v !== null));
+      }
+    } catch (error) {
+      console.log('Iniciando sem vendas salvas');
+    }
+  };
+
+  const salvarVenda = async (venda) => {
+    try {
+      await window.storage.set(`venda:${venda.id}`, JSON.stringify(venda));
+      return true;
+    } catch (error) {
+      console.error('Erro ao salvar:', error);
+      return false;
+    }
+  };
+
+  const adicionarVenda = () => {
+    const novaVenda = {
+      id: Date.now(),
+      status: '1-Entrada',
+      dataEntrada: new Date().toISOString().split('T')[0],
+      dataInput: '',
+      dataAtivacao: '',
+      numP2B: '',
+      numRadar: '',
+      linha: '1',
+      tipoVenda: 'Novo',
+      razaoSocial: '',
+      cnpj: '',
+      telefone: '',
+      contato: '',
+      consultorSupervisor: '',
+      sede: '',
+      qtdAcessos: '',
+      plano: 'TIM Black Empresa',
+      regiaoValidade: '',
+      oferta: '',
+      pct: '',
+      valorPlano: '',
+      faturaTotal: '0,00',
+      portabilidade: 'NÃO',
+      operadora: '',
+      acesso: '',
+      dataAgendamento: '',
+      fastChip: 'NÃO',
+      iccid: '',
+      aparelhos: 'COMODATO',
+      observacao: ''
+    };
+    setVendas([novaVenda, ...vendas]);
+    setEditando({ ...editando, [novaVenda.id]: true });
+  };
+
+  const duplicarVenda = async (venda) => {
+    const vendaDuplicada = {
+      ...venda,
+      id: Date.now(),
+      dataEntrada: new Date().toISOString().split('T')[0],
+      linha: venda.linha ? (parseInt(venda.linha) + 1).toString() : '2'
+    };
+    setVendas([vendaDuplicada, ...vendas]);
+    setEditando({ ...editando, [vendaDuplicada.id]: true });
+    await salvarVenda(vendaDuplicada);
+    setMensagem('Venda duplicada com sucesso!');
+    setTimeout(() => setMensagem(''), 3000);
+  };
+
+  const toggleEditar = (id) => {
+    setEditando({ ...editando, [id]: !editando[id] });
+  };
+
+  const salvarEdicao = async (id) => {
+    const venda = vendas.find(v => v.id === id);
+    if (venda) {
+      await salvarVenda(venda);
+      setEditando({ ...editando, [id]: false });
+      setMensagem('Venda salva com sucesso!');
+      setTimeout(() => setMensagem(''), 3000);
+    }
+  };
+
+  const cancelarEdicao = async (id) => {
+    // Recarregar a venda do storage
+    try {
+      const resultado = await window.storage.get(`venda:${id}`);
+      if (resultado) {
+        const vendaOriginal = JSON.parse(resultado.value);
+        setVendas(vendas.map(v => v.id === id ? vendaOriginal : v));
+      }
+    } catch (error) {
+      console.log('Venda não encontrada no storage');
+    }
+    setEditando({ ...editando, [id]: false });
+  };
+
+  const removerVenda = async (id) => {
+    if (window.confirm('Deseja realmente excluir esta venda?')) {
+      try {
+        await window.storage.delete(`venda:${id}`);
+        setVendas(vendas.filter(v => v.id !== id));
+        setMensagem('Venda excluída com sucesso!');
+        setTimeout(() => setMensagem(''), 3000);
+      } catch (error) {
+        setErro('Erro ao excluir venda');
+        setTimeout(() => setErro(''), 3000);
+      }
+    }
+  };
+
+  const atualizarVenda = async (id, campo, valor) => {
+    const vendasAtualizadas = vendas.map(venda => {
+      if (venda.id === id) {
+        const vendaAtualizada = { ...venda, [campo]: valor };
+        
+        // Limpar região e oferta quando o plano mudar
+        if (campo === 'plano') {
+          vendaAtualizada.regiaoValidade = '';
+          vendaAtualizada.oferta = '';
+        }
+        
+        // Limpar oferta quando a região mudar
+        if (campo === 'regiaoValidade') {
+          vendaAtualizada.oferta = '';
+        }
+        
+        // Calcular Fatura Total automaticamente
+        if (campo === 'valorPlano' || campo === 'qtdAcessos') {
+          const valorPlano = parseFloat((campo === 'valorPlano' ? valor : vendaAtualizada.valorPlano || '0').replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
+          const qtdAcessos = parseInt(campo === 'qtdAcessos' ? valor : vendaAtualizada.qtdAcessos || '0') || 0;
+          vendaAtualizada.faturaTotal = (valorPlano * qtdAcessos).toFixed(2).replace('.', ',');
+        }
+        
+        // Limpar Op. Doadora quando Port-in for NÃO
+        if (campo === 'portabilidade' && valor === 'NÃO') {
+          vendaAtualizada.operadora = '';
+        }
+        
+        salvarVenda(vendaAtualizada);
+        return vendaAtualizada;
+      }
+      return venda;
+    });
+    setVendas(vendasAtualizadas);
+  };
+
+  const exportarDados = () => {
+    let csv = 'Status,Data Entrada,Data Input,Data Ativação,Nº P2B,Nº Radar,Tipo Venda,Razão Social,CNPJ,Telefone,Contato,Consultor/Supervisor,Sede,Qtd Acessos,Plano,Região de Validade,Oferta,Pct,Valor Plano,Fatura Total,Port-in,Op. Doadora,Acesso,Data Port-in,Fast Chip,ICCID,Aparelhos,Observação\n';
+    
+    vendas.forEach(v => {
+      csv += `"${v.status}","${v.dataEntrada}","${v.dataInput}","${v.dataAtivacao}","${v.numP2B || v.numPedido || ''}","${v.numRadar || v.numPropostaVenda || ''}","${v.tipoVenda}","${v.razaoSocial}","${v.cnpj}","${v.telefone}","${v.contato}","${v.consultorSupervisor}","${v.sede}","${v.qtdAcessos}","${v.plano || v.planoTe || ''}","${v.regiaoValidade || ''}","${v.oferta || ''}","${v.pct || v.pacoTe || ''}","${v.valorPlano}","${v.faturaTotal}","${v.portabilidade}","${v.operadora || ''}","${v.acesso || ''}","${v.dataAgendamento}","${v.fastChip}","${v.iccid || ''}","${v.aparelhos}","${v.observacao}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `vendas_tim_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    
+    setMensagem('Dados exportados com sucesso!');
+    setTimeout(() => setMensagem(''), 3000);
+  };
+
+  const vendasFiltradas = vendas.filter(v => {
+    const matchFiltro = !filtro || 
+      v.razaoSocial?.toLowerCase().includes(filtro.toLowerCase()) ||
+      v.cnpj?.includes(filtro) ||
+      v.numP2B?.includes(filtro) ||
+      v.numPedido?.includes(filtro) ||
+      v.numRadar?.includes(filtro) ||
+      v.numPropostaVenda?.includes(filtro) ||
+      v.contato?.toLowerCase().includes(filtro.toLowerCase());
+    
+    const matchStatus = filtroStatus === 'Todos' || v.status === filtroStatus;
+    const matchContrato = !filtroContrato || v.cnpj === filtroContrato || v.razaoSocial === filtroContrato;
+    
+    return matchFiltro && matchStatus && matchContrato;
+  });
+
+  // Agrupar vendas por contrato
+  const agruparPorContrato = () => {
+    const grupos = {};
+    vendasFiltradas.forEach(venda => {
+      const chave = venda.cnpj || venda.razaoSocial || 'Sem identificação';
+      if (!grupos[chave]) {
+        grupos[chave] = {
+          razaoSocial: venda.razaoSocial,
+          cnpj: venda.cnpj,
+          linhas: [],
+          totalAcessos: 0,
+          totalFatura: 0
+        };
+      }
+      grupos[chave].linhas.push(venda);
+      grupos[chave].totalAcessos += parseInt(venda.qtdAcessos) || 0;
+      const fatura = parseFloat((venda.faturaTotal || '0').replace(',', '.')) || 0;
+      grupos[chave].totalFatura += fatura;
+    });
+    return grupos;
+  };
+
+  const contratosAgrupados = agruparPorContrato();
+
+  // Gerar cor para cada contrato
+  const getCorContrato = (cnpj) => {
+    const cores = [
+      'bg-blue-50 border-l-4 border-blue-400',
+      'bg-green-50 border-l-4 border-green-400',
+      'bg-purple-50 border-l-4 border-purple-400',
+      'bg-pink-50 border-l-4 border-pink-400',
+      'bg-yellow-50 border-l-4 border-yellow-400',
+      'bg-indigo-50 border-l-4 border-indigo-400',
+      'bg-orange-50 border-l-4 border-orange-400',
+      'bg-cyan-50 border-l-4 border-cyan-400'
+    ];
+    const contratos = Object.keys(contratosAgrupados);
+    const index = contratos.indexOf(cnpj || 'Sem identificação');
+    return cores[index % cores.length];
+  };
+
+  const filtrarPorContrato = (cnpj, razaoSocial) => {
+    setFiltroContrato(cnpj || razaoSocial);
+  };
+
+  const limparFiltroContrato = () => {
+    setFiltroContrato('');
+  };
+
+  const getStatusColor = (status) => {
+    if (status.includes('Entrada')) return 'bg-blue-100 text-blue-800';
+    if (status.includes('Pendente')) return 'bg-yellow-100 text-yellow-800';
+    if (status.includes('Validado')) return 'bg-green-100 text-green-800';
+    if (status.includes('Ativos')) return 'bg-green-100 text-green-800';
+    if (status.includes('Reprovado')) return 'bg-red-100 text-red-800';
+    return 'bg-gray-100 text-gray-800';
+  };
+
+  return (
+    <div className="max-w-full mx-auto p-6 bg-gray-50 min-h-screen">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-6 mb-6 text-white">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <FileText size={36} />
+            <div>
+              <h1 className="text-3xl font-bold">Sistema de Controle de Vendas TIM</h1>
+              <p className="text-blue-100 mt-1">Gerencie todas as suas vendas em um só lugar</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-2xl font-bold">{vendas.length}</p>
+            <p className="text-sm text-blue-100">Vendas Cadastradas</p>
+          </div>
+        </div>
+      </div>
+
+      {mensagem && (
+        <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6 rounded-lg shadow">
+          <p className="text-green-800 font-semibold">{mensagem}</p>
+        </div>
+      )}
+
+      {erro && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-lg shadow">
+          <p className="text-red-800 font-semibold">{erro}</p>
+        </div>
+      )}
+
+      {filtroContrato && (
+        <div className="bg-purple-50 border-l-4 border-purple-400 p-4 mb-6 rounded-lg shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-purple-800 font-semibold flex items-center gap-2">
+                <Eye size={20} />
+                Visualizando linhas do contrato
+              </p>
+              <p className="text-sm text-purple-700 mt-1 font-medium">
+                {contratosAgrupados[filtroContrato]?.razaoSocial || filtroContrato}
+              </p>
+              <p className="text-xs text-purple-600 mt-1">
+                {vendasFiltradas.length} linha(s) encontrada(s)
+              </p>
+            </div>
+            <button
+              onClick={limparFiltroContrato}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-semibold flex items-center gap-2"
+            >
+              <X size={18} />
+              Mostrar Todos
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Search className="inline mr-2" size={16} />
+              Buscar por Razão Social, CNPJ, P2B, Radar ou Contato
+            </label>
+            <input
+              type="text"
+              value={filtro}
+              onChange={(e) => setFiltro(e.target.value)}
+              placeholder="Digite para buscar..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Filter className="inline mr-2" size={16} />
+              Filtrar por Status
+            </label>
+            <select
+              value={filtroStatus}
+              onChange={(e) => setFiltroStatus(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="Todos">Todos os Status</option>
+              {statusPedido.map((status, i) => (
+                <option key={i} value={status}>{status}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-4 mb-6 flex-wrap">
+        <button
+          onClick={adicionarVenda}
+          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md font-semibold"
+        >
+          <Plus size={20} />
+          Nova Venda
+        </button>
+        <button
+          onClick={exportarDados}
+          className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md font-semibold"
+        >
+          <Download size={20} />
+          Exportar CSV
+        </button>
+        <button
+          onClick={() => setMostrarTotalizadores(!mostrarTotalizadores)}
+          className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-md font-semibold"
+        >
+          <BarChart3 size={20} />
+          {mostrarTotalizadores ? 'Ocultar' : 'Mostrar'} Consolidados
+        </button>
+      </div>
+
+      {mostrarTotalizadores && Object.keys(contratosAgrupados).length > 0 && (
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <BarChart3 size={24} className="text-purple-600" />
+              Contratos Consolidados
+            </h2>
+            <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full font-semibold">
+              {Object.keys(contratosAgrupados).length} contrato(s)
+            </span>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-purple-600 text-white">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold">Razão Social</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold">CNPJ</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold">Nº de Linhas</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold">Total Acessos</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold">Fatura Total</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {Object.entries(contratosAgrupados).map(([chave, dados]) => (
+                  <tr 
+                    key={chave}
+                    className={`hover:bg-purple-50 transition-colors ${
+                      filtroContrato === chave ? 'bg-purple-100 ring-2 ring-purple-400' : ''
+                    }`}
+                  >
+                    <td className="px-4 py-3 font-medium text-gray-800">
+                      {dados.razaoSocial || 'Sem nome'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 font-mono text-xs">
+                      {dados.cnpj || 'Sem CNPJ'}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center justify-center bg-blue-100 text-blue-800 font-bold rounded-full px-3 py-1 text-sm">
+                        {dados.linhas.length}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center justify-center bg-green-100 text-green-800 font-bold rounded-full px-3 py-1 text-sm">
+                        {dados.totalAcessos}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold text-purple-600 text-base">
+                      R$ {dados.totalFatura.toFixed(2).replace('.', ',')}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => filtrarPorContrato(dados.cnpj, dados.razaoSocial)}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-xs font-semibold"
+                        title="Ver todas as linhas"
+                      >
+                        <Eye size={14} />
+                        Ver Linhas
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="bg-purple-700 text-white font-bold">
+                <tr>
+                  <td colSpan="2" className="px-4 py-3 text-right">TOTAIS GERAIS:</td>
+                  <td className="px-4 py-3 text-center text-base">
+                    {Object.values(contratosAgrupados).reduce((sum, c) => sum + c.linhas.length, 0)}
+                  </td>
+                  <td className="px-4 py-3 text-center text-base">
+                    {Object.values(contratosAgrupados).reduce((sum, c) => sum + c.totalAcessos, 0)}
+                  </td>
+                  <td className="px-4 py-3 text-right text-base">
+                    R$ {Object.values(contratosAgrupados).reduce((sum, c) => sum + c.totalFatura, 0).toFixed(2).replace('.', ',')}
+                  </td>
+                  <td className="px-4 py-3"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-blue-600 text-white">
+              <tr>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Linha</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Status do Pedido</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Data Entrada (BOC)</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Data Input</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Data Ativação</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Nº P2B</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Nº Radar</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Tipo de Venda</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Razão Social</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">CNPJ</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Telefone</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Contato</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Consultor/Supervisor</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Sede</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Qtd Acessos</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Plano</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Região de Validade</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Oferta</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Pct</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Valor do Plano</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Fatura Total</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Port-in</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Op. Doadora</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Acesso</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Data Port-in</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Fast Chip</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">ICCID</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Aparelhos</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold">Observação</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold sticky right-0 bg-blue-600 z-10">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {vendasFiltradas.length === 0 ? (
+                <tr>
+                  <td colSpan="30" className="px-4 py-8 text-center text-gray-500">
+                    {filtro || filtroStatus !== 'Todos' ? 'Nenhuma venda encontrada com os filtros aplicados' : 'Nenhuma venda cadastrada. Clique em "Nova Venda" para começar.'}
+                  </td>
+                </tr>
+              ) : (
+                vendasFiltradas.map((venda) => {
+                  const estaEditando = editando[venda.id];
+                  const chaveContrato = venda.cnpj || venda.razaoSocial || 'Sem identificação';
+                  const numLinhasContrato = contratosAgrupados[chaveContrato]?.linhas.length || 1;
+                  const corContrato = getCorContrato(chaveContrato);
+                  
+                  return (
+                  <tr key={venda.id} className={`transition-colors hover:opacity-90 ${corContrato}`}>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={venda.linha || '1'}
+                          onChange={(e) => atualizarVenda(venda.id, 'linha', e.target.value)}
+                          disabled={!estaEditando}
+                          className={`w-16 px-2 py-1 text-xs text-center border rounded-lg font-semibold ${
+                            estaEditando 
+                              ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                              : 'bg-gray-50 border-gray-200 text-gray-600'
+                          }`}
+                          placeholder="1"
+                        />
+                        {numLinhasContrato > 1 && (
+                          <span className="text-xs text-gray-500 font-semibold">/ {numLinhasContrato}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <select
+                        value={venda.status}
+                        onChange={(e) => atualizarVenda(venda.id, 'status', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-56 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'focus:ring-2 focus:ring-blue-500' 
+                            : 'bg-gray-50 border-gray-200'
+                        } ${getStatusColor(venda.status)}`}
+                      >
+                        {statusPedido.map((status, i) => (
+                          <option key={i} value={status}>{status}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="date"
+                        value={venda.dataEntrada}
+                        onChange={(e) => atualizarVenda(venda.id, 'dataEntrada', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-36 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="date"
+                        value={venda.dataInput}
+                        onChange={(e) => atualizarVenda(venda.id, 'dataInput', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-36 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="date"
+                        value={venda.dataAtivacao}
+                        onChange={(e) => atualizarVenda(venda.id, 'dataAtivacao', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-36 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="text"
+                        value={venda.numP2B || venda.numPedido || ''}
+                        onChange={(e) => atualizarVenda(venda.id, 'numP2B', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-32 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                        placeholder="Nº P2B"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="text"
+                        value={venda.numRadar || venda.numPropostaVenda || ''}
+                        onChange={(e) => atualizarVenda(venda.id, 'numRadar', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-32 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                        placeholder="Nº Radar"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <select
+                        value={venda.tipoVenda}
+                        onChange={(e) => atualizarVenda(venda.id, 'tipoVenda', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-28 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                      >
+                        {tipoVenda.map((tipo, i) => (
+                          <option key={i} value={tipo}>{tipo}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="text"
+                        value={venda.razaoSocial}
+                        onChange={(e) => atualizarVenda(venda.id, 'razaoSocial', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-56 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                        placeholder="Razão Social"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="text"
+                        value={venda.cnpj}
+                        onChange={(e) => {
+                          if (estaEditando) {
+                            let valor = e.target.value.replace(/\D/g, '');
+                            if (valor.length <= 14) {
+                              if (valor.length > 12) {
+                                valor = valor.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2}).*/, '$1.$2.$3/$4-$5');
+                              } else if (valor.length > 8) {
+                                valor = valor.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4})/, '$1.$2.$3/$4');
+                              } else if (valor.length > 5) {
+                                valor = valor.replace(/^(\d{2})(\d{3})(\d{0,3})/, '$1.$2.$3');
+                              } else if (valor.length > 2) {
+                                valor = valor.replace(/^(\d{2})(\d{0,3})/, '$1.$2');
+                              }
+                              atualizarVenda(venda.id, 'cnpj', valor);
+                            }
+                          }
+                        }}
+                        disabled={!estaEditando}
+                        className={`w-40 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                        placeholder="00.000.000/0000-00"
+                        maxLength="18"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="text"
+                        value={venda.telefone}
+                        onChange={(e) => {
+                          if (estaEditando) {
+                            let valor = e.target.value.replace(/\D/g, '');
+                            if (valor.length <= 11) {
+                              if (valor.length > 6) {
+                                valor = valor.replace(/^(\d{2})(\d{5})(\d{0,4}).*/, '($1) $2-$3');
+                              } else if (valor.length > 2) {
+                                valor = valor.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+                              }
+                              atualizarVenda(venda.id, 'telefone', valor);
+                            }
+                          }
+                        }}
+                        disabled={!estaEditando}
+                        className={`w-36 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                        placeholder="(00) 00000-0000"
+                        maxLength="15"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="text"
+                        value={venda.contato}
+                        onChange={(e) => atualizarVenda(venda.id, 'contato', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-40 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                        placeholder="Nome do contato"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="text"
+                        value={venda.consultorSupervisor}
+                        onChange={(e) => atualizarVenda(venda.id, 'consultorSupervisor', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-40 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                        placeholder="Consultor/Supervisor"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="text"
+                        value={venda.sede}
+                        onChange={(e) => atualizarVenda(venda.id, 'sede', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-32 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                        placeholder="Sede"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="number"
+                        value={venda.qtdAcessos}
+                        onChange={(e) => atualizarVenda(venda.id, 'qtdAcessos', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-20 px-2 py-1 text-xs border rounded-lg text-center ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                        placeholder="0"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <select
+                        value={venda.plano || 'TIM Black Empresa'}
+                        onChange={(e) => atualizarVenda(venda.id, 'plano', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-40 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                      >
+                        {Object.keys(planosTIM).map((plano, i) => (
+                          <option key={i} value={plano}>{plano}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-3 py-2">
+                      <select
+                        value={venda.regiaoValidade || ''}
+                        onChange={(e) => atualizarVenda(venda.id, 'regiaoValidade', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-80 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                      >
+                        <option value="">Selecione uma região</option>
+                        {getRegioesPorPlano(venda.plano || 'TIM Black Empresa').map((regiao, i) => (
+                          <option key={i} value={regiao}>{regiao}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-3 py-2">
+                      <select
+                        value={venda.oferta || ''}
+                        onChange={(e) => atualizarVenda(venda.id, 'oferta', e.target.value)}
+                        disabled={!estaEditando || !venda.regiaoValidade}
+                        className={`w-64 px-2 py-1 text-xs border rounded-lg ${
+                          !estaEditando || !venda.regiaoValidade
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                            : 'bg-white border-gray-300 focus:ring-2 focus:ring-blue-500'
+                        }`}
+                      >
+                        <option value="">Selecione uma oferta</option>
+                        {getOfertasPorPlanoRegiao(venda.plano || 'TIM Black Empresa', venda.regiaoValidade).map((oferta, i) => (
+                          <option key={i} value={oferta}>{oferta}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="text"
+                        value={venda.pct || venda.pacoTe || ''}
+                        onChange={(e) => atualizarVenda(venda.id, 'pct', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-24 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                        placeholder="10GB"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="text"
+                        value={venda.valorPlano}
+                        onChange={(e) => {
+                          if (estaEditando) {
+                            const valor = e.target.value.replace(/\D/g, '');
+                            if (valor === '') {
+                              atualizarVenda(venda.id, 'valorPlano', '');
+                            } else {
+                              const numero = (parseInt(valor) / 100).toFixed(2);
+                              atualizarVenda(venda.id, 'valorPlano', numero.replace('.', ','));
+                            }
+                          }
+                        }}
+                        disabled={!estaEditando}
+                        className={`w-28 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                        placeholder="0,00"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="text"
+                        value={venda.faturaTotal}
+                        readOnly
+                        className="w-28 px-2 py-1 text-xs border border-gray-300 rounded-lg bg-blue-50 font-semibold text-blue-800 cursor-not-allowed"
+                        placeholder="R$ 0,00"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <select
+                        value={venda.portabilidade}
+                        onChange={(e) => atualizarVenda(venda.id, 'portabilidade', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-24 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                      >
+                        <option value="SIM">SIM</option>
+                        <option value="NÃO">NÃO</option>
+                      </select>
+                    </td>
+                    <td className="px-3 py-2">
+                      <select
+                        value={venda.operadora || ''}
+                        onChange={(e) => atualizarVenda(venda.id, 'operadora', e.target.value)}
+                        disabled={!estaEditando || venda.portabilidade === 'NÃO'}
+                        className={`w-32 px-2 py-1 text-xs border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                          !estaEditando || venda.portabilidade === 'NÃO'
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                            : 'bg-white border-gray-300'
+                        }`}
+                      >
+                        <option value="">Selecione</option>
+                        <option value="CLARO">CLARO</option>
+                        <option value="VIVO">VIVO</option>
+                        <option value="OI">OI</option>
+                      </select>
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="text"
+                        value={venda.acesso || ''}
+                        onChange={(e) => {
+                          if (estaEditando) {
+                            let valor = e.target.value.replace(/\D/g, '');
+                            if (valor.length <= 11) {
+                              if (valor.length > 6) {
+                                valor = valor.replace(/^(\d{2})(\d{5})(\d{0,4}).*/, '$1 $2-$3');
+                              } else if (valor.length > 2) {
+                                valor = valor.replace(/^(\d{2})(\d{0,5})/, '$1 $2');
+                              }
+                              atualizarVenda(venda.id, 'acesso', valor);
+                            }
+                          }
+                        }}
+                        disabled={!estaEditando}
+                        className={`w-36 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                        placeholder="61 98168-4455"
+                        maxLength="14"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="date"
+                        value={venda.dataAgendamento}
+                        onChange={(e) => atualizarVenda(venda.id, 'dataAgendamento', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-36 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <select
+                        value={venda.fastChip || 'NÃO'}
+                        onChange={(e) => atualizarVenda(venda.id, 'fastChip', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-24 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                      >
+                        <option value="SIM">SIM</option>
+                        <option value="NÃO">NÃO</option>
+                      </select>
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="text"
+                        value={venda.iccid || ''}
+                        onChange={(e) => atualizarVenda(venda.id, 'iccid', e.target.value)}
+                        disabled={!estaEditando || venda.fastChip === 'NÃO'}
+                        className={`w-40 px-2 py-1 text-xs border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                          !estaEditando || venda.fastChip === 'NÃO' 
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' 
+                            : 'bg-white border-gray-300'
+                        }`}
+                        placeholder="ICCID"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <select
+                        value={venda.aparelhos || 'COMODATO'}
+                        onChange={(e) => atualizarVenda(venda.id, 'aparelhos', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-32 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                      >
+                        <option value="COMODATO">COMODATO</option>
+                        <option value="OI">OI</option>
+                        <option value="VF 24X">VF 24X</option>
+                      </select>
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="text"
+                        value={venda.observacao}
+                        onChange={(e) => atualizarVenda(venda.id, 'observacao', e.target.value)}
+                        disabled={!estaEditando}
+                        className={`w-64 px-2 py-1 text-xs border rounded-lg ${
+                          estaEditando 
+                            ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 bg-white' 
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                        placeholder="Observações..."
+                      />
+                    </td>
+                    <td className="px-3 py-2 sticky right-0 z-10 bg-white">
+                      <div className="flex gap-1 items-center justify-center">
+                        {estaEditando ? (
+                          <>
+                            <button
+                              onClick={() => salvarEdicao(venda.id)}
+                              className="text-green-600 hover:text-green-800 transition-colors p-2 rounded-lg hover:bg-green-100"
+                              title="Salvar"
+                            >
+                              <Check size={20} />
+                            </button>
+                            <button
+                              onClick={() => cancelarEdicao(venda.id)}
+                              className="text-gray-600 hover:text-gray-800 transition-colors p-2 rounded-lg hover:bg-gray-200"
+                              title="Cancelar"
+                            >
+                              <X size={20} />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => toggleEditar(venda.id)}
+                              className="text-blue-600 hover:text-blue-800 transition-colors p-2 rounded-lg hover:bg-blue-100"
+                              title="Editar"
+                            >
+                              <Edit2 size={18} />
+                            </button>
+                            <button
+                              onClick={() => duplicarVenda(venda)}
+                              className="text-purple-600 hover:text-purple-800 transition-colors p-2 rounded-lg hover:bg-purple-100"
+                              title="Duplicar linha"
+                            >
+                              <Copy size={18} />
+                            </button>
+                            <button
+                              onClick={() => removerVenda(venda.id)}
+                              className="text-red-600 hover:text-red-800 transition-colors p-2 rounded-lg hover:bg-red-100"
+                              title="Excluir"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h2 className="text-xl font-bold text-gray-800 mb-4">Resumo de Vendas</h2>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600 mb-1">Total de Vendas</p>
+            <p className="text-3xl font-bold text-blue-600">{vendas.length}</p>
+          </div>
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600 mb-1">Contratos Únicos</p>
+            <p className="text-3xl font-bold text-purple-600">{Object.keys(contratosAgrupados).length}</p>
+          </div>
+          <div className="bg-green-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600 mb-1">Contratos Ativos</p>
+            <p className="text-3xl font-bold text-green-600">
+              {vendas.filter(v => v.status.includes('Ativos')).length}
+            </p>
+          </div>
+          <div className="bg-yellow-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600 mb-1">Pendentes</p>
+            <p className="text-3xl font-bold text-yellow-600">
+              {vendas.filter(v => v.status.includes('Pendente')).length}
+            </p>
+          </div>
+          <div className="bg-orange-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600 mb-1">Total Acessos</p>
+            <p className="text-3xl font-bold text-orange-600">
+              {vendas.reduce((sum, v) => sum + (parseInt(v.qtdAcessos) || 0), 0)}
+            </p>
+          </div>
+        </div>
+        
+        <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+          <h3 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+            <BarChart3 size={18} />
+            Como usar o sistema de múltiplas linhas:
+          </h3>
+          <ul className="text-sm text-gray-700 space-y-1">
+            <li>• <strong>Cores de fundo nas linhas</strong>: Cada contrato tem uma cor diferente para fácil identificação</li>
+            <li>• <strong>Campo Plano</strong>: Selecione o plano TIM desejado (TIM Black Empresa, TIM Controle, TIM Ultrafibra, Serviços)</li>
+            <li>• <strong>Campo Região de Validade</strong>: Após selecionar o Plano, escolha a região/UF/DDD onde o plano será aplicado</li>
+            <li>• <strong>Campo Oferta</strong>: Após selecionar Plano e Região, escolha a oferta específica disponível para aquela combinação</li>
+            <li>• <strong>Sistema em cascata</strong>: Plano → Região → Oferta (cada escolha define as opções seguintes)</li>
+            <li>• <strong>Tabela de Contratos Consolidados</strong>: Mostra resumo com total de linhas, acessos e fatura de cada contrato</li>
+            <li>• <strong>Botão "Ver Linhas"</strong>: Na tabela de consolidados, filtra para mostrar apenas aquele contrato</li>
+            <li>• <strong>Campo Linha "1/3"</strong>: Mostra qual linha é essa e quantas linhas o contrato possui</li>
+            <li>• <strong>Botão Duplicar (📋)</strong>: Cria uma nova linha do contrato incrementando o número automaticamente</li>
+            <li>• <strong>Botão Editar (✏️)</strong>: Habilita edição dos campos da linha</li>
+            <li>• <strong>Botão Excluir (🗑️)</strong>: Remove a linha específica</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SistemaVendas;

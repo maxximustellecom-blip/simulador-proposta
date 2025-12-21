@@ -388,6 +388,7 @@ th, td {
   color: var(--text) !important;
   padding: 0.65rem 0.9rem;
   text-align: left;
+  font-size: 10pt;
 }
 table thead th:last-child,
 table tbody td:last-child {

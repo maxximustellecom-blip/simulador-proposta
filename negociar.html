@@ -143,7 +143,7 @@
                     <td>${n.creator && n.creator.name ? n.creator.name : '-'}</td>
                     <td class="col-actions">
                         <div class="table-actions">
-                            <button type="button" class="btn btn-ghost" title="Configurar" onclick="configurarNegociacao(${n.id})"><i data-lucide="settings"></i><span>Configurar</span></button>
+                            <button type="button" class="btn btn-ghost" title="Configurar" onclick="configurarNegociacao(${n.id})"><i data-lucide="settings"></i></button>
                             <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="editarNegociacao(${n.id})" ${(__userRole !== 'admin' && String(n.status) === 'Concluída') ? 'disabled' : ''}><i data-lucide="edit-3"></i></button>
                             <button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="excluirNegociacao(${n.id})" ${(__userRole !== 'admin' && String(n.status) === 'Concluída') ? 'disabled' : ''} style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
                         </div>
