@@ -35,6 +35,7 @@
   var simOpen = isActive('simular') || isActive('historico-simulacoes');
   var ofertaOpen = isActive('categorias') || isActive('produtos');
   var customOpen = isActive('categoria-customizada') || isActive('produto-customizado');
+  var adminOpen = isActive('usuarios') || isActive('perfis-acesso');
   var sidebarHtml =
     '<nav class="sidebar">' +
       '<div class="sidebar-inner">' +
@@ -73,7 +74,14 @@
           '<a href="produto-customizado.html" class="nav-sublink' + (isActive('produto-customizado') ? ' active' : '') + '"><i data-lucide="shopping-cart"></i><span>Ofertas</span></a>' +
         '</div>' +
         '<div class="nav-title" id="adminTitle" style="display:' + (isAdmin ? 'block' : 'none') + '">Admin</div>' +
-        '<a id="navUsers" href="usuarios.html" class="nav-link' + (isActive('usuarios') ? ' active' : '') + '" style="display:' + (isAdmin ? 'flex' : 'none') + '"><i data-lucide="users"></i><span>Usuários</span></a>' +
+        '<button id="adminToggle" class="nav-dropdown' + (adminOpen ? ' open' : '') + '" type="button" style="display:' + (isAdmin ? 'flex' : 'none') + ';">' +
+          '<div class="left"><i data-lucide="shield-check"></i><span>Administração</span></div>' +
+          '<div class="chev"><i data-lucide="chevron-down"></i></div>' +
+        '</button>' +
+        '<div id="adminMenu" class="nav-subgroup" style="display:' + ((isAdmin && adminOpen) ? 'flex' : 'none') + ';">' +
+          '<a href="usuarios.html" class="nav-sublink' + (isActive('usuarios') ? ' active' : '') + '"><i data-lucide="users"></i><span>Usuários</span></a>' +
+          '<a href="perfis-acesso.html" class="nav-sublink' + (isActive('perfis-acesso') ? ' active' : '') + '"><i data-lucide="shield"></i><span>Perfis de Acesso</span></a>' +
+        '</div>' +
       '</div>' +
     '</nav>';
   var bottomHtml =
@@ -227,6 +235,21 @@
       } else {
         customBtn.classList.add('open');
         customMenu.style.display = 'flex';
+      }
+      if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    });
+  }
+  var adminBtn = document.getElementById('adminToggle');
+  var adminMenu = document.getElementById('adminMenu');
+  if (adminBtn && adminMenu) {
+    adminBtn.addEventListener('click', function () {
+      var isOpen = adminBtn.classList.contains('open');
+      if (isOpen) {
+        adminBtn.classList.remove('open');
+        adminMenu.style.display = 'none';
+      } else {
+        adminBtn.classList.add('open');
+        adminMenu.style.display = 'flex';
       }
       if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
     });

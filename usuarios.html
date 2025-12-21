@@ -29,7 +29,8 @@
                                     <th>Nome</th>
                                     <th>Email</th>
                                     <th>Matrícula</th>
-                                    <th>Perfil</th>
+                                    <th>Tipo</th>
+                                    <th>Perfil de Acesso</th>
                                     <th class="col-actions">Ações</th>
                                 </tr>
                             </thead>
@@ -69,10 +70,16 @@
                 </div>
                 <div class="grid-2" style="margin-top:0.75rem;">
                     <div>
-                        <div class="label">Perfil</div>
+                        <div class="label">Tipo</div>
                         <select id="uRole" class="select">
                             <option value="user">Usuário</option>
                             <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="label">Perfil de Acesso</div>
+                        <select id="uProfileId" class="select">
+                            <option value="">Selecione...</option>
                         </select>
                     </div>
                 </div>
@@ -103,10 +110,16 @@
                     <input id="editMatricula" class="input" type="text" placeholder="Matrícula">
                 </div>
                 <div class="section" style="padding:0.8rem; margin-top:0.6rem;">
-                    <div class="label">Perfil</div>
+                    <div class="label">Tipo</div>
                     <select id="editRole" class="select">
                         <option value="user">Usuário</option>
                         <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="section" style="padding:0.8rem; margin-top:0.6rem;">
+                    <div class="label">Perfil de Acesso</div>
+                    <select id="editProfileId" class="select">
+                        <option value="">Selecione...</option>
                     </select>
                 </div>
                 <div class="section" style="padding:0.8rem; margin-top:0.6rem;">
@@ -190,6 +203,7 @@
                     <td>${u.email}</td>
                     <td>${u.matricula || '-'}</td>
                     <td>${u.role}</td>
+                    <td>${u.profile ? u.profile.name : '-'}</td>
                     <td class="col-actions" style="min-width:140px;">
                         <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditarUsuario(${u.id})"><i data-lucide="edit-3"></i></button>
                         ${String(u.role) === 'admin' ? '' : `<button type="button" class="btn btn-primary btn-icon" title="Excluir" onclick="abrirExcluirUsuario(${u.id})"><i data-lucide='trash-2'></i></button>`}
@@ -215,6 +229,7 @@
             document.getElementById('uMatricula').value = '';
             document.getElementById('uPassword').value = '';
             document.getElementById('uRole').value = 'user';
+            document.getElementById('uProfileId').value = '';
         }
         function abrirEditarUsuario(id) {
             const u = getUserById(id);
@@ -224,6 +239,7 @@
             document.getElementById('editEmail').value = u.email || '';
             document.getElementById('editMatricula').value = u.matricula || '';
             document.getElementById('editRole').value = u.role || 'user';
+            document.getElementById('editProfileId').value = (u.profile && u.profile.id) ? u.profile.id : '';
             document.getElementById('editPassword').value = '';
             document.getElementById('editUserModal').classList.add('show');
         }
@@ -237,9 +253,10 @@
             const email = (document.getElementById('editEmail').value || '').trim();
             const matricula = (document.getElementById('editMatricula').value || '').trim();
             const role = document.getElementById('editRole').value || 'user';
+            const profile_id = document.getElementById('editProfileId').value || null;
             const password = (document.getElementById('editPassword').value || '').trim();
             if (!name || !email) { toast('Preencha nome e email', 'error'); return; }
-            const payload = { name, email, role, matricula };
+            const payload = { name, email, role, matricula, profile_id };
             if (password) payload.password = password;
             try {
                 await api('/auth/users/' + __editUserId, { method: 'PUT', body: JSON.stringify(payload) });
@@ -280,12 +297,13 @@
             const matricula = (document.getElementById('uMatricula').value || '').trim();
             const password = (document.getElementById('uPassword').value || '').trim();
             const role = document.getElementById('uRole').value || 'user';
+            const profile_id = document.getElementById('uProfileId').value || null;
             if (!name || !email || !password) {
                 toast('Preencha nome, email e senha', 'error');
                 return;
             }
             try {
-                await api('/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password, role, matricula }) });
+                await api('/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password, role, matricula, profile_id }) });
                 toast('Usuário cadastrado', 'success');
                 limparFormulario();
                 try { document.getElementById('cadastroUserModal').classList.remove('show'); } catch {}
@@ -318,9 +336,20 @@
                     window.location.href = 'login.html';
                 });
             }
+            await carregarPerfisSelect();
             await carregarUsuarios();
             if (window.lucide && typeof window.lucide.createIcons === 'function') { window.lucide.createIcons(); }
         });
+        
+        async function carregarPerfisSelect() {
+            try {
+                const list = await api('/access-profiles', { method: 'GET' });
+                const profiles = Array.isArray(list) ? list : [];
+                const opts = '<option value="">Selecione...</option>' + profiles.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+                document.getElementById('uProfileId').innerHTML = opts;
+                document.getElementById('editProfileId').innerHTML = opts;
+            } catch {}
+        }
     </script>
 </body>
 </html>

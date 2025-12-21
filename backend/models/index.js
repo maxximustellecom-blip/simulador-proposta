@@ -12,9 +12,13 @@ import CustomProduct from './CustomProduct.js';
 import NegociacaoPropostaCustomizada from './NegociacaoPropostaCustomizada.js';
 import NegociacaoPropostaAnexos from './NegociacaoPropostaAnexos.js';
 import NegociacaoPropostaCustomizadaAnexos from './NegociacaoPropostaCustomizadaAnexos.js';
+import AccessProfile from './AccessProfile.js';
 
 Simulation.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 User.hasMany(Simulation, { foreignKey: 'created_by', as: 'simulations' });
+
+User.belongsTo(AccessProfile, { foreignKey: 'profile_id', as: 'profile' });
+AccessProfile.hasMany(User, { foreignKey: 'profile_id', as: 'users' });
 
 Negotiation.hasOne(NegociacaoProposta, { foreignKey: 'negotiation_id', as: 'proposal' });
 NegociacaoProposta.belongsTo(Negotiation, { foreignKey: 'negotiation_id', as: 'negotiation' });
@@ -27,4 +31,4 @@ NegociacaoPropostaAnexos.belongsTo(Negotiation, { foreignKey: 'negotiation_id', 
 Negotiation.hasMany(NegociacaoPropostaCustomizadaAnexos, { foreignKey: 'negotiation_id', as: 'customAttachments' });
 NegociacaoPropostaCustomizadaAnexos.belongsTo(Negotiation, { foreignKey: 'negotiation_id', as: 'negotiation' });
 
-export { sequelize, User, Client, Simulation, Sale, Category, Product, Negotiation, NegociacaoProposta, CustomCategory, CustomProduct, NegociacaoPropostaCustomizada, NegociacaoPropostaAnexos, NegociacaoPropostaCustomizadaAnexos };
+export { sequelize, User, Client, Simulation, Sale, Category, Product, Negotiation, NegociacaoProposta, CustomCategory, CustomProduct, NegociacaoPropostaCustomizada, NegociacaoPropostaAnexos, NegociacaoPropostaCustomizadaAnexos, AccessProfile };
