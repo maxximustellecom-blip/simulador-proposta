@@ -278,6 +278,16 @@ html, body {
   border-color: rgba(239,68,68,0.35);
   color: #EF4444;
 }
+.chip-status.pending {
+  background: rgba(245,158,11,0.12);
+  border-color: rgba(245,158,11,0.35);
+  color: #F59E0B;
+}
+.chip-status.neutral {
+  background: rgba(107,114,128,0.12);
+  border-color: rgba(107,114,128,0.35);
+  color: #6B7280;
+}
 
 .kpis {
   display: grid;

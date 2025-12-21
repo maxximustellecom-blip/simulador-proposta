@@ -71,6 +71,11 @@
             background: white;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
+
+        .table-container-principal {
+            overflow-x: auto;
+        }
+
         table {
             width: 100%;
             border-collapse: separate; 
@@ -91,14 +96,6 @@
             position: sticky;
             top: 0;
             z-index: 10;
-        }
-        
-        /* Sticky Actions Column */
-        th:last-child, td:last-child {
-            position: sticky;
-            right: 0;
-            z-index: 5;
-            border-left: 1px solid var(--border);
         }
 
         tr { transition: background-color 0.2s; }
@@ -193,7 +190,6 @@
             <div class="card-head">
                 <div class="card-title">
                     <span>Pedidos de Vendas</span>
-                    <span class="chip" id="totalVendasCount">0</span>
                     <span class="chip">Somente Admin</span>
                 </div>
 
@@ -204,63 +200,36 @@
                 <div class="filters-container">
                     <div class="filter-group" style="flex: 2;">
                         <label class="label"><i data-lucide="search" size="14"></i> Buscar</label>
-                        <input type="text" id="filtroBusca" class="input" placeholder="Buscar por Razão Social, CNPJ, P2B, Radar ou Contato" oninput="filtrarVendas()">
-                    </div>
-                    <div class="filter-group">
-                        <label class="label"><i data-lucide="filter" size="14"></i> Status</label>
-                        <select id="filtroStatus" class="select" onchange="filtrarVendas()">
-                            <option value="Todos">Todos os Status</option>
-                            <!-- Populated by JS -->
-                        </select>
+                        <input type="text" id="filtroBusca" class="input" placeholder="Buscar por Razão Social ou CNPJ" oninput="filtrarBackend()">
                     </div>
                 </div>
             </section>
 
             <!-- Backend Table (Moved Inside Card) -->
             <section class="section" style="margin-top: 20px;">
-                <table id="tabelaBackend">
-                    <thead>
-                        <tr>
-                            <th>CNPJ</th>
-                            <th>Tipo</th>
-                            <th>Proposta</th>
-                            <th>Valor</th>
-                            <th>Status</th>
-                            <th>Data</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbodyBackend">
-                        <tr><td colspan="7" class="text-center p-4">Carregando...</td></tr>
-                    </tbody>
-                </table>
-            </div>
+                <div class="table-container-principal">
+                    <table id="tabelaPrincipal">
+                        <thead>
+                            <tr>
+                                <th style="min-width: 200px;">Razão Social</th>
+                                <th style="min-width: 100px;">Total Acessos</th>
+                                <th style="min-width: 100px;">Fatura Total</th>
+                                <th style="min-width: 120px;">Status Proposta</th>
+                                <th style="min-width: 120px;">Status Pedido</th>
+                                <th style="min-width: 120px;">Data</th>
+                                <th style="min-width: 100px;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyBackend">
+                            <tr><td colspan="8" class="text-center p-4">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
             
         </div>
 
-        <!-- Card Pedidos Backend (Concluídos) - REMOVED (Moved inside first card) -->
-
-        <!-- Contract Filter Banner -->
-        <div id="filtroContratoBanner" class="bg-purple-50 border-l-4 border-purple-400 p-4 mb-6 rounded-lg shadow-lg" style="display: none;">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-purple-800 font-semibold flex items-center gap-2">
-                        <i data-lucide="eye" size="20"></i>
-                        Visualizando linhas do contrato
-                    </p>
-                    <p id="nomeContratoFiltro" class="text-sm text-purple-700 mt-1 font-medium"></p>
-                    <p id="countContratoFiltro" class="text-xs text-purple-600 mt-1"></p>
-                </div>
-                <button onclick="limparFiltroContrato()" class="btn btn-purple btn-sm">
-                    <i data-lucide="x" size="18"></i> Mostrar Todos
-                </button>
-            </div>
-        </div>
-
-        <!-- Messages -->
-        <div id="mensagemContainer"></div>
-
-        <!-- Action Buttons -->
         <div class="action-buttons mb-6">
             <button class="btn btn-blue" onclick="adicionarVenda()">
                 <i data-lucide="plus" size="18"></i> Nova Venda
@@ -270,41 +239,13 @@
             </button>
         </div>
 
-        <!-- Consolidated Table (Hidden by default) -->
-        <div id="consolidadosContainer" class="consolidados-container">
-            <div class="consolidados-header">
-                <h2 class="text-purple-800 font-bold flex items-center gap-2" style="margin:0;">
-                    <i data-lucide="bar-chart-3" class="text-purple-600"></i>
-                    Contratos Consolidados
-                </h2>
-                <span id="totalContratosCount" class="text-sm text-purple-800 bg-white px-3 py-1 rounded-full font-semibold"></span>
-            </div>
-            <div class="table-container">
-                <table class="consolidados-table">
-                    <thead>
-                        <tr>
-                            <th>Razão Social</th>
-                            <th>CNPJ</th>
-                            <th class="text-center">Nº de Linhas</th>
-                            <th class="text-center">Total Acessos</th>
-                            <th class="text-right">Fatura Total</th>
-                            <th class="text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbodyConsolidados"></tbody>
-                    <tfoot class="bg-purple-800 text-white font-bold">
-                        <tr id="tfootConsolidados"></tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div>
-
+        <!-- Consolidated Table (Hidden by default) - REMOVED -->
+        
         <!-- Main Table -->
         <div class="table-container">
             <table id="tabelaVendas">
                 <thead>
                     <tr>
-                        <th style="min-width: 80px;">Linha</th>
                         <th style="min-width: 180px;">Status do Pedido</th>
                         <th style="min-width: 120px;">Data Entrada</th>
                         <th style="min-width: 120px;">Data Input</th>
@@ -345,6 +286,8 @@
     <script>
         const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
         // const API_BASE = 'http://localhost:3001';
+        let backendData = []; // Store fetched data for filtering
+
         async function api(path, options = {}) {
             const authRaw = localStorage.getItem('authUser');
             let headers = { 'Content-Type': 'application/json' };
@@ -436,13 +379,14 @@
         const getRegioesPorPlano = (plano) => Object.keys(planosTIM[plano] || {});
         const getOfertasPorPlanoRegiao = (plano, regiao) => (planosTIM[plano] && planosTIM[plano][regiao]) ? planosTIM[plano][regiao] : [];
 
-        const getStatusColor = (status) => {
-            if (!status) return 'bg-gray-100 text-gray-800';
-            if (status.includes('Entrada')) return 'bg-blue-100 text-blue-800';
-            if (status.includes('Pendente')) return 'bg-yellow-100 text-yellow-800';
-            if (status.includes('Validado') || status.includes('Ativos')) return 'bg-green-100 text-green-800';
-            if (status.includes('Reprovado')) return 'bg-red-100 text-red-800';
-            return 'bg-gray-100 text-gray-800';
+        const getStatusClass = (status) => {
+            if (!status) return 'chip-status neutral';
+            const s = status.toLowerCase();
+            if (s.includes('entrada') || s.includes('andamento')) return 'chip-status in-progress';
+            if (s.includes('pendente') || s.includes('pendência') || s.includes('pendencia') || s.includes('aguardando')) return 'chip-status pending';
+            if (s.includes('validado') || s.includes('ativos') || s.includes('concluído') || s.includes('concluido') || s.includes('concluída')) return 'chip-status concluded';
+            if (s.includes('reprovado') || s.includes('cancelado') || s.includes('cancelada') || s.includes('devolver')) return 'chip-status canceled';
+            return 'chip-status neutral';
         };
 
         const isVendaMatch = (v, busca, statusFiltro) => {
@@ -469,15 +413,29 @@
             return cores[Math.abs(hash) % cores.length];
         };
 
-        const showMessage = (msg, type = 'success') => {
-            const container = document.getElementById('mensagemContainer');
-            const color = type === 'success' ? 'green' : 'red';
-            container.innerHTML = `
-                <div class="bg-${color}-50 border-l-4 border-${color}-400 p-4 mb-6 rounded-lg shadow">
-                    <p class="text-${color}-800 font-semibold">${msg}</p>
+        const toast = (msg, type = 'success') => {
+            const t = document.getElementById('toast');
+            if (!t) return;
+            // Reset classes but keep 'toast'
+            t.className = 'toast';
+            t.style.display = 'block';
+            
+            // Icon and Color based on type
+            const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+            const colorClass = type === 'success' ? 'text-green-600' : 'text-red-600';
+            
+            t.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i data-lucide="${icon}" class="${colorClass}"></i>
+                    <span class="font-medium">${msg}</span>
                 </div>
             `;
-            setTimeout(() => container.innerHTML = '', 3000);
+            
+            if (window.lucide) window.lucide.createIcons();
+
+            setTimeout(() => {
+                t.style.display = 'none';
+            }, 3000);
         };
 
         // --- BACKEND INTEGRATION ---
@@ -485,30 +443,56 @@
             try {
                 // Endpoint updated to use the dedicated route for concluded sales
                 const data = await api('/pedidos-venda/concluidos');
-                renderBackendTable(data);
+                backendData = data || []; // Store data
+                renderBackendTable(backendData);
             } catch (error) {
                 console.error(error);
                 document.getElementById('tbodyBackend').innerHTML = 
-                    '<tr><td colspan="7" class="text-center p-4 text-red-600">Erro ao carregar dados do backend.</td></tr>';
+                    '<tr><td colspan="8" class="text-center p-4 text-red-600">Erro ao carregar dados do backend.</td></tr>';
             }
         }
 
         function renderBackendTable(data) {
             const tbody = document.getElementById('tbodyBackend');
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4">Nenhum pedido concluído encontrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4">Nenhum pedido concluído encontrado.</td></tr>';
                 return;
             }
             tbody.innerHTML = data.map(item => `
                 <tr>
-                    <td>${item.cnpj}</td>
-                    <td>${item.tipo}</td>
-                    <td>${item.proposta}</td>
+                    <td>${item.razaoSocial || item.cliente || '-'}</td>
+                    <td>${item.totalAcessos || 0}</td>
                     <td>${(item.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                    <td><span class="status-badge bg-green-100 text-green-800">${item.status}</span></td>
-                    <td>${item.data}</td>
+                    <td><span class="${getStatusClass(item.status)}">${item.status || '-'}</span></td>
+                    <td><span class="chip-status in-progress">Entrada</span></td>
+                    <td>${item.data || '-'}</td>
+                    <td>
+                        <button class="btn btn-ghost btn-sm" title="Operar" style="gap: 5px;" onclick="operarPedido('${item.id}')">
+                            <i data-lucide="settings"></i>Operar
+                        </button>
+                    </td>
                 </tr>
             `).join('');
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        function filtrarBackend() {
+            const busca = document.getElementById('filtroBusca').value.toLowerCase();
+            const filtered = backendData.filter(item => {
+                const searchStr = (
+                    (item.razaoSocial || '') + 
+                    (item.cliente || '') + 
+                    (item.cnpj || '') + 
+                    (item.status || '') +
+                    (item.tipo || '')
+                ).toLowerCase();
+                return searchStr.includes(busca);
+            });
+            renderBackendTable(filtered);
+        }
+
+        function operarPedido(id) {
+            showMessage('Operação iniciada para o pedido: ' + id);
         }
 
         // --- CORE LOGIC ---
@@ -517,15 +501,6 @@
             const stored = localStorage.getItem('vendas_data');
             if (stored) vendas = JSON.parse(stored);
             
-            // Populate Status Filter
-            const select = document.getElementById('filtroStatus');
-            statusPedido.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s;
-                opt.textContent = s;
-                select.appendChild(opt);
-            });
-
             renderTable();
             lucide.createIcons();
         }
@@ -672,70 +647,9 @@
         }
 
         function updateConsolidados() {
-            const grupos = {};
-            const filtroBusca = document.getElementById('filtroBusca').value.toLowerCase();
-            const filtroStatus = document.getElementById('filtroStatus').value;
-            
-            // Filter logic reused
-            const filtered = vendas.filter(v => isVendaMatch(v, filtroBusca, filtroStatus));
-
-            filtered.forEach(venda => {
-                const chave = venda.cnpj || venda.razaoSocial || 'Sem identificação';
-                if (!grupos[chave]) {
-                    grupos[chave] = {
-                        razaoSocial: venda.razaoSocial,
-                        cnpj: venda.cnpj,
-                        linhas: [],
-                        totalAcessos: 0,
-                        totalFatura: 0
-                    };
-                }
-                grupos[chave].linhas.push(venda);
-                grupos[chave].totalAcessos += parseInt(venda.qtdAcessos) || 0;
-                const fatura = parseFloat((String(venda.faturaTotal || '0')).replace(',', '.')) || 0;
-                grupos[chave].totalFatura += fatura;
-            });
-
-            const tbody = document.getElementById('tbodyConsolidados');
-            tbody.innerHTML = '';
-            
-            let totalLinhas = 0, totalAcessos = 0, totalFatura = 0;
-
-            Object.entries(grupos).forEach(([chave, dados]) => {
-                totalLinhas += dados.linhas.length;
-                totalAcessos += dados.totalAcessos;
-                totalFatura += dados.totalFatura;
-
-                const tr = document.createElement('tr');
-                if (filtroContrato === chave) tr.className = 'bg-purple-100';
-                
-                tr.innerHTML = `
-                    <td class="font-bold">${dados.razaoSocial || 'Sem nome'}</td>
-                    <td class="text-sm font-mono text-gray-600">${dados.cnpj || 'Sem CNPJ'}</td>
-                    <td class="text-center"><span class="bg-blue-100 text-blue-800 rounded-full px-2 py-1 text-xs font-bold">${dados.linhas.length}</span></td>
-                    <td class="text-center"><span class="bg-green-100 text-green-800 rounded-full px-2 py-1 text-xs font-bold">${dados.totalAcessos}</span></td>
-                    <td class="text-right font-bold text-purple-800">R$ ${dados.totalFatura.toFixed(2).replace('.', ',')}</td>
-                    <td class="text-center">
-                        <button onclick="filtrarPorContrato('${chave.replace(/'/g, "\\'")}')" class="btn btn-purple btn-sm" title="Ver Linhas">
-                            <i data-lucide="eye" size="14"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            document.getElementById('totalContratosCount').textContent = `${Object.keys(grupos).length} contrato(s)`;
-            
-            const tfoot = document.getElementById('tfootConsolidados');
-            tfoot.innerHTML = `
-                <td colspan="2" class="text-right">TOTAIS GERAIS:</td>
-                <td class="text-center">${totalLinhas}</td>
-                <td class="text-center">${totalAcessos}</td>
-                <td class="text-right">R$ ${totalFatura.toFixed(2).replace('.', ',')}</td>
-                <td></td>
-            `;
-            
-            lucide.createIcons();
+            // Functionality removed as per user request (consolidadosContainer removed)
+            // Keeping empty function if called elsewhere to prevent errors, 
+            // or we can remove calls to it.
         }
 
         function filtrarPorContrato(chave) {
@@ -749,6 +663,7 @@
         }
 
         function filtrarVendas() {
+            // Deprecated for main table filtering, but kept if needed for other logic
             renderTable();
         }
 
@@ -756,25 +671,13 @@
             const tbody = document.getElementById('tbodyVendas');
             tbody.innerHTML = '';
             
-            const busca = document.getElementById('filtroBusca').value.toLowerCase();
-            const statusFiltro = document.getElementById('filtroStatus').value;
-            
+            // Removed filtering logic as requested
             let filtered = vendas.filter(v => {
-                if (!isVendaMatch(v, busca, statusFiltro)) return false;
                 return !filtroContrato || (v.cnpj || v.razaoSocial || 'Sem identificação') === filtroContrato;
             });
 
-            document.getElementById('totalVendasCount').textContent = filtered.length;
 
-            // Update Contrato Banner
-            const banner = document.getElementById('filtroContratoBanner');
-            if (filtroContrato) {
-                banner.style.display = 'block';
-                document.getElementById('nomeContratoFiltro').textContent = filtroContrato;
-                document.getElementById('countContratoFiltro').textContent = `${filtered.length} linha(s) encontrada(s)`;
-            } else {
-                banner.style.display = 'none';
-            }
+            // Banner removed
 
             if (filtered.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="30" class="text-center p-6 text-gray-500">Nenhuma venda encontrada</td></tr>';
@@ -812,17 +715,13 @@
                 // Columns matching React example
                 tr.innerHTML = `
                     <td>
-                        <div class="flex items-center gap-1">
-                            <input type="text" value="${v.linha || '1'}" class="w-12 text-center" 
-                                onchange="handleInputChange(${v.id}, 'linha', this)" ${!isEditing ? 'disabled' : ''}>
-                            ${counts[chaveContrato] > 1 ? `<span class="text-xs text-gray-500">/${counts[chaveContrato]}</span>` : ''}
-                        </div>
-                    </td>
-                    <td>
-                        <select class="status-badge ${getStatusColor(v.status)}" 
-                            onchange="handleInputChange(${v.id}, 'status', this)" ${!isEditing ? 'disabled' : ''}>
-                            ${statusPedido.map(s => `<option value="${s}" ${v.status === s ? 'selected' : ''}>${s}</option>`).join('')}
-                        </select>
+                        ${!isEditing 
+                            ? `<span class="${getStatusClass(v.status)}">${v.status}</span>`
+                            : `<select style="width:100%; padding: 4px;" 
+                                onchange="handleInputChange(${v.id}, 'status', this)">
+                                ${statusPedido.map(s => `<option value="${s}" ${v.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+                               </select>`
+                        }
                     </td>
                     <td>${createInput('dataEntrada', 'date')}</td>
                     <td>${createInput('dataInput', 'date')}</td>
