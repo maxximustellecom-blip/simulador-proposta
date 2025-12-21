@@ -97,13 +97,8 @@
         th:last-child, td:last-child {
             position: sticky;
             right: 0;
-            background: inherit; /* Matches row background */
             z-index: 5;
             border-left: 1px solid var(--border);
-        }
-        th:last-child {
-            background: var(--blue-600);
-            z-index: 15;
         }
 
         tr { transition: background-color 0.2s; }
@@ -222,17 +217,10 @@
             </section>
 
             <!-- Backend Table (Moved Inside Card) -->
-            <div class="table-container mb-6" style="max-height: 300px; overflow-y: auto; border-top: 1px solid var(--border);">
-                <div class="p-4 bg-blue-50 border-b border-blue-100">
-                    <h3 class="text-blue-800 font-bold flex items-center gap-2 text-sm">
-                        <i data-lucide="database" size="16"></i>
-                        Pedidos de Venda (Backend - Concluídos)
-                    </h3>
-                </div>
+            <section class="section" style="margin-top: 20px;">
                 <table id="tabelaBackend">
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>CNPJ</th>
                             <th>Tipo</th>
                             <th>Proposta</th>
@@ -513,7 +501,6 @@
             }
             tbody.innerHTML = data.map(item => `
                 <tr>
-                    <td>${item.id}</td>
                     <td>${item.cnpj}</td>
                     <td>${item.tipo}</td>
                     <td>${item.proposta}</td>
