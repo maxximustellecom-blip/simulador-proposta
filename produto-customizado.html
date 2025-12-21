@@ -252,6 +252,7 @@
             document.getElementById('mProdNome').value = p.nome || p.name || '';
             document.getElementById('mProdDesc').value = p.descricao || p.description || '';
             document.getElementById('mProdPreco').value = String(p.preco || 0);
+            document.getElementById('regiao').value = p.regiao || '';
             openModal();
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         };

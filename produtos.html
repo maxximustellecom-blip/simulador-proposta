@@ -263,6 +263,7 @@
             document.getElementById('mProdNome').value = p.nome || p.name || '';
             document.getElementById('mProdDesc').value = p.descricao || p.description || '';
             document.getElementById('mProdPreco').value = String(p.preco || 0);
+            document.getElementById('regiao').value = p.regiao || '';
             openModal();
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         };
@@ -283,8 +284,9 @@
                 const nome = String(document.getElementById('mProdNome').value || '').trim();
                 const descricao = String(document.getElementById('mProdDesc').value || '').trim() || null;
                 const preco = Number(document.getElementById('mProdPreco').value || 0);
+                const regiao = String(document.getElementById('regiao').value || '').trim() || null;
                 if (!categoria_id || !nome || !(preco >= 0)) { toast('Preencha categoria, nome e preço', 'error'); return; }
-                const body = JSON.stringify({ categoria_id, nome, descricao, preco });
+                const body = JSON.stringify({ categoria_id, nome, descricao, preco, regiao });
                 if (__editingProdId) {
                     await api('/products/' + __editingProdId, { method: 'PUT', body });
                     toast('Produto atualizado', 'success');
