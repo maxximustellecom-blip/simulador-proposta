@@ -10,7 +10,7 @@ export async function listarPedidosConcluidos(req, res) {
           as: 'negotiation',
           where: {
             status: {
-              [Op.or]: ['Concluído', 'Concluido', 'CONCLUÍDO', 'CONCLUIDO'] // Handling potential case/accent differences
+              [Op.or]: ['Concluído', 'Concluido', 'CONCLUÍDO', 'CONCLUIDO', 'Concluída'] // Handling potential case/accent differences
             }
           }
         }

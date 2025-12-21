@@ -71,78 +71,58 @@
         <div class="modal-card">
             <div class="modal-head"><div id="modalTitle">Adicionar Cliente</div><button id="closeModalBtn" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
             <div class="modal-body">
-                <div class="grid-3-modal">
+                <div class="grid-2">
                     <div class="field"><span class="label-inline">CNPJ</span><input id="mCnpj" class="input" type="text" placeholder="00.000.000/0000-00"></div>
                     <div class="field"><span class="label-inline">Razão Social</span><input id="mNome" class="input" type="text" placeholder="Razão Social"></div>
                     <div class="field"><span class="label-inline">Nome Fantasia</span><input id="mFantasia" class="input" type="text" placeholder="Nome Fantasia"></div>
-                </div>
-                <div class="grid-3-modal" style="margin-top:0.5rem;">
                     <div class="field"><span class="label-inline">Email</span><input id="mEmail" class="input" type="email" placeholder="email@empresa.com"></div>
                     <div class="field"><span class="label-inline">Telefone</span><input id="mPhone" class="input" type="text" placeholder="(00) 0000-0000"></div>
                     <div class="field"><span class="label-inline">Abertura</span><input id="mAbertura" class="input" type="text" placeholder="AAAA-MM-DD"></div>
-                </div>
-                <div class="grid-3-modal" style="margin-top:0.5rem;">
                     <div class="field"><span class="label-inline">CEP</span><input id="mCep" class="input" type="text" placeholder="00000-000"></div>
                     <div class="field"><span class="label-inline">UF</span><input id="mUf" class="input" type="text" placeholder="SP"></div>
                     <div class="field"><span class="label-inline">Cidade</span><input id="mCidade" class="input" type="text" placeholder="Cidade"></div>
-                </div>
-                <div class="grid-3-modal" style="margin-top:0.5rem;">
                     <div class="field"><span class="label-inline">Bairro</span><input id="mBairro" class="input" type="text" placeholder="Bairro"></div>
                     <div class="field"><span class="label-inline">Logradouro</span><input id="mLogradouro" class="input" type="text" placeholder="Rua, Av."></div>
                     <div class="field"><span class="label-inline">Número</span><input id="mNumero" class="input" type="text" placeholder="Número"></div>
-                </div>
-                <div class="grid-2-modal" style="margin-top:0.5rem;">
                     <div class="field"><span class="label-inline">Complemento</span><input id="mComplemento" class="input" type="text" placeholder="Complemento"></div>
                 </div>
 
                 <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 1rem; margin-bottom: 0.5rem;"></div>
     
                 <div class="section-title" style="font-weight: 600; margin-bottom: 0.5rem; color: #e5e7eb;">REPRESENTANTE LEGAL</div>
-                <div class="grid-2-modal">
+                <div class="grid-2">
                     <div class="field"><span class="label-inline">Nome</span><input id="mRepNome" class="input" type="text" placeholder="Nome Completo"></div>
                     <div class="field"><span class="label-inline">CPF</span><input id="mRepCpf" class="input" type="text" placeholder="000.000.000-00"></div>
-                </div>
-                <div class="grid-2-modal" style="margin-top:0.5rem;">
                     <div class="field"><span class="label-inline">RG</span><input id="mRepRg" class="input" type="text" placeholder="RG"></div>
                     <div class="field"><span class="label-inline">Tel. Contato (1)</span><input id="mRepTel1" class="input" type="text" placeholder="(00) 00000-0000"></div>
-                </div>
-                <div class="grid-2-modal" style="margin-top:0.5rem;">
                     <div class="field"><span class="label-inline">Tel. Contato (2)</span><input id="mRepTel2" class="input" type="text" placeholder="(00) 00000-0000"></div>
                 </div>
             
                 <div class="section-title" style="font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #e5e7eb; display:flex; justify-content:space-between; align-items:center;">
                     <span>GESTOR DE CONTA</span>
                 </div>
-                <div class="grid-2-modal">
+                <div class="grid-2">
                     <div class="field"><span class="label-inline">Nome</span><input id="mGestorNome" class="input" type="text" placeholder="Nome Completo"></div>
                     <div class="field"><span class="label-inline">CPF</span><input id="mGestorCpf" class="input" type="text" placeholder="000.000.000-00"></div>
-                </div>
-                <div class="grid-2-modal" style="margin-top:0.5rem;">
                     <div class="field"><span class="label-inline">RG</span><input id="mGestorRg" class="input" type="text" placeholder="RG"></div>
                     <div class="field"><span class="label-inline">Tel. Contato (1)</span><input id="mGestorTel1" class="input" type="text" placeholder="(00) 00000-0000"></div>
-                </div>
-                <div class="grid-2-modal" style="margin-top:0.5rem;">
                     <div class="field"><span class="label-inline">Tel. Contato (2)</span><input id="mGestorTel2" class="input" type="text" placeholder="(00) 00000-0000"></div>
                 </div>
             
                 <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 1rem; margin-bottom: 0.5rem;"></div>
             
                 <div class="section-title" style="font-weight: 600; margin-bottom: 0.5rem; color: #e5e7eb;">1º Autorizado a receber o pedido <span style="color: #ef4444;">*</span></div>
-                <div class="grid-2-modal">
+                <div class="grid-2">
                     <div class="field"><span class="label-inline">Nome</span><input id="mAuth1Nome" class="input" type="text" placeholder="Nome Completo"></div>
                     <div class="field"><span class="label-inline">CPF</span><input id="mAuth1Cpf" class="input" type="text" placeholder="000.000.000-00"></div>
-                </div>
-                <div class="grid-2-modal" style="margin-top:0.5rem;">
                     <div class="field"><span class="label-inline">RG</span><input id="mAuth1Rg" class="input" type="text" placeholder="RG"></div>
                     <div class="field"><span class="label-inline">Contato</span><input id="mAuth1Contato" class="input" type="text" placeholder="(00) 00000-0000"></div>
                 </div>
             
                 <div class="section-title" style="font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #e5e7eb;">2º Autorizado a receber o pedido (Opcional)</div>
-                <div class="grid-2-modal">
+                <div class="grid-2">
                     <div class="field"><span class="label-inline">Nome</span><input id="mAuth2Nome" class="input" type="text" placeholder="Nome Completo"></div>
                     <div class="field"><span class="label-inline">CPF</span><input id="mAuth2Cpf" class="input" type="text" placeholder="000.000.000-00"></div>
-                </div>
-                <div class="grid-2-modal" style="margin-top:0.5rem;">
                     <div class="field"><span class="label-inline">Contato</span><input id="mAuth2Contato" class="input" type="text" placeholder="(00) 00000-0000"></div>
                 </div>
             </div>

@@ -391,20 +391,38 @@
             }
             const mSearch = document.getElementById('mClienteSearch');
             const mDropdown = document.getElementById('mClienteDropdown');
+            const mWrap = document.getElementById('mClienteWrap');
+            function updateDropdownPos() {
+                if (!mDropdown || !mWrap || !mDropdown.classList.contains('show')) return;
+                const rect = mWrap.getBoundingClientRect();
+                mDropdown.style.position = 'fixed';
+                mDropdown.style.top = (rect.bottom + 2) + 'px';
+                mDropdown.style.left = rect.left + 'px';
+                mDropdown.style.width = rect.width + 'px';
+                mDropdown.style.zIndex = '9999';
+            }
             if (mSearch) {
                 mSearch.addEventListener('input', () => {
                     renderClienteDropdown(document.getElementById('mCliente').value || '');
-                    if (mDropdown) mDropdown.classList.add('show');
+                    if (mDropdown) {
+                        mDropdown.classList.add('show');
+                        updateDropdownPos();
+                    }
                 });
                 mSearch.addEventListener('focus', () => {
                     renderClienteDropdown(document.getElementById('mCliente').value || '');
-                    if (mDropdown) mDropdown.classList.add('show');
+                    if (mDropdown) {
+                        mDropdown.classList.add('show');
+                        updateDropdownPos();
+                    }
                 });
             }
+            window.addEventListener('resize', updateDropdownPos);
+            window.addEventListener('scroll', updateDropdownPos, true); // Capture scroll to handle modal scroll
             document.addEventListener('click', (e) => {
                 const wrap = document.getElementById('mClienteWrap');
                 if (!wrap) return;
-                if (!wrap.contains(e.target)) {
+                if (!wrap.contains(e.target) && (!mDropdown || !mDropdown.contains(e.target))) {
                     if (mDropdown) mDropdown.classList.remove('show');
                 }
             });
