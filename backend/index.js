@@ -12,6 +12,7 @@ import negotiationRouter from './routes/negotiation.js';
 import customCategoryRouter from './routes/customCategory.js';
 import customProductRouter from './routes/customProduct.js';
 import accessProfileRouter from './routes/accessProfile.js';
+import pedidoDeVendaRouter from './routes/pedidoDeVenda.js';
 import authContext from './middleware/authContext.js';
 
 dotenv.config();

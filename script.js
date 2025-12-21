@@ -35,7 +35,7 @@
   var simOpen = isActive('simular') || isActive('historico-simulacoes');
   var ofertaOpen = isActive('categorias') || isActive('produtos');
   var customOpen = isActive('categoria-customizada') || isActive('produto-customizado');
-  var adminOpen = isActive('usuarios') || isActive('perfis-acesso');
+  var adminOpen = isActive('usuarios') || isActive('perfis-acesso') || isActive('pedido-vendas');
   var sidebarHtml =
     '<nav class="sidebar">' +
       '<div class="sidebar-inner">' +
@@ -75,12 +75,12 @@
           '<a href="produto-customizado.html" class="nav-sublink' + (isActive('produto-customizado') ? ' active' : '') + '"><i data-lucide="shopping-cart"></i><span>Ofertas</span></a>' +
         '</div>' +
         '<div class="nav-title" id="adminTitle" style="display:' + (isAdmin ? 'block' : 'none') + '">Admin</div>' +
-        '<a href="pedido-vendas.html" class="nav-link' + (isActive('pedido-vendas') ? ' active' : '') + '" style="display:' + (isAdmin ? 'flex' : 'none') + '"><i data-lucide="shopping-cart"></i><span>Pedidos de Vendas</span></a>' +
         '<button id="adminToggle" class="nav-dropdown' + (adminOpen ? ' open' : '') + '" type="button" style="display:' + (isAdmin ? 'flex' : 'none') + ';">' +
           '<div class="left"><i data-lucide="shield-check"></i><span>Administração</span></div>' +
           '<div class="chev"><i data-lucide="chevron-down"></i></div>' +
         '</button>' +
         '<div id="adminMenu" class="nav-subgroup" style="display:' + ((isAdmin && adminOpen) ? 'flex' : 'none') + ';">' +
+          '<a href="pedido-vendas.html" class="nav-sublink' + (isActive('pedido-vendas') ? ' active' : '') + '"><i data-lucide="shopping-cart"></i><span>Pedidos de Vendas</span></a>' +
           '<a href="usuarios.html" class="nav-sublink' + (isActive('usuarios') ? ' active' : '') + '"><i data-lucide="users"></i><span>Usuários</span></a>' +
           '<a href="perfis-acesso.html" class="nav-sublink' + (isActive('perfis-acesso') ? ' active' : '') + '"><i data-lucide="shield"></i><span>Perfis de Acesso</span></a>' +
         '</div>' +
