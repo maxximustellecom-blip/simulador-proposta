@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quadro de Vendas - Dezembro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #2d5016 0%, #1a3d0f 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .lousa {
+            background: linear-gradient(to bottom, #1e4620, #2d5c2f, #1e4620);
+            border: 25px solid #8B4513;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5), inset 0 0 100px rgba(0,0,0,0.2);
+            padding: 40px;
+            max-width: 1400px;
+            width: 100%;
+            position: relative;
+        }
+
+        .lousa::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border: 2px solid rgba(255,255,255,0.1);
+            pointer-events: none;
+        }
+
+        .cabecalho {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .titulo {
+            color: #ffffff;
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            letter-spacing: 3px;
+        }
+
+        .info-periodo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .campo-info {
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .campo-info input {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: #ffffff;
+            padding: 8px 15px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+        }
+
+        .campo-info input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(30, 70, 32, 0.3);
+            margin-bottom: 30px;
+        }
+
+        th, td {
+            border: 3px solid #ffffff;
+            padding: 12px 8px;
+            text-align: center;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.15);
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .consultor-col {
+            text-align: left;
+            font-size: 20px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        input[type="number"] {
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            text-align: center;
+            font-size: 15px;
+            font-weight: bold;
+            width: 100%;
+            font-family: 'Courier New', monospace;
+            padding: 4px;
+        }
+
+        input[type="number"]:focus {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .total-row {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .total-row td {
+            font-size: 22px;
+            color: #ffff00;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        input[readonly] {
+            cursor: default;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .botoes-controle {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.9);
+            color: #1e4620;
+            border: none;
+            padding: 14px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-whatsapp {
+            background: rgba(37, 211, 102, 0.95);
+            color: white;
+        }
+
+        .btn-whatsapp:hover {
+            background: rgb(37, 211, 102);
+        }
+
+        #mensagem-status {
+            text-align: center;
+            color: #ffffff;
+            font-size: 14px;
+            margin-top: 20px;
+            min-height: 20px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .giz-apagador {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .giz {
+            width: 8px;
+            height: 50px;
+            background: #fff;
+            border-radius: 4px;
+            opacity: 0.8;
+        }
+
+        .apagador {
+            width: 60px;
+            height: 35px;
+            background: linear-gradient(to bottom, #654321, #8B6F47);
+            border-radius: 4px;
+            border: 2px solid #4a3319;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="lousa">
+        <div class="cabecalho">
+            <div class="titulo">QUADRO DE VENDAS</div>
+            <div class="info-periodo">
+                <div class="campo-info">
+                    <span>MÊS:</span>
+                    <input type="text" id="mes-ref" value="DEZEMBRO" maxlength="15">
+                </div>
+                <div class="campo-info">
+                    <span>SEMANA:</span>
+                    <input type="text" id="semana-ref" value="1ª SEMANA" maxlength="20">
+                </div>
+                <div class="campo-info">
+                    <span>PERÍODO:</span>
+                    <input type="date" id="data-inicio">
+                    <span>até</span>
+                    <input type="date" id="data-fim">
+                </div>
+            </div>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th rowspan="3">CONSULTOR</th>
+                    <th colspan="4">NOVO + ADITIVO</th>
+                    <th colspan="4">RENEG</th>
+                    <th colspan="2">FIBRA</th>
+                    <th colspan="2">TIM CONTROLE</th>
+                </tr>
+                <tr>
+                    <th colspan="2">ENTRANTES</th>
+                    <th colspan="2">ATIVOS</th>
+                    <th colspan="2">ENTRANTES</th>
+                    <th colspan="2">ATIVOS</th>
+                    <th>ENT</th>
+                    <th>AT</th>
+                    <th>ENT</th>
+                    <th>AT</th>
+                </tr>
+                <tr>
+                    <th>QTD</th>
+                    <th>R$</th>
+                    <th>QTD</th>
+                    <th>R$</th>
+                    <th>QTD</th>
+                    <th>R$</th>
+                    <th>QTD</th>
+                    <th>R$</th>
+                    <th>QTD</th>
+                    <th>QTD</th>
+                    <th>QTD</th>
+                    <th>QTD</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-consultores">
+                <tr>
+                    <td class="consultor-col">Diego</td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                </tr>
+                <tr>
+                    <td class="consultor-col">Marcelo</td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                </tr>
+                <tr>
+                    <td class="consultor-col">Dheovana</td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                </tr>
+                <tr>
+                    <td class="consultor-col">Cesar</td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                    <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td>TOTAL EMPRESA</td>
+                    <td><input type="number" id="total-novo-ent-qtd" value="0" readonly></td>
+                    <td><input type="number" id="total-novo-ent-rec" value="0" readonly></td>
+                    <td><input type="number" id="total-novo-at-qtd" value="0" readonly></td>
+                    <td><input type="number" id="total-novo-at-rec" value="0" readonly></td>
+                    <td><input type="number" id="total-reneg-ent-qtd" value="0" readonly></td>
+                    <td><input type="number" id="total-reneg-ent-rec" value="0" readonly></td>
+                    <td><input type="number" id="total-reneg-at-qtd" value="0" readonly></td>
+                    <td><input type="number" id="total-reneg-at-rec" value="0" readonly></td>
+                    <td><input type="number" id="total-fibra-ent-qtd" value="0" readonly></td>
+                    <td><input type="number" id="total-fibra-at-qtd" value="0" readonly></td>
+                    <td><input type="number" id="total-tim-ent-qtd" value="0" readonly></td>
+                    <td><input type="number" id="total-tim-at-qtd" value="0" readonly></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="botoes-controle">
+            <button class="btn btn-whatsapp" onclick="copiarImagemWhatsApp()">📱 Copiar para WhatsApp</button>
+        </div>
+
+        <div id="mensagem-status"></div>
+
+        <div class="giz-apagador">
+            <div class="giz"></div>
+            <div class="giz"></div>
+            <div class="apagador"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        function mostrarMensagem(texto, tipo = 'sucesso') {
+            const msg = document.getElementById('mensagem-status');
+            msg.textContent = texto;
+            msg.style.color = tipo === 'sucesso' ? '#90EE90' : '#FFB6C1';
+            setTimeout(() => {
+                msg.textContent = '';
+            }, 3000);
+        }
+
+        async function copiarImagemWhatsApp() {
+            const lousa = document.querySelector('.lousa');
+            const botoes = document.querySelector('.botoes-controle');
+            const mensagem = document.getElementById('mensagem-status');
+            const giz = document.querySelector('.giz-apagador');
+            
+            botoes.style.display = 'none';
+            mensagem.style.display = 'none';
+            giz.style.display = 'none';
+            
+            try {
+                const canvas = await html2canvas(lousa, {
+                    backgroundColor: '#2d5016',
+                    scale: 2,
+                    logging: false,
+                    useCORS: true
+                });
+                
+                canvas.toBlob(async (blob) => {
+                    try {
+                        const item = new ClipboardItem({ 'image/png': blob });
+                        await navigator.clipboard.write([item]);
+                        mostrarMensagem('✅ Imagem copiada! Cole no WhatsApp (Ctrl+V)', 'sucesso');
+                    } catch (err) {
+                        const url = canvas.toDataURL('image/png');
+                        const link = document.createElement('a');
+                        const mes = document.getElementById('mes-ref').value;
+                        const semana = document.getElementById('semana-ref').value;
+                        link.download = `quadro-vendas-${mes}-${semana}.png`.replace(/\s+/g, '-').toLowerCase();
+                        link.href = url;
+                        link.click();
+                        mostrarMensagem('📥 Imagem baixada! Envie pelo WhatsApp', 'sucesso');
+                    }
+                });
+                
+            } catch (erro) {
+                mostrarMensagem('❌ Erro ao copiar. Tente novamente.', 'erro');
+                console.error(erro);
+            } finally {
+                botoes.style.display = 'flex';
+                mensagem.style.display = 'block';
+                giz.style.display = 'flex';
+            }
+        }
+
+        function calcularTotais() {
+            const tbody = document.getElementById('tbody-consultores');
+            const linhas = tbody.getElementsByTagName('tr');
+            
+            let totalNovoEntQtd = 0, totalNovoEntRec = 0, totalNovoAtQtd = 0, totalNovoAtRec = 0;
+            let totalRenegEntQtd = 0, totalRenegEntRec = 0, totalRenegAtQtd = 0, totalRenegAtRec = 0;
+            let totalFibraEntQtd = 0, totalFibraAtQtd = 0;
+            let totalTimEntQtd = 0, totalTimAtQtd = 0;
+
+            for (let linha of linhas) {
+                const inputs = linha.getElementsByTagName('input');
+                
+                // Novo + Aditivo - Entrantes
+                totalNovoEntQtd += parseInt(inputs[0].value) || 0;
+                totalNovoEntRec += parseFloat(inputs[1].value) || 0;
+                // Novo + Aditivo - Ativos
+                totalNovoAtQtd += parseInt(inputs[2].value) || 0;
+                totalNovoAtRec += parseFloat(inputs[3].value) || 0;
+                
+                // Reneg - Entrantes
+                totalRenegEntQtd += parseInt(inputs[4].value) || 0;
+                totalRenegEntRec += parseFloat(inputs[5].value) || 0;
+                // Reneg - Ativos
+                totalRenegAtQtd += parseInt(inputs[6].value) || 0;
+                totalRenegAtRec += parseFloat(inputs[7].value) || 0;
+                
+                // Fibra - Entrantes e Ativos (apenas quantidade)
+                totalFibraEntQtd += parseInt(inputs[8].value) || 0;
+                totalFibraAtQtd += parseInt(inputs[9].value) || 0;
+                
+                // TIM Controle - Entrantes e Ativos (apenas quantidade)
+                totalTimEntQtd += parseInt(inputs[10].value) || 0;
+                totalTimAtQtd += parseInt(inputs[11].value) || 0;
+            }
+
+            document.getElementById('total-novo-ent-qtd').value = totalNovoEntQtd;
+            document.getElementById('total-novo-ent-rec').value = totalNovoEntRec.toFixed(2);
+            document.getElementById('total-novo-at-qtd').value = totalNovoAtQtd;
+            document.getElementById('total-novo-at-rec').value = totalNovoAtRec.toFixed(2);
+            
+            document.getElementById('total-reneg-ent-qtd').value = totalRenegEntQtd;
+            document.getElementById('total-reneg-ent-rec').value = totalRenegEntRec.toFixed(2);
+            document.getElementById('total-reneg-at-qtd').value = totalRenegAtQtd;
+            document.getElementById('total-reneg-at-rec').value = totalRenegAtRec.toFixed(2);
+            
+            document.getElementById('total-fibra-ent-qtd').value = totalFibraEntQtd;
+            document.getElementById('total-fibra-at-qtd').value = totalFibraAtQtd;
+            
+            document.getElementById('total-tim-ent-qtd').value = totalTimEntQtd;
+            document.getElementById('total-tim-at-qtd').value = totalTimAtQtd;
+        }
+
+        function adicionarConsultor() {
+            const nome = prompt('Digite o nome do novo consultor:');
+            if (!nome || nome.trim() === '') return;
+
+            const tbody = document.getElementById('tbody-consultores');
+            const novaLinha = document.createElement('tr');
+            novaLinha.innerHTML = `
+                <td class="consultor-col">${nome.trim()}</td>
+                <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+                <td><input type="number" value="0" min="0" onchange="calcularTotais()"></td>
+                <td><input type="number" value="0" min="0" step="0.01" onchange="calcularTotais()"></td>
+            `;
+            tbody.appendChild(novaLinha);
+            calcularTotais();
+        }
+
+        function definirDatasIniciais() {
+            const hoje = new Date();
+            const diaSemana = hoje.getDay();
+            const diferenca = diaSemana === 0 ? -6 : 1 - diaSemana;
+            
+            const segunda = new Date(hoje);
+            segunda.setDate(hoje.getDate() + diferenca);
+            
+            const domingo = new Date(segunda);
+            domingo.setDate(segunda.getDate() + 6);
+            
+            document.getElementById('data-inicio').valueAsDate = segunda;
+            document.getElementById('data-fim').valueAsDate = domingo;
+        }
+
+        definirDatasIniciais();
+        calcularTotais();
+    </script>
+</body>
+</html>

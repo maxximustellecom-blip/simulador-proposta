@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quadro de Vendas • Maxximus Telecom</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* Theme Variables for Groups & Components */
+        :root {
+            /* Default (Dark Theme) */
+            --header-bg: var(--surface-strong);
+            --header-text: var(--muted);
+            
+            --group-novo-bg: rgba(3, 105, 161, 0.15);
+            --group-novo-text: #38bdf8;
+            
+            --group-reneg-bg: rgba(21, 128, 61, 0.15);
+            --group-reneg-text: #4ade80;
+            
+            --group-fibra-bg: rgba(126, 34, 206, 0.15);
+            --group-fibra-text: #c084fc;
+            
+            --group-tim-bg: rgba(190, 18, 60, 0.15);
+            --group-tim-text: #fb7185;
+            
+            --input-bg: var(--surface);
+            --input-hover: var(--surface-strong);
+            --input-focus-border: var(--primary);
+            --input-focus-shadow: rgba(37, 99, 235, 0.25);
+            --card-bg: var(--bg);
+        }
+
+        [data-theme="light"] {
+            /* Light Theme Overrides */
+            --header-bg: #f8fafc;
+            --header-text: #475569;
+            
+            --group-novo-bg: #e0f2fe;
+            --group-novo-text: #0369a1;
+            
+            --group-reneg-bg: #f0fdf4;
+            --group-reneg-text: #15803d;
+            
+            --group-fibra-bg: #faf5ff;
+            --group-fibra-text: #7e22ce;
+            
+            --group-tim-bg: #fff1f2;
+            --group-tim-text: #be123c;
+            
+            --input-bg: #ffffff;
+            --input-hover: #f1f5f9;
+            --input-focus-shadow: rgba(37, 99, 235, 0.15);
+            --card-bg: #ffffff;
+        }
+
+        .qv-input {
+            display: block;
+            min-width: 50px;
+            text-align: center;
+            padding: 6px;
+            font-size: 0.9rem;
+            border: 1px solid transparent;
+            border-radius: var(--radius);
+            background: transparent;
+            color: var(--text);
+            transition: all 0.2s;
+            cursor: default;
+        }
+        /* Removed hover/focus styles for non-editable inputs */
+        /* Style for read-only spans in footer */
+        tfoot .qv-input {
+            cursor: default;
+            pointer-events: none;
+        }
+        
+        .board-container {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        table {
+            border-collapse: separate; 
+            border-spacing: 0; 
+            width: 100%;
+        }
+
+        th {
+            background-color: var(--header-bg);
+            color: var(--header-text);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+        }
+        
+        th:last-child {
+            border-right: none;
+        }
+
+        /* Group Headers */
+        thead tr:first-child th {
+            background-color: var(--header-bg);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        /* Specific Header Colors for Groups */
+        .th-group-consultor { background-color: var(--header-bg); }
+        .th-group-novo { background-color: var(--group-novo-bg); color: var(--group-novo-text); }
+        .th-group-reneg { background-color: var(--group-reneg-bg); color: var(--group-reneg-text); }
+        .th-group-fibra { background-color: var(--group-fibra-bg); color: var(--group-fibra-text); }
+        .th-group-tim { background-color: var(--group-tim-bg); color: var(--group-tim-text); }
+
+        td {
+            padding: 0 !important; /* Reset padding to let input fill */
+            border-bottom: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            background-color: var(--bg);
+        }
+        
+        td:last-child {
+            border-right: none;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .consultor-col {
+            padding: 8px 12px !important;
+            font-weight: 500;
+            color: var(--text);
+            background-color: var(--header-bg);
+            width: 150px;
+        }
+
+        .total-row td {
+            background-color: var(--header-bg);
+            font-weight: bold;
+            border-top: 2px solid var(--border);
+        }
+
+        .total-cell {
+            padding: 8px 12px !important;
+            text-align: right;
+            color: var(--text);
+        }
+
+        .capture-area {
+            background-color: var(--surface);
+            border-radius: var(--radius);
+            margin-top: 20px;
+        }
+        
+        /* Input styles for filters */
+        .input {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.4rem 0.6rem;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+        .input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .label {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-bottom: 0.3rem;
+            font-weight: 500;
+        }
+
+        /* Header Filters Styles */
+        .header-filters {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .picker-group {
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+        }
+        
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+        }
+
+        /* Custom scrollbar for table container if needed */
+        .table-container {
+            overflow-x: auto;
+            border-radius: var(--radius);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding-bottom: 6rem;
+            }
+            
+            .card-head {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+            
+            .header-filters {
+                flex-direction: column;
+                align-items: stretch;
+                width: 100%;
+                gap: 0.75rem;
+            }
+            
+            .picker-group {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .picker-group .chip {
+                flex: 1;
+                min-width: 0 !important; /* Override inline min-width */
+            }
+            
+            /* Table Compactness */
+            th {
+                font-size: 0.65rem;
+                padding: 6px 4px;
+            }
+            
+            .consultor-col {
+                width: auto;
+                min-width: 80px;
+                max-width: 100px;
+                font-size: 0.7rem;
+            }
+            
+            .qv-input {
+                min-width: 35px;
+                font-size: 0.75rem;
+                padding: 4px 2px;
+            }
+
+            .card-footer {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+            
+            .card-footer button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <div class="card">
+            <div class="card-head">
+                <div class="card-title">
+                    <i data-lucide="bar-chart-3"></i>
+                    <span>Quadro de Vendas</span>
+                </div>
+                <div class="header-filters">
+                    <!-- Month Picker -->
+                    <div class="picker-group">
+                        <button id="prevMonth" class="btn btn-ghost btn-icon" type="button"><i data-lucide="chevron-left"></i></button>
+                        <span class="chip" style="min-width: 150px; justify-content: center; height: 36px;"><i data-lucide="calendar"></i><span id="monthLabel">DEZEMBRO 2025</span></span>
+                        <button id="nextMonth" class="btn btn-ghost btn-icon" type="button"><i data-lucide="chevron-right"></i></button>
+                    </div>
+
+                    <!-- Week Picker -->
+                    <div class="picker-group">
+                        <button id="prevWeek" class="btn btn-ghost btn-icon" type="button"><i data-lucide="chevron-left"></i></button>
+                        <span class="chip" style="min-width: 120px; justify-content: center; height: 36px;"><i data-lucide="clock"></i><span id="weekLabel">1ª SEMANA</span></span>
+                        <button id="nextWeek" class="btn btn-ghost btn-icon" type="button"><i data-lucide="chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="captureArea" class="capture-area">
+                <div class="board-container">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th rowspan="3" class="th-group-consultor" style="min-width: 150px;">CONSULTOR</th>
+                                    <th colspan="4" class="th-group-novo">NOVO + ADITIVO</th>
+                                    <th colspan="4" class="th-group-reneg">RENEG</th>
+                                    <th colspan="2" class="th-group-fibra">FIBRA</th>
+                                    <th colspan="2" class="th-group-tim">TIM CONTROLE</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="2" class="th-group-novo" style="opacity: 0.9">ENTRANTES</th>
+                                    <th colspan="2" class="th-group-novo" style="opacity: 0.9">ATIVOS</th>
+                                    <th colspan="2" class="th-group-reneg" style="opacity: 0.9">ENTRANTES</th>
+                                    <th colspan="2" class="th-group-reneg" style="opacity: 0.9">ATIVOS</th>
+                                    <th colspan="1" class="th-group-fibra" style="opacity: 0.9">ENTRANTES</th>
+                                    <th colspan="1" class="th-group-fibra" style="opacity: 0.9">ATIVOS</th>
+                                    <th colspan="1" class="th-group-tim" style="opacity: 0.9">ENTRANTES</th>
+                                    <th colspan="1" class="th-group-tim" style="opacity: 0.9">ATIVOS</th>
+                                </tr>
+                                <tr>
+                                    <th class="th-group-novo" style="opacity: 0.8">QTD</th>
+                                    <th class="th-group-novo" style="opacity: 0.8">R$</th>
+                                    <th class="th-group-novo" style="opacity: 0.8">QTD</th>
+                                    <th class="th-group-novo" style="opacity: 0.8">R$</th>
+                                    <th class="th-group-reneg" style="opacity: 0.8">QTD</th>
+                                    <th class="th-group-reneg" style="opacity: 0.8">R$</th>
+                                    <th class="th-group-reneg" style="opacity: 0.8">QTD</th>
+                                    <th class="th-group-reneg" style="opacity: 0.8">R$</th>
+                                    <th class="th-group-fibra" style="opacity: 0.8">QTD</th>
+                                    <th class="th-group-fibra" style="opacity: 0.8">R$</th>
+                                    <th class="th-group-tim" style="opacity: 0.8">QTD</th>
+                                    <th class="th-group-tim" style="opacity: 0.8; text-align: left;">R$</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-consultores">
+                                <!-- Carregado via JS -->
+                            </tbody>
+                            <tfoot>
+                                <tr class="total-row">
+                                    <td class="total-cell">TOTAL EMPRESA</td>
+                                    <td><span id="total-novo-ent-qtd" class="qv-input">0</span></td>
+                                    <td><span id="total-novo-ent-rec" class="qv-input">0.00</span></td>
+                                    <td><span id="total-novo-at-qtd" class="qv-input">0</span></td>
+                                    <td><span id="total-novo-at-rec" class="qv-input">0.00</span></td>
+                                    <td><span id="total-reneg-ent-qtd" class="qv-input">0</span></td>
+                                    <td><span id="total-reneg-ent-rec" class="qv-input">0.00</span></td>
+                                    <td><span id="total-reneg-at-qtd" class="qv-input">0</span></td>
+                                    <td><span id="total-reneg-at-rec" class="qv-input">0.00</span></td>
+                                    <td><span id="total-fibra-ent-qtd" class="qv-input">0</span></td>
+                                    <td><span id="total-fibra-at-qtd" class="qv-input">0</span></td>
+                                    <td><span id="total-tim-ent-qtd" class="qv-input">0</span></td>
+                                    <td><span id="total-tim-at-qtd" class="qv-input">0</span></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <div id="mensagem-status" style="font-size: 0.9rem;"></div>
+                <button class="btn btn-primary" onclick="copiarImagemWhatsApp()">
+                    <i data-lucide="camera"></i>
+                    <span>Copiar Imagem</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+    <script>
+        const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
+        
+        async function api(path, options = {}) {
+            const authRaw = localStorage.getItem('authUser');
+            let headers = { 'Content-Type': 'application/json' };
+            try {
+                const u = JSON.parse(authRaw || '{}');
+                if (u && u.id) headers['x-user-id'] = String(u.id);
+                if (u && u.role) headers['x-user-role'] = String(u.role);
+                if (u && u.name) headers['x-user-name'] = String(u.name);
+            } catch {}
+            const res = await fetch(API_BASE + path, { headers, ...options });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || ('HTTP ' + res.status));
+            }
+            return res.json();
+        }
+
+        async function loadConsultants() {
+            const tbody = document.getElementById('tbody-consultores');
+            tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding: 1rem;">Carregando...</td></tr>';
+            
+            try {
+                const users = await api('/auth/users', { method: 'GET' });
+                // Filter only role 'user'
+                const consultants = Array.isArray(users) ? users.filter(u => u.role === 'user') : [];
+                
+                tbody.innerHTML = '';
+                
+                if (consultants.length === 0) {
+                     tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding: 1rem;">Nenhum consultor encontrado.</td></tr>';
+                     calcularTotais();
+                     return;
+                }
+
+                consultants.forEach(user => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="consultor-col">${user.name || 'Sem Nome'}</td>
+                        <td><span class="qv-input">0</span></td>
+                        <td><span class="qv-input">0</span></td>
+                        <td><span class="qv-input">0</span></td>
+                        <td><span class="qv-input">0</span></td>
+                        <td><span class="qv-input">0</span></td>
+                        <td><span class="qv-input">0</span></td>
+                        <td><span class="qv-input">0</span></td>
+                        <td><span class="qv-input">0</span></td>
+                        <td><span class="qv-input">0</span></td>
+                        <td><span class="qv-input">0</span></td>
+                        <td><span class="qv-input">0</span></td>
+                        <td><span class="qv-input">0</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                
+                // Recalculate totals (should be 0)
+                calcularTotais();
+                
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding: 1rem; color: var(--danger);">Erro ao carregar consultores.</td></tr>';
+            }
+        }
+
+        function toast(msg, type) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.style.borderColor = type === 'error' ? 'rgba(239,68,68,0.35)' : 'rgba(16,185,129,0.35)';
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 2500);
+        }
+
+        const monthNames = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        let currentWeek = 1; // 0 = TODAS
+
+        function getWeeksInMonth(year, month) {
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startWeekday = firstDay.getDay(); // 0=Sunday
+            // Calculate number of weeks the month spans
+            return Math.ceil((startWeekday + daysInMonth) / 7);
+        }
+
+        function updateMonthDisplay() {
+            const name = monthNames[currentMonth];
+            document.getElementById('monthLabel').textContent = `${name} ${currentYear}`;
+            
+            // Re-validate current week for the new month
+            const maxWeeks = getWeeksInMonth(currentYear, currentMonth);
+            if (currentWeek > maxWeeks && currentWeek !== 0) {
+                currentWeek = maxWeeks;
+                updateWeekDisplay();
+            }
+        }
+
+        function updateWeekDisplay() {
+            const label = document.getElementById('weekLabel');
+            if (currentWeek === 0) {
+                label.textContent = 'TODAS';
+            } else {
+                label.textContent = `${currentWeek}ª SEMANA`;
+            }
+        }
+
+        async function copiarImagemWhatsApp() {
+            const captureTarget = document.querySelector('.card');
+            const btn = document.querySelector('.card-footer button');
+            
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i><span>Gerando...</span>';
+                lucide.createIcons();
+
+                const computedBg = getComputedStyle(document.body).getPropertyValue('--card-bg');
+
+                const canvas = await html2canvas(captureTarget, {
+                    scale: 2,
+                    backgroundColor: computedBg,
+                    logging: false,
+                    useCORS: true,
+                    ignoreElements: (element) => {
+                        return element.classList && element.classList.contains('card-footer');
+                    }
+                });
+                
+                canvas.toBlob(async (blob) => {
+                    try {
+                        const item = new ClipboardItem({ 'image/png': blob });
+                        await navigator.clipboard.write([item]);
+                        toast('Imagem copiada para a área de transferência!', 'success');
+                    } catch (err) {
+                        const url = canvas.toDataURL('image/png');
+                        const link = document.createElement('a');
+                        const mes = document.getElementById('monthLabel').textContent.trim() || 'mes';
+                        const semana = document.getElementById('weekLabel').textContent.trim() || 'semana';
+                        link.download = `quadro-vendas-${mes}-${semana}.png`.replace(/\s+/g, '-').toLowerCase();
+                        link.href = url;
+                        link.click();
+                        toast('Imagem baixada com sucesso!', 'success');
+                    }
+                });
+            } catch (erro) {
+                console.error(erro);
+                toast('Erro ao gerar imagem.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="camera"></i><span>Copiar Imagem</span>';
+                lucide.createIcons();
+            }
+        }
+
+        function calcularTotais() {
+            const tbody = document.getElementById('tbody-consultores');
+            const linhas = tbody.getElementsByTagName('tr');
+            
+            let totalNovoEntQtd = 0, totalNovoEntRec = 0, totalNovoAtQtd = 0, totalNovoAtRec = 0;
+            let totalRenegEntQtd = 0, totalRenegEntRec = 0, totalRenegAtQtd = 0, totalRenegAtRec = 0;
+            let totalFibraEntQtd = 0, totalFibraAtQtd = 0;
+            let totalTimEntQtd = 0, totalTimAtQtd = 0;
+
+            for (let linha of linhas) {
+                // Select spans with class qv-input inside the row
+                const spans = linha.querySelectorAll('span.qv-input');
+                
+                // Helper to parse float from span text
+                const val = (idx) => {
+                    if (!spans[idx]) return 0;
+                    // Replace comma with dot if user typed comma
+                    let text = spans[idx].textContent.trim().replace(',', '.');
+                    return parseFloat(text) || 0;
+                };
+
+                // Novo + Aditivo - Entrantes
+                totalNovoEntQtd += val(0);
+                totalNovoEntRec += val(1);
+                // Novo + Aditivo - Ativos
+                totalNovoAtQtd += val(2);
+                totalNovoAtRec += val(3);
+                
+                // Reneg - Entrantes
+                totalRenegEntQtd += val(4);
+                totalRenegEntRec += val(5);
+                // Reneg - Ativos
+                totalRenegAtQtd += val(6);
+                totalRenegAtRec += val(7);
+                
+                // Fibra - Entrantes e Ativos
+                totalFibraEntQtd += val(8);
+                totalFibraAtQtd += val(9);
+                
+                // TIM Controle - Entrantes e Ativos
+                totalTimEntQtd += val(10);
+                totalTimAtQtd += val(11);
+            }
+
+            document.getElementById('total-novo-ent-qtd').textContent = totalNovoEntQtd;
+            document.getElementById('total-novo-ent-rec').textContent = totalNovoEntRec.toFixed(2);
+            document.getElementById('total-novo-at-qtd').textContent = totalNovoAtQtd;
+            document.getElementById('total-novo-at-rec').textContent = totalNovoAtRec.toFixed(2);
+            
+            document.getElementById('total-reneg-ent-qtd').textContent = totalRenegEntQtd;
+            document.getElementById('total-reneg-ent-rec').textContent = totalRenegEntRec.toFixed(2);
+            document.getElementById('total-reneg-at-qtd').textContent = totalRenegAtQtd;
+            document.getElementById('total-reneg-at-rec').textContent = totalRenegAtRec.toFixed(2);
+            
+            document.getElementById('total-fibra-ent-qtd').textContent = totalFibraEntQtd;
+            document.getElementById('total-fibra-at-qtd').textContent = totalFibraAtQtd;
+            
+            document.getElementById('total-tim-ent-qtd').textContent = totalTimEntQtd;
+            document.getElementById('total-tim-at-qtd').textContent = totalTimAtQtd;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateMonthDisplay();
+            updateWeekDisplay();
+            lucide.createIcons();
+            loadConsultants();
+
+            // Listeners
+            document.getElementById('prevMonth').addEventListener('click', () => {
+                currentMonth--;
+                if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+                updateMonthDisplay();
+            });
+            document.getElementById('nextMonth').addEventListener('click', () => {
+                currentMonth++;
+                if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+                updateMonthDisplay();
+            });
+            document.getElementById('prevWeek').addEventListener('click', () => {
+                const maxWeeks = getWeeksInMonth(currentYear, currentMonth);
+                currentWeek--;
+                // Cycle: 1 -> 0 -> max -> max-1 ...
+                if (currentWeek < 0) currentWeek = maxWeeks;
+                updateWeekDisplay();
+            });
+            document.getElementById('nextWeek').addEventListener('click', () => {
+                const maxWeeks = getWeeksInMonth(currentYear, currentMonth);
+                currentWeek++;
+                // Cycle: ... max -> 0 -> 1
+                if (currentWeek > maxWeeks) currentWeek = 0;
+                updateWeekDisplay();
+            });
+        });
+    </script>
+</body>
+</html>
