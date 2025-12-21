@@ -62,7 +62,7 @@ export async function createNegotiation(req, res) {
 
     await PedidoDeVenda.create({
       negotiation_id: negotiation.id,
-      status: '1-Entrada'
+      status: status || 'Em andamento'
     });
 
     return res.status(201).json({
@@ -97,6 +97,16 @@ export async function updateNegotiation(req, res) {
     if (status) negotiation.status = status;
     if (data) negotiation.data = String(data).includes('-') ? String(data).split('-').reverse().join('/') : String(data);
     await negotiation.save();
+
+    // Se o status foi atualizado, reflete no PedidoDeVenda
+    if (status) {
+      const pedido = await PedidoDeVenda.findOne({ where: { negotiation_id: negotiation.id } });
+      if (pedido) {
+        pedido.status = status;
+        await pedido.save();
+      }
+    }
+
     return res.json({
       id: negotiation.id,
       cnpj: negotiation.cnpj,
