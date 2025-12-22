@@ -203,6 +203,26 @@
                 toast('Erro ao salvar categoria', 'error');
             }
         }
+        async function carregarTiposSelect() {
+            try {
+                const list = await api('/types', { method: 'GET' }).catch(() => []);
+                const arr = Array.isArray(list) ? list : [];
+                const select = document.getElementById('mCatTipo');
+                if (!select) return;
+                
+                // Preserve current value if any
+                const currentVal = select.value;
+                
+                select.innerHTML = arr.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
+                
+                // If the list is empty, maybe add a default or leave empty
+                if (arr.length === 0) {
+                    select.innerHTML = '<option value="">Sem tipos cadastrados</option>';
+                }
+            } catch {
+                // Fail silently or show toast
+            }
+        }
         document.addEventListener('DOMContentLoaded', () => {
             const auth = localStorage.getItem('authUser');
             if (!auth) { window.location.href = 'login.html'; return; }
@@ -211,6 +231,7 @@
                 const role = String(u.role || '').toLowerCase();
                 if (role !== 'admin') { window.location.href = 'dashboard.html'; return; }
             } catch { window.location.href = 'dashboard.html'; return; }
+            carregarTiposSelect();
             carregarCategoriasList();
             const novaBtn = document.getElementById('novaCategoriaBtn');
             if (novaBtn) {
@@ -323,9 +344,7 @@
                     <div class="field"><span class="label-inline">Descrição</span><input id="mCatDesc" class="input" type="text" placeholder="Descrição (opcional)"></div>
                     <div class="field"><span class="label-inline">Tipo</span>
                         <select id="mCatTipo" class="select">
-                            <option value="Novo">Novo</option>
-                            <option value="Aditivo">Aditivo</option>
-                            <option value="Renegociação">Renegociação</option>
+                            <option value="" disabled selected>Carregando...</option>
                         </select>
                     </div>
                 </div>

@@ -30,10 +30,7 @@
                         <div>
                             <div class="label">Tipo</div>
                             <select id="fCatTipo" class="select">
-                                <option value="">Todos</option>
-                                <option value="Novo">Novo</option>
-                                <option value="Aditivo">Aditivo</option>
-                                <option value="Renegociação">Renegociação</option>
+                                <option value="" selected>Carregando...</option>
                             </select>
                         </div>
                         <div style="display:flex; align-items:flex-end; gap:0.5rem; margin-left:auto; justify-content:flex-end;">
@@ -225,7 +222,28 @@
                 toast('Erro ao salvar categoria', 'error');
             }
         }
-        document.addEventListener('DOMContentLoaded', async () => {
+        async function carregarTiposSelect() {
+            try {
+                const list = await api('/types', { method: 'GET' }).catch(() => []);
+                const arr = Array.isArray(list) ? list : [];
+                
+                // Modal Select
+                const selectModal = document.getElementById('mCatTipo');
+                if (selectModal) {
+                    selectModal.innerHTML = arr.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
+                    if (arr.length === 0) selectModal.innerHTML = '<option value="">Sem tipos cadastrados</option>';
+                }
+
+                // Filter Select
+                const selectFilter = document.getElementById('fCatTipo');
+                if (selectFilter) {
+                    let html = '<option value="">Todos</option>';
+                    html += arr.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
+                    selectFilter.innerHTML = html;
+                }
+            } catch {}
+        }
+        document.addEventListener('DOMContentLoaded', () => {
             const auth = localStorage.getItem('authUser');
             if (!auth) { window.location.href = 'login.html'; return; }
             try {
@@ -233,7 +251,8 @@
                 const role = String(u.role || '').toLowerCase();
                 if (role !== 'admin') { window.location.href = 'dashboard.html'; return; }
             } catch { window.location.href = 'dashboard.html'; return; }
-            await carregarCategoriasList();
+            carregarTiposSelect();
+            carregarCategoriasList();
             const novaBtn = document.getElementById('novaCategoriaBtn');
             if (novaBtn) {
                 novaBtn.addEventListener('click', () => {
@@ -310,9 +329,7 @@
                     <div class="field"><span class="label-inline">Nome</span><input id="mCatNome" class="input" type="text" placeholder="Nome do plano"></div>
                     <div class="field"><span class="label-inline">Tipo</span>
                         <select id="mCatTipo" class="select">
-                            <option value="Novo">Novo</option>
-                            <option value="Aditivo">Aditivo</option>
-                            <option value="Renegociação">Renegociação</option>
+                            <option value="" disabled selected>Carregando...</option>
                         </select>
                     </div>
                     <div class="field"><span class="label-inline">Descrição</span><input id="mCatDesc" class="input" type="text" placeholder="Descrição (opcional)"></div>

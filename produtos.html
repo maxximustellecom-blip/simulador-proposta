@@ -26,10 +26,7 @@
                         <div>
                             <div class="label">Tipo</div>
                             <select id="fProdTipo" class="select">
-                                <option value="">Todos</option>
-                                <option value="Novo">Novo</option>
-                                <option value="Aditivo">Aditivo</option>
-                                <option value="Renegociação">Renegociação</option>
+                                <option value="" selected>Carregando...</option>
                             </select>
                         </div>
                         <div>
@@ -301,6 +298,29 @@
                 toast('Erro ao salvar produto', 'error');
             }
         }
+        async function carregarTiposSelect() {
+            try {
+                const list = await api('/types', { method: 'GET' }).catch(() => []);
+                const arr = Array.isArray(list) ? list : [];
+                
+                // Modal Select
+                const selectModal = document.getElementById('mProdTipo');
+                if (selectModal) {
+                    let html = '<option value="">Todos</option>';
+                    html += arr.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
+                    if (arr.length === 0) html += '<option value="" disabled>Sem tipos cadastrados</option>';
+                    selectModal.innerHTML = html;
+                }
+
+                // Filter Select
+                const selectFilter = document.getElementById('fProdTipo');
+                if (selectFilter) {
+                    let html = '<option value="">Todos</option>';
+                    html += arr.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
+                    selectFilter.innerHTML = html;
+                }
+            } catch {}
+        }
         document.addEventListener('DOMContentLoaded', async () => {
             const auth = localStorage.getItem('authUser');
             if (!auth) { window.location.href = 'login.html'; return; }
@@ -309,6 +329,10 @@
                 const role = String(u.role || '').toLowerCase();
                 if (role !== 'admin') { window.location.href = 'dashboard.html'; return; }
             } catch { window.location.href = 'dashboard.html'; return; }
+            
+            // Load types first so the select is ready
+            await carregarTiposSelect();
+            
             await carregarCategorias();
             await carregarRegioes();
             await carregarProdutos();
@@ -465,10 +489,7 @@
                 <div class="grid-2-modal">
                     <div class="field"><span class="label-inline">Tipo</span>
                         <select id="mProdTipo" class="select">
-                            <option value="">Todos</option>
-                            <option value="Novo">Novo</option>
-                            <option value="Aditivo">Aditivo</option>
-                            <option value="Renegociação">Renegociação</option>
+                            <option value="" selected>Carregando...</option>
                         </select>
                     </div>
                     <div class="field"><span class="label-inline">Plano</span><select id="mProdCategoria" class="select"><option value="">Carregando...</option></select></div>
