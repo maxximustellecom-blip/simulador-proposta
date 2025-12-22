@@ -213,7 +213,7 @@ html, body {
   margin-bottom: 1rem;
 }
 
-.card-title { font-weight: 700; }
+.card-title { font-weight: 700; display: flex; }
 
 .card-head {
   display: flex;
