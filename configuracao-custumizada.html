@@ -9,6 +9,53 @@
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        .modal-body {
+            padding: 1.5rem;
+            background-color: #f9fafb;
+        }
+        .section-block {
+            margin-bottom: 1rem;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .section-icon {
+            width: 20px;
+            height: 20px;
+            color: var(--primary);
+        }
+        .section-title {
+            font-weight: 600;
+            color: #111827;
+            font-size: 0.95rem;
+        }
+        .section-desc {
+            font-size: 0.8rem;
+            color: #6b7280;
+            line-height: 1.2;
+        }
+        .info-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            background: #f3f4f6;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #374151;
+        }
+    </style>
 </head>
 <body>
     <main class="container">
@@ -47,33 +94,11 @@
                                 <tr>
                                     <th>Linha</th>
                                     <th>Qtd</th>
-                                    <th>DDD</th>
-                                    <th>Tipo</th>
-                                    <th>Número</th>
-                                    <th>Plano Atual</th>
-                                    <th>Preço Atual</th>
-                                    <th>Portabilidade</th>
-                                    <th>Operadora Doadora</th>
-                                    <th>Número a Portar</th>
-                                    <th>Plano</th>
-                                    <th>Oferta</th>
-                                    <th>Pct</th>
-                                    <th>Valor Plano</th>
-                                    <th>Total Linha</th>
-                                    <th>Valor Não Fid.</th>
-                                    <th>% Desc.</th>
-                                    <th>Valor c/Desc.</th>
-                                    <th>Economia</th>
-                                    <th>Aparelho</th>
-                                    <th>Tipo Aparelho</th>
-                                    <th>Modelo</th>
-                                    <th>R$ Total Aparelho</th>
-                                    <th>R$ da Parcela</th>
                                     <th class="col-actions" style="min-width:140px;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="tableBody">
-                                <tr><td colspan="16">
+                                <tr><td colspan="3">
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
@@ -224,6 +249,7 @@
         let __negociacaoId = null;
         let __negociacaoInfo = null;
         let __clienteInfo = null;
+        let __tiposBackend = [];
         let linhas = [];
         let nextId = 1;
         let __isLocked = false;
@@ -231,13 +257,13 @@
         const ddds = [11,12,13,14,15,16,17,18,19,21,22,24,27,28,31,32,33,34,35,37,38,41,42,43,44,45,46,47,48,49,51,53,54,55,61,62,63,64,65,66,67,68,69,71,73,74,75,77,79,81,82,83,84,85,86,87,88,89,91,92,93,94,95,96,97,98,99];
         let __customCategorias = [];
         let __customProdutos = [];
-        let __planosPorTipo = { novo: [], adtivo: [], renegociacao: [] };
-        let __pctsPorTipo = { novo: [], adtivo: [], renegociacao: [] };
+        let __planosPorTipo = { novo: [], aditivo: [], renegociacao: [] };
+        let __pctsPorTipo = { novo: [], aditivo: [], renegociacao: [] };
         let __map = {};
         function normalizeTipoKey(t) {
             const k = String(t || '').toLowerCase();
             if (k.includes('reneg')) return 'renegociacao';
-            if (k.includes('adti') || k.includes('adit')) return 'adtivo';
+            if (k.includes('adti') || k.includes('adit')) return 'aditivo';
             return 'novo';
         }
         function parsePctFromText(s) {
@@ -265,15 +291,23 @@
             if (dataOut && smsOut) return `${dataOut} + ${smsOut}`;
             return dataOut || smsOut || '';
         }
+
+        async function carregarTiposBackend() {
+            try {
+                const list = await api('/types', { method: 'GET' });
+                __tiposBackend = Array.isArray(list) ? list : [];
+            } catch { __tiposBackend = []; }
+        }
+
         async function carregarCatalogoCustomizado() {
             try {
                 const cats = await api('/custom-categories', { method: 'GET' }).catch(() => []);
                 const prods = await api('/custom-products', { method: 'GET' }).catch(() => []);
                 __customCategorias = Array.isArray(cats) ? cats : [];
                 __customProdutos = Array.isArray(prods) ? prods : [];
-                __planosPorTipo = { novo: [], adtivo: [], renegociacao: [] };
-                __pctsPorTipo = { novo: [], adtivo: [], renegociacao: [] };
-                const pctSets = { novo: new Set(), adtivo: new Set(), renegociacao: new Set() };
+                __planosPorTipo = { novo: [], aditivo: [], renegociacao: [] };
+                __pctsPorTipo = { novo: [], aditivo: [], renegociacao: [] };
+                const pctSets = { novo: new Set(), aditivo: new Set(), renegociacao: new Set() };
                 __customProdutos.forEach(p => {
                     const tipo = normalizeTipoKey(p.category && p.category.tipo ? p.category.tipo : 'Novo');
                     const nome = String(p.nome || p.name || '-');
@@ -289,8 +323,8 @@
             } catch {
                 __customCategorias = [];
                 __customProdutos = [];
-                __planosPorTipo = { novo: [], adtivo: [], renegociacao: [] };
-                __pctsPorTipo = { novo: [], adtivo: [], renegociacao: [] };
+                __planosPorTipo = { novo: [], aditivo: [], renegociacao: [] };
+                __pctsPorTipo = { novo: [], aditivo: [], renegociacao: [] };
             }
         }
         function construirMapaCustomizado() {
@@ -435,8 +469,10 @@
         }
 
         function tipoOptionsHtml(sel) {
-            const opts = ['Novo','Adtivo','Renegociação'];
-            return opts.map(o => `<option value="${o}" ${String(sel||'')===o?'selected':''}>${o}</option>`).join('');
+            if (!__tiposBackend || __tiposBackend.length === 0) {
+                return '<option value="" disabled selected>Carregando...</option>';
+            }
+            return __tiposBackend.map(t => `<option value="${t.nome}" ${String(sel||'')===t.nome?'selected':''}>${t.nome}</option>`).join('');
         }
         function pctAtualOptionsHtml(sel) {
             return ['<option value="">Selecione</option>'].concat(pctsDadosDisponiveis.map(p => `<option value="${p}" ${String(sel||'')===p?'selected':''}>${p}</option>`)).join('');
@@ -463,100 +499,384 @@
             const sel = arr.find(p => p.nome === planoNome);
             return sel ? String(sel.pct || '') : '';
         }
+        let __currentEditId = null;
+
+        function openEditModal(id) {
+            const line = linhas.find(l => Number(l.id) === Number(id));
+            if (!line) return;
+            __currentEditId = id;
+
+            const modal = document.getElementById('editLineModal');
+            if (!modal) return;
+            document.getElementById('editLineId').value = id;
+
+            const populate = (id, opts, val) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerHTML = opts;
+                    el.value = val;
+                }
+            };
+
+            const dddOpts = ['<option value="">DDD</option>'].concat(ddds.map(d => `<option value="${d}">${d}</option>`)).join('');
+            populate('editDdd', dddOpts, line.ddd);
+
+            populate('editTipo', tipoOptionsHtml(line.tipoNegociacao), line.tipoNegociacao);
+            
+            const numEl = document.getElementById('editNumero');
+            if (numEl) numEl.value = line.numero || '';
+
+            populate('editPlanoAtual', pctAtualOptionsHtml(line.planoAtualGB), line.planoAtualGB);
+
+            const precoEl = document.getElementById('editPrecoAtual');
+            if (precoEl) precoEl.value = line.precoAtual || 0;
+
+            populate('editPortabilidade', '<option value="Não">Não</option><option value="Sim">Sim</option>', line.portabilidade);
+
+            const ops = ['Claro','Vivo','TIM','Oi'];
+            const opOpts = ['<option value="">Selecione...</option>'].concat(ops.map(o => `<option value="${o}">${o}</option>`)).join('');
+            populate('editOperadoraDoadora', opOpts, line.operadoraDoadora);
+
+            const numPortEl = document.getElementById('editNumeroPortar');
+            if (numPortEl) numPortEl.value = line.numeroPortar || '';
+
+            const catsByTipo = getFilteredCategorias(line.tipoNegociacao);
+            const catOpts = catsByTipo.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
+            populate('editCategoria', catOpts, line.categoria);
+
+            const currentCat = catsByTipo.find(c => c.nome === line.categoria);
+            const planos = currentCat ? (__map[currentCat.id] || []) : [];
+            const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
+                planos.map(p => `<option value="${p.nome}">${p.nome}</option>`)
+            ).join('');
+            populate('editPlano', planoOpts, line.plano);
+
+            const pctEl = document.getElementById('editPct');
+            if (pctEl) pctEl.value = line.pct || '-';
+            
+            const valPlanoEl = document.getElementById('editValorPlano');
+            if (valPlanoEl) valPlanoEl.value = line.valorPlano || 0;
+
+            const valNaoFidEl = document.getElementById('editValorNaoFid');
+            if (valNaoFidEl) valNaoFidEl.value = line.valorNaoFidelizado || 0;
+
+            const descEl = document.getElementById('editDesconto');
+            if (descEl) descEl.value = line.desconto || 0;
+
+            const valFinalEl = document.getElementById('editValorFinal');
+            if (valFinalEl) valFinalEl.value = currency(calcularPrecoFinal(line));
+
+            const econEl = document.getElementById('editEconomia');
+            if (econEl) econEl.value = currency(calcularEconomia(line));
+
+            populate('editTemAparelho', '<option value="Não">Não</option><option value="Sim">Sim</option>', line.temAparelho);
+            populate('editTipoAparelho', '<option value="Comodato">Comodato</option><option value="VF 24x">VF 24x</option>', line.tipoAparelho);
+            
+            const modeloEl = document.getElementById('editModeloAparelho');
+            if (modeloEl) modeloEl.value = line.modeloAparelho || '';
+            
+            const valApEl = document.getElementById('editValorAparelho');
+            if (valApEl) valApEl.value = line.valorAparelho || 0;
+
+            const valParcEl = document.getElementById('editValorParcela');
+            if (valParcEl) valParcEl.value = currency(line.valorParcela);
+
+            // Recalculo automatico se houver portabilidade e VF 24x
+            if (line.portabilidade === 'Sim' && line.tipoAparelho === 'VF 24x') {
+                const valAp = Number(line.valorAparelho || 0);
+                if (valParcEl) valParcEl.value = currency(valAp / 24);
+            }
+
+            updateEditModalState();
+
+            modal.classList.add('show');
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        }
+
+        function updateEditModalState() {
+            if (!__currentEditId) return;
+            const tipo = document.getElementById('editTipo').value;
+            const isReneg = normalizeTipoKey(tipo).includes('reneg');
+            const port = document.getElementById('editPortabilidade').value;
+            const temAp = document.getElementById('editTemAparelho').value;
+            const tipoAp = document.getElementById('editTipoAparelho').value;
+
+            const numEl = document.getElementById('editNumero');
+            if (numEl) numEl.disabled = !isReneg;
+
+            const isNovo = ['novo','aditivo'].includes(normalizeTipoKey(tipo));
+            const paEl = document.getElementById('editPlanoAtual');
+            if (paEl) paEl.disabled = isNovo;
+            const praEl = document.getElementById('editPrecoAtual');
+            if (praEl) praEl.disabled = isNovo;
+
+            const portDetails = document.getElementById('areaPortabilidadeDetails');
+            if (portDetails) portDetails.style.display = (port === 'Sim') ? 'grid' : 'none';
+
+            const opEl = document.getElementById('editOperadoraDoadora');
+            if (opEl) opEl.disabled = (port !== 'Sim');
+            const npEl = document.getElementById('editNumeroPortar');
+            if (npEl) npEl.disabled = (port !== 'Sim');
+
+            const apDetails = document.getElementById('areaAparelhoDetails');
+            if (apDetails) apDetails.style.display = (temAp === 'Sim') ? 'block' : 'none';
+
+            const tipoApEl = document.getElementById('editTipoAparelho');
+            if (tipoApEl) tipoApEl.disabled = (temAp !== 'Sim');
+            const modApEl = document.getElementById('editModeloAparelho');
+            if (modApEl) modApEl.disabled = (temAp !== 'Sim');
+            const valApEl = document.getElementById('editValorAparelho');
+            if (valApEl) valApEl.disabled = (temAp !== 'Sim' || tipoAp === 'Comodato');
+        }
+
+        function bindEditModalEvents() {
+            const modal = document.getElementById('editLineModal');
+            if (!modal) return;
+
+            const close = () => { modal.classList.remove('show'); __currentEditId = null; };
+            document.getElementById('editLineClose').onclick = close;
+            document.getElementById('editLineCancel').onclick = close;
+
+            const fields = ['editTipo', 'editPortabilidade', 'editTemAparelho', 'editTipoAparelho', 'editCategoria', 'editPlano'];
+            fields.forEach(fid => {
+                const el = document.getElementById(fid);
+                if (el) el.addEventListener('change', () => handleEditModalChange(fid));
+            });
+            
+            ['editNumero', 'editNumeroPortar'].forEach(fid => {
+                const el = document.getElementById(fid);
+                if (el) el.addEventListener('input', (e) => {
+                    const v = e.target.value.replace(/\D/g, '');
+                    e.target.value = v.length > 5 ? v.slice(0,5)+'-'+v.slice(5,9) : v;
+                });
+            });
+
+            ['editValorPlano', 'editValorNaoFid', 'editDesconto', 'editPrecoAtual', 'editValorAparelho'].forEach(fid => {
+                const el = document.getElementById(fid);
+                if (el) el.addEventListener('input', () => {
+                     const desc = Number(document.getElementById('editDesconto').value || 0);
+                     const base = Number(document.getElementById('editValorNaoFid').value || 0);
+                     const final = base * (1 - desc/100);
+                     document.getElementById('editValorFinal').value = currency(final);
+                     
+                     const pAtual = Number(document.getElementById('editPrecoAtual').value || 0);
+                     document.getElementById('editEconomia').value = currency(pAtual - final);
+
+                     const valAp = Number(document.getElementById('editValorAparelho').value || 0);
+                     const tipoAp = document.getElementById('editTipoAparelho').value;
+                     if (tipoAp === 'VF 24x') {
+                        document.getElementById('editValorParcela').value = currency(valAp / 24);
+                     } else {
+                        document.getElementById('editValorParcela').value = currency(0);
+                     }
+                });
+            });
+
+            document.getElementById('editLineSave').onclick = () => {
+                if (saveEditModal()) {
+                    close();
+                }
+            };
+        }
+
+        function handleEditModalChange(fieldId) {
+            const getValue = (id) => document.getElementById(id).value;
+            const setValue = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+            const setHTML = (id, h) => { const el = document.getElementById(id); if (el) el.innerHTML = h; };
+
+            if (fieldId === 'editTipo') {
+                const val = getValue('editTipo');
+                const catsByTipo = getFilteredCategorias(val);
+                const firstCat = catsByTipo[0]?.nome || '';
+                
+                const catOpts = catsByTipo.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
+                setHTML('editCategoria', catOpts);
+                setValue('editCategoria', firstCat);
+                handleEditModalChange('editCategoria');
+                
+                setValue('editPlano', '');
+                setValue('editPct', '');
+                setValue('editValorPlano', 0);
+                setValue('editValorNaoFid', 0);
+            }
+
+            if (fieldId === 'editCategoria') {
+                const catVal = getValue('editCategoria');
+                const tipoVal = getValue('editTipo');
+                const catsByTipo = getFilteredCategorias(tipoVal);
+                const catObj = catsByTipo.find(c => c.nome === catVal);
+                const planos = catObj ? (__map[catObj.id] || []) : [];
+                
+                const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
+                    planos.map(p => `<option value="${p.nome}">${p.nome}</option>`)
+                ).join('');
+                setHTML('editPlano', planoOpts);
+                setValue('editPlano', '');
+                handleEditModalChange('editPlano');
+            }
+
+            if (fieldId === 'editPlano') {
+                const planoVal = getValue('editPlano');
+                const catVal = getValue('editCategoria');
+                const tipoVal = getValue('editTipo');
+                const catsByTipo = getFilteredCategorias(tipoVal);
+                const catObj = catsByTipo.find(c => c.nome === catVal);
+                const planos = catObj ? (__map[catObj.id] || []) : [];
+                const sel = planos.find(p => p.nome === planoVal);
+
+                if (sel) {
+                    const baseTxt = sel.descricao || sel.nome || '';
+                    setValue('editPct', parsePctFromText(baseTxt));
+                    setValue('editValorPlano', sel.valor || 0);
+                    setValue('editValorNaoFid', sel.valor || 0);
+                } else {
+                    setValue('editPct', '-');
+                    setValue('editValorPlano', 0);
+                    setValue('editValorNaoFid', 0);
+                }
+                document.getElementById('editValorPlano').dispatchEvent(new Event('input'));
+            }
+
+            if (fieldId === 'editTipoAparelho' || fieldId === 'editTemAparelho') {
+                const tem = getValue('editTemAparelho');
+                const tipo = getValue('editTipoAparelho');
+                if (tem !== 'Sim') {
+                    setValue('editTipoAparelho', '');
+                    setValue('editModeloAparelho', '');
+                    setValue('editValorAparelho', 0);
+                    setValue('editValorParcela', currency(0));
+                } else {
+                     if (fieldId === 'editTemAparelho' && !tipo) {
+                         setValue('editTipoAparelho', 'Comodato'); 
+                     }
+                }
+                if (getValue('editTipoAparelho') === 'Comodato') {
+                    setValue('editValorAparelho', 0);
+                    setValue('editValorParcela', currency(0));
+                }
+            }
+            
+            updateEditModalState();
+        }
+
+        function saveEditModal() {
+            if (!__currentEditId) return false;
+            const getValue = (id) => document.getElementById(id).value;
+            
+            const tipoVal = getValue('editTipo');
+            const catVal = getValue('editCategoria');
+            const planoVal = getValue('editPlano');
+
+            // Validation Logic
+            const erros = [];
+            const normalize = (s) => String(s || '').toLowerCase();
+            const isReneg = normalize(tipoVal).includes('reneg');
+            
+            if (isReneg) {
+                const pa = getValue('editPlanoAtual');
+                const pra = Number(getValue('editPrecoAtual') || 0);
+                if (!pa || !pra) erros.push('Renegociações exigem Plano Atual e Preço Atual');
+                
+                const num = getValue('editNumero');
+                if (!num || num.length < 8) erros.push('Renegociações exigem o número da linha');
+            }
+            
+            const port = getValue('editPortabilidade');
+            if (port === 'Sim') {
+                const op = getValue('editOperadoraDoadora');
+                const np = getValue('editNumeroPortar');
+                if (!op) erros.push('Selecione a Operadora Doadora para portabilidade');
+                if (!np || np.length < 8) erros.push('Informe o Número a Portar válido');
+            }
+            
+            const temAp = getValue('editTemAparelho');
+            if (temAp === 'Sim') {
+                const mod = getValue('editModeloAparelho');
+                const valAp = Number(getValue('editValorAparelho') || 0);
+                if (!mod) erros.push('Informe o modelo do aparelho');
+                if (valAp <= 0 && getValue('editTipoAparelho') !== 'Comodato') erros.push('Informe o valor do aparelho');
+            }
+
+            if (!planoVal) erros.push('Selecione um plano');
+
+            if (erros.length > 0) {
+                toast('Corrija os erros: ' + erros.join('; '), 'error');
+                return false;
+            }
+            
+            const valorPlano = Number(getValue('editValorPlano') || 0);
+            const valorNaoFid = Number(getValue('editValorNaoFid') || 0);
+            const desconto = Number(getValue('editDesconto') || 0);
+            const pct = getValue('editPct');
+
+            const valorAp = Number(getValue('editValorAparelho') || 0);
+            const tipoAp = getValue('editTipoAparelho');
+            let valorParcela = 0;
+            if (tipoAp === 'VF 24x') valorParcela = valorAp / 24;
+
+            linhas = linhas.map(l => {
+                if (Number(l.id) !== Number(__currentEditId)) return l;
+                return {
+                    ...l,
+                    ddd: getValue('editDdd'),
+                    tipoNegociacao: tipoVal,
+                    numero: getValue('editNumero'),
+                    planoAtualGB: getValue('editPlanoAtual'),
+                    precoAtual: Number(getValue('editPrecoAtual') || 0),
+                    portabilidade: getValue('editPortabilidade'),
+                    operadoraDoadora: getValue('editOperadoraDoadora'),
+                    numeroPortar: getValue('editNumeroPortar'),
+                    categoria: catVal,
+                    plano: planoVal,
+                    pct: pct === '-' ? '' : pct,
+                    valorPlano: valorPlano,
+                    valorNaoFidelizado: valorNaoFid,
+                    desconto: desconto,
+                    temAparelho: getValue('editTemAparelho'),
+                    tipoAparelho: tipoAp,
+                    modeloAparelho: getValue('editModeloAparelho'),
+                    valorAparelho: valorAp,
+                    valorParcela: valorParcela
+                };
+            });
+            
+            renderTable();
+            renderResumo();
+            validarProposta();
+            salvarProposta(false);
+            return true;
+        }
+
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = linhas.map((l, idx) => {
-                const cats = getFilteredCategorias(l.tipoNegociacao);
-                const currentCat = cats.find(c => c.nome === l.categoria);
-                const planos = currentCat ? (__map[currentCat.id] || []) : [];
-                const planoOpts = ['<option value="">Selecione</option>'].concat(
-                    planos.map(p => `<option value="${p.nome}" ${String(l.plano||'')===p.nome?'selected':''}>${p.nome}</option>`)
-                ).join('');
-
-                const precoFinal = calcularPrecoFinal(l);
-                const economia = calcularEconomia(l);
-                const tipoAparelhoOpts = ['Comodato','VF 24x'];
-                const tipoAparelhoHtml = tipoAparelhoOpts.map(o => `<option value="${o}" ${String(l.tipoAparelho||'')===o?'selected':''}>${o}</option>`).join('');
-                
-                const dddOpts = ['<option value="">DDD</option>'].concat(ddds.map(d => `<option value="${d}" ${String(d) === String(l.ddd || '') ? 'selected' : ''}>${d}</option>`)).join('');
-
-                const isVF24x = l.tipoAparelho === 'VF 24x';
-                const isComodato = l.tipoAparelho === 'Comodato';
-                const hasAparelho = l.temAparelho === 'Sim';
-                const isPort = l.portabilidade === 'Sim';
-
-                const ops = ['Claro','Vivo','TIM','Oi'];
-                const opOpts = ['<option value="">Selecione...</option>'].concat(ops.map(o => `<option value="${o}" ${o === l.operadoraDoadora ? 'selected' : ''}>${o}</option>`)).join('');
-                
-                const tipo = String(l.tipoNegociacao || '').toLowerCase();
-                const isReneg = (tipo.includes('reneg') || tipo.includes('renegociação') || tipo.includes('renegociacao'));
-
-                // Styles for validation
-                const styleNumPortar = (isPort && !l.numeroPortar) ? 'border-color:#EF4444;' : '';
-                const styleValorAp = (isVF24x && !Number(l.valorAparelho)) ? 'border-color:#EF4444;' : '';
-                const styleValorParc = (isVF24x && !Number(l.valorParcela)) ? 'border-color:#EF4444; background-color:#f3f4f6;' : 'background-color:#f3f4f6;';
-
                 return `
                 <tr>
                     <td>${idx + 1}</td>
                     <td><input type="number" min="1" class="input" style="width:60px; text-align:center;" value="${l.quantidade || 1}" data-id="${l.id}" data-field="quantidade"></td>
-                    <td><select class="select" data-id="${l.id}" data-field="ddd" style="min-width:70px;">${dddOpts}</select></td>
-                    <td><select class="select" data-id="${l.id}" data-field="tipoNegociacao">${tipoOptionsHtml(l.tipoNegociacao)}</select></td>
-                    <td><input type="text" class="input" placeholder="00000-0000" style="min-width:110px; text-align:center;" value="${l.numero || ''}" data-id="${l.id}" data-field="numero" ${!isReneg ? 'disabled' : ''} maxlength="10"></td>
-                    <td><select class="select" data-id="${l.id}" data-field="planoAtualGB" ${['Novo','Adtivo'].includes(l.tipoNegociacao) ? 'disabled' : ''}>${pctAtualOptionsHtml(l.planoAtualGB)}</select></td>
-                    <td><input type="number" class="input" step="0.01" min="0" value="${l.precoAtual || ''}" data-id="${l.id}" data-field="precoAtual" ${['Novo','Adtivo'].includes(l.tipoNegociacao) ? 'disabled' : ''}></td>
-                    <td>
-                        <select class="select" data-id="${l.id}" data-field="portabilidade" style="min-width:70px;">
-                            <option value="Não" ${l.portabilidade === 'Não' ? 'selected' : ''}>Não</option>
-                            <option value="Sim" ${l.portabilidade === 'Sim' ? 'selected' : ''}>Sim</option>
-                        </select>
-                    </td>
-                    <td>
-                        <select class="select" data-id="${l.id}" data-field="operadoraDoadora" style="min-width:120px;" ${!isPort ? 'disabled' : ''}>
-                            ${opOpts}
-                        </select>
-                    </td>
-                    <td>
-                        <input type="text" class="input" placeholder="00000-0000" style="min-width:120px; text-align:center; ${styleNumPortar}"
-                               value="${l.numeroPortar || ''}" data-id="${l.id}" data-field="numeroPortar" ${!isPort ? 'disabled' : ''} maxlength="10">
-                    </td>
-                    <td><select class="select" data-id="${l.id}" data-field="categoria" style="min-width:120px;">${categoriaOptionsHtml(l.tipoNegociacao, l.categoria)}</select></td>
-                    <td><select class="select" data-id="${l.id}" data-field="plano" style="min-width:180px;">${planoOpts}</select></td>
-                    <td><span class="muted">${l.pct || '-'}</span></td>
-                    <td><input type="number" class="input" step="0.01" min="0" value="${l.valorPlano || ''}" data-id="${l.id}" data-field="valorPlano"></td>
-                    <td><strong style="color: var(--primary);">${currency((Number(l.quantidade)||1) * (Number(l.valorPlano)||0))}</strong></td>
-                    <td><input type="number" class="input" step="0.01" min="0" value="${l.valorNaoFidelizado || ''}" data-id="${l.id}" data-field="valorNaoFidelizado" style="width:100px; text-align:center;"></td>
-                    <td><input type="number" class="input" step="0.01" min="0" value="${l.desconto || 0}" data-id="${l.id}" data-field="desconto" style="width:80px; text-align:center;"></td>
-                    <td><span class="muted">${currency(precoFinal)}</span></td>
-                    <td><span class="muted">${currency(economia)}</span></td>
-                    <td><select class="select" data-id="${l.id}" data-field="temAparelho"><option value="Não" ${l.temAparelho==='Não'?'selected':''}>Não</option><option value="Sim" ${l.temAparelho==='Sim'?'selected':''}>Sim</option></select></td>
-                    <td><select class="select" data-id="${l.id}" data-field="tipoAparelho" ${!hasAparelho?'disabled':''}>${tipoAparelhoHtml}</select></td>
-                    <td><input type="text" class="input" placeholder="Ex: iPhone 15" value="${l.modeloAparelho || ''}" data-id="${l.id}" data-field="modeloAparelho" ${!hasAparelho?'disabled':''}></td>
-                    <td><input type="number" class="input" step="0.01" min="0" value="${l.valorAparelho || ''}" data-id="${l.id}" data-field="valorAparelho" style="${styleValorAp}" ${!hasAparelho || isComodato ?'disabled':''}></td>
-                    <td><input type="text" class="input" value="${currency(l.valorParcela)}" style="${styleValorParc}" readonly disabled></td>
                     <td class="col-actions">
                         <div class="table-actions">
+                            <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="openEditModal(${l.id})"><i data-lucide="pencil"></i></button>
                             <button type="button" class="btn btn-ghost btn-icon" title="Duplicar" data-id="${l.id}" data-action="dup"><i data-lucide="copy"></i></button>
                             <button type="button" class="btn btn-ghost btn-icon" title="Excluir" data-id="${l.id}" data-action="del" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;" ${linhas.length <= 1 ? 'disabled' : ''}><i data-lucide="trash-2"></i></button>
                         </div>
                     </td>
                 </tr>
                 `;
-            }).join('') || '<tr><td colspan="16" class="muted">Sem linhas</td></tr>';
+            }).join('') || '<tr><td colspan="3" class="muted">Sem linhas</td></tr>';
+            
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-            Array.from(document.querySelectorAll('#tableBody .input, #tableBody .select')).forEach(el => {
+            
+            Array.from(document.querySelectorAll('#tableBody .input[data-field="quantidade"]')).forEach(el => {
                 el.addEventListener('change', onFieldChange);
                 el.addEventListener('input', onFieldInput);
             });
+            
             if (__isLocked) {
-                Array.from(document.querySelectorAll('#tableBody .input, #tableBody .select')).forEach(el => { el.disabled = true; });
-                Array.from(document.querySelectorAll('#tableBody [data-action="dup"], #tableBody [data-action="del"]')).forEach(btn => { btn.disabled = true; });
+                Array.from(document.querySelectorAll('#tableBody .input')).forEach(el => { el.disabled = true; });
+                Array.from(document.querySelectorAll('#tableBody button')).forEach(btn => { btn.disabled = true; });
             }
-            Array.from(document.querySelectorAll('#tableBody [data-field="ddd"]')).forEach(el => {
-                el.addEventListener('input', () => {
-                    el.value = onlyDigits(el.value).slice(0, 2);
-                });
-            });
+            
             Array.from(document.querySelectorAll('#tableBody [data-action="dup"]')).forEach(btn => {
                 btn.addEventListener('click', () => {
                     const id = Number(btn.getAttribute('data-id') || 0);
@@ -571,6 +891,7 @@
                     salvarProposta();
                 });
             });
+            
             Array.from(document.querySelectorAll('#tableBody [data-action="del"]')).forEach(btn => {
                 btn.addEventListener('click', () => {
                     if (linhas.length <= 1) {
@@ -586,88 +907,23 @@
                 });
             });
         }
+
         function onFieldChange(e) {
             const id = Number(e.target.getAttribute('data-id') || 0);
             const field = String(e.target.getAttribute('data-field') || '');
             let val = e.target.value;
-            if (field === 'ddd') val = onlyDigits(val).slice(0, 2);
-            if (field === 'precoAtual') val = Number(val || 0);
+            
             linhas = linhas.map(l => {
                 if (Number(l.id) !== id) return l;
-                const novo = { ...l, [field]: val };
-                if (field === 'tipoNegociacao') {
-                    const cats = getFilteredCategorias(val);
-                    novo.categoria = (cats[0]?.nome || '');
-                    novo.plano = '';
-                    novo.pct = '';
-                    novo.valorPlano = 0;
-                    novo.valorNaoFidelizado = 0;
-                }
-                if (field === 'categoria') {
-                    novo.plano = '';
-                    novo.pct = '';
-                    novo.valorPlano = 0;
-                    novo.valorNaoFidelizado = 0;
-                }
-                if (field === 'plano') {
-                const cats = getFilteredCategorias(novo.tipoNegociacao);
-                const catObj = cats.find(c => c.nome === novo.categoria);
-                const arr = catObj ? (__map[catObj.id] || []) : [];
-                
-                const p = arr.find(x => x.nome === val);
-                novo.pct = p ? (p.pct || '') : '';
-                novo.valorPlano = p ? (Number(p.valor) || 0) : 0;
-                novo.valorNaoFidelizado = novo.valorPlano;
-            }
-                if (field === 'portabilidade') {
-                    if (val !== 'Sim') {
-                        novo.portabilidade = 'Não';
-                        novo.operadoraDoadora = '';
-                        novo.numeroPortar = '';
-                    } else {
-                        novo.portabilidade = 'Sim';
-                    }
-                }
-                if (field === 'numeroPortar') {
-                    const digs = String(val || '').replace(/\D/g, '').slice(0, 9);
-                    novo.numeroPortar = (digs.length > 5) ? (digs.slice(0, 5) + '-' + digs.slice(5)) : digs;
-                }
-                if (field === 'numero') {
-                    const digs = String(val || '').replace(/\D/g, '').slice(0, 9);
-                    novo.numero = (digs.length > 5) ? (digs.slice(0, 5) + '-' + digs.slice(5)) : digs;
-                }
-                if (field === 'temAparelho') {
-                    if (val !== 'Sim') {
-                        novo.temAparelho = 'Não';
-                        novo.modeloAparelho = '';
-                        novo.tipoAparelho = 'Comodato';
-                        novo.valorAparelho = 0;
-                    } else {
-                        novo.temAparelho = 'Sim';
-                    }
-                }
-                if (field === 'tipoAparelho') {
-                    if (val === 'Comodato') {
-                        novo.valorAparelho = 0;
-                        novo.valorParcela = 0;
-                    } else if (val === 'VF 24x') {
-                        const v = Number(novo.valorAparelho || 0);
-                        if (v > 0) novo.valorParcela = v / 24;
-                    }
-                }
-                if (field === 'valorAparelho') {
-                    if (novo.tipoAparelho === 'VF 24x') {
-                        const v = Number(val || 0);
-                        novo.valorParcela = v / 24;
-                    }
-                }
-                return novo;
+                return { ...l, [field]: val };
             });
+            
             renderTable();
             renderResumo();
             validarProposta();
             salvarProposta();
         }
+
         function onFieldInput() {
             renderResumo();
             validarProposta();
@@ -1150,6 +1406,7 @@
                 const idParam = Number(params.get('id') || 0);
                 if (!idParam) { window.location.href = 'negociar.html'; return; }
                 __negociacaoId = idParam;
+                await carregarTiposBackend();
                 await carregarCatalogoCustomizado();
                 construirMapaCustomizado();
                 await carregarNegociacaoBasica();
@@ -1158,6 +1415,7 @@
                 renderClienteBasico();
                 await carregarPropostaSalva();
                 loadAttachments();
+                bindEditModalEvents();
                 const addLinhaBtn = document.getElementById('addLinhaBtn');
                 const salvarBtn = document.getElementById('salvarBtn');
                 const copiarBtn = document.getElementById('copiarBtn');
@@ -1209,6 +1467,185 @@
         });
     </script>
     <div id="toast" class="toast"></div>
+    <div id="editLineModal" class="modal">
+        <div class="modal-card" style="max-width: 900px; width: 95%;">
+            <div class="modal-head">
+                <div>Editar Linha</div>
+                <button id="editLineClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editLineId">
+                
+                <!-- 1. Dados da Linha -->
+                <div class="section-block">
+                    <div class="section-header">
+                        <i data-lucide="phone" class="section-icon"></i>
+                        <div>
+                            <div class="section-title">Dados da Linha</div>
+                            <div class="section-desc">Informações básicas do número</div>
+                        </div>
+                    </div>
+                    <div class="grid-3">
+                        <div>
+                            <div class="label">DDD</div>
+                            <select id="editDdd" class="select"></select>
+                        </div>
+                        <div>
+                            <div class="label">Tipo</div>
+                            <select id="editTipo" class="select"></select>
+                        </div>
+                        <div>
+                            <div class="label">Número</div>
+                            <input id="editNumero" type="text" class="input" placeholder="00000-0000" maxlength="10">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Plano Atual -->
+                <div class="section-block">
+                    <div class="section-header">
+                        <i data-lucide="file-text" class="section-icon"></i>
+                        <div>
+                            <div class="section-title">Plano Atual</div>
+                            <div class="section-desc">O que o cliente já possui</div>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div>
+                            <div class="label">Plano Atual (Dados)</div>
+                            <select id="editPlanoAtual" class="select"></select>
+                        </div>
+                        <div>
+                            <div class="label">Preço Atual (R$)</div>
+                            <input id="editPrecoAtual" type="number" step="0.01" class="input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Portabilidade -->
+                <div class="section-block">
+                    <div class="section-header">
+                        <i data-lucide="arrow-left-right" class="section-icon"></i>
+                        <div>
+                            <div class="section-title">Portabilidade</div>
+                            <div class="section-desc">Trazer número de outra operadora</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="label">Deseja realizar portabilidade?</div>
+                        <select id="editPortabilidade" class="select">
+                            <option value="Não">Não</option>
+                            <option value="Sim">Sim</option>
+                        </select>
+                    </div>
+                    <div id="areaPortabilidadeDetails" class="grid-2" style="margin-top: 1rem; display: none;">
+                        <div>
+                            <div class="label">Operadora Doadora</div>
+                            <select id="editOperadoraDoadora" class="select"></select>
+                        </div>
+                        <div>
+                            <div class="label">Número a Portar</div>
+                            <input id="editNumeroPortar" type="text" class="input" placeholder="00000-0000" maxlength="10">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Novo Plano -->
+                <div class="section-block">
+                    <div class="section-header">
+                        <i data-lucide="package" class="section-icon"></i>
+                        <div>
+                            <div class="section-title">Novo Plano</div>
+                            <div class="section-desc">Configuração da nova oferta</div>
+                        </div>
+                    </div>
+                    <div class="grid-2" style="margin-bottom: 1rem;">
+                        <div>
+                            <div class="label">Categoria</div>
+                            <select id="editCategoria" class="select"></select>
+                        </div>
+                        <div>
+                            <div class="label">Plano</div>
+                            <select id="editPlano" class="select"></select>
+                        </div>
+                    </div>
+                    <div class="grid-3" style="margin-bottom: 1rem;">
+                        <div style="display:none;">
+                            <div class="label">Pct</div>
+                            <input id="editPct" type="text" class="input" readonly disabled style="background-color: #f3f4f6;">
+                        </div>
+                        <div>
+                            <div class="label">Valor Plano (R$)</div>
+                            <input id="editValorPlano" type="number" step="0.01" class="input">
+                        </div>
+                        <div>
+                            <div class="label">Valor Não Fid. (R$)</div>
+                            <input id="editValorNaoFid" type="number" step="0.01" class="input">
+                        </div>
+                        <div>
+                            <div class="label">% Desc.</div>
+                            <input id="editDesconto" type="number" step="0.01" class="input">
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div>
+                            <div class="label">Valor c/Desc.</div>
+                            <input id="editValorFinal" type="text" class="input" readonly disabled style="background-color: #e5e7eb; font-weight: 600; color: var(--primary);">
+                        </div>
+                        <div>
+                            <div class="label">Economia</div>
+                            <input id="editEconomia" type="text" class="input" readonly disabled style="background-color: #e5e7eb;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Aparelho -->
+                <div class="section-block">
+                    <div class="section-header">
+                        <i data-lucide="smartphone" class="section-icon"></i>
+                        <div>
+                            <div class="section-title">Aparelho</div>
+                            <div class="section-desc">Adicionar dispositivo à linha</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="label">Incluir aparelho?</div>
+                        <select id="editTemAparelho" class="select">
+                            <option value="Não">Não</option>
+                            <option value="Sim">Sim</option>
+                        </select>
+                    </div>
+                    <div id="areaAparelhoDetails" style="margin-top: 1rem; display: none;">
+                        <div class="grid-2" style="margin-bottom: 1rem;">
+                            <div>
+                                <div class="label">Tipo Aparelho</div>
+                                <select id="editTipoAparelho" class="select"></select>
+                            </div>
+                            <div>
+                                <div class="label">Modelo</div>
+                                <input id="editModeloAparelho" type="text" class="input">
+                            </div>
+                        </div>
+                        <div class="grid-2">
+                            <div>
+                                <div class="label">R$ Total Aparelho</div>
+                                <input id="editValorAparelho" type="number" step="0.01" class="input">
+                            </div>
+                            <div>
+                                <div class="label">R$ da Parcela</div>
+                                <input id="editValorParcela" type="text" class="input" readonly disabled style="background-color: #f3f4f6;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-actions">
+                <button id="editLineCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
+                <button id="editLineSave" class="btn btn-primary" type="button"><i data-lucide="check"></i><span>Salvar</span></button>
+            </div>
+        </div>
+    </div>
     <div id="confirmResetModal" class="modal">
         <div class="modal-card">
             <div class="modal-head"><div>Confirmar Reset</div><button id="confirmResetClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
