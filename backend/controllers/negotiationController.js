@@ -131,6 +131,7 @@ export async function deleteNegotiation(req, res) {
     if (!actor || (actor.role !== 'admin' && Number(negotiation.created_by || 0) !== Number(actor.id))) {
       return res.status(403).json({ error: 'forbidden' });
     }
+    await PedidoDeVenda.destroy({ where: { negotiation_id: negotiation.id } });
     await negotiation.destroy();
     return res.json({ ok: true });
   } catch (err) {
