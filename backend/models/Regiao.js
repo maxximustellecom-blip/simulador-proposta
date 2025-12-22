@@ -11,6 +11,10 @@ const Regiao = sequelize.define('Regiao', {
     type: DataTypes.STRING,
     allowNull: false
   },
+  scope: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   items: {
     type: DataTypes.JSON,
     allowNull: false

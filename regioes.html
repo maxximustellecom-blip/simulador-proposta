@@ -420,11 +420,24 @@
         </div>
     </div>
 
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
     <script src="script.js"></script>
     <script>
         // --- DATA ---
         const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
         const LABEL_TODAS_UFS = 'Todas as UFs';
+        
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'block';
+            // Simple fade out or just hide after 3s
+            setTimeout(() => {
+                t.style.display = 'none';
+            }, 3000);
+        }
         
         async function api(path, options = {}) {
             const authRaw = localStorage.getItem('authUser');
@@ -921,7 +934,7 @@
                     await api('/regioes/' + id, { method: 'DELETE' });
                     await loadRegioes();
                 } catch (e) {
-                    alert('Erro ao excluir: ' + e.message);
+                    showToast('Erro ao excluir: ' + e.message);
                 }
             }
         };
@@ -929,7 +942,7 @@
         document.getElementById('modalSalvar').addEventListener('click', async () => {
             const nome = inputNome.value.trim();
             if (!nome) {
-                alert('Informe o nome da região.');
+                showToast('Informe o nome da região.');
                 return;
             }
 
@@ -954,7 +967,7 @@
             }
 
             if (selected.length === 0) {
-                alert('Selecione ao menos uma região ou abrangência.');
+                showToast('Selecione ao menos uma região ou abrangência.');
                 return;
             }
 
@@ -980,7 +993,7 @@
                 await loadRegioes();
                 closeModal();
             } catch (e) {
-                alert('Erro ao salvar: ' + e.message);
+                showToast('Erro ao salvar: ' + e.message);
             }
         });
 
