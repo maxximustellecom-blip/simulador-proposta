@@ -214,6 +214,7 @@
                     <td class="col-actions">
                         <div class="table-actions">
                             <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditarProduto(${p.id})"><i data-lucide="edit-3"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Duplicar" onclick="abrirConfirmDupProduto(${p.id})"><i data-lucide="copy"></i></button>
                             <button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="abrirConfirmExcluirProduto(${p.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
                         </div>
                     </td>
@@ -344,6 +345,37 @@
                     toast('Erro ao excluir produto', 'error');
                 }
             });
+
+            const dupClose = document.getElementById('confirmDupClose');
+            const dupCancel = document.getElementById('confirmDupCancel');
+            const dupConfirm = document.getElementById('confirmDupConfirm');
+            if (dupClose) dupClose.addEventListener('click', fecharConfirmDupProduto);
+            if (dupCancel) dupCancel.addEventListener('click', fecharConfirmDupProduto);
+            if (dupConfirm) dupConfirm.addEventListener('click', async () => {
+                try {
+                    const id = Number(dupConfirm.dataset.id || 0);
+                    if (!id) { toast('Produto inválido', 'error'); return; }
+                    
+                    const p = (__produtos || []).find(x => Number(x.id) === id);
+                    if (!p) { toast('Produto não encontrado', 'error'); return; }
+
+                    const body = JSON.stringify({
+                        categoria_id: p.categoria_id,
+                        nome: (p.nome || p.name || '') + ' (Cópia)',
+                        descricao: p.descricao || p.description,
+                        preco: p.preco,
+                        regiao: p.regiao
+                    });
+
+                    await api('/custom-products', { method: 'POST', body });
+                    toast('Produto duplicado', 'success');
+                    fecharConfirmDupProduto();
+                    carregarProdutos();
+                } catch {
+                    toast('Erro ao duplicar produto', 'error');
+                }
+            });
+
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         });
         function abrirConfirmExcluirProduto(id) {
@@ -364,6 +396,27 @@
             const modal = document.getElementById('confirmDeleteModal');
             if (modal) modal.classList.remove('show');
         }
+        function abrirConfirmDupProduto(id) {
+            try {
+                const p = (__produtos || []).find(x => Number(x.id) === Number(id));
+                const txt = document.getElementById('confirmDupText');
+                if (txt) txt.textContent = `Deseja duplicar o produto "${p?.nome || p?.name || '-'}"?`;
+                const btn = document.getElementById('confirmDupConfirm');
+                if (btn) btn.dataset.id = String(id);
+                const modal = document.getElementById('confirmDupModal');
+                if (modal) modal.classList.add('show');
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+            } catch {}
+        }
+        window.abrirConfirmDupProduto = abrirConfirmDupProduto;
+
+        function fecharConfirmDupProduto() {
+            const btn = document.getElementById('confirmDupConfirm');
+            if (btn) btn.dataset.id = '';
+            const modal = document.getElementById('confirmDupModal');
+            if (modal) modal.classList.remove('show');
+        }
+        window.fecharConfirmDupProduto = fecharConfirmDupProduto;
         async function carregarRegioes() {
             const sel = document.getElementById('regiao');
             if (!sel) return;
@@ -409,18 +462,17 @@
                     <div class="field"><span class="label-inline">Nome</span><input id="mProdNome" class="input" type="text" placeholder="Nome da oferta"></div>
                     <div class="field"><span class="label-inline">Descrição</span><input id="mProdDesc" class="input" type="text" placeholder="Descrição (opcional)"></div>
                     <div class="field"><span class="label-inline">Preço (R$)</span><input id="mProdPreco" class="input" type="number" step="0.01" min="0" placeholder="0,00"></div>
-                    <div class="field">
-                         <div class="field"><span class="label-inline">Região (DDDs)</span>
-                         <select id="regiao" name="regiao" class="select">
+                    <div class="field"><span class="label-inline">Região (DDDs)</span>
+                        <select id="regiao" name="regiao" class="select">
                             <option value="" selected>Carregando...</option>
                         </select>
                     </div>
-                </div>
             </div>
              <div class="modal-actions" style="padding: 1rem 0rem 0rem;">
                 <button id="mProdSalvar" class="btn btn-primary" type="button"><i data-lucide="check"></i><span>Salvar</span></button>
             </div>
         </div>
+    </div>
     </div>
     <div id="confirmDeleteModal" class="modal">
         <div class="modal-card">
@@ -432,6 +484,19 @@
             <div class="modal-actions">
                 <button id="confirmDeleteCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
                 <button id="confirmDeleteConfirm" class="btn btn-ghost" type="button" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i><span>Excluir</span></button>
+            </div>
+        </div>
+    </div>
+    <div id="confirmDupModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Confirmar Cópia</div><button id="confirmDupClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="label">Deseja duplicar este produto?</div>
+                <div id="confirmDupText" class="muted" style="margin-top:0.5rem;"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmDupCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
+                <button id="confirmDupConfirm" class="btn btn-primary" type="button"><i data-lucide="copy"></i><span>Duplicar</span></button>
             </div>
         </div>
     </div>
