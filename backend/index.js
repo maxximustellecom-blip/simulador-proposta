@@ -13,6 +13,7 @@ import customCategoryRouter from './routes/customCategory.js';
 import customProductRouter from './routes/customProduct.js';
 import accessProfileRouter from './routes/accessProfile.js';
 import pedidoDeVendaRouter from './routes/pedidoDeVenda.js';
+import regiaoRouter from './routes/regiao.js';
 import authContext from './middleware/authContext.js';
 
 dotenv.config();
@@ -38,6 +39,7 @@ app.use('/custom-categories', customCategoryRouter);
 app.use('/custom-products', customProductRouter);
 app.use('/access-profiles', accessProfileRouter);
 app.use('/pedidos-venda', pedidoDeVendaRouter);
+app.use('/regioes', regiaoRouter);
 
 const port = process.env.PORT || 3001;
 

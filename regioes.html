@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regiões • Maxximus Telecom</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        .scope-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            background: var(--surface-strong);
+            padding: 4px;
+            border-radius: 8px;
+        }
+        .scope-tab {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.6rem;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .scope-tab:hover {
+            color: var(--foreground);
+            background: rgba(255,255,255,0.05);
+        }
+        .scope-tab.active {
+            background: var(--surface);
+            color: var(--primary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .view-section {
+            animation: fadeIn 0.2s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 0.5rem;
+            max-height: 350px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 12px;
+            background: var(--surface);
+        }
+        .checkbox-grid.compact {
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 0.8rem;
+        }
+        
+        /* Checkbox Item Styling */
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            padding: 6px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+            border: 1px solid transparent;
+        }
+        .checkbox-item:hover {
+            background: var(--surface-strong);
+        }
+        .checkbox-item:has(input:checked) {
+            background: var(--surface-strong);
+            border-color: var(--primary);
+            color: var(--primary);
+            font-weight: 500;
+        }
+        .checkbox-item input[type="checkbox"] {
+            accent-color: var(--primary);
+            width: 16px;
+            height: 16px;
+        }
+
+        /* UF Grid items */
+         .uf-grid {
+             grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
+             gap: 0.8rem !important;
+         }
+         
+         .uf-grid .checkbox-item {
+             flex-direction: column;
+             align-items: center;
+             justify-content: center;
+             text-align: center;
+             padding: 1rem 0.5rem;
+             border: 1px solid var(--border);
+             background: var(--surface);
+             border-radius: 8px;
+             height: 65%;
+             transition: all 0.2s;
+         }
+         
+         .uf-grid .checkbox-item:hover {
+             border-color: var(--muted);
+             transform: translateY(-2px);
+             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+         }
+         
+         .uf-grid .checkbox-item:has(input:checked) {
+             border-color: var(--primary);
+             background: rgba(var(--primary-rgb), 0.08);
+             box-shadow: 0 0 0 1px var(--primary);
+         }
+         
+         .uf-grid .checkbox-item input {
+             display: none !important;
+         }
+         
+         .uf-grid .uf-sigla {
+             font-size: 1.4rem;
+             font-weight: 700;
+             margin-bottom: 0.3rem;
+             color: var(--foreground);
+         }
+         
+         .uf-grid .uf-name {
+             font-size: 0.75rem;
+             color: var(--muted);
+             line-height: 1.1;
+             white-space: nowrap;
+             overflow: hidden;
+             text-overflow: ellipsis;
+             max-width: 100%;
+         }
+         
+         .uf-grid .checkbox-item:has(input:checked) .uf-sigla {
+             color: var(--primary);
+         }
+
+        /* Big Card for Nacional */
+        .big-option-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--surface);
+        }
+        .big-option-card:hover {
+            border-color: var(--muted);
+        }
+        .big-option-card:has(input:checked) {
+            border-color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.05);
+        }
+        .big-option-card input {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary);
+        }
+        .big-option-card .content { flex: 1; }
+        .big-option-card .title { font-weight: 600; font-size: 1.1rem; margin-bottom: 0.2rem; }
+        .big-option-card .desc { color: var(--muted); font-size: 0.9rem; }
+        .big-option-card .check-icon { 
+            color: var(--primary); 
+            opacity: 0; 
+            transform: scale(0.5); 
+            transition: all 0.2s; 
+        }
+        .big-option-card:has(input:checked) .check-icon { opacity: 1; transform: scale(1); }
+
+        .info-box {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-bar {
+            position: relative;
+            margin-bottom: 0.8rem;
+        }
+        .search-bar i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            width: 16px;
+            height: 16px;
+        }
+        .search-bar input {
+            width: 100%;
+            padding-left: 35px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--foreground);
+        }
+        
+        /* Selection Preview Area */
+        .selection-preview-area {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            font-size: 0.9rem;
+        }
+        .btn-link-sm {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: underline;
+        }
+        .btn-link-sm:hover { color: var(--primary-dark); }
+        
+        .preview-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            min-height: 40px;
+        }
+        
+        .preview-placeholder {
+            color: var(--muted);
+            font-style: italic;
+            font-size: 0.9rem;
+            align-self: center;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: var(--surface-strong);
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+            color: var(--foreground);
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .chip.chip-nacional {
+            background: rgba(var(--primary-rgb), 0.1);
+            border-color: rgba(var(--primary-rgb), 0.3);
+            color: var(--primary);
+            font-weight: 500;
+        }
+        
+        .chip-remove {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.1);
+            color: var(--foreground);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .chip-remove:hover {
+            background: var(--red);
+            color: white;
+        }
+        .chip-nacional .chip-remove:hover {
+            background: var(--primary);
+        }
+        
+        .chip-count-badge {
+            background: var(--surface-strong);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <div class="card">
+            <div class="card-head">
+                <div class="card-title">
+                    <i data-lucide="map"></i>
+                    <span>Regiões</span>
+                </div>
+                <div class="muted">
+                    <button id="novaRegiaoBtn" class="btn btn-primary" type="button"><i data-lucide="plus"></i><span>Nova Região</span></button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-container" style="margin-top:1rem;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Regiões Selecionadas</th>
+                                <th class="col-actions" style="width:120px;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="regioesTbody">
+                            <tr><td colspan="3" class="muted" style="text-align:center; padding: 2rem;">Nenhuma região cadastrada.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal -->
+    <div id="regiaoModal" class="modal">
+        <div class="modal-card" style="max-width: 900px;">
+            <div class="modal-head">
+                <div class="card-title" id="modalTitle">Nova Região</div>
+                <button id="modalClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 1.5rem;">
+                    <div class="label">Nome da Região / Grupo</div>
+                    <input id="inputNome" class="input" type="text" placeholder="Ex: Região Sul, DDD 11, etc.">
+                </div>
+
+                <div class="label" style="margin-bottom: 0.5rem;">Tipo de Abrangência</div>
+                
+                <!-- Tabs de Navegação -->
+                <div class="scope-tabs">
+                    <button type="button" class="scope-tab active" data-tab="nacional">
+                        <i data-lucide="globe"></i>
+                        <span>Nacional</span>
+                    </button>
+                    <button type="button" class="scope-tab" data-tab="uf">
+                        <i data-lucide="map"></i>
+                        <span>Por Estado</span>
+                    </button>
+                    <button type="button" class="scope-tab" data-tab="ddd">
+                        <i data-lucide="hash"></i>
+                        <span>Por DDD / Cidade</span>
+                    </button>
+                </div>
+
+                <!-- Container Nacional -->
+                <div id="view-nacional" class="view-section active">
+                    <div class="info-box">
+                        <i data-lucide="info"></i>
+                        <span>Ao selecionar esta opção, todas as regiões e DDDs do Brasil serão incluídos neste grupo.</span>
+                    </div>
+                    <label class="big-option-card" id="cardNacional">
+                        <input type="checkbox" id="checkNacional">
+                        <div class="content">
+                            <div class="title">Todas as UFs</div>
+                            <div class="desc">Abrangência nacional completa</div>
+                        </div>
+                        <div class="check-icon"><i data-lucide="check-circle-2"></i></div>
+                    </label>
+                </div>
+
+                <!-- Container Estados -->
+                <div id="view-uf" class="view-section" style="display:none;">
+                    <div class="checkbox-grid uf-grid" id="gridUf">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- Container DDDs -->
+                <div id="view-ddd" class="view-section" style="display:none;">
+                     <div class="search-bar">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="searchDdd" placeholder="Buscar região ou DDD..." onkeyup="filterGrid('ddd')">
+                    </div>
+                    <div class="checkbox-grid" id="gridDdd">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- Resumo da Seleção -->
+                <div class="selection-preview-area">
+                    <div class="preview-header">
+                        <span class="muted">Itens Selecionados</span>
+                        <button type="button" class="btn-link-sm" onclick="clearSelections()" style="display:none;" id="btnClearAll">Limpar tudo</button>
+                    </div>
+                    <div class="preview-chips" id="previewChips">
+                        <span class="preview-placeholder">Nenhuma região selecionada</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="modalCancel" class="btn btn-ghost" type="button">Cancelar</button>
+                <button id="modalSalvar" class="btn btn-primary" type="button"><i data-lucide="check"></i><span>Salvar</span></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // --- DATA ---
+        const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
+        const LABEL_TODAS_UFS = 'Todas as UFs';
+        
+        async function api(path, options = {}) {
+            const authRaw = localStorage.getItem('authUser');
+            let headers = { 'Content-Type': 'application/json' };
+            try {
+                const u = JSON.parse(authRaw || '{}');
+                if (u && u.id) headers['x-user-id'] = String(u.id);
+                if (u && u.role) headers['x-user-role'] = String(u.role);
+                if (u && u.name) headers['x-user-name'] = String(u.name);
+            } catch {}
+            
+            const res = await fetch(API_BASE + path, { headers, ...options });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || ('HTTP ' + res.status));
+            }
+            return res.json();
+        }
+
+        const REGIOES_LIST = [
+            {v: "11,12,13,14,15,16,17,18,19,21,22,24,27,28,31,32,33,34,35,37,38,41,42,43,44,45,46,47,48,49,51,53,54,55,61,62,63,64,65,66,67,68,69,71,73,74,75,77,79,81,82,83,84,85,86,87,88,89,91,92,93,94,95,96,97,98,99", l: LABEL_TODAS_UFS},
+            ...Array.from({length: 89}, (_, i) => i + 11).filter(n => ![20,23,25,26,29,30,36,39,40,50,52,56,57,58,59,60,70,72,76,78,80,90].includes(n)).map(n => ({v: String(n), l: "DDD " + String(n)})),
+            {v: "68", l: "AC"}, {v: "92,97", l: "AM"}, {v: "71,73,74,75,77", l: "BA"}, {v: "85,88", l: "CE"}, {v: "61", l: "DF"},
+            {v: "62,64", l: "GO"}, {v: "98,99", l: "MA"}, {v: "31,32,33,34,35,37,38", l: "MG"}, {v: "67", l: "MS"}, {v: "65,66", l: "MT"},
+            {v: "91,93,94", l: "PA"}, {v: "81,87", l: "PE"}, {v: "41,42,43,44,45,46", l: "PR"}, {v: "21,22,24", l: "RJ"}, {v: "84", l: "RN"},
+            {v: "69", l: "RO"}, {v: "95", l: "RR"}, {v: "51,53,54,55", l: "RS"}, {v: "47,48,49", l: "SC"}, {v: "11,12,13,14,15,16,17,18,19", l: "SP"},
+            {v: "63", l: "TO"}, {v: "43", l: "Andirá (PR)"}, {v: "81", l: "Caruaru (PE)"}, {v: "45", l: "Cascavel (PR)"}, {v: "54", l: "Caxias do Sul (RS)"},
+            {v: "49", l: "Chapecó (SC)"}, {v: "43", l: "Cornélio Procópio (PR)"}, {v: "37", l: "Divinópolis (MG)"}, {v: "41", l: "Fazenda Rio Grande (PR)"},
+            {v: "48", l: "Florianópolis (SC)"}, {v: "43", l: "Ibiporã (PR)"}, {v: "73", l: "Ilhéus (BA)"}, {v: "47", l: "Joinville (SC)"},
+            {v: "32", l: "Juiz de Fora (MG)"}, {v: "45", l: "Medianeira (PR)"}, {v: "38", l: "Montes Carlos (MG)"}, {v: "81", l: "Olinda (PE)"},
+            {v: "48", l: "Palhoça (SC)"}, {v: "54", l: "Passo Fundo (RS)"}, {v: "24", l: "Petrópolis (RJ)"}, {v: "35", l: "Pouso Alegre (MG)"},
+            {v: "51,53,55", l: "RS (exceto Caxias/Passo Fundo)"}, {v: "54", l: "RS (Caxias/Passo Fundo)"}, {v: "43", l: "Santo Antônio da Platina (PR)"},
+            {v: "48", l: "São José (SC)"}, {v: "42", l: "Telêmaco Borba (PR)"}, {v: "21", l: "Teresópolis (RJ)"}, {v: "45", l: "Toledo (PR)"},
+            {v: "46", l: "União da Vitória (PR)"}, {v: "35", l: "Varginha (MG)"},
+            {v: "11,12,13,14,15,16,17,18,19,27,28,32,21,22,24,51,53,54,55,61,62,63,64,71,73,74,75,77,79,81,82,83,84,85,86,87,88,89,91,92,93,94,95,96,97,98,99", l: "Regiões TSP, TSE, TSU, TCN, TNE"}
+        ];
+
+        // Sort REGIOES_LIST alphabetically by label for better UX
+        REGIOES_LIST.sort((a, b) => a.l.localeCompare(b.l));
+
+        // State
+        let regioes = [];
+        let editId = null;
+        let currentScope = 'nacional'; // nacional, uf, ddd
+
+        // --- INIT ---
+        function init() {
+            loadRegioes();
+            setupTabs();
+            setupSearch();
+            setupCheckboxListeners();
+        }
+
+        const DDDS_BRASIL = [
+            {d: '11', r: 'São Paulo e Região Metropolitana (SP)'},
+            {d: '12', r: 'São José dos Campos e Vale do Paraíba (SP)'},
+            {d: '13', r: 'Santos e Baixada Santista (SP)'},
+            {d: '14', r: 'Bauru, Marília e Região (SP)'},
+            {d: '15', r: 'Sorocaba e Região (SP)'},
+            {d: '16', r: 'Ribeirão Preto e Região (SP)'},
+            {d: '17', r: 'São José do Rio Preto e Região (SP)'},
+            {d: '18', r: 'Presidente Prudente e Região (SP)'},
+            {d: '19', r: 'Campinas e Região (SP)'},
+            {d: '21', r: 'Rio de Janeiro e Região (RJ)'},
+            {d: '22', r: 'Campos dos Goytacazes e Região (RJ)'},
+            {d: '24', r: 'Volta Redonda, Petrópolis e Região (RJ)'},
+            {d: '27', r: 'Vitória e Região (ES)'},
+            {d: '28', r: 'Cachoeiro de Itapemirim e Região (ES)'},
+            {d: '31', r: 'Belo Horizonte e Região (MG)'},
+            {d: '32', r: 'Juiz de Fora e Região (MG)'},
+            {d: '33', r: 'Governador Valadares e Região (MG)'},
+            {d: '34', r: 'Uberlândia e Triângulo Mineiro (MG)'},
+            {d: '35', r: 'Poços de Caldas e Sul de Minas (MG)'},
+            {d: '37', r: 'Divinópolis e Oeste de Minas (MG)'},
+            {d: '38', r: 'Montes Claros e Norte de Minas (MG)'},
+            {d: '41', r: 'Curitiba e Região (PR)'},
+            {d: '42', r: 'Ponta Grossa e Região (PR)'},
+            {d: '43', r: 'Londrina e Região (PR)'},
+            {d: '44', r: 'Maringá e Região (PR)'},
+            {d: '45', r: 'Foz do Iguaçu e Região (PR)'},
+            {d: '46', r: 'Francisco Beltrão e Sudoeste (PR)'},
+            {d: '47', r: 'Joinville e Norte (SC)'},
+            {d: '48', r: 'Florianópolis e Região (SC)'},
+            {d: '49', r: 'Chapecó e Oeste (SC)'},
+            {d: '51', r: 'Porto Alegre e Região (RS)'},
+            {d: '53', r: 'Pelotas e Sul (RS)'},
+            {d: '54', r: 'Caxias do Sul e Serra (RS)'},
+            {d: '55', r: 'Santa Maria e Oeste (RS)'},
+            {d: '61', r: 'Brasília e Entorno (DF/GO)'},
+            {d: '62', r: 'Goiânia e Região (GO)'},
+            {d: '63', r: 'Palmas e Tocantins (TO)'},
+            {d: '64', r: 'Rio Verde e Sul de Goiás (GO)'},
+            {d: '65', r: 'Cuiabá e Região (MT)'},
+            {d: '66', r: 'Rondonópolis e Norte (MT)'},
+            {d: '67', r: 'Campo Grande e Mato Grosso do Sul (MS)'},
+            {d: '68', r: 'Rio Branco e Acre (AC)'},
+            {d: '69', r: 'Porto Velho e Rondônia (RO)'},
+            {d: '71', r: 'Salvador e Região (BA)'},
+            {d: '73', r: 'Ilhéus, Itabuna e Sul (BA)'},
+            {d: '74', r: 'Juazeiro e Norte (BA)'},
+            {d: '75', r: 'Feira de Santana e Região (BA)'},
+            {d: '77', r: 'Vitória da Conquista e Oeste (BA)'},
+            {d: '79', r: 'Aracaju e Sergipe (SE)'},
+            {d: '81', r: 'Recife e Região (PE)'},
+            {d: '82', r: 'Maceió e Alagoas (AL)'},
+            {d: '83', r: 'João Pessoa e Paraíba (PB)'},
+            {d: '84', r: 'Natal e Rio Grande do Norte (RN)'},
+            {d: '85', r: 'Fortaleza e Região (CE)'},
+            {d: '86', r: 'Teresina e Norte (PI)'},
+            {d: '87', r: 'Petrolina e Interior (PE)'},
+            {d: '88', r: 'Juazeiro do Norte e Interior (CE)'},
+            {d: '89', r: 'Picos e Sul (PI)'},
+            {d: '91', r: 'Belém e Região (PA)'},
+            {d: '92', r: 'Manaus e Região (AM)'},
+            {d: '93', r: 'Santarém e Oeste (PA)'},
+            {d: '94', r: 'Marabá e Sul (PA)'},
+            {d: '95', r: 'Boa Vista e Roraima (RR)'},
+            {d: '96', r: 'Macapá e Amapá (AP)'},
+            {d: '97', r: 'Coari e Interior (AM)'},
+            {d: '98', r: 'São Luís e Região (MA)'},
+            {d: '99', r: 'Imperatriz e Interior (MA)'}
+        ];
+        
+        const ESTADOS_BRASIL = [
+            { s: 'AC', n: 'Acre', v: '68' },
+            { s: 'AL', n: 'Alagoas', v: '82' },
+            { s: 'AP', n: 'Amapá', v: '96' },
+            { s: 'AM', n: 'Amazonas', v: '92,97' },
+            { s: 'BA', n: 'Bahia', v: '71,73,74,75,77' },
+            { s: 'CE', n: 'Ceará', v: '85,88' },
+            { s: 'DF', n: 'Distrito Federal', v: '61' },
+            { s: 'ES', n: 'Espírito Santo', v: '27,28' },
+            { s: 'GO', n: 'Goiás', v: '62,64' },
+            { s: 'MA', n: 'Maranhão', v: '98,99' },
+            { s: 'MT', n: 'Mato Grosso', v: '65,66' },
+            { s: 'MS', n: 'Mato Grosso do Sul', v: '67' },
+            { s: 'MG', n: 'Minas Gerais', v: '31,32,33,34,35,37,38' },
+            { s: 'PA', n: 'Pará', v: '91,93,94' },
+            { s: 'PB', n: 'Paraíba', v: '83' },
+            { s: 'PR', n: 'Paraná', v: '41,42,43,44,45,46' },
+            { s: 'PE', n: 'Pernambuco', v: '81,87' },
+            { s: 'PI', n: 'Piauí', v: '86' },
+            { s: 'RJ', n: 'Rio de Janeiro', v: '21,22,24' },
+            { s: 'RN', n: 'Rio Grande do Norte', v: '84' },
+            { s: 'RS', n: 'Rio Grande do Sul', v: '51,53,54,55' },
+            { s: 'RO', n: 'Rondônia', v: '69' },
+            { s: 'RR', n: 'Roraima', v: '95' },
+            { s: 'SC', n: 'Santa Catarina', v: '47,48,49' },
+            { s: 'SP', n: 'São Paulo', v: '11,12,13,14,15,16,17,18,19' },
+            { s: 'SE', n: 'Sergipe', v: '79' },
+            { s: 'TO', n: 'Tocantins', v: '63' }
+        ];
+
+        function setupTabs() {
+            document.querySelectorAll('.scope-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const t = tab.getAttribute('data-tab');
+                    
+                    // Only clear if actually changing tab
+                    if (t !== currentScope) {
+                        clearSelections();
+                    }
+                    
+                    switchTab(t);
+                });
+            });
+        }
+        
+        function switchTab(tabName) {
+            currentScope = tabName;
+            
+            // UI Tabs
+            document.querySelectorAll('.scope-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.scope-tab[data-tab="${tabName}"]`).classList.add('active');
+
+            // UI Sections
+            document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
+            const activeSection = document.getElementById(`view-${tabName}`);
+            if (activeSection) {
+                activeSection.style.display = 'block';
+                // Trigger animation reset
+                activeSection.style.animation = 'none';
+                activeSection.offsetHeight; /* trigger reflow */
+                activeSection.style.animation = 'fadeIn 0.2s ease-out';
+            }
+            
+            renderCheckboxes();
+        }
+
+        function setupSearch() {
+            // Attached via onkeyup in HTML, just helpers here if needed
+        }
+
+        function filterGrid(type) {
+            const input = document.getElementById(type === 'uf' ? 'searchUf' : 'searchDdd');
+            const filter = input.value.toLowerCase();
+            const grid = document.getElementById(type === 'uf' ? 'gridUf' : 'gridDdd');
+            
+            const items = grid.getElementsByClassName('checkbox-item');
+            Array.from(items).forEach(item => {
+                const txt = item.textContent.toLowerCase();
+                item.style.display = txt.includes(filter) ? 'flex' : 'none';
+            });
+        }
+        
+        function setupCheckboxListeners() {
+            // Listen to checkNacional
+            document.getElementById('checkNacional').addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    // Uncheck everything else?
+                    // "Todas as UFs" implies everything else is redundant or included.
+                    // Let's uncheck other hidden boxes to keep state clean?
+                    // Actually, if "Nacional" is checked, we should probably ignore specific selections or clear them.
+                    clearSelections(true); // Keep only nacional
+                }
+                updatePreview();
+            });
+        }
+        
+        function clearSelections(exceptNacional = false) {
+             const allChecks = document.querySelectorAll('input[type="checkbox"]');
+             allChecks.forEach(cb => {
+                 if (exceptNacional && cb.id === 'checkNacional') return;
+                 cb.checked = false;
+             });
+             if (!exceptNacional) updatePreview();
+        }
+
+        // --- RENDER ---
+
+        async function loadRegioes() {
+            try {
+                regioes = await api('/regioes');
+            } catch (e) {
+                console.error(e);
+                regioes = [];
+            }
+            renderTable();
+        }
+
+        // --- RENDER ---
+        function renderTable() {
+            const tbody = document.getElementById('regioesTbody');
+            tbody.innerHTML = '';
+
+            if (regioes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="muted" style="text-align:center; padding: 2rem;">Nenhuma região cadastrada.</td></tr>';
+                return;
+            }
+
+            regioes.forEach(r => {
+                const tr = document.createElement('tr');
+                // Limit display of selected regions
+                const displayRegs = r.items && r.items.length > 0 
+                    ? r.items.map(i => i.l).join(', ') 
+                    : '<span class="muted">Nenhuma</span>';
+                
+                tr.innerHTML = `
+                    <td style="font-weight:600;">${r.nome}</td>
+                    <td><div style="max-height: 60px; overflow-y:auto; font-size:0.85rem; color:var(--muted); line-height:1.4;">${displayRegs}</div></td>
+                    <td>
+                        <div class="flex gap-1">
+                            <button onclick="editarRegiao(${r.id})" class="btn btn-blue btn-sm btn-icon"><i data-lucide="edit-2"></i></button>
+                            <button onclick="excluirRegiao(${r.id})" class="btn btn-red btn-sm btn-icon"><i data-lucide="trash-2"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function renderCheckboxes() {
+            // Only render if empty or dirty? 
+            // Better to re-render to ensure state consistency or just toggle visibility?
+            // Re-rendering is safer for now.
+            
+            // --- UF Grid ---
+            const gridUf = document.getElementById('gridUf');
+            if (gridUf.children.length === 0) {
+                 gridUf.innerHTML = ESTADOS_BRASIL.map(r => {
+                     return `
+                    <label class="checkbox-item" title="${r.n}">
+                        <input type="checkbox" class="cb-uf" value="${r.v}" data-l="${r.s}" onchange="handleUfChange(this)">
+                        <div class="uf-sigla">${r.s}</div>
+                        <div class="uf-name">${r.n}</div>
+                    </label>
+                `}).join('');
+            }
+            
+            // --- DDD Grid ---
+            const gridDdd = document.getElementById('gridDdd');
+             if (gridDdd.children.length === 0) {
+                 gridDdd.innerHTML = DDDS_BRASIL.map(r => `
+                    <label class="checkbox-item">
+                        <input type="checkbox" class="cb-ddd" value="${r.d}" data-l="DDD ${r.d} - ${r.r}" onchange="handleDddChange(this)">
+                        <span>DDD ${r.d} - ${r.r}</span>
+                    </label>
+                `).join('');
+            }
+            
+            // Ensure global event listener for counting is covered by individual onchange or global?
+            // Added onchange inline above for specific logic, but let's add a global updateCount
+        }
+        
+        function handleUfChange(el) {
+            if (el.checked) {
+                document.getElementById('checkNacional').checked = false;
+            }
+            updatePreview();
+        }
+        
+        function handleDddChange(el) {
+             if (el.checked) {
+                document.getElementById('checkNacional').checked = false;
+            }
+            updatePreview();
+        }
+        
+        function updatePreview() {
+            const container = document.getElementById('previewChips');
+            const btnClear = document.getElementById('btnClearAll');
+            container.innerHTML = '';
+            
+            let items = [];
+            
+            if (currentScope === 'nacional') {
+                if (document.getElementById('checkNacional').checked) {
+                    container.innerHTML = `
+                        <div class="chip chip-nacional">
+                            <i data-lucide="globe" style="width:14px; height:14px;"></i>
+                            <span>Todo o Brasil</span>
+                            <div class="chip-remove" onclick="removeSelection('nacional')"><i data-lucide="x" style="width:10px; height:10px;"></i></div>
+                        </div>
+                    `;
+                    btnClear.style.display = 'block';
+                    lucide.createIcons();
+                    return;
+                }
+            } else if (currentScope === 'uf') {
+                items = Array.from(document.querySelectorAll('.cb-uf:checked')).map(cb => ({
+                    t: 'uf',
+                    v: cb.value,
+                    l: cb.getAttribute('data-l')
+                }));
+            } else if (currentScope === 'ddd') {
+                items = Array.from(document.querySelectorAll('.cb-ddd:checked')).map(cb => ({
+                    t: 'ddd',
+                    v: cb.value,
+                    l: cb.getAttribute('data-l')
+                }));
+            }
+            
+            if (items.length === 0) {
+                container.innerHTML = '<span class="preview-placeholder">Nenhuma região selecionada</span>';
+                btnClear.style.display = 'none';
+                return;
+            }
+            
+            btnClear.style.display = 'block';
+            
+            // Limit chips to prevent overflow
+            const limit = 10;
+            const visible = items.slice(0, limit);
+            const remaining = items.length - limit;
+            
+            visible.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'chip';
+                // Icon based on type
+                const icon = item.t === 'uf' ? 'map-pin' : 'phone';
+                div.innerHTML = `
+                    <i data-lucide="${icon}" style="width:12px; height:12px; opacity:0.7;"></i>
+                    <span>${item.l}</span>
+                    <div class="chip-remove" onclick="removeSelection('${item.t}', '${item.v}')">
+                        <i data-lucide="x" style="width:10px; height:10px;"></i>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            
+            if (remaining > 0) {
+                const more = document.createElement('div');
+                more.className = 'chip-count-badge';
+                more.textContent = `+${remaining} outros`;
+                container.appendChild(more);
+            }
+            
+            lucide.createIcons();
+        }
+        
+        window.removeSelection = function(type, value) {
+            if (type === 'nacional') {
+                document.getElementById('checkNacional').checked = false;
+            } else if (type === 'uf') {
+                const el = document.querySelector(`.cb-uf[value="${value}"]`);
+                if (el) el.checked = false;
+            } else if (type === 'ddd') {
+                const el = document.querySelector(`.cb-ddd[value="${value}"]`);
+                if (el) el.checked = false;
+            }
+            updatePreview();
+        };
+
+        // --- MODAL & ACTIONS ---
+        const modal = document.getElementById('regiaoModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const inputNome = document.getElementById('inputNome');
+        
+        function openModal(isEdit = false) {
+            modal.classList.add('show');
+            
+            // Reset state
+            document.getElementById('checkNacional').checked = false;
+            document.querySelectorAll('.cb-uf').forEach(c => c.checked = false);
+            document.querySelectorAll('.cb-ddd').forEach(c => c.checked = false);
+            
+            if (!isEdit) {
+                modalTitle.textContent = 'Nova Região';
+                inputNome.value = '';
+                editId = null;
+                switchTab('nacional'); // Default start
+            } else {
+                modalTitle.textContent = 'Editar Região';
+            }
+            updatePreview();
+        }
+
+        function closeModal() {
+            modal.classList.remove('show');
+        }
+
+        document.getElementById('novaRegiaoBtn').addEventListener('click', () => openModal(false));
+        document.getElementById('modalClose').addEventListener('click', closeModal);
+        document.getElementById('modalCancel').addEventListener('click', closeModal);
+
+        window.editarRegiao = function(id) {
+            const r = regioes.find(x => x.id === id);
+            if (!r) return;
+            
+            editId = id;
+            inputNome.value = r.nome;
+            
+            // Determine Tab based on content
+            let hasNacional = false;
+            let hasUf = false;
+            let hasDdd = false;
+            
+            // Apply checks
+            r.items.forEach(item => {
+                if (item.l === LABEL_TODAS_UFS) {
+                    document.getElementById('checkNacional').checked = true;
+                    hasNacional = true;
+                } else {
+                    // Try UF
+                    // We need to find checkboxes even if they are not currently visible?
+                    // Yes, we rendered them in init -> renderCheckboxes (via openModal call? No, openModal resets)
+                    // Wait, renderCheckboxes checks for innerHTML === ''. 
+                    // So we must ensure they are rendered.
+                    renderCheckboxes(); 
+                    
+                    const cbUf = document.querySelector(`.cb-uf[value="${item.v}"]`);
+                    if (cbUf) {
+                        cbUf.checked = true;
+                        hasUf = true;
+                    } else {
+                        const cbDdd = document.querySelector(`.cb-ddd[value="${item.v}"]`);
+                        if (cbDdd) {
+                            cbDdd.checked = true;
+                            hasDdd = true;
+                        }
+                    }
+                }
+            });
+
+            openModal(true);
+            
+            // Decide which tab to show
+            if (r.scope) {
+                switchTab(r.scope);
+            } else {
+                if (hasNacional) switchTab('nacional');
+                else if (hasUf) switchTab('uf');
+                else if (hasDdd) switchTab('ddd');
+                else switchTab('nacional'); // default
+            }
+            
+            updatePreview();
+        };
+
+        window.excluirRegiao = async function(id) {
+            if (confirm('Tem certeza que deseja excluir esta região?')) {
+                try {
+                    await api('/regioes/' + id, { method: 'DELETE' });
+                    await loadRegioes();
+                } catch (e) {
+                    alert('Erro ao excluir: ' + e.message);
+                }
+            }
+        };
+
+        document.getElementById('modalSalvar').addEventListener('click', async () => {
+            const nome = inputNome.value.trim();
+            if (!nome) {
+                alert('Informe o nome da região.');
+                return;
+            }
+
+            const selected = [];
+            
+            if (currentScope === 'nacional') {
+                if (document.getElementById('checkNacional').checked) {
+                    // Find "Todas as UFs" item safely
+                    const nacionalItem = REGIOES_LIST.find(r => r.l === LABEL_TODAS_UFS);
+                    if (nacionalItem) {
+                        selected.push(nacionalItem);
+                    }
+                }
+            } else if (currentScope === 'uf') {
+                document.querySelectorAll('.cb-uf:checked').forEach(cb => {
+                    selected.push({ v: cb.value, l: cb.getAttribute('data-l') });
+                });
+            } else if (currentScope === 'ddd') {
+                document.querySelectorAll('.cb-ddd:checked').forEach(cb => {
+                    selected.push({ v: cb.value, l: cb.getAttribute('data-l') });
+                });
+            }
+
+            if (selected.length === 0) {
+                alert('Selecione ao menos uma região ou abrangência.');
+                return;
+            }
+
+            try {
+                const payload = {
+                    nome: nome,
+                    scope: currentScope,
+                    items: selected
+                };
+
+                if (editId) {
+                    await api('/regioes/' + editId, {
+                        method: 'PUT',
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    await api('/regioes', {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                await loadRegioes();
+                closeModal();
+            } catch (e) {
+                alert('Erro ao salvar: ' + e.message);
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
