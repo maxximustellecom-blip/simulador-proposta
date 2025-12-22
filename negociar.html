@@ -6,6 +6,19 @@
     <title>Propostas • Maxximus Telecom</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Specific override for negociar.html to allow dropdown overflow */
+        #negociarModal .modal-card {
+            overflow: visible !important;
+        }
+        #negociarModal .modal-body {
+            overflow-y: visible !important;
+        }
+        #negociarModal .modal-head {
+            border-top-left-radius: 14px;
+            border-top-right-radius: 14px;
+        }
+    </style>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
 <body>
@@ -393,13 +406,17 @@
             const mDropdown = document.getElementById('mClienteDropdown');
             const mWrap = document.getElementById('mClienteWrap');
             function updateDropdownPos() {
-                if (!mDropdown || !mWrap || !mDropdown.classList.contains('show')) return;
-                const rect = mWrap.getBoundingClientRect();
-                mDropdown.style.position = 'fixed';
-                mDropdown.style.top = (rect.bottom + 2) + 'px';
-                mDropdown.style.left = rect.left + 'px';
-                mDropdown.style.width = rect.width + 'px';
-                mDropdown.style.zIndex = '9999';
+                // Fixed position not needed if we rely on CSS relative positioning within modal
+                // But if we want it to float over everything, fixed is okay.
+                // However, user reports it "not appearing".
+                // Let's stick to standard absolute positioning relative to parent wrapper
+                // and ensure z-index is high enough.
+                if (!mDropdown || !mWrap) return;
+                mDropdown.style.width = '100%';
+                mDropdown.style.top = '100%';
+                mDropdown.style.left = '0';
+                mDropdown.style.position = 'absolute';
+                mDropdown.style.zIndex = '10001';
             }
             if (mSearch) {
                 mSearch.addEventListener('input', () => {
@@ -417,8 +434,7 @@
                     }
                 });
             }
-            window.addEventListener('resize', updateDropdownPos);
-            window.addEventListener('scroll', updateDropdownPos, true); // Capture scroll to handle modal scroll
+            // Removed complex scroll/resize handlers that might be miscalculating position
             document.addEventListener('click', (e) => {
                 const wrap = document.getElementById('mClienteWrap');
                 if (!wrap) return;
