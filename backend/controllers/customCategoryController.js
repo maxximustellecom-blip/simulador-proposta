@@ -13,8 +13,7 @@ export async function createCustomCategory(req, res) {
   try {
     const { nome, descricao, tipo } = req.body || {};
     if (!nome) return res.status(400).json({ error: 'nome é obrigatório' });
-    const allowed = ['Novo', 'Adtivo', 'Renegociação'];
-    const tipoValid = allowed.includes(String(tipo || 'Novo')) ? String(tipo || 'Novo') : 'Novo';
+    const tipoValid = tipo;
     const cat = await CustomCategory.create({ nome, descricao: descricao || null, tipo: tipoValid });
     return res.status(201).json(cat);
   } catch (err) {
@@ -32,10 +31,6 @@ export async function updateCustomCategory(req, res) {
     if (nome) cat.nome = nome;
     if (descricao !== undefined) cat.descricao = descricao || null;
     if (tipo !== undefined) {
-      const allowed = ['Novo', 'Adtivo', 'Renegociação'];
-      if (!allowed.includes(String(tipo))) {
-        return res.status(400).json({ error: 'tipo inválido' });
-      }
       cat.tipo = String(tipo);
     }
     await cat.save();
