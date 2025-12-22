@@ -614,6 +614,76 @@
             { s: 'TO', n: 'Tocantins', v: '63' }
         ];
 
+        const CIDADES_POR_DDD = {
+            '11': ['São Paulo', 'Guarulhos', 'Santo André', 'São Bernardo do Campo', 'Osasco', 'Barueri', 'Jundiaí'],
+            '12': ['São José dos Campos', 'Taubaté', 'Jacareí', 'Guaratinguetá', 'Ubatuba', 'Caraguatatuba'],
+            '13': ['Santos', 'São Vicente', 'Praia Grande', 'Guarujá', 'Cubatão', 'Itanhaém'],
+            '14': ['Bauru', 'Marília', 'Botucatu', 'Jaú', 'Lins', 'Avaré'],
+            '15': ['Sorocaba', 'Itapetininga', 'Itu', 'Votorantim', 'Tatuí', 'Salto'],
+            '16': ['Ribeirão Preto', 'Franca', 'Araraquara', 'São Carlos', 'Sertãozinho'],
+            '17': ['São José do Rio Preto', 'Catanduva', 'Barretos', 'Votuporanga', 'Fernandópolis'],
+            '18': ['Presidente Prudente', 'Araçatuba', 'Birigui', 'Assis', 'Andradina'],
+            '19': ['Campinas', 'Piracicaba', 'Limeira', 'Americana', 'Sumaré', 'Indaiatuba', 'Rio Claro'],
+            '21': ['Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Nova Iguaçu', 'Niterói'],
+            '22': ['Campos dos Goytacazes', 'Cabo Frio', 'Macaé', 'Nova Friburgo', 'Rio das Ostras'],
+            '24': ['Volta Redonda', 'Petrópolis', 'Angra dos Reis', 'Barra Mansa', 'Resende', 'Teresópolis'],
+            '27': ['Vitória', 'Vila Velha', 'Serra', 'Cariacica', 'Linhares', 'Colatina'],
+            '28': ['Cachoeiro de Itapemirim', 'Itapemirim', 'Marataízes', 'Castelo'],
+            '31': ['Belo Horizonte', 'Contagem', 'Betim', 'Sete Lagoas', 'Ipatinga', 'Itabira'],
+            '32': ['Juiz de Fora', 'Barbacena', 'Muriaé', 'Ubá', 'São João del-Rei'],
+            '33': ['Governador Valadares', 'Teófilo Otoni', 'Caratinga', 'Manhuaçu'],
+            '34': ['Uberlândia', 'Uberaba', 'Araguari', 'Araxá', 'Ituiutaba', 'Patos de Minas'],
+            '35': ['Poços de Caldas', 'Pouso Alegre', 'Varginha', 'Passos', 'Lavras', 'Itajubá'],
+            '37': ['Divinópolis', 'Itaúna', 'Pará de Minas', 'Formiga', 'Nova Serrana'],
+            '38': ['Montes Claros', 'Curvelo', 'Diamantina', 'Janaúba', 'Pirapora'],
+            '41': ['Curitiba', 'São José dos Pinhais', 'Colombo', 'Paranaguá', 'Araucária'],
+            '42': ['Ponta Grossa', 'Guarapuava', 'Telêmaco Borba', 'Castro', 'Irati'],
+            '43': ['Londrina', 'Apucarana', 'Arapongas', 'Cambé', 'Cornélio Procópio'],
+            '44': ['Maringá', 'Campo Mourão', 'Paranavaí', 'Cianorte', 'Umuarama'],
+            '45': ['Foz do Iguaçu', 'Cascavel', 'Toledo', 'Marechal Cândido Rondon'],
+            '46': ['Francisco Beltrão', 'Pato Branco', 'Dois Vizinhos', 'Palmas'],
+            '47': ['Joinville', 'Blumenau', 'Itajaí', 'Balneário Camboriú', 'Jaraguá do Sul'],
+            '48': ['Florianópolis', 'São José', 'Palhoça', 'Criciúma', 'Tubarão'],
+            '49': ['Chapecó', 'Lages', 'Caçador', 'Concórdia', 'Videira'],
+            '51': ['Porto Alegre', 'Canoas', 'Novo Hamburgo', 'São Leopoldo', 'Gravataí', 'Santa Cruz do Sul'],
+            '53': ['Pelotas', 'Rio Grande', 'Bagé', 'Camaquã'],
+            '54': ['Caxias do Sul', 'Bento Gonçalves', 'Passo Fundo', 'Erechim', 'Farroupilha'],
+            '55': ['Santa Maria', 'Uruguaiana', 'Ijuí', 'Santo Ângelo', 'Alegrete'],
+            '61': ['Brasília', 'Valparaíso de Goiás', 'Luziânia', 'Formosa'],
+            '62': ['Goiânia', 'Aparecida de Goiânia', 'Anápolis', 'Trindade'],
+            '63': ['Palmas', 'Araguaína', 'Gurupi', 'Porto Nacional'],
+            '64': ['Rio Verde', 'Jataí', 'Caldas Novas', 'Catalão', 'Itumbiara'],
+            '65': ['Cuiabá', 'Várzea Grande', 'Cáceres', 'Tangará da Serra'],
+            '66': ['Rondonópolis', 'Sinop', 'Sorriso', 'Barra do Garças'],
+            '67': ['Campo Grande', 'Dourados', 'Três Lagoas', 'Corumbá', 'Ponta Porã'],
+            '68': ['Rio Branco', 'Cruzeiro do Sul', 'Sena Madureira'],
+            '69': ['Porto Velho', 'Ji-Paraná', 'Ariquemes', 'Cacoal', 'Vilhena'],
+            '71': ['Salvador', 'Camaçari', 'Lauro de Freitas', 'Simões Filho'],
+            '73': ['Ilhéus', 'Itabuna', 'Porto Seguro', 'Jequié', 'Eunápolis'],
+            '74': ['Juazeiro', 'Jacobina', 'Irecê', 'Senhor do Bonfim'],
+            '75': ['Feira de Santana', 'Alagoinhas', 'Santo Antônio de Jesus', 'Paulo Afonso'],
+            '77': ['Vitória da Conquista', 'Barreiras', 'Luís Eduardo Magalhães', 'Guanambi'],
+            '79': ['Aracaju', 'Nossa Senhora do Socorro', 'Lagarto', 'Itabaiana'],
+            '81': ['Recife', 'Jaboatão dos Guararapes', 'Olinda', 'Caruaru', 'Paulista'],
+            '82': ['Maceió', 'Arapiraca', 'Rio Largo', 'Palmeira dos Índios'],
+            '83': ['João Pessoa', 'Campina Grande', 'Santa Rita', 'Patos'],
+            '84': ['Natal', 'Mossoró', 'Parnamirim', 'São Gonçalo do Amarante'],
+            '85': ['Fortaleza', 'Caucaia', 'Maracanaú', 'Sobral'],
+            '86': ['Teresina', 'Parnaíba', 'Piripiri', 'Campo Maior'],
+            '87': ['Petrolina', 'Garanhuns', 'Serra Talhada', 'Arcoverde'],
+            '88': ['Juazeiro do Norte', 'Crato', 'Barbalha', 'Iguatu', 'Sobral (Região)'],
+            '89': ['Picos', 'Floriano', 'Oeiras', 'São Raimundo Nonato'],
+            '91': ['Belém', 'Ananindeua', 'Castanhal', 'Abaetetuba'],
+            '92': ['Manaus', 'Parintins', 'Itacoatiara', 'Manacapuru'],
+            '93': ['Santarém', 'Altamira', 'Itaituba'],
+            '94': ['Marabá', 'Parauapebas', 'Tucuruí', 'Redenção'],
+            '95': ['Boa Vista', 'Rorainópolis'],
+            '96': ['Macapá', 'Santana'],
+            '97': ['Coari', 'Tefé', 'Tabatinga'],
+            '98': ['São Luís', 'São José de Ribamar', 'Timon', 'Caxias'],
+            '99': ['Imperatriz', 'Bacabal', 'Balsas', 'Codó']
+        };
+
         function setupTabs() {
             document.querySelectorAll('.scope-tab').forEach(tab => {
                 tab.addEventListener('click', () => {
@@ -754,10 +824,47 @@
             // --- DDD Grid ---
             const gridDdd = document.getElementById('gridDdd');
              if (gridDdd.children.length === 0) {
-                 gridDdd.innerHTML = DDDS_BRASIL.map(r => `
+                 // 1. Prepare Base DDDs
+                 const baseDdds = DDDS_BRASIL.map(r => ({
+                     v: r.d,
+                     l: `DDD ${r.d} - ${r.r}`,
+                     isBase: true,
+                     sortDdd: r.d
+                 }));
+
+                 // 2. Extract specific cities from STATIC LIST
+                 const specificCities = [];
+                 Object.entries(CIDADES_POR_DDD).forEach(([ddd, cities]) => {
+                     cities.forEach(city => {
+                         specificCities.push({
+                             v: city, // Use city name as value
+                             l: `DDD ${ddd} - ${city}`,
+                             isBase: false,
+                             sortDdd: ddd
+                         });
+                     });
+                 });
+
+                 // 3. Combine and Sort
+                 const allDddOptions = [...baseDdds, ...specificCities];
+                 
+                 // Sort by DDD (sortDdd) then by Label (l)
+                 allDddOptions.sort((a, b) => {
+                     const dddA = parseInt(a.sortDdd) || 0;
+                     const dddB = parseInt(b.sortDdd) || 0;
+                     if (dddA !== dddB) return dddA - dddB;
+                     
+                     // Same DDD: Base (Generic) first, then alphabetical
+                     if (a.isBase && !b.isBase) return -1;
+                     if (!a.isBase && b.isBase) return 1;
+                     
+                     return a.l.localeCompare(b.l);
+                 });
+
+                 gridDdd.innerHTML = allDddOptions.map(r => `
                     <label class="checkbox-item">
-                        <input type="checkbox" class="cb-ddd" value="${r.d}" data-l="DDD ${r.d} - ${r.r}" onchange="handleDddChange(this)">
-                        <span>DDD ${r.d} - ${r.r}</span>
+                        <input type="checkbox" class="cb-ddd" value="${r.v}" data-l="${r.l}" onchange="handleDddChange(this)">
+                        <span>${r.l}</span>
                     </label>
                 `).join('');
             }
@@ -835,7 +942,7 @@
                 div.innerHTML = `
                     <i data-lucide="${icon}" style="width:12px; height:12px; opacity:0.7;"></i>
                     <span>${item.l}</span>
-                    <div class="chip-remove" onclick="removeSelection('${item.t}', '${item.v}')">
+                    <div class="chip-remove" onclick="removeSelection('${item.t}', '${item.v}', '${item.l.replace(/'/g, "\\'")}')">
                         <i data-lucide="x" style="width:10px; height:10px;"></i>
                     </div>
                 `;
@@ -852,14 +959,22 @@
             lucide.createIcons();
         }
         
-        window.removeSelection = function(type, value) {
+        window.removeSelection = function(type, value, label) {
             if (type === 'nacional') {
                 document.getElementById('checkNacional').checked = false;
             } else if (type === 'uf') {
                 const el = document.querySelector(`.cb-uf[value="${value}"]`);
                 if (el) el.checked = false;
             } else if (type === 'ddd') {
-                const el = document.querySelector(`.cb-ddd[value="${value}"]`);
+                // Try specific match first (value + label)
+                let el = null;
+                if (label) {
+                    el = document.querySelector(`.cb-ddd[value="${value}"][data-l="${label}"]`);
+                }
+                // Fallback to value only if not found (or no label provided)
+                if (!el) {
+                    el = document.querySelector(`.cb-ddd[value="${value}"]`);
+                }
                 if (el) el.checked = false;
             }
             updatePreview();
@@ -940,7 +1055,9 @@
                         } 
                         
                         // Try DDD (also check if not found in UF, or independent)
-                        const cbDdd = document.querySelector(`.cb-ddd[value="${item.v}"]`);
+                        let cbDdd = document.querySelector(`.cb-ddd[value="${item.v}"][data-l="${item.l}"]`);
+                        if (!cbDdd) cbDdd = document.querySelector(`.cb-ddd[value="${item.v}"]`);
+                        
                         if (cbDdd) {
                             cbDdd.checked = true;
                             hasDdd = true;
