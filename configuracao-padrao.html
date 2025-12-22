@@ -93,12 +93,14 @@
                             <thead>
                                 <tr>
                                     <th>Linha</th>
+                                    <th>Tipo</th>
                                     <th>Qtd</th>
+                                    <th>Total</th>
                                     <th class="col-actions" style="min-width:140px;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="itensTbody">
-                                <tr><td colspan="3">
+                                <tr><td colspan="5">
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
@@ -1353,7 +1355,7 @@
             const tbody = document.getElementById('itensTbody');
             if (!__categorias.length && !__produtos.length) {
                 tbody.innerHTML = `
-                    <tr><td colspan="3">
+                    <tr><td colspan="5">
                         <div id="loadingDots" class="muted" style="padding:0.8rem; text-align:center; font-weight:600;">Carregando</div>
                     </td></tr>
                 `;
@@ -1365,10 +1367,12 @@
                 return `
                     <tr>
                         <td>${idx + 1}</td>
+                        <td>${l.tipoNegociacao || '-'}</td>
                         <td>
                             <input type="number" min="1" class="input" style="width:90px; text-align:center;" value="${l.quantidade}"
                                    data-id="${l.id}" data-field="quantidade">
                         </td>
+                        <td>${currency(totalLinha(l))}</td>
                         <td class="col-actions">
                             <div class="table-actions">
                                 <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="openEditModal(${l.id})"><i data-lucide="pencil"></i></button>
@@ -1380,7 +1384,7 @@
                 `;
             }).join('');
             document.getElementById('countItensLabel').textContent = `${__linhas.length} ${__linhas.length === 1 ? 'item' : 'itens'}`;
-            tbody.innerHTML = rows || '<tr><td colspan="3" class="muted">Sem itens</td></tr>';
+            tbody.innerHTML = rows || '<tr><td colspan="5" class="muted">Sem itens</td></tr>';
             
             Array.from(tbody.querySelectorAll('input[data-field="quantidade"]')).forEach(el => {
                 el.addEventListener('change', (e) => {

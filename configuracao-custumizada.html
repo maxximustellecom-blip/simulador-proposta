@@ -93,12 +93,14 @@
                             <thead>
                                 <tr>
                                     <th>Linha</th>
+                                    <th>Tipo</th>
                                     <th>Qtd</th>
+                                    <th>Total</th>
                                     <th class="col-actions" style="min-width:140px;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="tableBody">
-                                <tr><td colspan="3">
+                                <tr><td colspan="5">
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
@@ -850,10 +852,13 @@
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = linhas.map((l, idx) => {
+                const total = currency(calcularPrecoFinal(l) * (Number(l.quantidade) || 1));
                 return `
                 <tr>
                     <td>${idx + 1}</td>
+                    <td>${l.tipoNegociacao || '-'}</td>
                     <td><input type="number" min="1" class="input" style="width:60px; text-align:center;" value="${l.quantidade || 1}" data-id="${l.id}" data-field="quantidade"></td>
+                    <td>${total}</td>
                     <td class="col-actions">
                         <div class="table-actions">
                             <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="openEditModal(${l.id})"><i data-lucide="pencil"></i></button>
@@ -863,7 +868,7 @@
                     </td>
                 </tr>
                 `;
-            }).join('') || '<tr><td colspan="3" class="muted">Sem linhas</td></tr>';
+            }).join('') || '<tr><td colspan="5" class="muted">Sem linhas</td></tr>';
             
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             
