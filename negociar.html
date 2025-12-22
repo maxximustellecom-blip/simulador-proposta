@@ -30,7 +30,7 @@
         <div class="card">
             <div class="card-head">
                 <div class="card-title">
-                    <span>Propostas</span>
+                    <span>Propostas</span>&nbsp;
                     <span class="chip">Painel de propostas</span>
                 </div>
                 <div class="muted">
@@ -230,7 +230,8 @@
             if (mClienteHidden) mClienteHidden.value = '';
             if (mClienteSearch) mClienteSearch.value = '';
             if (mClienteDropdown) { mClienteDropdown.innerHTML = ''; mClienteDropdown.classList.remove('show', 'limited'); }
-            if (mTipo) mTipo.value = '1º VENDA';
+            // mTipo value will be reset to first option automatically or we can force it if we want a specific default
+            // if (mTipo) mTipo.value = '1º VENDA'; // Removed hardcoded default
             if (mProposta) mProposta.value = 'PROPOSTA PADRÃO';
             if (mStatus) mStatus.value = 'Em andamento';
             __editingNegId = null;
@@ -257,7 +258,14 @@
             const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
             if (__userRole !== 'admin' && String(n?.status || '') === 'Concluída') return;
             setClienteSelected(n?.cnpj || '');
-            document.getElementById('mTipo').value = n?.tipo || '1º VENDA';
+            
+            // Try to set value, if not found it might default to first option
+            if (n?.tipo) {
+                document.getElementById('mTipo').value = n.tipo;
+            } else {
+                 // Maybe select first option explicitly if needed, but browser does it
+            }
+            
             document.getElementById('mProposta').value = n?.proposta || 'PROPOSTA PADRÃO';
             document.getElementById('mStatus').value = n?.status || 'Em andamento';
             __editingNegId = Number(id);
@@ -334,6 +342,27 @@
                 buscar();
             } catch {}
         }
+        async function carregarTiposSelect() {
+            try {
+                const list = await api('/types', { method: 'GET' }).catch(() => []);
+                const arr = Array.isArray(list) ? list : [];
+                const select = document.getElementById('mTipo');
+                if (!select) return;
+                
+                let html = '';
+                html += arr.map(t => `<option value="${t.nome}">${t.nome.toUpperCase()}</option>`).join('');
+                
+                if (arr.length === 0) {
+                    html += '<option value="" disabled>Sem tipos cadastrados</option>';
+                }
+                select.innerHTML = html;
+                
+                // Select first option by default if available
+                if (select.options.length > 0 && !select.value) {
+                    select.selectedIndex = 0;
+                }
+            } catch {}
+        }
         document.addEventListener('DOMContentLoaded', async () => {
             const auth = localStorage.getItem('authUser');
             if (!auth) { window.location.href = 'login.html'; return; }
@@ -342,6 +371,8 @@
                     const u = JSON.parse(auth || '{}');
                     __userRole = String(u && u.role ? u.role : '');
                 } catch { __userRole = ''; }
+                
+                await carregarTiposSelect();
                 await carregarClientes();
                 renderClienteDropdown('');
                 const params = new URLSearchParams(window.location.search || '');
@@ -351,7 +382,7 @@
                     const c = (__clients || []).find(x => Number(x.id) === idNum);
                     if (c) {
                         setClienteSelected(c.cnpj || '');
-                        document.getElementById('mTipo').value = '1º VENDA';
+                        // document.getElementById('mTipo').value = '1º VENDA'; // Let it be default
                         document.getElementById('mProposta').value = 'PROPOSTA PADRÃO';
                         document.getElementById('mStatus').value = 'Em andamento';
                         openModal();
@@ -368,7 +399,10 @@
             } catch {}
             document.getElementById('novaNegociacaoBtn').addEventListener('click', () => {
                 setClienteSelected('');
-                document.getElementById('mTipo').value = '1º VENDA';
+                // Default mTipo is handled by browser/load (first option) unless we force reset to first option explicitly
+                const mTipo = document.getElementById('mTipo');
+                if (mTipo && mTipo.options.length > 0) mTipo.selectedIndex = 0;
+                
                 document.getElementById('mProposta').value = 'PROPOSTA PADRÃO';
                 openModal();
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
@@ -468,10 +502,7 @@
                     <div>
                         <div class="label">Tipo</div>
                         <select id="mTipo" class="select">
-                            <option value="1º VENDA">NOVO</option>
-                            <option value="ADTIVO">ADITIVO</option>
-                            <option value="RENEGOCIAÇÃO">RENOVAÇÃO</option>
-                            <option value="ADTIVO">RENOVAÇÃO/ADITIVO</option>
+                            <option value="" selected>Carregando...</option>
                         </select>
                     </div>
                     <div>
