@@ -623,6 +623,15 @@ select option[disabled], .select option[disabled] {
 }
 #filtersProdutos .input, #filtersProdutos .select { width: 100%; box-sizing: border-box; min-width: 0; }
 #filtersProdutos .btn-icon { border-color: var(--border); }
+#filtersTipos {
+  align-items: end;
+  background: var(--surface);
+  border-radius: 12px;
+  gap: 0.6rem;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.2fr) auto;
+}
+#filtersTipos .input, #filtersTipos .select { width: 100%; box-sizing: border-box; min-width: 0; }
+#filtersTipos .btn-icon { border-color: var(--border); }
 @media (max-width: 919px) {
   #filtersHistorico { grid-template-columns: 1fr; }
   #filtersHistorico > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
@@ -638,6 +647,8 @@ select option[disabled], .select option[disabled] {
   #filtersCategorias > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
   #filtersProdutos { grid-template-columns: 1fr; }
   #filtersProdutos > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
+  #filtersTipos { grid-template-columns: 1fr; }
+  #filtersTipos > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
 }
 @media (max-width: 1024px) and (min-width: 920px) {
   #filtersHistorico { grid-template-columns: 1fr 1fr; }
@@ -654,6 +665,8 @@ select option[disabled], .select option[disabled] {
   #filtersCategorias > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
   #filtersProdutos { grid-template-columns: 1fr 1fr; }
   #filtersProdutos > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
+  #filtersTipos { grid-template-columns: 1fr 1fr; }
+  #filtersTipos > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
 }
 .chart-card canvas { max-width: 100%; }
 .chart-card { padding: 1rem; }
