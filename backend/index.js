@@ -40,6 +40,7 @@ app.use('/custom-products', customProductRouter);
 app.use('/access-profiles', accessProfileRouter);
 app.use('/pedidos-venda', pedidoDeVendaRouter);
 app.use('/regioes', regiaoRouter);
+app.use('/types', tipoRouter);
 
 const port = process.env.PORT || 3001;
 

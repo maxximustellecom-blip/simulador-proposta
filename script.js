@@ -58,6 +58,7 @@
           '<a href="historico-simulacoes.html" class="nav-sublink' + (isActive('historico-simulacoes') ? ' active' : '') + '"><i data-lucide="list"></i><span>Histórico</span></a>' +
         '</div>' +
         '<div class="nav-title" style="display:' + (isAdmin ? 'flex' : 'none') + '">Ofertas</div>' +
+        '<a href="tipo.html" class="nav-link' + (isActive('tipo') ? ' active' : '') + '" style="display:' + (isAdmin ? 'flex' : 'none') + '"><i data-lucide="tag"></i><span>Tipos</span></a>' +
         '<a href="regioes.html" class="nav-link' + (isActive('regioes') ? ' active' : '') + '" style="display:' + (isAdmin ? 'flex' : 'none') + '"><i data-lucide="map"></i><span>Regiões</span></a>' +
         '<button id="ofertaToggle" class="nav-dropdown' + (ofertaOpen ? ' open' : '') + '" type="button" style="display:' + (isAdmin ? 'flex' : 'none') + ';">' +
           '<div class="left"><i data-lucide="package"></i><span>Padrão</span></div>' +
