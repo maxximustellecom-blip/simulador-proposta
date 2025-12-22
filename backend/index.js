@@ -14,6 +14,7 @@ import customProductRouter from './routes/customProduct.js';
 import accessProfileRouter from './routes/accessProfile.js';
 import pedidoDeVendaRouter from './routes/pedidoDeVenda.js';
 import regiaoRouter from './routes/regiao.js';
+import tipoRouter from './routes/tipo.js';
 import authContext from './middleware/authContext.js';
 
 dotenv.config();
