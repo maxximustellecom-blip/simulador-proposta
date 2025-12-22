@@ -878,44 +878,49 @@
             const r = regioes.find(x => x.id === id);
             if (!r) return;
             
+            // 1. Open modal first to reset state (uncheck everything)
+            openModal(true);
+            
+            // 2. Set ID and Name
             editId = id;
             inputNome.value = r.nome;
             
-            // Determine Tab based on content
+            // 3. Ensure checkboxes are rendered so we can find them
+            renderCheckboxes(); 
+
+            // 4. Determine Tab based on content (fallback logic)
             let hasNacional = false;
             let hasUf = false;
             let hasDdd = false;
             
-            // Apply checks
-            r.items.forEach(item => {
-                if (item.l === LABEL_TODAS_UFS) {
-                    document.getElementById('checkNacional').checked = true;
-                    hasNacional = true;
-                } else {
-                    // Try UF
-                    // We need to find checkboxes even if they are not currently visible?
-                    // Yes, we rendered them in init -> renderCheckboxes (via openModal call? No, openModal resets)
-                    // Wait, renderCheckboxes checks for innerHTML === ''. 
-                    // So we must ensure they are rendered.
-                    renderCheckboxes(); 
-                    
-                    const cbUf = document.querySelector(`.cb-uf[value="${item.v}"]`);
-                    if (cbUf) {
-                        cbUf.checked = true;
-                        hasUf = true;
+            // 5. Apply checks
+            if (r.items && Array.isArray(r.items)) {
+                r.items.forEach(item => {
+                    if (item.l === LABEL_TODAS_UFS) {
+                        const el = document.getElementById('checkNacional');
+                        if (el) {
+                            el.checked = true;
+                            hasNacional = true;
+                        }
                     } else {
-                        const cbDdd = document.querySelector(`.cb-ddd[value="${item.v}"]`);
-                        if (cbDdd) {
-                            cbDdd.checked = true;
-                            hasDdd = true;
+                        // Try UF
+                        const cbUf = document.querySelector(`.cb-uf[value="${item.v}"]`);
+                        if (cbUf) {
+                            cbUf.checked = true;
+                            hasUf = true;
+                        } else {
+                            // Try DDD
+                            const cbDdd = document.querySelector(`.cb-ddd[value="${item.v}"]`);
+                            if (cbDdd) {
+                                cbDdd.checked = true;
+                                hasDdd = true;
+                            }
                         }
                     }
-                }
-            });
+                });
+            }
 
-            openModal(true);
-            
-            // Decide which tab to show
+            // 6. Decide which tab to show
             if (r.scope) {
                 switchTab(r.scope);
             } else {
@@ -925,6 +930,7 @@
                 else switchTab('nacional'); // default
             }
             
+            // 7. Update preview
             updatePreview();
         };
 

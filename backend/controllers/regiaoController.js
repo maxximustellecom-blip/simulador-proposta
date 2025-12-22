@@ -12,8 +12,8 @@ export const getAll = async (req, res) => {
 
 export const create = async (req, res) => {
   try {
-    const { nome, items } = req.body;
-    const regiao = await Regiao.create({ nome, items });
+    const { nome, items, scope } = req.body;
+    const regiao = await Regiao.create({ nome, items, scope });
     res.status(201).json(regiao);
   } catch (error) {
     console.error('Error creating regiao:', error);
@@ -24,14 +24,14 @@ export const create = async (req, res) => {
 export const update = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nome, items } = req.body;
+    const { nome, items, scope } = req.body;
     const regiao = await Regiao.findByPk(id);
     
     if (!regiao) {
       return res.status(404).json({ error: 'Regiao not found' });
     }
 
-    await regiao.update({ nome, items });
+    await regiao.update({ nome, items, scope });
     res.json(regiao);
   } catch (error) {
     console.error('Error updating regiao:', error);
