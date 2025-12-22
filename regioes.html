@@ -304,6 +304,9 @@
             display: inline-flex;
             align-items: center;
         }
+
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -423,6 +426,24 @@
     <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
 
+    <!-- Confirm Delete Modal -->
+    <div id="confirmDeleteModal" class="modal">
+        <div class="modal-card" style="max-width: 400px;">
+            <div class="modal-head">
+                <div class="card-title">Excluir Região</div>
+                <button id="confirmDeleteClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir esta região?</p>
+                <p class="muted" style="font-size: 0.9rem; margin-top: 0.5rem;">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmDeleteCancel" class="btn btn-ghost" type="button">Cancelar</button>
+                <button id="confirmDeleteBtn" class="btn btn-primary" style="background-color: var(--red, #ef4444); border-color: var(--red, #ef4444);" type="button">Excluir</button>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
     <script>
         // --- DATA ---
@@ -481,6 +502,7 @@
         // State
         let regioes = [];
         let editId = null;
+        let deleteId = null;
         let currentScope = 'nacional'; // nacional, uf, ddd
 
         // --- INIT ---
@@ -489,6 +511,7 @@
             setupTabs();
             setupSearch();
             setupCheckboxListeners();
+            setupDeleteModal();
         }
 
         const DDDS_BRASIL = [
@@ -888,14 +911,20 @@
             // 3. Ensure checkboxes are rendered so we can find them
             renderCheckboxes(); 
 
-            // 4. Determine Tab based on content (fallback logic)
+            // 4. Safe items parsing
+            let items = r.items;
+            if (typeof items === 'string') {
+                try { items = JSON.parse(items); } catch(e) { console.error('Error parsing items', e); items = []; }
+            }
+
+            // 5. Determine Tab variables
             let hasNacional = false;
             let hasUf = false;
             let hasDdd = false;
             
-            // 5. Apply checks
-            if (r.items && Array.isArray(r.items)) {
-                r.items.forEach(item => {
+            // 6. Apply checks
+            if (items && Array.isArray(items)) {
+                items.forEach(item => {
                     if (item.l === LABEL_TODAS_UFS) {
                         const el = document.getElementById('checkNacional');
                         if (el) {
@@ -908,19 +937,19 @@
                         if (cbUf) {
                             cbUf.checked = true;
                             hasUf = true;
-                        } else {
-                            // Try DDD
-                            const cbDdd = document.querySelector(`.cb-ddd[value="${item.v}"]`);
-                            if (cbDdd) {
-                                cbDdd.checked = true;
-                                hasDdd = true;
-                            }
+                        } 
+                        
+                        // Try DDD (also check if not found in UF, or independent)
+                        const cbDdd = document.querySelector(`.cb-ddd[value="${item.v}"]`);
+                        if (cbDdd) {
+                            cbDdd.checked = true;
+                            hasDdd = true;
                         }
                     }
                 });
             }
 
-            // 6. Decide which tab to show
+            // 7. Decide which tab to show
             if (r.scope) {
                 switchTab(r.scope);
             } else {
@@ -930,19 +959,57 @@
                 else switchTab('nacional'); // default
             }
             
-            // 7. Update preview
+            // 8. Update preview
             updatePreview();
         };
 
-        window.excluirRegiao = async function(id) {
-            if (confirm('Tem certeza que deseja excluir esta região?')) {
+        function closeConfirmModal() {
+            document.getElementById('confirmDeleteModal').classList.remove('active');
+            deleteId = null;
+        }
+
+        function setupDeleteModal() {
+            const modal = document.getElementById('confirmDeleteModal');
+            const btnClose = document.getElementById('confirmDeleteClose');
+            const btnCancel = document.getElementById('confirmDeleteCancel');
+            const btnConfirm = document.getElementById('confirmDeleteBtn');
+
+            const close = () => closeConfirmModal();
+
+            btnClose.addEventListener('click', close);
+            btnCancel.addEventListener('click', close);
+            
+            btnConfirm.addEventListener('click', async () => {
+                if (!deleteId) return;
+                
+                const originalText = btnConfirm.innerHTML;
+                btnConfirm.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Excluindo...';
+                btnConfirm.disabled = true;
+                lucide.createIcons();
+
                 try {
-                    await api('/regioes/' + id, { method: 'DELETE' });
+                    await api('/regioes/' + deleteId, { method: 'DELETE' });
                     await loadRegioes();
+                    showToast('Região excluída com sucesso.');
+                    close();
                 } catch (e) {
                     showToast('Erro ao excluir: ' + e.message);
+                } finally {
+                    btnConfirm.innerHTML = originalText;
+                    btnConfirm.disabled = false;
+                    lucide.createIcons();
                 }
-            }
+            });
+
+            // Close on click outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) close();
+            });
+        }
+
+        window.excluirRegiao = function(id) {
+            deleteId = id;
+            document.getElementById('confirmDeleteModal').classList.add('active');
         };
 
         document.getElementById('modalSalvar').addEventListener('click', async () => {
