@@ -313,7 +313,7 @@
     <main class="container">
         <div class="card">
             <div class="card-head">
-                <div class="card-title" style="display: flex;">
+                <div class="card-title">
                     <i data-lucide="map"></i>
                     <span>Regiões</span>
                 </div>
@@ -964,7 +964,7 @@
         };
 
         function closeConfirmModal() {
-            document.getElementById('confirmDeleteModal').classList.remove('active');
+            document.getElementById('confirmDeleteModal').classList.remove('show');
             deleteId = null;
         }
 
@@ -1009,7 +1009,7 @@
 
         window.excluirRegiao = function(id) {
             deleteId = id;
-            document.getElementById('confirmDeleteModal').classList.add('active');
+            document.getElementById('confirmDeleteModal').classList.add('show');
         };
 
         document.getElementById('modalSalvar').addEventListener('click', async () => {
