@@ -55,6 +55,52 @@
                         <input id="pDesc" class="input" type="text" placeholder="Descrição do perfil" autocomplete="off">
                     </div>
                 </div>
+                
+                <!-- Commission Config -->
+                <div class="section" style="padding:0.8rem; margin-top:0.6rem; border-top:1px solid #e5e7eb; background: #fafafa; border-radius: 4px;">
+                    <h4 style="font-size:0.85rem; font-weight:600; margin-bottom:0.8rem; color:#374151;">Configuração de Comissionamento</h4>
+                    
+                    <div style="margin-bottom:1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                            <span class="label" style="font-size:0.75rem;">Tabela 1: Níveis e Fator</span>
+                        </div>
+                        <div class="table-container" style="max-height:150px; overflow-y:auto; border:1px solid #e5e7eb; border-radius:4px; background:#fff;">
+                            <table class="table-compact">
+                                <thead>
+                                    <tr>
+                                        <th style="width:15%">Nível</th>
+                                        <th style="width:25%">Receita</th>
+                                        <th style="width:25%">Elegibilidade</th>
+                                        <th style="width:15%">% Fator</th>
+                                        <th style="width:10%"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="createLevelTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                            <span class="label" style="font-size:0.75rem;">Tabela 2: Por Tipo de Produto</span>
+                        </div>
+                        <div class="table-container" style="max-height:150px; overflow-y:auto; border:1px solid #e5e7eb; border-radius:4px; background:#fff;">
+                            <table class="table-compact">
+                                <thead>
+                                    <tr>
+                                        <th style="width:15%">Nível</th>
+                                        <th style="width:15%">Renov.</th>
+                                        <th style="width:15%">U. Fibra</th>
+                                        <th style="width:15%">WTTX</th>
+                                        <th style="width:15%">M2M</th>
+                                        <th style="width:10%"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="createProductTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-ghost" onclick="limparFormulario()">Limpar</button>
@@ -76,6 +122,50 @@
                 <div class="section" style="padding:0.8rem; margin-top:0.6rem;">
                     <div class="label">Descrição</div>
                     <input id="editPDesc" class="input" type="text" placeholder="Descrição do perfil">
+                </div>
+
+                <!-- Commission Config Edit -->
+                <div class="section" style="padding:0.8rem; margin-top:0.6rem; border-top:1px solid #e5e7eb; background: #fafafa; border-radius: 4px;">
+                    <h4 style="font-size:0.85rem; font-weight:600; margin-bottom:0.8rem; color:#374151;">Configuração de Comissionamento</h4>
+                    
+                    <div style="margin-bottom:1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                            <span class="label" style="font-size:0.75rem;">Tabela 1: Níveis e Fator</span>
+                        </div>
+                        <div class="table-container" style="max-height:150px; overflow-y:auto; border:1px solid #e5e7eb; border-radius:4px; background:#fff;">
+                            <table class="table-compact">
+                                <thead>
+                                    <tr>
+                                        <th style="width:15%">Nível</th>
+                                        <th style="width:25%">Receita</th>
+                                        <th style="width:25%">Elegibilidade</th>
+                                        <th style="width:20%">% Fator</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="editLevelTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                            <span class="label" style="font-size:0.75rem;">Tabela 2: Por Tipo de Produto</span>
+                        </div>
+                        <div class="table-container" style="max-height:150px; overflow-y:auto; border:1px solid #e5e7eb; border-radius:4px; background:#fff;">
+                            <table class="table-compact">
+                                <thead>
+                                    <tr>
+                                        <th style="width:15%">Nível</th>
+                                        <th style="width:18%">Renov.</th>
+                                        <th style="width:18%">U. Fibra</th>
+                                        <th style="width:18%">WTTX</th>
+                                        <th style="width:21%">M2M</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="editProductTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="modal-actions">
@@ -139,6 +229,7 @@
         let __deleteProfileId = null;
         function abrirCadastroPerfil() {
             document.getElementById('cadastroPerfilModal').classList.add('show');
+            populateCommissionTables('createLevelTableBody', 'createProductTableBody', null);
         }
         function fecharCadastroPerfil() {
             document.getElementById('cadastroPerfilModal').classList.remove('show');
@@ -181,6 +272,7 @@
             document.getElementById('editPName').value = p.name || '';
             document.getElementById('editPDesc').value = p.description || '';
             document.getElementById('editPerfilModal').classList.add('show');
+            populateCommissionTables('editLevelTableBody', 'editProductTableBody', p.commission_config);
         }
         function fecharEditarPerfil() {
             __editProfileId = null;
@@ -191,8 +283,14 @@
             const name = (document.getElementById('editPName').value || '').trim();
             const description = (document.getElementById('editPDesc').value || '').trim();
             if (!name) { toast('Preencha o nome do perfil', 'error'); return; }
+            
+            const commission_config = getCommissionConfig('editLevelTableBody', 'editProductTableBody');
+
             try {
-                await api('/access-profiles/' + __editProfileId, { method: 'PUT', body: JSON.stringify({ name, description }) });
+                await api('/access-profiles/' + __editProfileId, { 
+                    method: 'PUT', 
+                    body: JSON.stringify({ name, description, commission_config }) 
+                });
                 toast('Perfil atualizado', 'success');
                 fecharEditarPerfil();
                 await carregarPerfis();
@@ -223,6 +321,92 @@
                 toast('Erro ao excluir perfil', 'error');
             }
         }
+
+        // Commission Helper Functions
+        const DEFAULT_COMMISSION_ROWS = ['BLUE', 'SILVER', 'PLATINUM', 'BLACK', 'BLACK+'];
+
+        function addLevelRow(tbodyId, data = null) {
+            const tbody = document.getElementById(tbodyId);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><span style="font-size:0.75rem; font-weight:500; padding-left:4px;">${data && data.name ? data.name : ''}</span><input type="hidden" value="${data && data.name ? data.name : ''}"></td>
+                <td><input type="text" placeholder="R$..." value="${data && data.revenue !== undefined ? data.revenue : ''}"></td>
+                <td><input type="text" placeholder="Condição" value="${data && data.eligibility !== undefined ? data.eligibility : ''}"></td>
+                <td><input type="text" placeholder="%" value="${data && data.factor !== undefined ? data.factor : ''}"></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function addProductRow(tbodyId, data = null) {
+            const tbody = document.getElementById(tbodyId);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><span style="font-size:0.75rem; font-weight:500; padding-left:4px;">${data && data.level_group ? data.level_group : ''}</span><input type="hidden" value="${data && data.level_group ? data.level_group : ''}"></td>
+                <td><input type="text" placeholder="%" value="${data && data.renovacao !== undefined ? data.renovacao : ''}"></td>
+                <td><input type="text" placeholder="%" value="${data && data.ultra_fibra !== undefined ? data.ultra_fibra : ''}"></td>
+                <td><input type="text" placeholder="%" value="${data && data.wttx !== undefined ? data.wttx : ''}"></td>
+                <td><input type="text" placeholder="%" value="${data && data.m2m !== undefined ? data.m2m : ''}"></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function getCommissionConfig(levelTbodyId, productTbodyId) {
+            const levels = [];
+            document.querySelectorAll(`#${levelTbodyId} tr`).forEach(tr => {
+                const inputs = tr.querySelectorAll('input');
+                // input[0] is hidden name
+                if (inputs.length > 0) {
+                    levels.push({
+                        name: inputs[0].value,
+                        revenue: inputs[1].value,
+                        eligibility: inputs[2].value,
+                        factor: inputs[3].value
+                    });
+                }
+            });
+
+            const products = [];
+            document.querySelectorAll(`#${productTbodyId} tr`).forEach(tr => {
+                const inputs = tr.querySelectorAll('input');
+                // input[0] is hidden level_group
+                if (inputs.length > 0) {
+                    products.push({
+                        level_group: inputs[0].value,
+                        renovacao: inputs[1].value,
+                        ultra_fibra: inputs[2].value,
+                        wttx: inputs[3].value,
+                        m2m: inputs[4].value
+                    });
+                }
+            });
+
+            return { levels, products };
+        }
+
+        function populateCommissionTables(levelTbodyId, productTbodyId, config) {
+            const levelBody = document.getElementById(levelTbodyId);
+            const productBody = document.getElementById(productTbodyId);
+            levelBody.innerHTML = '';
+            productBody.innerHTML = '';
+            
+            if (typeof config === 'string') {
+                try { config = JSON.parse(config); } catch (e) { console.error('Error parsing config', e); config = {}; }
+            }
+
+            // Merge defaults with config
+            const levels = DEFAULT_COMMISSION_ROWS.map(name => {
+                const existing = (config && config.levels) ? config.levels.find(l => l.name === name) : null;
+                return existing || { name, revenue: '', eligibility: '', factor: '' };
+            });
+            
+            const products = DEFAULT_COMMISSION_ROWS.map(name => {
+                const existing = (config && config.products) ? config.products.find(p => p.level_group === name) : null;
+                return existing || { level_group: name, renovacao: '', ultra_fibra: '', wttx: '', m2m: '' };
+            });
+
+            levels.forEach(l => addLevelRow(levelTbodyId, l));
+            products.forEach(p => addProductRow(productTbodyId, p));
+        }
         async function salvarPerfil() {
             const name = (document.getElementById('pName').value || '').trim();
             const description = (document.getElementById('pDesc').value || '').trim();
@@ -230,8 +414,14 @@
                 toast('Preencha o nome do perfil', 'error');
                 return;
             }
+            
+            const commission_config = getCommissionConfig('createLevelTableBody', 'createProductTableBody');
+
             try {
-                await api('/access-profiles', { method: 'POST', body: JSON.stringify({ name, description }) });
+                await api('/access-profiles', { 
+                    method: 'POST', 
+                    body: JSON.stringify({ name, description, commission_config }) 
+                });
                 toast('Perfil cadastrado', 'success');
                 limparFormulario();
                 try { document.getElementById('cadastroPerfilModal').classList.remove('show'); } catch {}
