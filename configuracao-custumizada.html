@@ -267,6 +267,7 @@
             const k = String(t || '').toLowerCase();
             if (k.includes('reneg')) return 'renegociacao';
             if (k.includes('adti') || k.includes('adit')) return 'aditivo';
+            if (k.includes('tt')) return 'renegociacao';
             return 'novo';
         }
         function parsePctFromText(s) {
