@@ -58,7 +58,7 @@
                 
                 <!-- Commission Config -->
                 <div class="section" style="padding:0.8rem; margin-top:0.6rem; border-top:1px solid #e5e7eb; background: #fafafa; border-radius: 4px;">
-                    <h4 style="font-size:0.85rem; font-weight:600; margin-bottom:0.8rem; color:#374151;">Configuração de Comissionamento</h4>
+                    <h4 style="font-size:0.85rem; font-weight:600; margin-bottom:0.8rem; color:#374151; margin-top: 0px;">Configuração de Comissionamento</h4>
                     
                     <div style="margin-bottom:1rem;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
@@ -93,7 +93,7 @@
                                         <th style="width:15%">U. Fibra</th>
                                         <th style="width:15%">WTTX</th>
                                         <th style="width:15%">M2M</th>
-                                        <th style="width:10%"></th>
+                                        <th style="width:15%">Controle</th>
                                     </tr>
                                 </thead>
                                 <tbody id="createProductTableBody"></tbody>
@@ -126,7 +126,7 @@
 
                 <!-- Commission Config Edit -->
                 <div class="section" style="padding:0.8rem; margin-top:0.6rem; border-top:1px solid #e5e7eb; background: #fafafa; border-radius: 4px;">
-                    <h4 style="font-size:0.85rem; font-weight:600; margin-bottom:0.8rem; color:#374151;">Configuração de Comissionamento</h4>
+                    <h4 style="font-size:0.85rem; font-weight:600; margin-bottom:0.8rem; color:#374151; margin-top: 0px;">Configuração de Comissionamento</h4>
                     
                     <div style="margin-bottom:1rem;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
@@ -159,7 +159,8 @@
                                         <th style="width:18%">Renov.</th>
                                         <th style="width:18%">U. Fibra</th>
                                         <th style="width:18%">WTTX</th>
-                                        <th style="width:21%">M2M</th>
+                                        <th style="width:16%">M2M</th>
+                                        <th style="width:15%">Controle</th>
                                     </tr>
                                 </thead>
                                 <tbody id="editProductTableBody"></tbody>
@@ -346,6 +347,7 @@
                 <td><input type="text" placeholder="%" value="${data && data.ultra_fibra !== undefined ? data.ultra_fibra : ''}"></td>
                 <td><input type="text" placeholder="%" value="${data && data.wttx !== undefined ? data.wttx : ''}"></td>
                 <td><input type="text" placeholder="%" value="${data && data.m2m !== undefined ? data.m2m : ''}"></td>
+                <td><input type="text" placeholder="%" value="${data && data.controle !== undefined ? data.controle : ''}"></td>
             `;
             tbody.appendChild(tr);
         }
@@ -375,7 +377,8 @@
                         renovacao: inputs[1].value,
                         ultra_fibra: inputs[2].value,
                         wttx: inputs[3].value,
-                        m2m: inputs[4].value
+                        m2m: inputs[4].value,
+                        controle: inputs[5].value
                     });
                 }
             });
@@ -401,7 +404,7 @@
             
             const products = DEFAULT_COMMISSION_ROWS.map(name => {
                 const existing = (config && config.products) ? config.products.find(p => p.level_group === name) : null;
-                return existing || { level_group: name, renovacao: '', ultra_fibra: '', wttx: '', m2m: '' };
+                return existing || { level_group: name, renovacao: '', ultra_fibra: '', wttx: '', m2m: '', controle: '' };
             });
 
             levels.forEach(l => addLevelRow(levelTbodyId, l));
