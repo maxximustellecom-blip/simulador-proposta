@@ -193,26 +193,41 @@
         }
 
         .search-bar {
-            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             margin-bottom: 0.8rem;
         }
-        .search-bar i {
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--muted);
-            width: 16px;
-            height: 16px;
+        .search-input-wrapper {
+             display: flex;
+             align-items: center;
+             flex: 1;
+             background: var(--surface);
+             border-radius: 8px;
+             padding: 0 10px;
+             height: 36px;
+             transition: border-color 0.2s;
         }
-        .search-bar input {
-            width: 100%;
-            padding-left: 35px;
-            height: 36px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            color: var(--foreground);
+        .search-input-wrapper:focus-within {
+             border-color: var(--primary);
+             box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
+        }
+        .search-input-wrapper svg {
+             color: var(--muted);
+             width: 16px;
+             height: 16px;
+             margin-right: 8px;
+             flex-shrink: 0;
+        }
+        .search-input-wrapper input {
+             border: none;
+             background: transparent;
+             width: 100%;
+             height: 100%;
+             color: var(--foreground);
+             outline: none;
+             font-size: 0.9rem;
+             padding: 0;
         }
         
         /* Selection Preview Area */
@@ -364,6 +379,10 @@
                         <i data-lucide="map"></i>
                         <span>Por Estado</span>
                     </button>
+                    <button type="button" class="scope-tab" data-tab="regionais">
+                        <i data-lucide="map-pin"></i>
+                        <span>Regionais</span>
+                    </button>
                     <button type="button" class="scope-tab" data-tab="ddd">
                         <i data-lucide="hash"></i>
                         <span>Por DDD / Cidade</span>
@@ -393,11 +412,24 @@
                     </div>
                 </div>
 
+                <!-- Container Regionais -->
+                <div id="view-regionais" class="view-section" style="display:none;">
+                    <div class="checkbox-grid uf-grid" id="gridRegionais">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
                 <!-- Container DDDs -->
                 <div id="view-ddd" class="view-section" style="display:none;">
                      <div class="search-bar">
-                        <i data-lucide="search"></i>
-                        <input type="text" id="searchDdd" placeholder="Buscar região ou DDD..." onkeyup="filterGrid('ddd')">
+                        <div class="search-input-wrapper">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg>
+                            <input type="text" id="searchDdd" placeholder="Buscar região ou DDD..." onkeyup="filterGrid('ddd')">
+                        </div>
+                        <label class="checkbox-item" style="white-space: nowrap;">
+                            <input type="checkbox" id="checkAllDdd" onchange="toggleSelectAllDdd(this)">
+                            <span>Selecionar Todos</span>
+                        </label>
                     </div>
                     <div class="checkbox-grid" id="gridDdd">
                         <!-- Filled by JS -->
@@ -613,6 +645,14 @@
             { s: 'TO', n: 'Tocantins', v: '63' }
         ];
 
+        const REGIONAIS_BRASIL = [
+            { n: 'Norte', ufs: ['AC', 'AP', 'AM', 'PA', 'RO', 'RR', 'TO'] },
+            { n: 'Nordeste', ufs: ['AL', 'BA', 'CE', 'MA', 'PB', 'PE', 'PI', 'RN', 'SE'] },
+            { n: 'Centro', ufs: ['DF', 'GO', 'MT', 'MS'] },
+            { n: 'Sudeste', ufs: ['ES', 'MG', 'RJ', 'SP'] },
+            { n: 'Sul', ufs: ['PR', 'RS', 'SC'] }
+        ];
+
         const CIDADES_POR_DDD = {
             '11': ['Arujá', 'Barueri', 'Biritiba-Mirim', 'Caieiras', 'Cajamar', 'Carapicuíba', 'Cotia', 'Diadema', 'Embu das Artes', 'Embu-Guaçu', 'Ferraz de Vasconcelos', 'Francisco Morato', 'Franco da Rocha', 'Guararema', 'Guarulhos', 'Itapecerica da Serra', 'Itapevi', 'Itaquaquecetuba', 'Jandira', 'Juquitiba', 'Mairiporã', 'Mauá', 'Mogi das Cruzes', 'Osasco', 'Pirapora do Bom Jesus', 'Poá', 'Ribeirão Pires', 'Rio Grande da Serra', 'Salesópolis', 'Santa Isabel', 'Santana de Parnaíba', 'Santo André', 'São Bernardo do Campo', 'São Caetano do Sul', 'São Lourenço da Serra', 'São Paulo', 'Suzano', 'Taboão da Serra', 'Vargem Grande Paulista'],
             '12': ['Aparecida', 'Arapeí', 'Areias', 'Bananal', 'Caçapava', 'Cachoeira Paulista', 'Campos do Jordão', 'Canas', 'Caraguatatuba', 'Cruzeiro', 'Cunha', 'Guaratinguetá', 'Igaratá', 'Jacareí', 'Jambeiro', 'Lorena', 'Monteiro Lobato', 'Natividade da Serra', 'Paraibuna', 'Pindamonhangaba', 'Piquete', 'Queluz', 'Redenção da Serra', 'Roseira', 'Santa Branca', 'São Bento do Sapucaí', 'São José dos Campos', 'São Luís do Paraitinga', 'Silveiras', 'Taubaté', 'Ubatuba'],
@@ -810,6 +850,23 @@
                 `}).join('');
             }
             
+            // --- Regionais Grid ---
+            const gridRegionais = document.getElementById('gridRegionais');
+            if (gridRegionais && gridRegionais.children.length === 0) {
+                 gridRegionais.innerHTML = REGIONAIS_BRASIL.map(r => {
+                     // Aggregate values from ESTADOS_BRASIL for this region
+                     const ufsData = ESTADOS_BRASIL.filter(e => r.ufs.includes(e.s));
+                     const combinedValue = ufsData.map(e => e.v).join(',');
+                     
+                     return `
+                    <label class="checkbox-item" style="flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 120px; padding: 1rem;">
+                        <input type="checkbox" class="cb-regional" value="${combinedValue}" data-l="${r.n}" onchange="handleRegionalChange(this)">
+                        <div class="uf-sigla" style="font-size: 1.2rem; margin-bottom: 0.5rem;">${r.n}</div>
+                        <div class="uf-name" style="font-size: 0.8rem; color: var(--muted); white-space: normal;">${r.ufs.join(', ')}</div>
+                    </label>
+                `}).join('');
+            }
+
             // --- DDD Grid ---
             const gridDdd = document.getElementById('gridDdd');
              if (gridDdd.children.length === 0) {
@@ -902,6 +959,12 @@
                     v: cb.value,
                     l: cb.getAttribute('data-l')
                 }));
+            } else if (currentScope === 'regionais') {
+                items = Array.from(document.querySelectorAll('.cb-regional:checked')).map(cb => ({
+                    t: 'regional',
+                    v: cb.value,
+                    l: cb.getAttribute('data-l')
+                }));
             } else if (currentScope === 'ddd') {
                 items = Array.from(document.querySelectorAll('.cb-ddd:checked')).map(cb => ({
                     t: 'ddd',
@@ -927,7 +990,7 @@
                 const div = document.createElement('div');
                 div.className = 'chip';
                 // Icon based on type
-                const icon = item.t === 'uf' ? 'map-pin' : 'phone';
+                const icon = (item.t === 'uf' || item.t === 'regional') ? 'map-pin' : 'phone';
                 div.innerHTML = `
                     <i data-lucide="${icon}" style="width:12px; height:12px; opacity:0.7;"></i>
                     <span>${item.l}</span>
@@ -948,11 +1011,40 @@
             lucide.createIcons();
         }
         
+        function handleRegionalChange(el) {
+            if (el.checked) {
+                document.getElementById('checkNacional').checked = false;
+            }
+            updatePreview();
+        }
+
+        function toggleSelectAllDdd(el) {
+            const isChecked = el.checked;
+            const grid = document.getElementById('gridDdd');
+            // Only toggle visible items (respecting filter)
+            const visibleItems = Array.from(grid.querySelectorAll('.checkbox-item')).filter(item => item.style.display !== 'none');
+            
+            visibleItems.forEach(item => {
+                const cb = item.querySelector('input[type="checkbox"]');
+                if (cb) {
+                    cb.checked = isChecked;
+                }
+            });
+            
+            if (isChecked) {
+                document.getElementById('checkNacional').checked = false;
+            }
+            updatePreview();
+        }
+
         window.removeSelection = function(type, value, label) {
             if (type === 'nacional') {
                 document.getElementById('checkNacional').checked = false;
             } else if (type === 'uf') {
                 const el = document.querySelector(`.cb-uf[value="${value}"]`);
+                if (el) el.checked = false;
+            } else if (type === 'regional') {
+                const el = document.querySelector(`.cb-regional[value="${value}"]`);
                 if (el) el.checked = false;
             } else if (type === 'ddd') {
                 // Try specific match first (value + label)
@@ -980,6 +1072,7 @@
             // Reset state
             document.getElementById('checkNacional').checked = false;
             document.querySelectorAll('.cb-uf').forEach(c => c.checked = false);
+            document.querySelectorAll('.cb-regional').forEach(c => c.checked = false);
             document.querySelectorAll('.cb-ddd').forEach(c => c.checked = false);
             
             if (!isEdit) {
@@ -1024,6 +1117,7 @@
             // 5. Determine Tab variables
             let hasNacional = false;
             let hasUf = false;
+            let hasRegional = false;
             let hasDdd = false;
             
             // 6. Apply checks
@@ -1043,6 +1137,13 @@
                             hasUf = true;
                         } 
                         
+                        // Try Regional
+                        const cbRegional = document.querySelector(`.cb-regional[value="${item.v}"]`);
+                        if (cbRegional) {
+                            cbRegional.checked = true;
+                            hasRegional = true;
+                        }
+                        
                         // Try DDD (also check if not found in UF, or independent)
                         let cbDdd = document.querySelector(`.cb-ddd[value="${item.v}"][data-l="${item.l}"]`);
                         if (!cbDdd) cbDdd = document.querySelector(`.cb-ddd[value="${item.v}"]`);
@@ -1061,6 +1162,7 @@
             } else {
                 if (hasNacional) switchTab('nacional');
                 else if (hasUf) switchTab('uf');
+                else if (hasRegional) switchTab('regionais');
                 else if (hasDdd) switchTab('ddd');
                 else switchTab('nacional'); // default
             }
@@ -1137,6 +1239,10 @@
                 }
             } else if (currentScope === 'uf') {
                 document.querySelectorAll('.cb-uf:checked').forEach(cb => {
+                    selected.push({ v: cb.value, l: cb.getAttribute('data-l') });
+                });
+            } else if (currentScope === 'regionais') {
+                document.querySelectorAll('.cb-regional:checked').forEach(cb => {
                     selected.push({ v: cb.value, l: cb.getAttribute('data-l') });
                 });
             } else if (currentScope === 'ddd') {
