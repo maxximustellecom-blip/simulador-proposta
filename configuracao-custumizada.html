@@ -445,7 +445,7 @@
             const atualTotalEl = document.getElementById('resumoAtualTotal');
             const propostaTotalEl = document.getElementById('resumoPropostaTotal');
             const atualItens = linhas.map((l, idx) => {
-                const ac = l.ddd ? `DDD ${l.ddd}` : 'N/A';
+                const ac = (l.dddAtual || l.ddd) ? `DDD ${l.dddAtual || l.ddd}` : 'N/A';
                 const plano = l.planoAtualGB || 'N/A';
                 const val = currency(l.precoAtual || 0);
                 return `<div style="background:#F3F4F6; padding:8px; border-radius:6px; margin-bottom:6px;">Linha ${idx + 1}: ${ac}<br>Plano: ${plano}<br>Valor: ${val}</div>`;
@@ -506,12 +506,17 @@
         let __currentEditId = null;
 
         function openEditModal(id) {
-            const line = linhas.find(l => Number(l.id) === Number(id));
+            const index = linhas.findIndex(l => Number(l.id) === Number(id));
+            const line = linhas[index];
             if (!line) return;
             __currentEditId = id;
 
             const modal = document.getElementById('editLineModal');
             if (!modal) return;
+            
+            const titleEl = document.getElementById('editLineTitle');
+            if (titleEl) titleEl.textContent = (index + 1) + 'º Linha';
+            
             document.getElementById('editLineId').value = id;
 
             const populate = (id, opts, val) => {
@@ -523,7 +528,8 @@
             };
 
             const dddOpts = ['<option value="">DDD</option>'].concat(ddds.map(d => `<option value="${d}">${d}</option>`)).join('');
-            populate('editDdd', dddOpts, line.ddd);
+            populate('editDdd', dddOpts, line.dddAtual || line.ddd);
+            populate('editDddNovo', dddOpts, line.ddd);
 
             populate('editTipo', tipoOptionsHtml(line.tipoNegociacao), line.tipoNegociacao);
             
@@ -822,7 +828,8 @@
                 if (Number(l.id) !== Number(__currentEditId)) return l;
                 return {
                     ...l,
-                    ddd: getValue('editDdd'),
+                    ddd: getValue('editDddNovo') || getValue('editDdd'),
+                    dddAtual: getValue('editDdd'),
                     tipoNegociacao: tipoVal,
                     numero: getValue('editNumero'),
                     planoAtualGB: getValue('editPlanoAtual'),
@@ -1030,6 +1037,7 @@
                     id: Number(l.id || idx + 1),
                     quantidade: Number(l.quantidade) || 1,
                     ddd: l.ddd || '',
+                    dddAtual: l.dddAtual || '',
                     tipoNegociacao: l.tipoNegociacao || 'Novo',
                     numero: l.numero || '',
                     planoAtualGB: l.planoAtualGB || '',
@@ -1488,7 +1496,7 @@
                     <div class="section-header">
                         <i data-lucide="phone" class="section-icon"></i>
                         <div>
-                            <div class="section-title">Dados da Linha</div>
+                            <div class="section-title" id="editLineTitle">Dados da Linha</div>
                             <div class="section-desc">Informações básicas do número</div>
                         </div>
                     </div>
@@ -1527,33 +1535,7 @@
                     </div>
                 </div>
 
-                <!-- 3. Portabilidade -->
-                <div class="section-block">
-                    <div class="section-header">
-                        <i data-lucide="arrow-left-right" class="section-icon"></i>
-                        <div>
-                            <div class="section-title">Portabilidade</div>
-                            <div class="section-desc">Trazer número de outra operadora</div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="label">Deseja realizar portabilidade?</div>
-                        <select id="editPortabilidade" class="select">
-                            <option value="Não">Não</option>
-                            <option value="Sim">Sim</option>
-                        </select>
-                    </div>
-                    <div id="areaPortabilidadeDetails" class="grid-2" style="margin-top: 1rem; display: none;">
-                        <div>
-                            <div class="label">Operadora Doadora</div>
-                            <select id="editOperadoraDoadora" class="select"></select>
-                        </div>
-                        <div>
-                            <div class="label">Número a Portar</div>
-                            <input id="editNumeroPortar" type="text" class="input" placeholder="00000-0000" maxlength="10">
-                        </div>
-                    </div>
-                </div>
+
 
                 <!-- 4. Novo Plano -->
                 <div class="section-block">
@@ -1564,7 +1546,11 @@
                             <div class="section-desc">Configuração da nova oferta</div>
                         </div>
                     </div>
-                    <div class="grid-2" style="margin-bottom: 1rem;">
+                    <div class="grid-3" style="margin-bottom: 1rem;">
+                        <div>
+                            <div class="label">DDD</div>
+                            <select id="editDddNovo" class="select"></select>
+                        </div>
                         <div>
                             <div class="label">Categoria</div>
                             <select id="editCategoria" class="select"></select>
@@ -1602,18 +1588,28 @@
                             <input id="editEconomia" type="text" class="input" readonly disabled style="background-color: #e5e7eb;">
                         </div>
                     </div>
-                </div>
-
-                <!-- 5. Aparelho -->
-                <div class="section-block">
-                    <div class="section-header">
-                        <i data-lucide="smartphone" class="section-icon"></i>
+                    
+                    <!-- Portabilidade -->
+                    <div style="margin-top: 1rem; border-top: 1px solid #e5e7eb; padding-top: 1rem;">
+                        <div class="label">Deseja realizar portabilidade?</div>
+                        <select id="editPortabilidade" class="select">
+                            <option value="Não">Não</option>
+                            <option value="Sim">Sim</option>
+                        </select>
+                    </div>
+                    <div id="areaPortabilidadeDetails" class="grid-2" style="margin-top: 1rem; display: none;">
                         <div>
-                            <div class="section-title">Aparelho</div>
-                            <div class="section-desc">Adicionar dispositivo à linha</div>
+                            <div class="label">Operadora Doadora</div>
+                            <select id="editOperadoraDoadora" class="select"></select>
+                        </div>
+                        <div>
+                            <div class="label">Número a Portar</div>
+                            <input id="editNumeroPortar" type="text" class="input" placeholder="00000-0000" maxlength="10">
                         </div>
                     </div>
-                    <div>
+                    
+                    <!-- Aparelho -->
+                    <div style="margin-top: 1rem; border-top: 1px solid #e5e7eb; padding-top: 1rem;">
                         <div class="label">Incluir aparelho?</div>
                         <select id="editTemAparelho" class="select">
                             <option value="Não">Não</option>
@@ -1643,6 +1639,8 @@
                         </div>
                     </div>
                 </div>
+
+
 
             </div>
             <div class="modal-actions">
