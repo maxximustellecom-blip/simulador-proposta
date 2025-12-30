@@ -1091,6 +1091,12 @@
             const temAp = document.getElementById('editTemAparelho').value;
             const tipoAp = document.getElementById('editTipoAparelho').value;
 
+            // Show/Hide Plano Atual card based on Renegociação
+            const secPlanoAtual = document.getElementById('secPlanoAtual');
+            if (secPlanoAtual) {
+                secPlanoAtual.style.display = isReneg ? 'block' : 'none';
+            }
+
             const numEl = document.getElementById('editNumero');
             if (numEl) numEl.disabled = !isReneg;
 
