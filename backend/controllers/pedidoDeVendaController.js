@@ -55,6 +55,11 @@ export async function listarPedidosConcluidos(req, res) {
         {
           model: Negotiation,
           as: 'negotiation',
+          include: [
+            { model: Client, as: 'client' },
+            { model: NegociacaoProposta, as: 'proposal' },
+            { model: NegociacaoPropostaCustomizada, as: 'customProposal' }
+          ],
           where: {
             status: {
               [Op.or]: ['Concluído', 'Concluido', 'CONCLUÍDO', 'CONCLUIDO', 'Concluída'] // Handling potential case/accent differences
@@ -66,17 +71,38 @@ export async function listarPedidosConcluidos(req, res) {
     });
 
     // Formatting the response to match what the frontend table likely expects
-    const result = pedidos.map(p => ({
-      id: p.id,
-      negotiation_id: p.negotiation_id,
-      cnpj: p.negotiation?.cnpj,
-      tipo: p.negotiation?.tipo,
-      proposta: p.negotiation?.proposta,
-      valor: p.negotiation?.valor,
-      status: p.negotiation?.status, // Or p.status if we want the order status
-      data: p.negotiation?.data,
-      created_at: p.created_at
-    }));
+    const result = pedidos.map(p => {
+      const neg = p.negotiation || {};
+      const prop = neg.proposal || null;
+      const cust = neg.customProposal || null;
+      let totalAcessos = 0;
+      if (prop && prop.total_acessos !== undefined && prop.total_acessos !== null) {
+        totalAcessos = Number(prop.total_acessos || 0);
+      } else if (cust && cust.total_acessos !== undefined && cust.total_acessos !== null) {
+        totalAcessos = Number(cust.total_acessos || 0);
+      } else {
+        const linhas = (prop && Array.isArray(prop.linhas)) ? prop.linhas
+                      : (cust && Array.isArray(cust.linhas)) ? cust.linhas
+                      : [];
+        totalAcessos = linhas.reduce((sum, l) => {
+          const q = Number(l && l.quantidade !== undefined ? l.quantidade : 1);
+          return sum + (isFinite(q) ? q : 1);
+        }, 0);
+      }
+      return {
+        id: p.id,
+        negotiation_id: p.negotiation_id,
+        razaoSocial: neg.client?.name || '',
+        cnpj: neg.cnpj,
+        tipo: neg.tipo,
+        proposta: neg.proposta,
+        valor: neg.valor,
+        status: neg.status,
+        data: neg.data,
+        totalAcessos,
+        created_at: p.created_at
+      };
+    });
 
     return res.json(result);
   } catch (error) {
