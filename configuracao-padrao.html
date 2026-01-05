@@ -252,14 +252,22 @@
                             <div class="section-desc">Selecione o plano desejado</div>
                         </div>
                     </div>
-                    <div class="grid-3" style="margin-bottom: 1rem;">
-                        <div>
-                            <div class="label">DDD</div>
-                            <select id="editDddNovo" class="select"></select>
-                        </div>
+                    <div class="grid-2" style="margin-bottom: 1rem;">
                         <div>
                             <div class="label">Categoria</div>
                             <select id="editCategoria" class="select"></select>
+                        </div>
+                        <div>
+                            <div class="label">Região</div>
+                            <select id="editRegiao" class="select">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid-2" style="margin-bottom: 1rem;">
+                        <div>
+                            <div class="label">DDD</div>
+                            <select id="editDddNovo" class="select"></select>
                         </div>
                         <div>
                             <div class="label">Plano</div>
@@ -657,6 +665,7 @@
             return parts.join(' + ');
         }
         let __categorias = [];
+        let __regioes = [];
         const pctsDadosDisponiveis = ['100MB','1GB','2GB','3GB','4GB','5GB','6GB','8GB','10GB','12GB','20GB','22GB','30GB','32GB','50GB','52GB','100GB','150GB','Voz (sem dados)'];
         let __produtos = [];
         let __map = {}; // categoria.nome -> produtos
@@ -711,6 +720,7 @@
         }
         async function initConfiguracao() {
             await carregarTiposBackend();
+            await carregarRegioes();
             await carregarCategorias();
             await carregarProdutos();
             construirMapa();
@@ -749,6 +759,12 @@
                 const list = await api('/types', { method: 'GET' });
                 __tiposBackend = Array.isArray(list) ? list : [];
             } catch { __tiposBackend = []; }
+        }
+        async function carregarRegioes() {
+            try {
+                const list = await api('/regioes', { method: 'GET' });
+                __regioes = Array.isArray(list) ? list : [];
+            } catch { __regioes = []; }
         }
         async function carregarCategorias() {
             try {
@@ -1003,11 +1019,61 @@
                 }
             };
 
-            // DDD
-            const ddds = [11,12,13,14,15,16,17,18,19,21,22,24,27,28,31,32,33,34,35,37,38,41,42,43,44,45,46,47,48,49,51,53,54,55,61,62,63,64,65,66,67,68,69,71,73,74,75,77,79,81,82,83,84,85,86,87,88,89,91,92,93,94,95,96,97,98,99];
-            const dddOpts = ['<option value="">DDD</option>'].concat(ddds.map(d => `<option value="${d}">${d}</option>`)).join('');
-            populate('editDdd', dddOpts, line.dddAtual || line.ddd);
-            populate('editDddNovo', dddOpts, line.ddd);
+            // DDD Base (All)
+            const allDdds = [11,12,13,14,15,16,17,18,19,21,22,24,27,28,31,32,33,34,35,37,38,41,42,43,44,45,46,47,48,49,51,53,54,55,61,62,63,64,65,66,67,68,69,71,73,74,75,77,79,81,82,83,84,85,86,87,88,89,91,92,93,94,95,96,97,98,99];
+            const allDddOpts = ['<option value="">DDD</option>'].concat(allDdds.map(d => `<option value="${d}">${d}</option>`)).join('');
+            populate('editDdd', allDddOpts, line.dddAtual || line.ddd); // DDD Atual always shows all
+
+            // Region & DDD Novo Logic
+            const currentDdd = Number(line.ddd || 0);
+            let currentRegiaoId = '';
+            
+            // Find region for current DDD
+            if (currentDdd) {
+                const found = __regioes.find(r => {
+                    let items = r.items;
+                    if (typeof items === 'string') { try { items = JSON.parse(items); } catch { items = []; } }
+                    if (Array.isArray(items)) {
+                        const ddds = items.flatMap(i => (i.v || '').split(',').map(s => Number(s.trim())));
+                        return ddds.includes(currentDdd);
+                    }
+                    return false;
+                });
+                if (found) currentRegiaoId = found.id;
+            }
+
+            // Populate Regiao
+            const regiaoOpts = ['<option value="">Selecione...</option>'].concat(
+                __regioes.map(r => `<option value="${r.id}">${r.nome}</option>`)
+            ).join('');
+            populate('editRegiao', regiaoOpts, currentRegiaoId);
+
+            // Populate DDD Novo based on Region
+            let availableDdds = [];
+            if (currentRegiaoId) {
+                const r = __regioes.find(x => String(x.id) === String(currentRegiaoId));
+                if (r) {
+                    let items = r.items;
+                    if (typeof items === 'string') try { items = JSON.parse(items); } catch { items = []; }
+                    if (Array.isArray(items)) {
+                        availableDdds = items.flatMap(i => (i.v || '').split(',').map(s => Number(s.trim()))).filter(n => n > 0).sort((a,b) => a-b);
+                    } else {
+                        availableDdds = [];
+                    }
+                }
+            }
+            // If no region found but we have a DDD (maybe legacy or mismatch), include that DDD or show all?
+            // If we have currentDdd but no region matches, maybe we should show all?
+            // But user wants strict flow. Let's assume if no region selected, empty list (or user selects region).
+            // But if we have a currentDdd that doesn't match any region, we should probably still show it?
+            // For now, if availableDdds is empty but we have currentDdd, let's show it?
+            // No, let's stick to the flow. If currentDdd is valid it should be in a region.
+            
+            const dddNovoOpts = ['<option value="">DDD</option>'].concat(
+                availableDdds.map(d => `<option value="${d}">${d}</option>`)
+            ).join('');
+            populate('editDddNovo', dddNovoOpts, line.ddd);
+
 
             // Tipo
             populate('editTipo', tipoOptionsHtml(line.tipoNegociacao), line.tipoNegociacao);
@@ -1040,9 +1106,43 @@
             const catOpts = catsByTipo.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
             populate('editCategoria', catOpts, line.categoria);
 
-            // Plano (Filtered by Categoria)
+            // Plano (Filtered by Categoria AND DDD/Regiao)
             const currentCat = catsByTipo.find(c => c.nome === line.categoria);
-            const planos = currentCat ? (__map[currentCat.id] || []) : [];
+            let planos = currentCat ? (__map[currentCat.id] || []) : [];
+            
+            const selRegiaoId = currentRegiaoId;
+            const selDdd = line.ddd;
+
+            if (!selDdd) {
+                planos = [];
+            } else {
+                const selRegiaoObj = __regioes.find(r => String(r.id) === String(selRegiaoId));
+                const selRegiaoNome = selRegiaoObj ? selRegiaoObj.nome : '';
+
+                if (selDdd || selRegiaoNome) {
+                    planos = planos.filter(p => {
+                        const pReg = String(p.regiao || '').trim();
+                        if (!pReg || pReg.toLowerCase() === 'nacional') return true;
+
+                        // 1. Direct DDD match
+                        if (selDdd && pReg.includes(String(selDdd))) return true;
+
+                        // 2. Region Name match -> Check content
+                        const regionFound = __regioes.find(r => r.nome.toLowerCase() === pReg.toLowerCase() || pReg.toLowerCase().includes(r.nome.toLowerCase()));
+                        
+                        if (regionFound) {
+                                let items = regionFound.items;
+                                if (typeof items === 'string') try { items = JSON.parse(items); } catch { items = []; }
+                                if (Array.isArray(items)) {
+                                    const ddds = items.flatMap(i => (i.v || '').split(',').map(s => Number(s.trim())));
+                                    if (ddds.includes(Number(selDdd))) return true;
+                                }
+                        }
+                        return false;
+                    });
+                }
+            }
+
             const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
                 planos.map(p => `<option value="${p.nome}">${p.nome}</option>`)
             ).join('');
@@ -1133,7 +1233,7 @@
             document.getElementById('editLineClose').onclick = close;
             document.getElementById('editLineCancel').onclick = close;
 
-            const fields = ['editTipo', 'editPortabilidade', 'editTemAparelho', 'editTipoAparelho', 'editCategoria', 'editPlano', 'editValorAparelho'];
+            const fields = ['editTipo', 'editPortabilidade', 'editTemAparelho', 'editTipoAparelho', 'editCategoria', 'editPlano', 'editValorAparelho', 'editRegiao', 'editDddNovo'];
             fields.forEach(fid => {
                 const el = document.getElementById(fid);
                 if (el) el.addEventListener('change', () => handleEditModalChange(fid));
@@ -1175,12 +1275,67 @@
                 handleEditModalChange('editCategoria');
             }
 
-            if (fieldId === 'editCategoria') {
+            if (fieldId === 'editRegiao') {
+                const regId = getValue('editRegiao');
+                let ddds = [];
+                if (regId) {
+                    const r = __regioes.find(x => String(x.id) === String(regId));
+                    if (r) {
+                         let items = r.items;
+                         if (typeof items === 'string') try { items = JSON.parse(items); } catch { items = []; }
+                         if (Array.isArray(items)) {
+                             ddds = items.flatMap(i => (i.v || '').split(',').map(s => Number(s.trim()))).filter(n => n > 0).sort((a,b) => a-b);
+                         } else {
+                             ddds = [];
+                         }
+                    }
+                }
+                const dddOpts = ['<option value="">DDD</option>'].concat(ddds.map(d => `<option value="${d}">${d}</option>`)).join('');
+                setHTML('editDddNovo', dddOpts);
+                setValue('editDddNovo', '');
+                handleEditModalChange('editDddNovo');
+            }
+
+            if (fieldId === 'editDddNovo' || fieldId === 'editCategoria') {
                 const catVal = getValue('editCategoria');
                 const tipoVal = getValue('editTipo');
                 const catsByTipo = getFilteredCategorias(tipoVal);
                 const catObj = catsByTipo.find(c => c.nome === catVal);
-                const planos = catObj ? (__map[catObj.id] || []) : [];
+                let planos = catObj ? (__map[catObj.id] || []) : [];
+                
+                // Filter by Region/DDD
+                const regId = getValue('editRegiao');
+                const selDdd = getValue('editDddNovo');
+
+                if (!selDdd) {
+                    planos = [];
+                } else {
+                    const selRegiaoObj = __regioes.find(r => String(r.id) === String(regId));
+                    const selRegiaoNome = selRegiaoObj ? selRegiaoObj.nome : '';
+
+                    if (selDdd || selRegiaoNome) {
+                        planos = planos.filter(p => {
+                            const pReg = String(p.regiao || '').trim();
+                            if (!pReg || pReg.toLowerCase() === 'nacional') return true;
+
+                            // 1. Direct DDD match
+                            if (selDdd && pReg.includes(String(selDdd))) return true;
+
+                            // 2. Region Name match -> Check content
+                            const regionFound = __regioes.find(r => r.nome.toLowerCase() === pReg.toLowerCase() || pReg.toLowerCase().includes(r.nome.toLowerCase()));
+                            
+                            if (regionFound) {
+                                let items = regionFound.items;
+                                if (typeof items === 'string') try { items = JSON.parse(items); } catch { items = []; }
+                                if (Array.isArray(items)) {
+                                    const ddds = items.flatMap(i => (i.v || '').split(',').map(s => Number(s.trim())));
+                                    if (ddds.includes(Number(selDdd))) return true;
+                                }
+                            }
+                            return false;
+                        });
+                    }
+                }
                 
                 const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
                     planos.map(p => `<option value="${p.nome}">${p.nome}</option>`)

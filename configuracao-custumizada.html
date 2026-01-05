@@ -253,6 +253,7 @@
         let __negociacaoInfo = null;
         let __clienteInfo = null;
         let __tiposBackend = [];
+        let __regioes = [];
         let linhas = [];
         let nextId = 1;
         let __isLocked = false;
@@ -303,6 +304,13 @@
             } catch { __tiposBackend = []; }
         }
 
+        async function carregarRegioes() {
+            try {
+                const list = await api('/regioes', { method: 'GET' });
+                __regioes = Array.isArray(list) ? list : [];
+            } catch { __regioes = []; }
+        }
+
         async function carregarCatalogoCustomizado() {
             try {
                 const cats = await api('/custom-categories', { method: 'GET' }).catch(() => []);
@@ -318,7 +326,8 @@
                     const baseTxt = p.descricao || p.description || nome;
                     const pct = parsePctFromText(baseTxt);
                     const valor = Number(p.preco || 0);
-                    __planosPorTipo[tipo].push({ nome, pct, valor });
+                    const regiao = p.regiao || '';
+                    __planosPorTipo[tipo].push({ nome, pct, valor, regiao });
                     if (pct) pctSets[tipo].add(pct);
                 });
                 Object.keys(pctSets).forEach(k => {
@@ -529,7 +538,46 @@
 
             const dddOpts = ['<option value="">DDD</option>'].concat(ddds.map(d => `<option value="${d}">${d}</option>`)).join('');
             populate('editDdd', dddOpts, line.dddAtual || line.ddd);
-            populate('editDddNovo', dddOpts, line.ddd);
+
+            // Region & DDD Novo Logic
+            const currentDdd = Number(line.ddd || 0);
+            let currentRegiaoId = '';
+            
+            if (currentDdd) {
+                const found = __regioes.find(r => {
+                    let items = r.items;
+                    if (typeof items === 'string') { try { items = JSON.parse(items); } catch { items = []; } }
+                    if (Array.isArray(items)) {
+                        const ddds = items.flatMap(i => (i.v || '').split(',').map(s => Number(s.trim())));
+                        return ddds.includes(currentDdd);
+                    }
+                    return false;
+                });
+                if (found) currentRegiaoId = found.id;
+            }
+
+            const regiaoOpts = ['<option value="">Selecione...</option>'].concat(
+                __regioes.map(r => `<option value="${r.id}">${r.nome}</option>`)
+            ).join('');
+            populate('editRegiao', regiaoOpts, currentRegiaoId);
+
+            let availableDdds = [];
+            if (currentRegiaoId) {
+                const r = __regioes.find(x => String(x.id) === String(currentRegiaoId));
+                if (r) {
+                    let items = r.items;
+                    if (typeof items === 'string') try { items = JSON.parse(items); } catch { items = []; }
+                    if (Array.isArray(items)) {
+                        availableDdds = items.flatMap(i => (i.v || '').split(',').map(s => Number(s.trim()))).filter(n => n > 0).sort((a,b) => a-b);
+                    } else {
+                        availableDdds = [];
+                    }
+                }
+            }
+            const dddNovoOpts = ['<option value="">DDD</option>'].concat(
+                availableDdds.map(d => `<option value="${d}">${d}</option>`)
+            ).join('');
+            populate('editDddNovo', dddNovoOpts, line.ddd);
 
             populate('editTipo', tipoOptionsHtml(line.tipoNegociacao), line.tipoNegociacao);
             
@@ -556,8 +604,38 @@
 
             const currentCat = catsByTipo.find(c => c.nome === line.categoria);
             const planos = currentCat ? (__map[currentCat.id] || []) : [];
+            let filteredPlanos = planos;
+
+            // Apply filtering logic consistent with handleEditModalChange
+            if (!currentDdd) {
+                filteredPlanos = [];
+            } else {
+                const regNome = currentRegiaoId ? (__regioes.find(r => String(r.id) === String(currentRegiaoId))?.nome || '') : '';
+                
+                if (currentDdd || regNome) {
+                     filteredPlanos = filteredPlanos.filter(p => {
+                         const pReg = String(p.regiao || '').trim();
+                         if (!pReg || pReg.toLowerCase() === 'nacional') return true;
+
+                         if (currentDdd && pReg.includes(String(currentDdd))) return true;
+
+                         const regionFound = __regioes.find(r => r.nome.toLowerCase() === pReg.toLowerCase() || pReg.toLowerCase().includes(r.nome.toLowerCase()));
+                         
+                         if (regionFound) {
+                              let items = regionFound.items;
+                              if (typeof items === 'string') try { items = JSON.parse(items); } catch { items = []; }
+                              if (Array.isArray(items)) {
+                                  const ddds = items.flatMap(i => (i.v || '').split(',').map(s => Number(s.trim())));
+                                  if (ddds.includes(Number(currentDdd))) return true;
+                              }
+                         }
+                         return false;
+                     });
+                }
+            }
+
             const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
-                planos.map(p => `<option value="${p.nome}">${p.nome}</option>`)
+                filteredPlanos.map(p => `<option value="${p.nome}">${p.nome}</option>`)
             ).join('');
             populate('editPlano', planoOpts, line.plano);
 
@@ -653,7 +731,7 @@
             document.getElementById('editLineClose').onclick = close;
             document.getElementById('editLineCancel').onclick = close;
 
-            const fields = ['editTipo', 'editPortabilidade', 'editTemAparelho', 'editTipoAparelho', 'editCategoria', 'editPlano'];
+            const fields = ['editTipo', 'editPortabilidade', 'editTemAparelho', 'editTipoAparelho', 'editCategoria', 'editPlano', 'editRegiao', 'editDddNovo'];
             fields.forEach(fid => {
                 const el = document.getElementById(fid);
                 if (el) el.addEventListener('change', () => handleEditModalChange(fid));
@@ -716,12 +794,67 @@
                 setValue('editValorNaoFid', 0);
             }
 
-            if (fieldId === 'editCategoria') {
+            if (fieldId === 'editRegiao') {
+                const regId = getValue('editRegiao');
+                let ddds = [];
+                if (regId) {
+                    const r = __regioes.find(x => String(x.id) === String(regId));
+                    if (r) {
+                        let items = r.items;
+                        if (typeof items === 'string') try { items = JSON.parse(items); } catch { items = []; }
+                        if (Array.isArray(items)) {
+                            ddds = items.flatMap(i => (i.v || '').split(',').map(s => Number(s.trim()))).filter(n => n > 0).sort((a,b) => a-b);
+                        } else {
+                            ddds = [];
+                        }
+                    }
+                }
+                const dddOpts = ['<option value="">DDD</option>'].concat(ddds.map(d => `<option value="${d}">${d}</option>`)).join('');
+                setHTML('editDddNovo', dddOpts);
+                setValue('editDddNovo', '');
+                handleEditModalChange('editDddNovo');
+            }
+
+            if (fieldId === 'editDddNovo' || fieldId === 'editCategoria') {
                 const catVal = getValue('editCategoria');
                 const tipoVal = getValue('editTipo');
+                const regId = getValue('editRegiao');
+                const dddVal = getValue('editDddNovo');
+                
                 const catsByTipo = getFilteredCategorias(tipoVal);
                 const catObj = catsByTipo.find(c => c.nome === catVal);
-                const planos = catObj ? (__map[catObj.id] || []) : [];
+                let planos = catObj ? (__map[catObj.id] || []) : [];
+
+                if (!dddVal) {
+                    planos = [];
+                } else {
+                    const rObj = __regioes.find(x => String(x.id) === String(regId));
+                    const regNome = rObj ? rObj.nome : '';
+
+                    if (dddVal || regNome) {
+                        planos = planos.filter(p => {
+                            const pReg = String(p.regiao || '').trim();
+                            if (!pReg || pReg.toLowerCase() === 'nacional') return true;
+
+                            // 1. Direct DDD match
+                            if (dddVal && pReg.includes(String(dddVal))) return true;
+
+                            // 2. Region Name match -> Check content
+                            const regionFound = __regioes.find(r => r.nome.toLowerCase() === pReg.toLowerCase() || pReg.toLowerCase().includes(r.nome.toLowerCase()));
+                            
+                            if (regionFound) {
+                                let items = regionFound.items;
+                                if (typeof items === 'string') try { items = JSON.parse(items); } catch { items = []; }
+                                if (Array.isArray(items)) {
+                                    const ddds = items.flatMap(i => (i.v || '').split(',').map(s => Number(s.trim())));
+                                    if (ddds.includes(Number(dddVal))) return true;
+                                }
+                            }
+                            
+                            return false;
+                        });
+                    }
+                }
                 
                 const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
                     planos.map(p => `<option value="${p.nome}">${p.nome}</option>`)
@@ -1428,6 +1561,7 @@
                 if (!idParam) { window.location.href = 'negociar.html'; return; }
                 __negociacaoId = idParam;
                 await carregarTiposBackend();
+                await carregarRegioes();
                 await carregarCatalogoCustomizado();
                 construirMapaCustomizado();
                 await carregarNegociacaoBasica();
@@ -1552,14 +1686,22 @@
                             <div class="section-desc">Configuração da nova oferta</div>
                         </div>
                     </div>
-                    <div class="grid-3" style="margin-bottom: 1rem;">
-                        <div>
-                            <div class="label">DDD</div>
-                            <select id="editDddNovo" class="select"></select>
-                        </div>
+                    <div class="grid-2" style="margin-bottom: 1rem;">
                         <div>
                             <div class="label">Categoria</div>
                             <select id="editCategoria" class="select"></select>
+                        </div>
+                        <div>
+                            <div class="label">Região</div>
+                            <select id="editRegiao" class="select">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid-2" style="margin-bottom: 1rem;">
+                        <div>
+                            <div class="label">DDD</div>
+                            <select id="editDddNovo" class="select"></select>
                         </div>
                         <div>
                             <div class="label">Plano</div>
