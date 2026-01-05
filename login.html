@@ -81,7 +81,7 @@
                 const user = await res.json();
                 const payload = { ...user, remember, at: new Date().toISOString() };
                 localStorage.setItem('authUser', JSON.stringify(payload));
-                window.location.href = 'dashboard.html';
+                window.location.href = 'quadro-vendas.html';
             } catch {
                 showError('Falha de conexão');
             }
