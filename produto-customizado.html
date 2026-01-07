@@ -55,12 +55,13 @@
                                     <th>Plano</th>
                                     <th>Tipo</th>
                                     <th>Nome</th>
+                                    <th>Região</th>
                                     <th>Preço&nbsp;(R$)</th>
                                     <th class="col-actions" style="min-width:160px;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="prodTbody">
-                                <tr><td colspan="5">
+                                <tr><td colspan="6">
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
@@ -106,6 +107,7 @@
         let __categorias = [];
         let __categoriasIdx = {};
         let __produtos = [];
+        let __regioesMap = {};
         let __editingProdId = null;
         function catOptionLabel(c) {
             const tipo = String(c && c.tipo ? c.tipo : '-');
@@ -207,6 +209,7 @@
                     <td><span class="ellipsis">${catName}</span></td>
                     <td><span class="chip" style="${tipoChipStyle(tipoVal)}">${tipoVal}</span></td>
                     <td><span class="ellipsis">${p.nome || p.name || '-'}</span></td>
+                    <td><span class="ellipsis">${__regioesMap[p.regiao] || p.regiao || '-'}</span></td>
                     <td>${currency(p.preco)}</td>
                     <td class="col-actions">
                         <div class="table-actions">
@@ -217,7 +220,7 @@
                     </td>
                 </tr>
                 `;
-            }).join('') || '<tr><td colspan="5" class="muted">Sem resultados</td></tr>';
+            }).join('') || '<tr><td colspan="6" class="muted">Sem resultados</td></tr>';
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         }
         function openModal() { document.getElementById('produtoModal').classList.add('show'); }
@@ -458,6 +461,11 @@
                     
                     const values = items.map(i => i.v).join(',');
                     html += `<option value="${values}">${r.nome}</option>`;
+                    
+                    // Populate map for table display
+                    if (values) {
+                        __regioesMap[values] = r.nome;
+                    }
                 });
                 
                 sel.innerHTML = html;
