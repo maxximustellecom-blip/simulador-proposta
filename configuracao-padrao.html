@@ -1253,7 +1253,7 @@
                 }
                 
                 const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
-                    planos.map(p => `<option value="${p.nome}">${p.nome}</option>`)
+                    [...new Set(planos.map(p => p.nome))].map(nome => `<option value="${nome}">${nome}</option>`)
                 ).join('');
                 setHTML('editPlano', planoOpts);
                 setValue('editPlano', '');
