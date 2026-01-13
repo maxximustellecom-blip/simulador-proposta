@@ -7,6 +7,106 @@
     <link rel="icon" href="data:,">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos Otimizados para Comissões */
+        .commission-wrapper {
+            margin-top: 1rem;
+            background: #fafafa;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .commission-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .commission-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .commission-card:last-child {
+            margin-bottom: 0;
+        }
+        .commission-card-header {
+            padding: 0.6rem 1rem;
+            background: #f3f4f6;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #4b5563;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        .commission-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .commission-table th {
+            text-align: center;
+            padding: 0.6rem 0.5rem;
+            font-size: 0.75rem;
+            color: #6b7280;
+            font-weight: 600;
+            border-bottom: 1px solid #e5e7eb;
+            background: #fff;
+        }
+        .commission-table th:first-child {
+            text-align: left;
+            padding-left: 1rem;
+        }
+        .commission-table td {
+            padding: 0.4rem 0.5rem;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .commission-table tr:last-child td {
+            border-bottom: none;
+        }
+        .commission-input {
+            width: 100%;
+            height: 32px !important;
+            padding: 0 0.5rem;
+            font-size: 0.85rem;
+            border: 1px solid transparent !important;
+            background: transparent !important;
+            border-radius: 4px;
+            text-align: center;
+            color: #374151 !important;
+            transition: all 0.2s;
+        }
+        .commission-input:hover {
+            background: #f9fafb !important;
+            border-color: #d1d5db !important;
+        }
+        .commission-input:focus {
+            background: #fff !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
+        }
+        .level-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #4b5563;
+            background: #f3f4f6;
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        /* Modal Width Override for Profile Modals */
+        #cadastroPerfilModal .modal-card,
+        #editPerfilModal .modal-card {
+            max-width: 900px;
+        }
+    </style>
 </head>
 <body>
     <main class="container">
@@ -57,47 +157,39 @@
                 </div>
                 
                 <!-- Commission Config -->
-                <div class="section" style="padding:0.8rem; margin-top:0.6rem; border-top:1px solid #e5e7eb; background: #fafafa; border-radius: 4px;">
-                    <h4 style="font-size:0.85rem; font-weight:600; margin-bottom:0.8rem; color:#374151; margin-top: 0px;">Configuração de Comissionamento</h4>
+                <div class="commission-wrapper">
+                    <div class="commission-title">Configuração de Comissionamento</div>
                     
-                    <div style="margin-bottom:1rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
-                            <span class="label" style="font-size:0.75rem;">Tabela 1: Níveis e Fator</span>
-                        </div>
-                        <div class="table-container" style="max-height:150px; overflow-y:auto; border:1px solid #e5e7eb; border-radius:4px; background:#fff;">
-                            <table class="table-compact">
-                                <thead>
-                                    <tr>
-                                        <th style="width:15%">Nível</th>
-                                        <th style="width:15%">Receita</th>
-                                        <th style="width:15%">Elegibilidade</th>
-                                        <th style="width:15%">% Fator</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="createLevelTableBody"></tbody>
-                            </table>
-                        </div>
+                    <div class="commission-card">
+                        <div class="commission-card-header">Tabela 1: Níveis e Fator</div>
+                        <table class="commission-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:20%">Nível</th>
+                                    <th style="width:25%">Receita</th>
+                                    <th style="width:30%">Elegibilidade</th>
+                                    <th style="width:25%">% Fator</th>
+                                </tr>
+                            </thead>
+                            <tbody id="createLevelTableBody"></tbody>
+                        </table>
                     </div>
 
-                    <div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
-                            <span class="label" style="font-size:0.75rem;">Tabela 2: Por Tipo de Produto</span>
-                        </div>
-                        <div class="table-container" style="max-height:150px; overflow-y:auto; border:1px solid #e5e7eb; border-radius:4px; background:#fff;">
-                            <table class="table-compact">
-                                <thead>
-                                    <tr>
-                                        <th style="width:15%">Nível</th>
-                                        <th style="width:15%">Renov.</th>
-                                        <th style="width:15%">U. Fibra</th>
-                                        <th style="width:15%">WTTX</th>
-                                        <th style="width:15%">M2M</th>
-                                        <th style="width:15%">Controle</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="createProductTableBody"></tbody>
-                            </table>
-                        </div>
+                    <div class="commission-card">
+                        <div class="commission-card-header">Tabela 2: Por Tipo de Produto</div>
+                        <table class="commission-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:20%">Nível</th>
+                                    <th>Renov.</th>
+                                    <th>U. Fibra</th>
+                                    <th>WTTX</th>
+                                    <th>M2M</th>
+                                    <th>Controle</th>
+                                </tr>
+                            </thead>
+                            <tbody id="createProductTableBody"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -124,47 +216,39 @@
                 </div>
 
                 <!-- Commission Config Edit -->
-                <div class="section" style="padding:0.8rem; margin-top:0.6rem; border-top:1px solid #e5e7eb; background: #fafafa; border-radius: 4px;">
-                    <h4 style="font-size:0.85rem; font-weight:600; margin-bottom:0.8rem; color:#374151; margin-top: 0px;">Configuração de Comissionamento</h4>
+                <div class="commission-wrapper">
+                    <div class="commission-title">Configuração de Comissionamento</div>
                     
-                    <div style="margin-bottom:1rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
-                            <span class="label" style="font-size:0.75rem;">Tabela 1: Níveis e Fator</span>
-                        </div>
-                        <div class="table-container" style="max-height:150px; overflow-y:auto; border:1px solid #e5e7eb; border-radius:4px; background:#fff;">
-                            <table class="table-compact">
-                                <thead>
-                                    <tr>
-                                        <th style="width:15%">Nível</th>
-                                        <th style="width:15%">Receita</th>
-                                        <th style="width:15%">Elegibilidade</th>
-                                        <th style="width:15%">% Fator</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="editLevelTableBody"></tbody>
-                            </table>
-                        </div>
+                    <div class="commission-card">
+                        <div class="commission-card-header">Tabela 1: Níveis e Fator</div>
+                        <table class="commission-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:20%">Nível</th>
+                                    <th style="width:25%">Receita</th>
+                                    <th style="width:30%">Elegibilidade</th>
+                                    <th style="width:25%">% Fator</th>
+                                </tr>
+                            </thead>
+                            <tbody id="editLevelTableBody"></tbody>
+                        </table>
                     </div>
 
-                    <div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
-                            <span class="label" style="font-size:0.75rem;">Tabela 2: Por Tipo de Produto</span>
-                        </div>
-                        <div class="table-container" style="max-height:150px; overflow-y:auto; border:1px solid #e5e7eb; border-radius:4px; background:#fff;">
-                            <table class="table-compact">
-                                <thead>
-                                    <tr>
-                                        <th style="width:15%">Nível</th>
-                                        <th style="width:15%">Renov.</th>
-                                        <th style="width:15%">U. Fibra</th>
-                                        <th style="width:15%">WTTX</th>
-                                        <th style="width:15%">M2M</th>
-                                        <th style="width:15%">Controle</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="editProductTableBody"></tbody>
-                            </table>
-                        </div>
+                    <div class="commission-card">
+                        <div class="commission-card-header">Tabela 2: Por Tipo de Produto</div>
+                        <table class="commission-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:20%">Nível</th>
+                                    <th>Renov.</th>
+                                    <th>U. Fibra</th>
+                                    <th>WTTX</th>
+                                    <th>M2M</th>
+                                    <th>Controle</th>
+                                </tr>
+                            </thead>
+                            <tbody id="editProductTableBody"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -329,10 +413,10 @@
             const tbody = document.getElementById(tbodyId);
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><span style="font-size:0.75rem; font-weight:500; padding-left:4px;">${data && data.name ? data.name : ''}</span><input type="hidden" value="${data && data.name ? data.name : ''}"></td>
-                <td><input type="text" placeholder="R$..." value="${data && data.revenue !== undefined ? data.revenue : ''}"></td>
-                <td><input type="text" placeholder="Condição" value="${data && data.eligibility !== undefined ? data.eligibility : ''}"></td>
-                <td><input type="text" placeholder="%" value="${data && data.factor !== undefined ? data.factor : ''}"></td>
+                <td><span class="level-badge">${data && data.name ? data.name : ''}</span><input type="hidden" value="${data && data.name ? data.name : ''}"></td>
+                <td><input type="text" class="commission-input" placeholder="R$..." value="${data && data.revenue !== undefined ? data.revenue : ''}"></td>
+                <td><input type="text" class="commission-input" placeholder="Condição" value="${data && data.eligibility !== undefined ? data.eligibility : ''}"></td>
+                <td><input type="text" class="commission-input" placeholder="%" value="${data && data.factor !== undefined ? data.factor : ''}"></td>
             `;
             tbody.appendChild(tr);
         }
@@ -341,12 +425,12 @@
             const tbody = document.getElementById(tbodyId);
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><span style="font-size:0.75rem; font-weight:500; padding-left:4px;">${data && data.level_group ? data.level_group : ''}</span><input type="hidden" value="${data && data.level_group ? data.level_group : ''}"></td>
-                <td><input type="text" placeholder="%" value="${data && data.renovacao !== undefined ? data.renovacao : ''}"></td>
-                <td><input type="text" placeholder="%" value="${data && data.ultra_fibra !== undefined ? data.ultra_fibra : ''}"></td>
-                <td><input type="text" placeholder="%" value="${data && data.wttx !== undefined ? data.wttx : ''}"></td>
-                <td><input type="text" placeholder="%" value="${data && data.m2m !== undefined ? data.m2m : ''}"></td>
-                <td><input type="text" placeholder="%" value="${data && data.controle !== undefined ? data.controle : ''}"></td>
+                <td><span class="level-badge">${data && data.level_group ? data.level_group : ''}</span><input type="hidden" value="${data && data.level_group ? data.level_group : ''}"></td>
+                <td><input type="text" class="commission-input" placeholder="%" value="${data && data.renovacao !== undefined ? data.renovacao : ''}"></td>
+                <td><input type="text" class="commission-input" placeholder="%" value="${data && data.ultra_fibra !== undefined ? data.ultra_fibra : ''}"></td>
+                <td><input type="text" class="commission-input" placeholder="%" value="${data && data.wttx !== undefined ? data.wttx : ''}"></td>
+                <td><input type="text" class="commission-input" placeholder="%" value="${data && data.m2m !== undefined ? data.m2m : ''}"></td>
+                <td><input type="text" class="commission-input" placeholder="%" value="${data && data.controle !== undefined ? data.controle : ''}"></td>
             `;
             tbody.appendChild(tr);
         }

@@ -42,7 +42,7 @@
         '<div class="brand-mini"><i data-lucide="zap"></i><span>Maxximus</span></div>' +
         '<div class="nav-title">Principal</div>' +
         '<div class="nav-group">' +
-          '<a href="quadro-vendas.html" class="nav-link' + (isActive('quadro-vendas') ? ' active' : '') + '"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>' +
+          '<a href="quadro-vendas.html" class="nav-link' + (isActive('quadro-vendas') ? ' active' : '') + '"><i data-lucide="layout-dashboard"></i><span>Quadro de vendas</span></a>' +
           '<a href="clientes.html" class="nav-link' + (isActive('clientes') ? ' active' : '') + '"><i data-lucide="building-2"></i><span>Clientes</span></a>' +
           '<a href="negociar.html" class="nav-link' + (isActive('negociar') ? ' active' : '') + '"><i data-lucide="handshake"></i><span>Propostas</span></a>' +
           '<a href="top-sellers.html" class="nav-link' + (isActive('top-sellers') ? ' active' : '') + '"><i data-lucide="star"></i><span>Top Sellers</span></a>' +
