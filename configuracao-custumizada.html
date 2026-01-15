@@ -1376,11 +1376,8 @@
                 const StandardFonts = window.PDFLib.StandardFonts;
                 const rgb = window.PDFLib.rgb;
                 const pdfDoc = await PDFDocument.load(existingPdfBytes);
-                while (pdfDoc.getPageCount() < 4) {
-                    pdfDoc.addPage();
-                }
                 const pages = pdfDoc.getPages();
-                const page4 = pages[3];
+                const lastPage = pages[pages.length - 1];
                 const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
                 const n = __negociacaoInfo || {};
                 const c = __clienteInfo || {};
@@ -1390,30 +1387,43 @@
                 const totalProposto = currency(totais.totalProposto);
                 const totalEconomia = currency(totais.totalEconomia);
                 const totalLinhas = linhas.length || 0;
-                const { width, height } = page4.getSize();
-                const linhasTexto = [
-                    'Resumo da Proposta Comercial Customizada',
-                    '',
-                    'Cliente: ' + (c.name || '-'),
-                    'CNPJ: ' + formatCnpj(n.cnpj || c.cnpj || ''),
-                    'Tipo de Negociação: ' + (n.tipo || '-'),
-                    'Proposta: ' + (n.proposta || '-'),
-                    'Status: ' + (n.status || 'Em andamento'),
-                    '',
-                    'Total de linhas: ' + String(totalLinhas),
-                    'Total de acessos: ' + String(acessos),
-                    'Receita Atual: ' + totalAtual,
-                    'Receita Proposta: ' + totalProposto,
-                    'Economia Total: ' + totalEconomia
-                ];
-                let y = height - 80;
+                const pageSize = lastPage.getSize();
+                const height = pageSize.height;
                 const fontSizeTitulo = 14;
                 const fontSizeLinha = 11;
-                page4.drawText(linhasTexto[0], { x: 50, y, size: fontSizeTitulo, font, color: rgb(0, 0, 0) });
-                y -= 24;
-                for (let i = 2; i < linhasTexto.length; i++) {
+                const marginLeft = 50;
+                let y = height - 60;
+                lastPage.drawText('Proposta Comercial Customizada', { x: marginLeft, y, size: fontSizeTitulo, font, color: rgb(0, 0, 0) });
+                y -= 22;
+                const clienteLines = [
+                    'Cliente: ' + (c.name || '-'),
+                    'CNPJ: ' + formatCnpj(n.cnpj || c.cnpj || ''),
+                    'Proposta: ' + (n.proposta || '-'),
+                    'Tipo de Negociação: ' + (n.tipo || '-'),
+                    'Status: ' + (n.status || 'Em andamento')
+                ];
+                clienteLines.forEach(line => {
+                    if (y < 80) return;
+                    lastPage.drawText(line, { x: marginLeft, y, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    y -= 16;
+                });
+                y -= 8;
+                const headerY = y;
+                const colPlanoX = marginLeft;
+                const colValorX = marginLeft + 320;
+                const headerSize = 11;
+                lastPage.drawText('Plano', { x: colPlanoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+                lastPage.drawText('Valor', { x: colValorX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+                y = headerY - 16;
+                for (let i = 0; i < linhas.length; i++) {
                     if (y < 60) break;
-                    page4.drawText(linhasTexto[i], { x: 50, y, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    const l = linhas[i];
+                    const planoNome = String(l.plano || '-');
+                    const qtd = Number(l.quantidade) || 1;
+                    const precoFinalUnit = calcularPrecoFinal(l);
+                    const totalLinhaValor = currency(qtd * precoFinalUnit);
+                    lastPage.drawText(planoNome, { x: colPlanoX, y, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(totalLinhaValor, { x: colValorX, y, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     y -= 16;
                 }
                 const pdfBytes = await pdfDoc.save();
