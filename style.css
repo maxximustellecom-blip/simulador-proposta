@@ -428,6 +428,40 @@ th.col-actions, td.col-actions {
   justify-content: flex-end;
   gap: 0.5rem;
 }
+.filters-section-sticky {
+  position: sticky;
+  top: 3.2rem;
+  z-index: 30;
+}
+.accordion-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.accordion-chevron {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.18s ease;
+}
+tr.group-header[data-open="true"] .accordion-chevron {
+  transform: rotate(90deg);
+}
+tr.group-header {
+  background: var(--surface-strong);
+}
+tr.group-header td {
+  font-weight: 600;
+}
+tr.group-header td:first-child {
+  border-left: 3px solid var(--primary);
+}
+.group-name-ellipsis {
+  display: inline-block;
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 @media (max-width: 919px) {
   .table-container { margin-bottom: 1rem; overflow-x: auto; }
   th, td { padding: 0.6rem 0.75rem; }

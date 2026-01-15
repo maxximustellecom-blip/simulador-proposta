@@ -21,7 +21,7 @@
                 </div>
             </div>
             <div class="card-body">
-                <section class="section" style="margin-top: 20px;">
+                <section class="section filters-section-sticky" style="margin-top: 20px;">
                     <div id="filtersProdutos" class="filters">
                         <div>
                             <div class="label">Tipo</div>
@@ -200,17 +200,38 @@
                 if (key === 'renegociação' || key === 'renegociacao') return 'border-color: rgba(59,130,246,0.35); background: rgba(59,130,246,0.12);';
                 return 'border-color: rgba(156,163,175,0.35); background: rgba(156,163,175,0.12);';
             }
-            tbody.innerHTML = arr.map(p => {
+            if (!arr.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="muted">Sem resultados</td></tr>';
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+                return;
+            }
+            const groups = {};
+            arr.forEach(p => {
                 const catName = (__categoriasIdx[Number(p.categoria_id)] ||
                     ((p && p.category && (p.category.nome || p.category.name)) ? (p.category.nome || p.category.name) : '-'));
-                const tipoVal = (p && p.category && p.category.tipo) ? p.category.tipo : '-';
-                return `
+                const nomeVal = p && (p.nome || p.name) ? (p.nome || p.name) : '-';
+                const precoVal = Number(p.preco || 0);
+                const key = [catName, nomeVal, precoVal.toFixed(2)].join('||');
+                if (!groups[key]) {
+                    groups[key] = { catName, nomeVal, precoVal, items: [] };
+                }
+                groups[key].items.push(p);
+            });
+            const rows = [];
+            let groupIndex = 0;
+            Object.keys(groups).forEach(key => {
+                const group = groups[key];
+                if (group.items.length <= 1) {
+                    const p = group.items[0];
+                    const catName = group.catName;
+                    const tipoVal = (p && p.category && p.category.tipo) ? p.category.tipo : '-';
+                    rows.push(`
                 <tr>
                     <td><span class="ellipsis">${catName}</span></td>
                     <td><span class="chip" style="${tipoChipStyle(tipoVal)}">${tipoVal}</span></td>
-                    <td><span class="ellipsis">${p.nome || p.name || '-'}</span></td>
+                    <td><span class="ellipsis">${group.nomeVal}</span></td>
                     <td><span class="ellipsis">${__regioesMap[p.regiao] || p.regiao || '-'}</span></td>
-                    <td>${currency(p.preco)}</td>
+                    <td>${currency(group.precoVal)}</td>
                     <td class="col-actions">
                         <div class="table-actions">
                             <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditarProduto(${p.id})"><i data-lucide="edit-3"></i></button>
@@ -219,8 +240,66 @@
                         </div>
                     </td>
                 </tr>
-                `;
-            }).join('') || '<tr><td colspan="6" class="muted">Sem resultados</td></tr>';
+                    `);
+                } else {
+                    const groupId = 'prod-group-' + groupIndex++;
+                    const first = group.items[0];
+                    const regiaoLabel = __regioesMap[first.regiao] || first.regiao || '-';
+                    rows.push(`
+                <tr class="group-header" data-group-id="${groupId}" data-open="false" data-count="${group.items.length}" style="background-color:#F9FAFB;">
+                    <td><span class="ellipsis">${group.catName}</span></td>
+                    <td><span class="chip" style="border-color: rgba(156,163,175,0.35); background: rgba(156,163,175,0.12);">Grupo</span></td>
+                    <td><span class="ellipsis group-name-ellipsis">${group.nomeVal}</span></td>
+                    <td><span class="ellipsis">${regiaoLabel}</span></td>
+                    <td>${currency(group.precoVal)}</td>
+                    <td class="col-actions">
+                        <button type="button" class="btn btn-ghost btn-icon accordion-toggle" data-group-id="${groupId}">
+                            <i data-lucide="chevron-right" class="accordion-chevron"></i>
+                            <span class="accordion-toggle-label">Ver (${group.items.length})</span>
+                        </button>
+                    </td>
+                </tr>
+                    `);
+                    group.items.forEach(p => {
+                        const catName = group.catName;
+                        const tipoVal = (p && p.category && p.category.tipo) ? p.category.tipo : '-';
+                        rows.push(`
+                <tr class="accordion-row" data-group-id="${groupId}" style="display:none;">
+                    <td><span class="ellipsis">${catName}</span></td>
+                    <td><span class="chip" style="${tipoChipStyle(tipoVal)}">${tipoVal}</span></td>
+                    <td><span class="ellipsis">${group.nomeVal}</span></td>
+                    <td><span class="ellipsis">${__regioesMap[p.regiao] || p.regiao || '-'}</span></td>
+                    <td>${currency(group.precoVal)}</td>
+                    <td class="col-actions">
+                        <div class="table-actions">
+                            <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditarProduto(${p.id})"><i data-lucide="edit-3"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Duplicar" onclick="abrirConfirmDupProduto(${p.id})"><i data-lucide="copy"></i></button>
+                            <button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="abrirConfirmExcluirProduto(${p.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                        `);
+                    });
+                }
+            });
+            tbody.innerHTML = rows.join('');
+            Array.from(tbody.querySelectorAll('tr.group-header')).forEach(row => {
+                row.addEventListener('click', () => {
+                    const groupId = row.getAttribute('data-group-id');
+                    const isOpen = row.getAttribute('data-open') === 'true';
+                    const newIsOpen = !isOpen;
+                    const count = Number(row.getAttribute('data-count') || 0);
+                    Array.from(tbody.querySelectorAll('tr.accordion-row[data-group-id="' + groupId + '"]')).forEach(r => {
+                        r.style.display = newIsOpen ? '' : 'none';
+                    });
+                    row.setAttribute('data-open', newIsOpen ? 'true' : 'false');
+                    const toggle = row.querySelector('.accordion-toggle');
+                    if (toggle) {
+                        const label = toggle.querySelector('.accordion-toggle-label');
+                        if (label && count > 0) label.textContent = newIsOpen ? ('Ocultar (' + count + ')') : ('Ver (' + count + ')');
+                    }
+                });
+            });
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         }
         function openModal() { document.getElementById('produtoModal').classList.add('show'); }
