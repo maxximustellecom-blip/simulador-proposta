@@ -9,6 +9,7 @@
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <style>
         .modal-body {
             padding: 1.5rem;
@@ -153,6 +154,7 @@
                         <button id="novaBtn" class="btn btn-ghost" type="button"><i data-lucide="rotate-ccw"></i><span>Resetar Proposta</span></button>
                         <button id="copiarBtn" class="btn btn-ghost" type="button" title="Copiar proposta"><i data-lucide="copy"></i><span>Copiar Proposta</span></button>
                         <button id="relatorioBtn" class="btn btn-ghost" type="button" title="Gerar Relatório"><i data-lucide="file-text"></i><span>Gerar Relatório</span></button>
+                        <button id="propostaComercialBtn" class="btn btn-ghost" type="button" title="Gerar Proposta Comercial"><i data-lucide="file-text"></i><span>Gerar Proposta Comercial</span></button>
                         <button id="salvarBtn" class="btn btn-primary" type="button" title="Salvar"><i data-lucide="save"></i><span>Salvar</span></button>
                     </div>
                 </section>
@@ -1769,6 +1771,74 @@
                 doc.save(nomeArquivo);
             } catch {
                 toast('Erro ao gerar relatório', 'error');
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const propostaBtn = document.getElementById('propostaComercialBtn');
+            if (propostaBtn) propostaBtn.addEventListener('click', gerarPropostaComercialPdf);
+        });
+        async function gerarPropostaComercialPdf() {
+            try {
+                if (window.location && window.location.protocol === 'file:') {
+                    toast('Para gerar a proposta comercial, abra esta tela via HTTP (http:// ou https://), não diretamente pelo arquivo local.', 'error');
+                    return;
+                }
+                if (!window.PDFLib || !document || !document.body) { toast('Biblioteca de PDF indisponível', 'error'); return; }
+                const baseRes = await fetch('proposta-comercial.pdf').catch(() => null);
+                if (!baseRes.ok) { toast('Modelo de proposta comercial não encontrado', 'error'); return; }
+                const existingPdfBytes = await baseRes.arrayBuffer();
+                const PDFDocument = window.PDFLib.PDFDocument;
+                const StandardFonts = window.PDFLib.StandardFonts;
+                const rgb = window.PDFLib.rgb;
+                const pdfDoc = await PDFDocument.load(existingPdfBytes);
+                while (pdfDoc.getPageCount() < 4) {
+                    pdfDoc.addPage();
+                }
+                const pages = pdfDoc.getPages();
+                const page4 = pages[3];
+                const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+                const n = __negociacaoInfo || {};
+                const c = __clienteInfo || {};
+                const acessos = __linhas.reduce((acc, l) => acc + Number(l.quantidade || 0), 0);
+                const total = totalGeral();
+                const totalFormatado = currency(total);
+                const totalLinhas = __linhas.length || 0;
+                const { width, height } = page4.getSize();
+                const linhasTexto = [
+                    'Resumo da Proposta Comercial',
+                    '',
+                    'Cliente: ' + (c.name || '-'),
+                    'CNPJ: ' + formatCnpj(n.cnpj || c.cnpj || ''),
+                    'Tipo de Negociação: ' + (n.tipo || '-'),
+                    'Proposta: ' + (n.proposta || '-'),
+                    'Status: ' + (__negociacaoStatus || (n.status || '-')),
+                    '',
+                    'Total de linhas: ' + String(totalLinhas),
+                    'Total de acessos: ' + String(acessos),
+                    'Valor total mensal proposto: ' + totalFormatado
+                ];
+                let y = height - 80;
+                const fontSizeTitulo = 14;
+                const fontSizeLinha = 11;
+                page4.drawText(linhasTexto[0], { x: 50, y, size: fontSizeTitulo, font, color: rgb(0, 0, 0) });
+                y -= 24;
+                for (let i = 2; i < linhasTexto.length; i++) {
+                    if (y < 60) break;
+                    page4.drawText(linhasTexto[i], { x: 50, y, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    y -= 16;
+                }
+                const pdfBytes = await pdfDoc.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'proposta-comercial.pdf';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            } catch {
+                toast('Erro ao gerar proposta comercial', 'error');
             }
         }
         function salvarProposta(evt, shouldReload = true, skipValidation = false) {
