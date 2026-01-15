@@ -1409,8 +1409,13 @@
                 });
                 y -= 8;
                 const headerY = y;
-                const colPlanoX = marginLeft;
-                const colValorX = marginLeft + 260;
+                const tableX = 25; // Margin left pedido de 25
+                const tableWidth = 500;
+                const colOfertaX = tableX + 10;
+                const colQtdX = tableX + 220;
+                const colTipoX = tableX + 300;
+                const colValorX = tableX + 400;
+                
                 const rowHeight = 16;
                 const headerSize = 11;
                 const maxRows = Math.max(Math.floor((headerY - 60) / rowHeight) - 2, 0);
@@ -1419,34 +1424,62 @@
                 const tableHeight = (1 + rowsToDraw + 1) * rowHeight + 8;
                 const tableBottomY = Math.max(tableTopY - tableHeight, 40);
                 const rectHeight = tableTopY - tableBottomY;
+
+                // Fundo branco da tabela
                 lastPage.drawRectangle({
-                    x: marginLeft - 10,
+                    x: tableX,
                     y: tableBottomY,
-                    width: 420,
+                    width: tableWidth,
                     height: rectHeight,
                     color: rgb(1, 1, 1),
                     borderColor: rgb(0.85, 0.85, 0.85),
                     borderWidth: 1
                 });
-                lastPage.drawText('Plano', { x: colPlanoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+                
+                // Cor de fundo do cabecalho (cinza claro)
+                lastPage.drawRectangle({
+                    x: tableX,
+                    y: headerY - 4,
+                    width: tableWidth,
+                    height: rowHeight + 4,
+                    color: rgb(0.95, 0.95, 0.95),
+                    borderColor: rgb(0.9, 0.9, 0.9),
+                    borderWidth: 0
+                });
+
+                // Textos do cabecalho
+                lastPage.drawText('Oferta', { x: colOfertaX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+                lastPage.drawText('Qtd', { x: colQtdX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+                lastPage.drawText('Tipo', { x: colTipoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
                 lastPage.drawText('Valor', { x: colValorX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+
                 let yLinha = headerY - rowHeight;
                 let totalSoma = 0;
                 for (let i = 0; i < rowsToDraw; i++) {
                     const l = linhas[i];
                     const planoNome = String(l.plano || '-');
-                    const qtd = Number(l.quantidade) || 1;
+                    const qtd = String(l.quantidade || 1);
+                    const tipo = String(l.tipoNegociacao || '-');
                     const precoFinalUnit = calcularPrecoFinal(l);
-                    const linhaVal = qtd * precoFinalUnit;
+                    const linhaVal = (Number(qtd)||0) * precoFinalUnit;
                     const totalLinhaValor = currency(linhaVal);
+                    
                     totalSoma += linhaVal;
-                    lastPage.drawText(planoNome, { x: colPlanoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    
+                    // Oferta truncada
+                    let ofertaTexto = planoNome;
+                    if (ofertaTexto.length > 35) ofertaTexto = ofertaTexto.substring(0, 32) + '...';
+                    
+                    lastPage.drawText(ofertaTexto, { x: colOfertaX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(qtd, { x: colQtdX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(tipo, { x: colTipoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(totalLinhaValor, { x: colValorX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    
                     yLinha -= rowHeight;
                 }
                 const yTotal = yLinha - 4;
                 const totalLabel = 'Valor Total: ' + totalProposto;
-                lastPage.drawText(totalLabel, { x: colPlanoX, y: yTotal, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                lastPage.drawText(totalLabel, { x: colValorX - 40, y: yTotal, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
