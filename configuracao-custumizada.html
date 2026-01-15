@@ -1391,16 +1391,14 @@
                 const height = pageSize.height;
                 const fontSizeTitulo = 14;
                 const fontSizeLinha = 11;
-                const marginLeft = 50;
+                const tableWidth = 500;
+                const marginLeft = (pageSize.width - tableWidth) / 2; // Centralizado com a tabela
                 let y = height - 60;
                 lastPage.drawText('Proposta Comercial Customizada', { x: marginLeft, y, size: fontSizeTitulo, font, color: rgb(1, 1, 1) });
                 y -= 22;
                 const clienteLines = [
                     'Cliente: ' + (c.name || '-'),
-                    'CNPJ: ' + formatCnpj(n.cnpj || c.cnpj || ''),
-                    'Proposta: ' + (n.proposta || '-'),
-                    'Tipo de Negociação: ' + (n.tipo || '-'),
-                    'Status: ' + (n.status || 'Em andamento')
+                    'CNPJ: ' + formatCnpj(n.cnpj || c.cnpj || '')
                 ];
                 clienteLines.forEach(line => {
                     if (y < 80) return;
@@ -1409,8 +1407,7 @@
                 });
                 y -= 8;
                 const headerY = y;
-                const tableX = 25; // Margin left pedido de 25
-                const tableWidth = 500;
+                const tableX = marginLeft; // Tabela centralizada
                 const colOfertaX = tableX + 10;
                 const colQtdX = tableX + 220;
                 const colTipoX = tableX + 300;
