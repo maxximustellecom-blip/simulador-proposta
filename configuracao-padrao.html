@@ -1806,7 +1806,7 @@
                 const fontSizeLinha = 11;
                 const marginLeft = 50;
                 let y = height - 60;
-                lastPage.drawText('Proposta Comercial', { x: marginLeft, y, size: fontSizeTitulo, font, color: rgb(0, 0, 0) });
+                lastPage.drawText('Proposta Comercial', { x: marginLeft, y, size: fontSizeTitulo, font, color: rgb(1, 1, 1) });
                 y -= 22;
                 const clienteLines = [
                     'Cliente: ' + (c.name || '-'),
@@ -1817,26 +1817,47 @@
                 ];
                 clienteLines.forEach(line => {
                     if (y < 80) return;
-                    lastPage.drawText(line, { x: marginLeft, y, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(line, { x: marginLeft, y, size: fontSizeLinha, font, color: rgb(1, 1, 1) });
                     y -= 16;
                 });
                 y -= 8;
                 const headerY = y;
                 const colPlanoX = marginLeft;
-                const colValorX = marginLeft + 320;
+                const colValorX = marginLeft + 260;
+                const rowHeight = 16;
                 const headerSize = 11;
+                const maxRows = Math.max(Math.floor((headerY - 60) / rowHeight) - 2, 0);
+                const rowsToDraw = Math.min(__linhas.length, maxRows);
+                const tableTopY = headerY + 8;
+                const tableHeight = (1 + rowsToDraw + 1) * rowHeight + 8;
+                const tableBottomY = Math.max(tableTopY - tableHeight, 40);
+                const rectHeight = tableTopY - tableBottomY;
+                lastPage.drawRectangle({
+                    x: marginLeft - 10,
+                    y: tableBottomY,
+                    width: 420,
+                    height: rectHeight,
+                    color: rgb(1, 1, 1),
+                    borderColor: rgb(0.85, 0.85, 0.85),
+                    borderWidth: 1
+                });
                 lastPage.drawText('Plano', { x: colPlanoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
                 lastPage.drawText('Valor', { x: colValorX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
-                y = headerY - 16;
-                for (let i = 0; i < __linhas.length; i++) {
-                    if (y < 60) break;
+                let yLinha = headerY - rowHeight;
+                let totalSoma = 0;
+                for (let i = 0; i < rowsToDraw; i++) {
                     const l = __linhas[i];
                     const planoNome = String(l.plano || '-');
-                    const valorLinha = currency(totalLinha(l));
-                    lastPage.drawText(planoNome, { x: colPlanoX, y, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(valorLinha, { x: colValorX, y, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    y -= 16;
+                    const linhaVal = totalLinha(l);
+                    const valorLinha = currency(linhaVal);
+                    totalSoma += linhaVal;
+                    lastPage.drawText(planoNome, { x: colPlanoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(valorLinha, { x: colValorX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    yLinha -= rowHeight;
                 }
+                const yTotal = yLinha - 4;
+                const totalLabel = 'Valor Total: ' + totalFormatado;
+                lastPage.drawText(totalLabel, { x: colPlanoX, y: yTotal, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
