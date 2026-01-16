@@ -143,6 +143,41 @@ export async function importLeads(req, res) {
       if (!Object.values(payload).some(v => String(v || '').trim().length > 0)) {
         continue;
       }
+      const normalized = {};
+      Object.keys(payload).forEach(h => {
+        const norm = normalizeHeaderName(h);
+        normalized[norm] = payload[h];
+      });
+      if (!cnpj && normalized.doc) {
+        cnpj = normalized.doc;
+      }
+      if (!contato && normalized.nome) {
+        contato = normalized.nome;
+      }
+      if (!endereco) {
+        const tpLog = normalized.tp_log || '';
+        const lograd = normalized.lograd || '';
+        const numero = normalized.numero || '';
+        const complem = normalized.complem || '';
+        const bairro = normalized.bairro || '';
+        const cidade = normalized.cidade || '';
+        const uf = normalized.uf || '';
+        const cep = normalized.cep || '';
+        const parts = [];
+        const line1Parts = [];
+        const logPrefix = (tpLog ? tpLog + ' ' : '') + lograd;
+        if (logPrefix.trim()) line1Parts.push(logPrefix.trim());
+        if (numero) line1Parts.push('nº ' + numero);
+        if (complem) line1Parts.push(complem);
+        if (line1Parts.length) parts.push(line1Parts.join(', '));
+        const line2Parts = [];
+        if (bairro) line2Parts.push(bairro);
+        if (cidade || uf) line2Parts.push([cidade, uf].filter(Boolean).join(' - '));
+        if (cep) line2Parts.push('CEP ' + cep);
+        if (line2Parts.length) parts.push(line2Parts.join(' • '));
+        const built = parts.join(' | ');
+        if (built) endereco = built;
+      }
       leadsPayload.push({ cnpj, email, contato, endereco, payload });
     }
     if (!leadsPayload.length) {
