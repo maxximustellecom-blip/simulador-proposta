@@ -380,30 +380,30 @@
                             var nome = payload.NOME || payload.Nome || payload.nome || '-';
                             
                             let statusLabel = '<span class="chip">Pendente</span>';
-                            let borderStyle = 'border-left: 4px solid var(--border);';
+                            let borderStyle = 'border-left: 3px solid var(--border);';
                             
                             if (l.status === 'apto') {
-                                statusLabel = '<span class="chip" style="background:rgba(16,185,129,0.2); color:#065F46;">Apto</span>';
-                                borderStyle = 'border-left: 4px solid #10B981;';
+                                statusLabel = '<span class="chip" style="background:rgba(16,185,129,0.18); color:#065F46; font-size:0.7rem; padding:0.1rem 0.35rem;">Apto</span>';
+                                borderStyle = 'border-left: 3px solid #10B981;';
                             } else if (l.status === 'nao_apto') {
-                                statusLabel = '<span class="chip" style="background:rgba(239,68,68,0.2); color:#991B1B;">Não Apto</span>';
-                                borderStyle = 'border-left: 4px solid #EF4444;';
+                                statusLabel = '<span class="chip" style="background:rgba(239,68,68,0.18); color:#991B1B; font-size:0.7rem; padding:0.1rem 0.35rem;">Não Apto</span>';
+                                borderStyle = 'border-left: 3px solid #EF4444;';
                             }
 
                             return `
-                            <div class="card" style="margin-bottom: 1rem; border: 1px solid var(--border); ${borderStyle} box-shadow:none;">
-                                <div class="card-body" style="padding: 1rem;">
-                                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
+                            <div class="card" style="margin-bottom: 0.5rem; border: 1px solid var(--border); ${borderStyle} box-shadow:none;">
+                                <div class="card-body">
+                                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.35rem;">
                                         <div>
-                                            <div style="font-weight:600; font-size:1.05rem;">${nome}</div>
-                                            <div class="muted" style="font-size:0.9rem;">CNPJ: ${l.cnpj || '-'}</div>
-                                            <div class="muted" style="font-size:0.9rem;">${l.contato || '-'}</div>
+                                            <div style="font-weight:600; font-size:0.9rem;">${nome}</div>
+                                            <div class="muted" style="font-size:0.78rem;">CNPJ: ${l.cnpj || '-'}</div>
+                                            <div class="muted" style="font-size:0.78rem;">${l.contato || '-'}</div>
                                         </div>
                                         <div>${statusLabel}</div>
                                     </div>
-                                    <div style="background: var(--surface); padding: 0.75rem; border-radius: var(--radius); border: 1px solid var(--border);">
-                                        <div style="font-weight:600; font-size:0.8rem; text-transform:uppercase; color:var(--muted-foreground); margin-bottom:0.25rem;">Feedback</div>
-                                        <div style="white-space: pre-wrap;">${l.feedback}</div>
+                                    <div style="background: var(--surface); padding: 0.5rem; border-radius: var(--radius); border: 1px solid var(--border);">
+                                        <div style="font-weight:600; font-size:0.72rem; text-transform:uppercase; color:var(--muted-foreground); margin-bottom:0.2rem;">Feedback</div>
+                                        <div style="white-space: pre-wrap; font-size:0.78rem; line-height:1.2;">${l.feedback}</div>
                                     </div>
                                 </div>
                             </div>
