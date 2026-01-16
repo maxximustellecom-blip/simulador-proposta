@@ -421,6 +421,8 @@ export async function listAllLeads(req, res) {
           email: l.email,
           contato,
           endereco: l.endereco,
+          status: l.status,
+          feedback: l.feedback,
           created_at: l.createdAt
         };
     });
@@ -428,5 +430,50 @@ export async function listAllLeads(req, res) {
     return res.json(result);
   } catch (err) {
     return res.status(500).json({ error: 'erro ao listar leads', details: String(err && err.message ? err.message : err) });
+  }
+}
+
+export async function updateLead(req, res) {
+  try {
+    const actor = req.user;
+    if (!actor || !actor.id) {
+      return res.status(401).json({ error: 'unauthorized' });
+    }
+
+    const leadId = Number(req.params.id);
+    if (!leadId) {
+      return res.status(400).json({ error: 'missing_id' });
+    }
+
+    const lead = await Lead.findByPk(leadId, {
+      include: [
+        { model: LeadBatch, as: 'batch' }
+      ]
+    });
+
+    if (!lead) {
+      return res.status(404).json({ error: 'lead not found' });
+    }
+
+    // Check permissions
+    const isAdmin = actor.role === 'admin';
+    if (!isAdmin) {
+      // Check if lead belongs to a batch assigned to this user
+      if (Number(lead.batch.assigned_to) !== Number(actor.id)) {
+        return res.status(403).json({ error: 'forbidden' });
+      }
+    }
+
+    const { status, feedback } = req.body;
+    
+    if (status !== undefined) lead.status = status;
+    if (feedback !== undefined) lead.feedback = feedback;
+
+    await lead.save();
+
+    return res.json({ success: true, lead });
+
+  } catch (err) {
+    return res.status(500).json({ error: 'erro ao atualizar lead', details: String(err && err.message ? err.message : err) });
   }
 }
