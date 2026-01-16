@@ -76,7 +76,7 @@
         </div>
     </main>
     <script>
-        const API_BASE = 'http://localhost:3001';
+        const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
         let __isAdminUser = false;
         let __batchesCache = [];
         let __allBatchesCache = [];
@@ -159,6 +159,9 @@
                         '<td class="col-actions" style="min-width:140px;">' +
                             '<button type="button" class="btn btn-ghost btn-icon" title="Ver leads" onclick="abrirDetalheRemessa(' + b.id + ')">' +
                                 '<i data-lucide="list"></i>' +
+                            '</button>&nbsp;' +
+                            '<button type="button" class="btn btn-ghost btn-icon" title="Excluir remessa" onclick="abrirConfirmacaoExclusao(' + b.id + ')">' +
+                                '<i data-lucide="trash-2"></i>' +
                             '</button>' +
                         '</td>' +
                     '</tr>'
@@ -166,6 +169,32 @@
             }).join('');
             if (window.lucide && typeof window.lucide.createIcons === 'function') {
                 window.lucide.createIcons();
+            }
+        }
+
+        let __batchToDelete = null;
+
+        async function abrirConfirmacaoExclusao(id) {
+            __batchToDelete = id;
+            const modal = document.getElementById('deleteConfirmModal');
+            if (modal) modal.classList.add('show');
+        }
+
+        function fecharConfirmacaoExclusao() {
+            __batchToDelete = null;
+            const modal = document.getElementById('deleteConfirmModal');
+            if (modal) modal.classList.remove('show');
+        }
+
+        async function confirmarExclusaoRemessa() {
+            if (!__batchToDelete) return;
+            try {
+                await api('/leads/batches/' + __batchToDelete, { method: 'DELETE' });
+                toast('Remessa excluída com sucesso', 'success');
+                fecharConfirmacaoExclusao();
+                await carregarRemessas();
+            } catch (e) {
+                toast(e.message || 'Erro ao excluir remessa', 'error');
             }
         }
 
@@ -450,6 +479,24 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head">
+                <div>Confirmar exclusão</div>
+                <button class="btn btn-ghost btn-icon" type="button" onclick="fecharConfirmacaoExclusao()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="muted">Tem certeza que deseja excluir esta remessa?</div>
+                <div style="margin-top:0.6rem; color:#FCA5A5;">Esta ação removerá permanentemente a remessa e todos os leads associados a ela.</div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" type="button" onclick="fecharConfirmacaoExclusao()">Cancelar</button>
+                <button class="btn btn-primary" type="button" onclick="confirmarExclusaoRemessa()">Excluir</button>
             </div>
         </div>
     </div>

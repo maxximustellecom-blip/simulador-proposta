@@ -202,7 +202,7 @@ export async function listBatches(req, res) {
       assigned_user: b.assignedUser ? { id: b.assignedUser.id, name: b.assignedUser.name } : null,
       created_by: b.created_by,
       creator: b.creator ? { id: b.creator.id, name: b.creator.name } : null,
-      created_at: b.created_at
+      created_at: b.createdAt
     }));
     return res.json(result);
   } catch (err) {
@@ -242,7 +242,7 @@ export async function getBatchDetail(req, res) {
       assigned_user: batch.assignedUser ? { id: batch.assignedUser.id, name: batch.assignedUser.name } : null,
       created_by: batch.created_by,
       creator: batch.creator ? { id: batch.creator.id, name: batch.creator.name } : null,
-      created_at: batch.created_at,
+      created_at: batch.createdAt,
       leads: (batch.leads || []).map(l => ({
         id: l.id,
         cnpj: l.cnpj,
@@ -254,5 +254,35 @@ export async function getBatchDetail(req, res) {
     });
   } catch (err) {
     return res.status(500).json({ error: 'erro ao buscar remessa de leads', details: String(err && err.message ? err.message : err) });
+  }
+}
+
+export async function deleteBatch(req, res) {
+  try {
+    const actor = req.user;
+    if (!actor || !actor.id) {
+      return res.status(401).json({ error: 'unauthorized' });
+    }
+    const id = Number(req.params.id);
+    if (!id) {
+      return res.status(400).json({ error: 'missing_id' });
+    }
+    const batch = await LeadBatch.findByPk(id);
+    if (!batch) {
+      return res.status(404).json({ error: 'remessa não encontrada' });
+    }
+    const isAdmin = actor.role === 'admin';
+    // Permitir excluir se for admin ou se for o criador da remessa
+    if (!isAdmin && Number(batch.created_by || 0) !== Number(actor.id)) {
+      return res.status(403).json({ error: 'forbidden' });
+    }
+    
+    // Deletar leads primeiro (caso cascade não esteja configurado no DB)
+    await Lead.destroy({ where: { batch_id: id } });
+    await batch.destroy();
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'erro ao excluir remessa de leads', details: String(err && err.message ? err.message : err) });
   }
 }
