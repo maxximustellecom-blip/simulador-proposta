@@ -80,6 +80,7 @@
         let __isAdminUser = false;
         let __batchesCache = [];
         let __allBatchesCache = [];
+        let __feedbackCountsByBatchId = {};
 
         async function api(path, options = {}) {
             const authRaw = localStorage.getItem('authUser');
@@ -150,6 +151,7 @@
             tbody.innerHTML = arr.map(function (b) {
                 const name = b.assigned_user && b.assigned_user.name ? b.assigned_user.name : '-';
                 const createdAt = formatDateTime(b.created_at);
+                const feedbackCount = (__feedbackCountsByBatchId && __feedbackCountsByBatchId[b.id]) || 0;
                 return (
                     '<tr>' +
                         '<td>' + (b.file_name || '-') + '</td>' +
@@ -162,6 +164,7 @@
                             '</button>&nbsp;' +
                             '<button type="button" class="btn btn-ghost btn-icon" title="Ver feedbacks" onclick="abrirDetalheRemessa(' + b.id + ', true)">' +
                                 '<i data-lucide="message-square"></i>' +
+                                '<span>ver feedbacks (' + feedbackCount + ')</span>' +
                             '</button>&nbsp;' +
                             '<button type="button" class="btn btn-ghost btn-icon" title="Excluir remessa" onclick="abrirConfirmacaoExclusao(' + b.id + ')">' +
                                 '<i data-lucide="trash-2"></i>' +
@@ -196,6 +199,7 @@
                 toast('Remessa excluída com sucesso', 'success');
                 fecharConfirmacaoExclusao();
                 await carregarRemessas();
+                await carregarFeedbackCounts();
             } catch (e) {
                 toast(e.message || 'Erro ao excluir remessa', 'error');
             }
@@ -231,6 +235,27 @@
                 __allBatchesCache = [];
                 renderBatchesTable([]);
                 toast('Erro ao carregar remessas de leads', 'error');
+            }
+        }
+
+        async function carregarFeedbackCounts() {
+            try {
+                const list = await api('/leads/mine?limit=5000', { method: 'GET' }).catch(function () { return []; });
+                const arr = Array.isArray(list) ? list : [];
+                const map = {};
+                arr.forEach(function (l) {
+                    const hasFeedback = l && l.feedback && String(l.feedback).trim().length > 0;
+                    if (!hasFeedback) return;
+                    const bid = Number(l.batch_id || 0);
+                    if (!bid) return;
+                    if (!map[bid]) map[bid] = 0;
+                    map[bid] += 1;
+                });
+                __feedbackCountsByBatchId = map;
+                renderBatchesTable(__batchesCache);
+            } catch {
+                __feedbackCountsByBatchId = {};
+                renderBatchesTable(__batchesCache);
             }
         }
 
@@ -297,6 +322,7 @@
                     modal.classList.remove('show');
                 }
                 await carregarRemessas();
+                await carregarFeedbackCounts();
             } catch (e) {
                 toast('Erro ao importar leads', 'error');
             }
@@ -485,6 +511,7 @@
                 closeDetail.addEventListener('click', fecharDetalheRemessa);
             }
             carregarRemessas();
+            carregarFeedbackCounts();
             if (window.lucide && typeof window.lucide.createIcons === 'function') {
                 window.lucide.createIcons();
             }

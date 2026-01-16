@@ -294,7 +294,6 @@ export async function getBatchDetail(req, res) {
       created_at: batch.createdAt,
       leads: (batch.leads || []).map(l => {
         let contato = l.contato;
-        // Tenta enriquecer a exibição usando payload se tiver DDD e TEL
         if (l.payload && typeof l.payload === 'object') {
           const normalized = {};
           Object.keys(l.payload).forEach(h => {
@@ -316,6 +315,8 @@ export async function getBatchDetail(req, res) {
           email: l.email,
           contato,
           endereco: l.endereco,
+          status: l.status,
+          feedback: l.feedback,
           payload: l.payload
         };
       })
