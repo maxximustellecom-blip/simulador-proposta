@@ -66,7 +66,13 @@ function buildFieldMapping(headers) {
     let key = null;
     if (norm.includes('cnpj')) key = 'cnpj';
     else if (norm.includes('email')) key = 'email';
-    else if (norm.includes('contato') || norm.includes('responsavel') || norm.includes('responsável')) key = 'contato';
+    else if (
+      norm.includes('contato') ||
+      norm.includes('responsavel') ||
+      norm.includes('responsável') ||
+      norm === 'tel' ||
+      norm.includes('telefone')
+    ) key = 'contato';
     else if (norm.includes('endereco') || norm.includes('endereço') || norm.includes('logradouro') || norm.includes('rua')) key = 'endereco';
     mapping.push({ index, header: h, key });
   });
@@ -286,14 +292,33 @@ export async function getBatchDetail(req, res) {
       created_by: batch.created_by,
       creator: batch.creator ? { id: batch.creator.id, name: batch.creator.name } : null,
       created_at: batch.createdAt,
-      leads: (batch.leads || []).map(l => ({
-        id: l.id,
-        cnpj: l.cnpj,
-        email: l.email,
-        contato: l.contato,
-        endereco: l.endereco,
-        payload: l.payload
-      }))
+      leads: (batch.leads || []).map(l => {
+        let contato = l.contato;
+        if ((!contato || String(contato).trim().length === 0) && l.payload && typeof l.payload === 'object') {
+          const normalized = {};
+          Object.keys(l.payload).forEach(h => {
+            const norm = normalizeHeaderName(h);
+            normalized[norm] = l.payload[h];
+          });
+          const ddd = normalized.ddd || '';
+          const tel = normalized.tel || '';
+          const partsContato = [];
+          if (ddd) partsContato.push('(' + ddd + ')');
+          if (tel) partsContato.push(tel);
+          const builtContato = partsContato.join(' ');
+          if (builtContato) {
+            contato = builtContato;
+          }
+        }
+        return {
+          id: l.id,
+          cnpj: l.cnpj,
+          email: l.email,
+          contato,
+          endereco: l.endereco,
+          payload: l.payload
+        };
+      })
     });
   } catch (err) {
     return res.status(500).json({ error: 'erro ao buscar remessa de leads', details: String(err && err.message ? err.message : err) });
