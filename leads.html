@@ -321,10 +321,12 @@
                         tbody.innerHTML = '<tr><td colspan="4" class="muted" style="text-align:center; padding:1rem;">Nenhum lead encontrado</td></tr>';
                     } else {
                         tbody.innerHTML = leads.map(function (l) {
+                            var payload = l && l.payload ? l.payload : {};
+                            var nome = payload.NOME || payload.Nome || payload.nome || '';
                             return (
                                 '<tr>' +
                                     '<td>' + (l.cnpj || '-') + '</td>' +
-                                    '<td>' + (l.email || '-') + '</td>' +
+                                    '<td>' + (nome || '-') + '</td>' +
                                     '<td>' + (l.contato || '-') + '</td>' +
                                     '<td>' + (l.endereco || '-') + '</td>' +
                                 '</tr>'
@@ -450,7 +452,7 @@
         </div>
     </div>
     <div id="leadsDetailModal" class="modal">
-        <div class="modal-card">
+        <div class="modal-card" style="max-width: 1000px; width: 95%;">
             <div class="modal-head">
                 <div>Leads da remessa</div>
                 <button id="leadsDetailClose" class="btn btn-ghost btn-icon" type="button">
@@ -464,7 +466,7 @@
                         <thead>
                             <tr>
                                 <th>CNPJ</th>
-                                <th>Email</th>
+                                <th>Nome</th>
                                 <th>Contato</th>
                                 <th>Endereço</th>
                             </tr>

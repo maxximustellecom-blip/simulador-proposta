@@ -151,8 +151,16 @@ export async function importLeads(req, res) {
       if (!cnpj && normalized.doc) {
         cnpj = normalized.doc;
       }
-      if (!contato && normalized.nome) {
-        contato = normalized.nome;
+      if (!contato) {
+        const ddd = normalized.ddd || '';
+        const tel = normalized.tel || '';
+        const partsContato = [];
+        if (ddd) partsContato.push('(' + ddd + ')');
+        if (tel) partsContato.push(tel);
+        const builtContato = partsContato.join(' ');
+        if (builtContato) {
+          contato = builtContato;
+        }
       }
       if (!endereco) {
         const tpLog = normalized.tp_log || '';
