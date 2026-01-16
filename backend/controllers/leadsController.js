@@ -376,7 +376,7 @@ export async function listAllLeads(req, res) {
           model: LeadBatch, 
           as: 'batch', 
           where: whereBatch,
-          attributes: ['id', 'assigned_to', 'created_at']
+          attributes: ['id', 'assigned_to', 'created_at', 'file_name']
         }
       ],
       order: [['id', 'DESC']],
@@ -416,6 +416,8 @@ export async function listAllLeads(req, res) {
         return {
           id: l.id,
           batch_id: l.batch_id,
+          batch_name: l.batch ? l.batch.file_name : null,
+          batch_date: l.batch ? l.batch.created_at : null,
           cnpj: l.cnpj,
           nome,
           email: l.email,

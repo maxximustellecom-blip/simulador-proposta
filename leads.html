@@ -160,6 +160,9 @@
                             '<button type="button" class="btn btn-ghost btn-icon" title="Ver leads" onclick="abrirDetalheRemessa(' + b.id + ')">' +
                                 '<i data-lucide="list"></i>' +
                             '</button>&nbsp;' +
+                            '<button type="button" class="btn btn-ghost btn-icon" title="Ver feedbacks" onclick="abrirDetalheRemessa(' + b.id + ', true)">' +
+                                '<i data-lucide="message-square"></i>' +
+                            '</button>&nbsp;' +
                             '<button type="button" class="btn btn-ghost btn-icon" title="Excluir remessa" onclick="abrirConfirmacaoExclusao(' + b.id + ')">' +
                                 '<i data-lucide="trash-2"></i>' +
                             '</button>' +
@@ -299,45 +302,115 @@
             }
         }
 
-        async function abrirDetalheRemessa(id) {
+        async function abrirDetalheRemessa(id, onlyFeedbacks = false) {
             try {
                 const modal = document.getElementById('leadsDetailModal');
                 const tbody = document.getElementById('leadsDetailTbody');
                 const info = document.getElementById('leadsDetailInfo');
-                if (tbody) {
-                    tbody.innerHTML = '<tr><td colspan="4"><div class="skeleton skel-row"></div><div class="skeleton skel-row"></div></td></tr>';
+                const tableContainer = document.querySelector('#leadsDetailModal .table-container');
+                
+                // Create or get cards container
+                let cardsContainer = document.getElementById('leadsDetailCards');
+                if (!cardsContainer) {
+                    cardsContainer = document.createElement('div');
+                    cardsContainer.id = 'leadsDetailCards';
+                    cardsContainer.style.cssText = 'margin-top:1rem; max-height:60vh; overflow:auto; display:none;';
+                    tableContainer.parentNode.insertBefore(cardsContainer, tableContainer);
                 }
+
+                if (onlyFeedbacks) {
+                    tableContainer.style.display = 'none';
+                    cardsContainer.style.display = 'block';
+                    cardsContainer.innerHTML = '<div class="skeleton skel-row"></div><div class="skeleton skel-row"></div>';
+                } else {
+                    cardsContainer.style.display = 'none';
+                    tableContainer.style.display = 'block';
+                    if (tbody) tbody.innerHTML = '<tr><td colspan="4"><div class="skeleton skel-row"></div><div class="skeleton skel-row"></div></td></tr>';
+                }
+
                 if (modal) {
                     modal.classList.add('show');
                 }
                 const data = await api('/leads/batches/' + id, { method: 'GET' });
                 if (info) {
                     const owner = data.assigned_user && data.assigned_user.name ? data.assigned_user.name : '-';
-                    info.textContent = 'Arquivo: ' + (data.file_name || '-') + ' • Leads: ' + (data.total_leads || 0) + ' • Usuário: ' + owner;
+                    let infoText = 'Arquivo: ' + (data.file_name || '-') + ' • Leads: ' + (data.total_leads || 0) + ' • Usuário: ' + owner;
+                    if (onlyFeedbacks) {
+                        infoText += ' • <span style="color:var(--primary); font-weight:600;">Exibindo feedbacks</span>';
+                    }
+                    info.innerHTML = infoText;
                 }
-                if (tbody) {
-                    const leads = Array.isArray(data.leads) ? data.leads : [];
+
+                let leads = Array.isArray(data.leads) ? data.leads : [];
+
+                if (onlyFeedbacks) {
+                    leads = leads.filter(l => l.feedback && String(l.feedback).trim().length > 0);
+                    
                     if (!leads.length) {
-                        tbody.innerHTML = '<tr><td colspan="4" class="muted" style="text-align:center; padding:1rem;">Nenhum lead encontrado</td></tr>';
+                        cardsContainer.innerHTML = '<div class="muted" style="text-align:center; padding:1rem;">Nenhum feedback encontrado nesta remessa</div>';
                     } else {
-                        tbody.innerHTML = leads.map(function (l) {
+                        cardsContainer.innerHTML = leads.map(function (l) {
                             var payload = l && l.payload ? l.payload : {};
-                            var nome = payload.NOME || payload.Nome || payload.nome || '';
-                            return (
-                                '<tr>' +
-                                    '<td>' + (l.cnpj || '-') + '</td>' +
-                                    '<td>' + (nome || '-') + '</td>' +
-                                    '<td>' + (l.contato || '-') + '</td>' +
-                                    '<td>' + (l.endereco || '-') + '</td>' +
-                                '</tr>'
-                            );
+                            var nome = payload.NOME || payload.Nome || payload.nome || '-';
+                            
+                            let statusLabel = '<span class="chip">Pendente</span>';
+                            let borderStyle = 'border-left: 4px solid var(--border);';
+                            
+                            if (l.status === 'apto') {
+                                statusLabel = '<span class="chip" style="background:rgba(16,185,129,0.2); color:#065F46;">Apto</span>';
+                                borderStyle = 'border-left: 4px solid #10B981;';
+                            } else if (l.status === 'nao_apto') {
+                                statusLabel = '<span class="chip" style="background:rgba(239,68,68,0.2); color:#991B1B;">Não Apto</span>';
+                                borderStyle = 'border-left: 4px solid #EF4444;';
+                            }
+
+                            return `
+                            <div class="card" style="margin-bottom: 1rem; border: 1px solid var(--border); ${borderStyle} box-shadow:none;">
+                                <div class="card-body" style="padding: 1rem;">
+                                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
+                                        <div>
+                                            <div style="font-weight:600; font-size:1.05rem;">${nome}</div>
+                                            <div class="muted" style="font-size:0.9rem;">CNPJ: ${l.cnpj || '-'}</div>
+                                            <div class="muted" style="font-size:0.9rem;">${l.contato || '-'}</div>
+                                        </div>
+                                        <div>${statusLabel}</div>
+                                    </div>
+                                    <div style="background: var(--surface); padding: 0.75rem; border-radius: var(--radius); border: 1px solid var(--border);">
+                                        <div style="font-weight:600; font-size:0.8rem; text-transform:uppercase; color:var(--muted-foreground); margin-bottom:0.25rem;">Feedback</div>
+                                        <div style="white-space: pre-wrap;">${l.feedback}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            `;
                         }).join('');
                     }
+
+                } else {
+                    if (tbody) {
+                        if (!leads.length) {
+                            tbody.innerHTML = '<tr><td colspan="4" class="muted" style="text-align:center; padding:1rem;">Nenhum lead encontrado</td></tr>';
+                        } else {
+                            tbody.innerHTML = leads.map(function (l) {
+                                var payload = l && l.payload ? l.payload : {};
+                                var nome = payload.NOME || payload.Nome || payload.nome || '';
+                                return (
+                                    '<tr>' +
+                                        '<td>' + (l.cnpj || '-') + '</td>' +
+                                        '<td>' + (nome || '-') + '</td>' +
+                                        '<td>' + (l.contato || '-') + '</td>' +
+                                        '<td>' + (l.endereco || '-') + '</td>' +
+                                    '</tr>'
+                                );
+                            }).join('');
+                        }
+                    }
                 }
+
                 if (window.lucide && typeof window.lucide.createIcons === 'function') {
                     window.lucide.createIcons();
                 }
-            } catch {
+            } catch (e) {
+                console.error(e);
                 toast('Erro ao carregar detalhes da remessa', 'error');
             }
         }
