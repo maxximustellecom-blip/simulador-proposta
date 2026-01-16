@@ -157,17 +157,17 @@ export async function importLeads(req, res) {
       if (!cnpj && normalized.doc) {
         cnpj = normalized.doc;
       }
-      if (!contato) {
-        const ddd = normalized.ddd || '';
-        const tel = normalized.tel || '';
-        const partsContato = [];
-        if (ddd) partsContato.push('(' + ddd + ')');
-        if (tel) partsContato.push(tel);
-        const builtContato = partsContato.join(' ');
-        if (builtContato) {
-          contato = builtContato;
-        }
+      
+      // Prioridade para composição DDD + TEL do payload
+      const normDdd = normalized.ddd || '';
+      const normTel = normalized.tel || '';
+      if (normTel) {
+        const parts = [];
+        if (normDdd) parts.push('(' + normDdd + ')');
+        parts.push(normTel);
+        contato = parts.join(' ');
       }
+
       if (!endereco) {
         const tpLog = normalized.tp_log || '';
         const lograd = normalized.lograd || '';
@@ -294,7 +294,8 @@ export async function getBatchDetail(req, res) {
       created_at: batch.createdAt,
       leads: (batch.leads || []).map(l => {
         let contato = l.contato;
-        if ((!contato || String(contato).trim().length === 0) && l.payload && typeof l.payload === 'object') {
+        // Tenta enriquecer a exibição usando payload se tiver DDD e TEL
+        if (l.payload && typeof l.payload === 'object') {
           const normalized = {};
           Object.keys(l.payload).forEach(h => {
             const norm = normalizeHeaderName(h);
@@ -302,12 +303,11 @@ export async function getBatchDetail(req, res) {
           });
           const ddd = normalized.ddd || '';
           const tel = normalized.tel || '';
-          const partsContato = [];
-          if (ddd) partsContato.push('(' + ddd + ')');
-          if (tel) partsContato.push(tel);
-          const builtContato = partsContato.join(' ');
-          if (builtContato) {
-            contato = builtContato;
+          if (tel) {
+            const parts = [];
+            if (ddd) parts.push('(' + ddd + ')');
+            parts.push(tel);
+            contato = parts.join(' ');
           }
         }
         return {
@@ -352,5 +352,81 @@ export async function deleteBatch(req, res) {
     return res.status(200).json({ success: true });
   } catch (err) {
     return res.status(500).json({ error: 'erro ao excluir remessa de leads', details: String(err && err.message ? err.message : err) });
+  }
+}
+
+export async function listAllLeads(req, res) {
+  try {
+    const actor = req.user;
+    if (!actor || !actor.id) {
+      return res.status(401).json({ error: 'unauthorized' });
+    }
+    
+    const whereBatch = {};
+    if (actor.role !== 'admin') {
+      whereBatch.assigned_to = Number(actor.id);
+    }
+    
+    const limit = req.query.limit ? Number(req.query.limit) : 1000;
+    const offset = req.query.offset ? Number(req.query.offset) : 0;
+
+    const leads = await Lead.findAll({
+      include: [
+        { 
+          model: LeadBatch, 
+          as: 'batch', 
+          where: whereBatch,
+          attributes: ['id', 'assigned_to', 'created_at']
+        }
+      ],
+      order: [['id', 'DESC']],
+      limit,
+      offset
+    });
+    
+    const result = leads.map(l => {
+        let contato = l.contato;
+        if (l.payload && typeof l.payload === 'object') {
+          const normalized = {};
+          Object.keys(l.payload).forEach(h => {
+            const norm = normalizeHeaderName(h);
+            normalized[norm] = l.payload[h];
+          });
+          const ddd = normalized.ddd || '';
+          const tel = normalized.tel || '';
+          if (tel) {
+            const parts = [];
+            if (ddd) parts.push('(' + ddd + ')');
+            parts.push(tel);
+            contato = parts.join(' ');
+          }
+        }
+        
+        const payload = l.payload || {};
+        let nome = '';
+        const possibleNames = ['nome', 'name', 'razao', 'razaosocial', 'razão', 'cliente'];
+        for (const key of Object.keys(payload)) {
+            const normKey = normalizeHeaderName(key);
+            if (possibleNames.includes(normKey)) {
+                nome = payload[key];
+                break;
+            }
+        }
+
+        return {
+          id: l.id,
+          batch_id: l.batch_id,
+          cnpj: l.cnpj,
+          nome,
+          email: l.email,
+          contato,
+          endereco: l.endereco,
+          created_at: l.createdAt
+        };
+    });
+
+    return res.json(result);
+  } catch (err) {
+    return res.status(500).json({ error: 'erro ao listar leads', details: String(err && err.message ? err.message : err) });
   }
 }

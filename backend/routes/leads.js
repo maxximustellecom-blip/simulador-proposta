@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { importLeads, listBatches, getBatchDetail, deleteBatch } from '../controllers/leadsController.js';
+import { importLeads, listBatches, getBatchDetail, deleteBatch, listAllLeads } from '../controllers/leadsController.js';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -11,6 +11,7 @@ const router = express.Router();
 
 router.post('/import', upload.single('file'), importLeads);
 router.get('/batches', listBatches);
+router.get('/mine', listAllLeads); // Nova rota para listar leads do usuário
 router.get('/batches/:id', getBatchDetail);
 router.delete('/batches/:id', deleteBatch);
 
