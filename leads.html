@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leads • Maxximus Telecom</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <main class="container">
+        <div class="card">
+            <div class="card-head">
+                <div class="card-title">
+                    <span>Leads</span>&nbsp;
+                    <span class="chip" id="leadsRoleChip">Cadastro admin • Visualização por usuário</span>
+                </div>
+                <div class="muted">
+                    <button id="openLeadsImportModal" class="btn btn-primary" type="button" style="display:none;">
+                        <i data-lucide="upload"></i>
+                        <span>Nova importação</span>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <section class="section filters-section-sticky" style="margin-top: 20px;">
+                    <div id="filtersLeads" class="filters">
+                        <div>
+                            <div class="label">Filtrar por arquivo</div>
+                            <input id="leadsFilterText" class="input" type="text" placeholder="Nome do arquivo">
+                        </div>
+                        <div id="leadsFilterUserWrapper" style="display:none;">
+                            <div class="label">Usuário</div>
+                            <select id="leadsFilterUser" class="select">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                        <div style="display:flex; align-items:flex-end; gap:0.5rem; margin-left:auto; justify-content:flex-end;">
+                            <button id="leadsFilterClear" class="btn btn-ghost" type="button" title="Limpar">
+                                <i data-lucide="rotate-ccw"></i>
+                                <span>Limpar</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+                <section class="section" style="margin-top: 10px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <div class="label">Remessas de leads</div>
+                        <div class="muted" id="leadsBatchesCount">0 itens</div>
+                    </div>
+                    <div class="table-container" style="margin-top:0.75rem;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Arquivo</th>
+                                    <th style="min-width:80px;">Qtd leads</th>
+                                    <th>Usuário</th>
+                                    <th style="min-width:160px;">Criado em</th>
+                                    <th class="col-actions" style="min-width:140px;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leadsBatchesTbody">
+                                <tr>
+                                    <td colspan="5">
+                                        <div class="skeleton skel-row"></div>
+                                        <div class="skeleton skel-row"></div>
+                                        <div class="skeleton skel-row"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+    <script>
+        const API_BASE = 'http://localhost:3001';
+        let __isAdminUser = false;
+        let __batchesCache = [];
+        let __allBatchesCache = [];
+
+        async function api(path, options = {}) {
+            const authRaw = localStorage.getItem('authUser');
+            let headers = { 'Content-Type': 'application/json' };
+            try {
+                const u = JSON.parse(authRaw || '{}');
+                if (u && u.id) headers['x-user-id'] = String(u.id);
+                if (u && u.role) headers['x-user-role'] = String(u.role);
+                if (u && u.name) headers['x-user-name'] = String(u.name);
+            } catch {}
+            if (options.body instanceof FormData) {
+                delete headers['Content-Type'];
+            }
+            const res = await fetch(API_BASE + path, { ...options, headers });
+            if (!res.ok) {
+                const err = await res.json().catch(function () { return {}; });
+                throw new Error(err.error || ('HTTP ' + res.status));
+            }
+            return res.json();
+        }
+
+        function toast(msg, type) {
+            const el = document.getElementById('toast');
+            if (!el) return;
+            el.textContent = msg;
+            if (type === 'success') {
+                el.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+                el.style.color = '#FFFFFF';
+                el.style.borderColor = 'transparent';
+            } else if (type === 'error') {
+                el.style.background = 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)';
+                el.style.color = '#FFFFFF';
+                el.style.borderColor = 'transparent';
+            } else {
+                el.style.background = 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)';
+                el.style.color = '#FFFFFF';
+                el.style.borderColor = 'transparent';
+            }
+            el.style.display = 'block';
+            clearTimeout(window.__toastTimer);
+            window.__toastTimer = setTimeout(function () { el.style.display = 'none'; }, 2500);
+        }
+
+        function formatDateTime(value) {
+            if (!value) return '-';
+            try {
+                const d = new Date(value);
+                if (Number.isNaN(d.getTime())) return '-';
+                return d.toLocaleString('pt-BR');
+            } catch {
+                return String(value);
+            }
+        }
+
+        function renderBatchesTable(list) {
+            const tbody = document.getElementById('leadsBatchesTbody');
+            const countLabel = document.getElementById('leadsBatchesCount');
+            const arr = Array.isArray(list) ? list : [];
+            __batchesCache = arr.slice();
+            if (countLabel) {
+                countLabel.textContent = arr.length + ' ' + (arr.length === 1 ? 'item' : 'itens');
+            }
+            if (!tbody) return;
+            if (!arr.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="muted" style="text-align:center; padding:1rem;">Nenhuma remessa encontrada</td></tr>';
+                return;
+            }
+            tbody.innerHTML = arr.map(function (b) {
+                const name = b.assigned_user && b.assigned_user.name ? b.assigned_user.name : '-';
+                const createdAt = formatDateTime(b.created_at);
+                return (
+                    '<tr>' +
+                        '<td>' + (b.file_name || '-') + '</td>' +
+                        '<td>' + (b.total_leads || 0) + '</td>' +
+                        '<td>' + name + '</td>' +
+                        '<td>' + createdAt + '</td>' +
+                        '<td class="col-actions" style="min-width:140px;">' +
+                            '<button type="button" class="btn btn-ghost btn-icon" title="Ver leads" onclick="abrirDetalheRemessa(' + b.id + ')">' +
+                                '<i data-lucide="list"></i>' +
+                            '</button>' +
+                        '</td>' +
+                    '</tr>'
+                );
+            }).join('');
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        }
+
+        function aplicarFiltroRemessas() {
+            const textInput = document.getElementById('leadsFilterText');
+            const userSelect = document.getElementById('leadsFilterUser');
+            let arr = Array.isArray(__allBatchesCache) ? __allBatchesCache.slice() : [];
+            const term = textInput && textInput.value ? textInput.value.toLowerCase() : '';
+            if (term) {
+                arr = arr.filter(function (b) {
+                    return String(b.file_name || '').toLowerCase().indexOf(term) !== -1;
+                });
+            }
+            if (__isAdminUser && userSelect && userSelect.value) {
+                const uid = Number(userSelect.value);
+                if (uid) {
+                    arr = arr.filter(function (b) {
+                        return Number(b.assigned_to || 0) === uid;
+                    });
+                }
+            }
+            renderBatchesTable(arr);
+        }
+
+        async function carregarRemessas() {
+            try {
+                const list = await api('/leads/batches', { method: 'GET' }).catch(function () { return []; });
+                __allBatchesCache = Array.isArray(list) ? list.slice() : [];
+                aplicarFiltroRemessas();
+            } catch {
+                __allBatchesCache = [];
+                renderBatchesTable([]);
+                toast('Erro ao carregar remessas de leads', 'error');
+            }
+        }
+
+        async function carregarUsuariosSelect() {
+            try {
+                const list = await api('/auth/users?role=user', { method: 'GET' }).catch(function () { return []; });
+                const arr = Array.isArray(list) ? list : [];
+                const select = document.getElementById('leadsUserSelect');
+                const filterSelect = document.getElementById('leadsFilterUser');
+                if (select) {
+                    if (!arr.length) {
+                        select.innerHTML = '<option value="">Nenhum usuário encontrado</option>';
+                    } else {
+                        select.innerHTML = '<option value="">Selecione o usuário</option>' + arr.map(function (u) {
+                            return '<option value="' + u.id + '">' + (u.name || u.email || ('Usuário ' + u.id)) + '</option>';
+                        }).join('');
+                    }
+                }
+                if (filterSelect) {
+                    if (!arr.length) {
+                        filterSelect.innerHTML = '<option value="">Todos</option>';
+                    } else {
+                        filterSelect.innerHTML = '<option value="">Todos</option>' + arr.map(function (u) {
+                            return '<option value="' + u.id + '">' + (u.name || u.email || ('Usuário ' + u.id)) + '</option>';
+                        }).join('');
+                    }
+                }
+            } catch {
+                const select = document.getElementById('leadsUserSelect');
+                const filterSelect = document.getElementById('leadsFilterUser');
+                if (select) {
+                    select.innerHTML = '<option value="">Erro ao carregar usuários</option>';
+                }
+                if (filterSelect) {
+                    filterSelect.innerHTML = '<option value="">Erro</option>';
+                }
+            }
+        }
+
+        async function importarLeads() {
+            try {
+                const fileInput = document.getElementById('leadsFileInput');
+                if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+                    toast('Selecione um arquivo CSV ou Excel', 'error');
+                    return;
+                }
+                const file = fileInput.files[0];
+                const formData = new FormData();
+                formData.append('file', file);
+                if (__isAdminUser) {
+                    const select = document.getElementById('leadsUserSelect');
+                    const userId = select && select.value ? Number(select.value) : 0;
+                    if (!userId) {
+                        toast('Selecione o usuário para atribuir a remessa', 'error');
+                        return;
+                    }
+                    formData.append('assignedUserId', String(userId));
+                }
+                await api('/leads/import', { method: 'POST', body: formData });
+                toast('Leads importados com sucesso', 'success');
+                fileInput.value = '';
+                const modal = document.getElementById('leadsImportModal');
+                if (modal) {
+                    modal.classList.remove('show');
+                }
+                await carregarRemessas();
+            } catch (e) {
+                toast('Erro ao importar leads', 'error');
+            }
+        }
+
+        async function abrirDetalheRemessa(id) {
+            try {
+                const modal = document.getElementById('leadsDetailModal');
+                const tbody = document.getElementById('leadsDetailTbody');
+                const info = document.getElementById('leadsDetailInfo');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="4"><div class="skeleton skel-row"></div><div class="skeleton skel-row"></div></td></tr>';
+                }
+                if (modal) {
+                    modal.classList.add('show');
+                }
+                const data = await api('/leads/batches/' + id, { method: 'GET' });
+                if (info) {
+                    const owner = data.assigned_user && data.assigned_user.name ? data.assigned_user.name : '-';
+                    info.textContent = 'Arquivo: ' + (data.file_name || '-') + ' • Leads: ' + (data.total_leads || 0) + ' • Usuário: ' + owner;
+                }
+                if (tbody) {
+                    const leads = Array.isArray(data.leads) ? data.leads : [];
+                    if (!leads.length) {
+                        tbody.innerHTML = '<tr><td colspan="4" class="muted" style="text-align:center; padding:1rem;">Nenhum lead encontrado</td></tr>';
+                    } else {
+                        tbody.innerHTML = leads.map(function (l) {
+                            return (
+                                '<tr>' +
+                                    '<td>' + (l.cnpj || '-') + '</td>' +
+                                    '<td>' + (l.email || '-') + '</td>' +
+                                    '<td>' + (l.contato || '-') + '</td>' +
+                                    '<td>' + (l.endereco || '-') + '</td>' +
+                                '</tr>'
+                            );
+                        }).join('');
+                    }
+                }
+                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                    window.lucide.createIcons();
+                }
+            } catch {
+                toast('Erro ao carregar detalhes da remessa', 'error');
+            }
+        }
+
+        function fecharDetalheRemessa() {
+            const modal = document.getElementById('leadsDetailModal');
+            if (modal) modal.classList.remove('show');
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const auth = localStorage.getItem('authUser');
+            if (!auth) {
+                window.location.href = 'login.html';
+                return;
+            }
+            let user = null;
+            try {
+                user = JSON.parse(auth || '{}');
+            } catch {
+                window.location.href = 'login.html';
+                return;
+            }
+            const role = String(user && user.role ? user.role : '').toLowerCase();
+            __isAdminUser = role === 'admin';
+            const chip = document.getElementById('leadsRoleChip');
+            if (chip) {
+                chip.textContent = __isAdminUser ? 'Cadastro admin • Visualização por usuário' : 'Visualização das suas remessas de leads';
+            }
+            if (__isAdminUser) {
+                const filterUserWrapper = document.getElementById('leadsFilterUserWrapper');
+                if (filterUserWrapper) {
+                    filterUserWrapper.style.display = 'block';
+                }
+                carregarUsuariosSelect();
+            }
+            const importBtn = document.getElementById('importLeadsBtn');
+            if (importBtn) {
+                importBtn.addEventListener('click', importarLeads);
+            }
+            const openImport = document.getElementById('openLeadsImportModal');
+            const importModal = document.getElementById('leadsImportModal');
+            const importClose = document.getElementById('leadsImportClose');
+            if (openImport && importModal && __isAdminUser) {
+                openImport.style.display = 'inline-flex';
+                openImport.addEventListener('click', function () {
+                    importModal.classList.add('show');
+                });
+            }
+            if (importClose && importModal) {
+                importClose.addEventListener('click', function () {
+                    importModal.classList.remove('show');
+                });
+            }
+            const filterText = document.getElementById('leadsFilterText');
+            if (filterText) {
+                filterText.addEventListener('input', aplicarFiltroRemessas);
+            }
+            const filterUser = document.getElementById('leadsFilterUser');
+            if (filterUser) {
+                filterUser.addEventListener('change', aplicarFiltroRemessas);
+            }
+            const filterClear = document.getElementById('leadsFilterClear');
+            if (filterClear) {
+                filterClear.addEventListener('click', function () {
+                    if (filterText) filterText.value = '';
+                    if (filterUser) filterUser.value = '';
+                    aplicarFiltroRemessas();
+                });
+            }
+            const closeDetail = document.getElementById('leadsDetailClose');
+            if (closeDetail) {
+                closeDetail.addEventListener('click', fecharDetalheRemessa);
+            }
+            carregarRemessas();
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        });
+    </script>
+    <div id="toast" class="toast"></div>
+    <script src="script.js"></script>
+    <div id="leadsImportModal" class="modal">
+        <div class="modal-card" style="max-width: 800px; width: 95%;">
+            <div class="modal-head">
+                <div>Importar planilha de leads</div>
+                <button id="leadsImportClose" class="btn btn-ghost btn-icon" type="button">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="section">
+                    <div class="grid-2-modal">
+                        <div>
+                            <div class="label">Arquivo CSV ou Excel</div>
+                            <input id="leadsFileInput" class="input" type="file" accept=".csv,.xlsx,.xls">
+                        </div>
+                        <div>
+                            <div class="label">Atribuir para</div>
+                            <select id="leadsUserSelect" class="select">
+                                <option value="">Selecione o usuário</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:flex-end; gap:0.5rem; justify-content:flex-end; margin-top:1rem;">
+                        <button id="importLeadsBtn" class="btn btn-primary" type="button">
+                            <i data-lucide="upload"></i>
+                            <span>Importar</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="leadsDetailModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head">
+                <div>Leads da remessa</div>
+                <button id="leadsDetailClose" class="btn btn-ghost btn-icon" type="button">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="leadsDetailInfo" class="muted"></div>
+                <div class="table-container" style="margin-top:1rem; max-height:60vh; overflow:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>CNPJ</th>
+                                <th>Email</th>
+                                <th>Contato</th>
+                                <th>Endereço</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leadsDetailTbody">
+                            <tr>
+                                <td colspan="4">
+                                    <div class="skeleton skel-row"></div>
+                                    <div class="skeleton skel-row"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -15,6 +15,7 @@ import accessProfileRouter from './routes/accessProfile.js';
 import pedidoDeVendaRouter from './routes/pedidoDeVenda.js';
 import regiaoRouter from './routes/regiao.js';
 import tipoRouter from './routes/tipo.js';
+import leadsRouter from './routes/leads.js';
 import authContext from './middleware/authContext.js';
 
 dotenv.config();
@@ -42,6 +43,7 @@ app.use('/access-profiles', accessProfileRouter);
 app.use('/pedidos-venda', pedidoDeVendaRouter);
 app.use('/regioes', regiaoRouter);
 app.use('/types', tipoRouter);
+app.use('/leads', leadsRouter);
 
 const port = process.env.PORT || 3001;
 

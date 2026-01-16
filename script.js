@@ -35,7 +35,7 @@
   var simOpen = isActive('simular') || isActive('historico-simulacoes');
   var ofertaOpen = isActive('categorias') || isActive('produtos');
   var customOpen = isActive('categoria-customizada') || isActive('produto-customizado');
-  var adminOpen = isActive('usuarios') || isActive('perfis-acesso') || isActive('pedido-vendas');
+  var adminOpen = isActive('usuarios') || isActive('perfis-acesso') || isActive('pedido-vendas') || isActive('leads');
   var sidebarHtml =
     '<nav class="sidebar">' +
       '<div class="sidebar-inner">' +
@@ -84,6 +84,7 @@
         '<div id="adminMenu" class="nav-subgroup" style="display:' + ((isAdmin && adminOpen) ? 'flex' : 'none') + ';">' +
           '<a href="pedido-vendas.html" class="nav-sublink' + (isActive('pedido-vendas') ? ' active' : '') + '"><i data-lucide="shopping-cart"></i><span>Pedidos de Vendas</span></a>' +
           '<a href="usuarios.html" class="nav-sublink' + (isActive('usuarios') ? ' active' : '') + '"><i data-lucide="users"></i><span>Usuários</span></a>' +
+          '<a href="leads.html" class="nav-sublink' + (isActive('leads') ? ' active' : '') + '"><i data-lucide="file-spreadsheet"></i><span>Leads</span></a>' +
           '<a href="perfis-acesso.html" class="nav-sublink' + (isActive('perfis-acesso') ? ' active' : '') + '"><i data-lucide="shield"></i><span>Perfis de Acesso</span></a>' +
         '</div>' +
       '</div>' +

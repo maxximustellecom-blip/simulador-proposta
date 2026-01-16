@@ -16,6 +16,8 @@ import AccessProfile from './AccessProfile.js';
 import PedidoDeVenda from './PedidoDeVenda.js';
 import Regiao from './Regiao.js';
 import Tipo from './Tipo.js';
+import LeadBatch from './LeadBatch.js';
+import Lead from './Lead.js';
 
 Simulation.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 User.hasMany(Simulation, { foreignKey: 'created_by', as: 'simulations' });
@@ -37,4 +39,11 @@ NegociacaoPropostaCustomizadaAnexos.belongsTo(Negotiation, { foreignKey: 'negoti
 Negotiation.hasOne(PedidoDeVenda, { foreignKey: 'negotiation_id', as: 'pedidoDeVenda' });
 PedidoDeVenda.belongsTo(Negotiation, { foreignKey: 'negotiation_id', as: 'negotiation' });
 
-export { sequelize, User, Client, Simulation, Sale, Category, Product, Negotiation, NegociacaoProposta, CustomCategory, CustomProduct, NegociacaoPropostaCustomizada, NegociacaoPropostaAnexos, NegociacaoPropostaCustomizadaAnexos, AccessProfile, PedidoDeVenda, Regiao, Tipo };
+LeadBatch.belongsTo(User, { foreignKey: 'assigned_to', as: 'assignedUser' });
+LeadBatch.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
+User.hasMany(LeadBatch, { foreignKey: 'assigned_to', as: 'assignedLeadBatches' });
+User.hasMany(LeadBatch, { foreignKey: 'created_by', as: 'createdLeadBatches' });
+LeadBatch.hasMany(Lead, { foreignKey: 'batch_id', as: 'leads' });
+Lead.belongsTo(LeadBatch, { foreignKey: 'batch_id', as: 'batch' });
+
+export { sequelize, User, Client, Simulation, Sale, Category, Product, Negotiation, NegociacaoProposta, CustomCategory, CustomProduct, NegociacaoPropostaCustomizada, NegociacaoPropostaAnexos, NegociacaoPropostaCustomizadaAnexos, AccessProfile, PedidoDeVenda, Regiao, Tipo, LeadBatch, Lead };
