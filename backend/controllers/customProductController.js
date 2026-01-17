@@ -155,16 +155,19 @@ export async function exportCustomProducts(req, res) {
         .filter(v => v !== '')
         .join(',');
       if (values) {
-        regiaoMap[values] = r.nome || r.name || '';
+        regiaoMap[values] = { id: r.id, nome: r.nome || r.name || '' };
       }
     });
 
-    let csv = 'id,categoria_id,categoria_nome,categoria_tipo,nome,descricao,preco,regiao_nome,regiao_valor,created_at,updated_at\n';
+    let csv = 'id,categoria_id,categoria_nome,categoria_tipo,nome,descricao,preco,regiao_id,regiao_nome,regiao_valor,created_at,updated_at\n';
     prods.forEach(p => {
       const categoriaNome = p.category && (p.category.nome || p.category.name) ? (p.category.nome || p.category.name) : '';
       const categoriaTipo = p.category && p.category.tipo ? p.category.tipo : '';
       const regiaoValor = p.regiao || '';
-      const regiaoNome = regiaoMap[regiaoValor] || '';
+      const regiaoObj = regiaoMap[regiaoValor] || {};
+      const regiaoId = regiaoObj.id || '';
+      const regiaoNome = regiaoObj.nome || '';
+      
       const createdAt = p.created_at || p.createdAt || '';
       const updatedAt = p.updated_at || p.updatedAt || '';
       const fields = [
@@ -175,6 +178,7 @@ export async function exportCustomProducts(req, res) {
         p.nome,
         p.descricao || '',
         p.preco,
+        regiaoId,
         regiaoNome,
         regiaoValor,
         createdAt,
@@ -231,10 +235,12 @@ export async function importCustomProducts(req, res) {
       if (norm === 'id') key = 'id';
       else if (norm === 'categoria_id' || norm === 'id_categoria') key = 'categoria_id';
       else if (norm === 'categoria_nome' || norm === 'nome_categoria') key = 'categoria_nome';
-      else if (norm === 'tipo') key = 'tipo';
+      else if (norm === 'tipo' || norm === 'categoria_tipo' || norm === 'tipo_categoria') key = 'tipo';
       else if (norm === 'nome' || norm.includes('produto') || norm.includes('oferta')) key = 'nome';
       else if (norm.includes('descricao') || norm.includes('descri')) key = 'descricao';
-      else if ((norm.includes('regiao') && !norm.includes('nome')) || norm.includes('ddd')) key = 'regiao';
+      else if ((norm.includes('regiao') && !norm.includes('nome') && !norm.includes('id')) || norm.includes('ddd')) key = 'regiao_valor';
+      else if (norm === 'regiao_id' || norm === 'id_regiao') key = 'regiao_id';
+      else if (norm === 'regiao_nome' || norm === 'nome_regiao') key = 'regiao_nome';
       else if (norm.includes('preco') || norm.includes('preço') || norm === 'valor') key = 'preco';
       if (key) mapping.push({ index, header: h, key });
     });
@@ -261,7 +267,32 @@ export async function importCustomProducts(req, res) {
       const id = idRaw ? Number(String(idRaw).replace(/\D/g, '')) : 0;
       const nome = values.nome || '';
       const descricao = values.descricao || null;
-      const regiao = values.regiao || null;
+      
+      const regiaoValor = values.regiao_valor || values.regiao || null;
+      const regiaoIdRaw = values.regiao_id || '';
+      const regiaoNome = values.regiao_nome || '';
+      
+      let finalRegiao = regiaoValor;
+      if (regiaoIdRaw) {
+        const rid = Number(String(regiaoIdRaw).replace(/\D/g, ''));
+        if (rid) {
+          const r = await Regiao.findByPk(rid);
+          if (r) {
+            let items = r.items || [];
+            if (!Array.isArray(items)) { try { items = JSON.parse(items); } catch {} }
+            finalRegiao = items.map(i => i.v).join(',');
+          }
+        }
+      } else if (regiaoNome) {
+        const r = await Regiao.findOne({ where: { nome: regiaoNome } });
+        if (r) {
+          let items = r.items || [];
+          if (!Array.isArray(items)) { try { items = JSON.parse(items); } catch {} }
+          finalRegiao = items.map(i => i.v).join(',');
+        }
+      }
+
+      const regiao = finalRegiao;
       const precoRaw = values.preco || '';
       let preco = null;
       if (precoRaw) {

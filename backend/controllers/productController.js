@@ -235,7 +235,7 @@ export async function importProducts(req, res) {
       if (norm === 'id') key = 'id';
       else if (norm === 'categoria_id' || norm === 'id_categoria') key = 'categoria_id';
       else if (norm === 'categoria_nome' || norm === 'nome_categoria') key = 'categoria_nome';
-      else if (norm === 'tipo') key = 'tipo';
+      else if (norm === 'tipo' || norm === 'categoria_tipo' || norm === 'tipo_categoria') key = 'tipo';
       else if (norm === 'nome' || norm.includes('produto') || norm.includes('oferta')) key = 'nome';
       else if (norm.includes('descricao') || norm.includes('descri')) key = 'descricao';
       else if ((norm.includes('regiao') && !norm.includes('nome') && !norm.includes('id')) || norm.includes('ddd')) key = 'regiao_valor';
