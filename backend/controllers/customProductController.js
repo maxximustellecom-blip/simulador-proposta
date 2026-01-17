@@ -296,8 +296,27 @@ export async function importCustomProducts(req, res) {
       const precoRaw = values.preco || '';
       let preco = null;
       if (precoRaw) {
-        const cleaned = String(precoRaw).replace(/\./g, '').replace(',', '.');
-        const n = Number(cleaned);
+        let s = String(precoRaw).trim().replace(/\s/g, '');
+        const commaIndex = s.lastIndexOf(',');
+        const dotIndex = s.lastIndexOf('.');
+        if (commaIndex >= 0 && dotIndex >= 0) {
+          if (commaIndex > dotIndex) {
+            s = s.replace(/\./g, '');
+            s = s.replace(',', '.');
+          } else {
+            s = s.replace(/,/g, '');
+          }
+        } else if (commaIndex >= 0) {
+          s = s.replace(/\./g, '');
+          s = s.replace(',', '.');
+        } else if (dotIndex >= 0) {
+          const parts = s.split('.');
+          if (parts.length > 2) {
+            const decimal = parts.pop();
+            s = parts.join('') + '.' + decimal;
+          }
+        }
+        const n = Number(s);
         if (!Number.isNaN(n)) {
           preco = n;
         }
