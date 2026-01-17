@@ -1837,7 +1837,7 @@
                 const pageSize = lastPage.getSize();
                 const height = pageSize.height;
                 const fontSizeTitulo = 14;
-                const fontSizeLinha = 9;
+                const fontSizeLinha = 8;
                 const tableWidth = 500; // Largura da tabela
                 const marginLeft = (pageSize.width - tableWidth) / 2; // Centralizado com a tabela
                 let y = height - 60;
@@ -1855,14 +1855,13 @@
                 y -= 8;
                 const headerY = y;
                 const tableX = marginLeft; // Tabela centralizada (mesmo X do texto)
-                // Definicao das colunas relative ao tableX
                 const colQtdX = tableX + 10;
                 const colTipoX = tableX + 60;
-                const colPlanoX = tableX + 120;
-                const colOfertaX = tableX + 220;
-                const colValorX = tableX + 330;
-                const colAparelhoX = tableX + 400;
-                const colValorApX = tableX + 470;
+                const colPlanoX = tableX + 110;
+                const colOfertaX = tableX + 200;
+                const colAparelhoX = tableX + 320;
+                const colValorApX = tableX + 390;
+                const colValorX = tableX + 470;
                 
                 const rowHeight = 16;
                 const headerSize = 9;
@@ -1896,14 +1895,13 @@
                     borderWidth: 0 // Sem borda ou borda sutil
                 });
 
-                // Textos do cabecalho
                 lastPage.drawText('Qtd', { x: colQtdX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
                 lastPage.drawText('Tipo', { x: colTipoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
                 lastPage.drawText('Plano', { x: colPlanoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
                 lastPage.drawText('Oferta', { x: colOfertaX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
-                lastPage.drawText('Valor', { x: colValorX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
                 lastPage.drawText('Aparelho', { x: colAparelhoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
                 lastPage.drawText('Valor ap.', { x: colValorApX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+                lastPage.drawText('Valor', { x: colValorX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
 
                 let yLinha = headerY - rowHeight;
                 let totalSoma = 0;
@@ -1922,24 +1920,23 @@
                     totalSoma += linhaVal;
                     
                     let planoTexto = plano;
-                    if (planoTexto.length > 24) planoTexto = planoTexto.substring(0, 21) + '...';
+                    if (planoTexto.length > 18) planoTexto = planoTexto.substring(0, 15) + '...';
                     let ofertaTexto = oferta;
-                    if (ofertaTexto.length > 30) ofertaTexto = ofertaTexto.substring(0, 27) + '...';
+                    if (ofertaTexto.length > 18) ofertaTexto = ofertaTexto.substring(0, 15) + '...';
                     
                     lastPage.drawText(qtd, { x: colQtdX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(tipo, { x: colTipoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(planoTexto, { x: colPlanoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(ofertaTexto, { x: colOfertaX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(valorLinha, { x: colValorX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(aparelhoTipo, { x: colAparelhoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(valorAparelho, { x: colValorApX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(valorLinha, { x: colValorX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     
                     yLinha -= rowHeight;
                 }
                 
                 const yTotal = yLinha - 4;
                 const totalLabel = 'Valor Total: ' + totalFormatado;
-                // Desenha total alinhado a direita (perto da coluna valor)
                 lastPage.drawText(totalLabel, { x: colValorX - 40, y: yTotal, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
