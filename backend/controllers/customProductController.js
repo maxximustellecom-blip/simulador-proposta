@@ -1,4 +1,63 @@
+import xlsx from 'xlsx';
 import { CustomProduct, CustomCategory } from '../models/index.js';
+
+function normalizeHeaderName(name) {
+  return String(name || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function parseCsv(content) {
+  const text = String(content || '');
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (!lines.length) return { headers: [], rows: [] };
+  const rows = [];
+  let current = [];
+  let value = '';
+  let inQuotes = false;
+  function pushValue() {
+    current.push(value);
+    value = '';
+  }
+  function pushRow() {
+    if (current.length > 0) {
+      rows.push(current);
+      current = [];
+    }
+  }
+  const chars = Array.from(text);
+  for (let i = 0; i < chars.length; i++) {
+    const ch = chars[i];
+    if (ch === '"') {
+      if (inQuotes && chars[i + 1] === '"') {
+        value += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === ',' && !inQuotes) {
+      pushValue();
+    } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+      if (ch === '\r' && chars[i + 1] === '\n') {
+        i++;
+      }
+      pushValue();
+      pushRow();
+    } else {
+      value += ch;
+    }
+  }
+  if (value.length > 0 || current.length > 0) {
+    pushValue();
+    pushRow();
+  }
+  if (!rows.length) return { headers: [], rows: [] };
+  const headers = rows[0].map(h => String(h || '').trim());
+  const dataRows = rows.slice(1).filter(r => r.some(v => String(v || '').trim().length > 0));
+  return { headers, rows: dataRows };
+}
 
 export async function listCustomProducts(req, res) {
   try {
@@ -71,3 +130,184 @@ export async function deleteCustomProduct(req, res) {
   }
 }
 
+export async function exportCustomProducts(req, res) {
+  try {
+    const prods = await CustomProduct.findAll({
+      include: [{ model: CustomCategory, as: 'category' }],
+      order: [['created_at', 'DESC']]
+    });
+    let csv = 'id,categoria_id,categoria_nome,tipo,nome,descricao,preco,regiao\n';
+    prods.forEach(p => {
+      const categoriaNome = p.category && (p.category.nome || p.category.name) ? (p.category.nome || p.category.name) : '';
+      const tipo = p.category && p.category.tipo ? p.category.tipo : '';
+      const fields = [
+        p.id,
+        p.categoria_id,
+        categoriaNome,
+        tipo,
+        p.nome,
+        p.descricao || '',
+        p.preco,
+        p.regiao || ''
+      ];
+      const row = fields.map(f => {
+        const v = f === null || f === undefined ? '' : String(f);
+        return '"' + v.replace(/"/g, '""') + '"';
+      }).join(',');
+      csv += row + '\n';
+    });
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="produtos-customizados.csv"');
+    return res.send(csv);
+  } catch (err) {
+    return res.status(500).json({ error: 'erro ao exportar produtos customizados', details: String(err && err.message ? err.message : err) });
+  }
+}
+
+export async function importCustomProducts(req, res) {
+  try {
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ error: 'arquivo obrigatório' });
+    }
+    const originalName = String(req.file.originalname || '').toLowerCase();
+    const ext = originalName.split('.').pop() || '';
+    let headers = [];
+    let rows = [];
+    if (ext === 'xls' || ext === 'xlsx') {
+      const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames && workbook.SheetNames[0];
+      if (!sheetName) {
+        return res.status(400).json({ error: 'planilha vazia ou inválida' });
+      }
+      const sheet = workbook.Sheets[sheetName];
+      const data = xlsx.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+      if (!Array.isArray(data) || !data.length) {
+        return res.status(400).json({ error: 'planilha vazia ou inválida' });
+      }
+      headers = data[0].map(h => String(h || '').trim());
+      rows = data.slice(1).filter(r => Array.isArray(r) && r.some(v => String(v || '').trim().length > 0));
+    } else {
+      const parsed = parseCsv(req.file.buffer.toString('utf8'));
+      headers = parsed.headers;
+      rows = parsed.rows;
+    }
+    if (!headers.length || !rows.length) {
+      return res.status(400).json({ error: 'planilha vazia ou inválida' });
+    }
+    const mapping = [];
+    headers.forEach((h, index) => {
+      const norm = normalizeHeaderName(h);
+      let key = null;
+      if (norm === 'id') key = 'id';
+      else if (norm === 'categoria_id' || norm === 'id_categoria') key = 'categoria_id';
+      else if (norm === 'categoria_nome' || norm === 'nome_categoria') key = 'categoria_nome';
+      else if (norm === 'tipo') key = 'tipo';
+      else if (norm === 'nome' || norm.includes('produto') || norm.includes('oferta')) key = 'nome';
+      else if (norm.includes('descricao') || norm.includes('descri')) key = 'descricao';
+      else if (norm.includes('preco') || norm.includes('preço') || norm === 'valor') key = 'preco';
+      else if (norm.includes('regiao') || norm.includes('região') || norm.includes('ddd')) key = 'regiao';
+      if (key) mapping.push({ index, header: h, key });
+    });
+    if (!mapping.length) {
+      return res.status(400).json({ error: 'nenhuma coluna reconhecida na planilha' });
+    }
+    let updated = 0;
+    let created = 0;
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const values = {};
+      mapping.forEach(({ index, key }) => {
+        const raw = row[index];
+        if (raw !== undefined && raw !== null) {
+          values[key] = String(raw).trim();
+        }
+      });
+      const hasAny = Object.values(values).some(v => String(v || '').trim().length > 0);
+      if (!hasAny) {
+        continue;
+      }
+      const lineNumber = i + 2;
+      const idRaw = values.id || '';
+      const id = idRaw ? Number(String(idRaw).replace(/\D/g, '')) : 0;
+      const nome = values.nome || '';
+      const descricao = values.descricao || null;
+      const regiao = values.regiao || null;
+      const precoRaw = values.preco || '';
+      let preco = null;
+      if (precoRaw) {
+        const cleaned = String(precoRaw).replace(/\./g, '').replace(',', '.');
+        const n = Number(cleaned);
+        if (!Number.isNaN(n)) {
+          preco = n;
+        }
+      }
+      let categoriaId = null;
+      const categoriaIdRaw = values.categoria_id || '';
+      const categoriaNomeRaw = values.categoria_nome || '';
+      const tipoRaw = values.tipo || '';
+      if (categoriaIdRaw) {
+        const cid = Number(String(categoriaIdRaw).replace(/\D/g, ''));
+        if (cid) {
+          const cat = await CustomCategory.findByPk(cid);
+          if (!cat) {
+            return res.status(400).json({ error: 'categoria não encontrada na linha ' + lineNumber });
+          }
+          categoriaId = cid;
+        }
+      } else if (categoriaNomeRaw) {
+        const where = { nome: categoriaNomeRaw };
+        if (tipoRaw) {
+          where.tipo = tipoRaw;
+        }
+        const cat = await CustomCategory.findOne({ where });
+        if (!cat) {
+          return res.status(400).json({ error: 'categoria não encontrada para "' + categoriaNomeRaw + '" na linha ' + lineNumber });
+        }
+        categoriaId = cat.id;
+      }
+      let prod = null;
+      if (id) {
+        prod = await CustomProduct.findByPk(id);
+      }
+      if (prod) {
+        if (categoriaId !== null) {
+          prod.categoria_id = categoriaId;
+        }
+        if (nome) {
+          prod.nome = nome;
+        }
+        if (descricao !== null) {
+          prod.descricao = descricao || null;
+        }
+        if (preco !== null) {
+          prod.preco = preco;
+        }
+        if (regiao !== null) {
+          prod.regiao = regiao || null;
+        }
+        await prod.save();
+        updated++;
+      } else {
+        if (!nome) {
+          return res.status(400).json({ error: 'nome é obrigatório na linha ' + lineNumber });
+        }
+        if (!categoriaId) {
+          return res.status(400).json({ error: 'categoria é obrigatória na linha ' + lineNumber });
+        }
+        const prodCreated = await CustomProduct.create({
+          categoria_id: categoriaId,
+          nome,
+          descricao: descricao || null,
+          preco: preco !== null ? preco : 0,
+          regiao: regiao || null
+        });
+        if (prodCreated && prodCreated.id) {
+          created++;
+        }
+      }
+    }
+    return res.json({ ok: true, updated, created, total: updated + created });
+  } catch (err) {
+    return res.status(500).json({ error: 'erro ao importar produtos customizados', details: String(err && err.message ? err.message : err) });
+  }
+}

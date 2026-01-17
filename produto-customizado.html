@@ -16,7 +16,9 @@
                     <span>Ofertas</span>&nbsp;
                     <span class="chip">Customizado</span>
                 </div>
-                <div class="muted">
+                <div class="muted" style="display:flex; gap:0.5rem; align-items:center;">
+                    <button id="exportCustomProdutosBtn" class="btn btn-ghost" type="button"><i data-lucide="download"></i><span>Exportar</span></button>
+                    <button id="importCustomProdutosBtn" class="btn btn-ghost" type="button"><i data-lucide="upload"></i><span>Importar</span></button>
                     <button id="novoProdutoBtn" class="btn btn-primary" type="button"><i data-lucide="plus"></i><span>Nova oferta</span></button>
                 </div>
             </div>
@@ -85,7 +87,10 @@
                 if (u && u.role) headers['x-user-role'] = String(u.role);
                 if (u && u.name) headers['x-user-name'] = String(u.name);
             } catch {}
-            const res = await fetch(API_BASE + path, { headers, ...options });
+            if (options.body instanceof FormData) {
+                delete headers['Content-Type'];
+            }
+            const res = await fetch(API_BASE + path, { ...options, headers });
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 throw new Error(err.error || ('HTTP ' + res.status));
@@ -176,6 +181,57 @@
             } catch {
                 __produtos = [];
                 renderProdutosTable([]);
+            }
+        }
+        async function exportCustomProdutos() {
+            try {
+                const authRaw = localStorage.getItem('authUser');
+                let headers = {};
+                try {
+                    const u = JSON.parse(authRaw || '{}');
+                    if (u && u.id) headers['x-user-id'] = String(u.id);
+                    if (u && u.role) headers['x-user-role'] = String(u.role);
+                    if (u && u.name) headers['x-user-name'] = String(u.name);
+                } catch {}
+                const res = await fetch(API_BASE + '/custom-products/export', { method: 'GET', headers });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || ('HTTP ' + res.status));
+                }
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'produtos-customizados-' + new Date().toISOString().slice(0, 10) + '.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                toast('Planilha exportada com sucesso', 'success');
+            } catch {
+                toast('Erro ao exportar planilha de produtos', 'error');
+            }
+        }
+        async function importarCustomProdutos() {
+            try {
+                const fileInput = document.getElementById('customProdutosFileInput');
+                if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+                    toast('Selecione um arquivo CSV ou Excel', 'error');
+                    return;
+                }
+                const file = fileInput.files[0];
+                const formData = new FormData();
+                formData.append('file', file);
+                await api('/custom-products/import', { method: 'POST', body: formData });
+                toast('Produtos importados com sucesso', 'success');
+                fileInput.value = '';
+                const modal = document.getElementById('customProdutosImportModal');
+                if (modal) {
+                    modal.classList.remove('show');
+                }
+                await carregarProdutos();
+            } catch {
+                toast('Erro ao importar produtos', 'error');
             }
         }
         function aplicarFiltroProdutos() {
@@ -351,6 +407,26 @@
                     if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
                 });
             }
+            const exportBtn = document.getElementById('exportCustomProdutosBtn');
+            if (exportBtn) exportBtn.addEventListener('click', exportCustomProdutos);
+            const importBtn = document.getElementById('importCustomProdutosBtn');
+            const importModal = document.getElementById('customProdutosImportModal');
+            const importClose = document.getElementById('customProdutosImportClose');
+            const importConfirm = document.getElementById('importCustomProdutosConfirmBtn');
+            if (importBtn && importModal) {
+                importBtn.addEventListener('click', () => {
+                    importModal.classList.add('show');
+                    if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+                });
+            }
+            if (importClose && importModal) {
+                importClose.addEventListener('click', () => {
+                    importModal.classList.remove('show');
+                });
+            }
+            if (importConfirm) {
+                importConfirm.addEventListener('click', importarCustomProdutos);
+            }
             const buscarBtn = document.getElementById('prodBuscarBtn');
             const limparBtn = document.getElementById('prodLimparBtn');
             if (buscarBtn) buscarBtn.addEventListener('click', aplicarFiltroProdutos);
@@ -485,6 +561,30 @@
     </script>
     <div id="toast" class="toast"></div>
     <script src="script.js"></script>
+    <div id="customProdutosImportModal" class="modal">
+        <div class="modal-card" style="max-width: 800px; width: 95%;">
+            <div class="modal-head">
+                <div>Importar planilha de produtos customizados</div>
+                <button id="customProdutosImportClose" class="btn btn-ghost btn-icon" type="button">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="section">
+                    <div>
+                        <div class="label">Arquivo CSV ou Excel</div>
+                        <input id="customProdutosFileInput" class="input" type="file" accept=".csv,.xlsx,.xls">
+                    </div>
+                    <div style="display:flex; align-items:flex-end; gap:0.5rem; justify-content:flex-end; margin-top:1rem;">
+                        <button id="importCustomProdutosConfirmBtn" class="btn btn-primary" type="button">
+                            <i data-lucide="upload"></i>
+                            <span>Importar</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="produtoModal" class="modal">
         <div class="modal-card">
             <div class="modal-head"><div>Oferta</div><button id="mProdFechar" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
