@@ -1,5 +1,5 @@
 import xlsx from 'xlsx';
-import { CustomProduct, CustomCategory } from '../models/index.js';
+import { CustomProduct, CustomCategory, Regiao } from '../models/index.js';
 
 function normalizeHeaderName(name) {
   return String(name || '')
@@ -132,23 +132,53 @@ export async function deleteCustomProduct(req, res) {
 
 export async function exportCustomProducts(req, res) {
   try {
-    const prods = await CustomProduct.findAll({
-      include: [{ model: CustomCategory, as: 'category' }],
-      order: [['created_at', 'DESC']]
+    const [prods, regioes] = await Promise.all([
+      CustomProduct.findAll({
+        include: [{ model: CustomCategory, as: 'category' }],
+        order: [['created_at', 'DESC']]
+      }),
+      Regiao.findAll()
+    ]);
+
+    const regiaoMap = {};
+    regioes.forEach(r => {
+      let items = r.items || [];
+      if (!Array.isArray(items)) {
+        try {
+          items = JSON.parse(items);
+        } catch {
+          items = [];
+        }
+      }
+      const values = items
+        .map(i => (i && i.v !== undefined && i.v !== null ? String(i.v) : ''))
+        .filter(v => v !== '')
+        .join(',');
+      if (values) {
+        regiaoMap[values] = r.nome || r.name || '';
+      }
     });
-    let csv = 'id,categoria_id,categoria_nome,tipo,nome,descricao,preco,regiao\n';
+
+    let csv = 'id,categoria_id,categoria_nome,categoria_tipo,nome,descricao,preco,regiao_nome,regiao_valor,created_at,updated_at\n';
     prods.forEach(p => {
       const categoriaNome = p.category && (p.category.nome || p.category.name) ? (p.category.nome || p.category.name) : '';
-      const tipo = p.category && p.category.tipo ? p.category.tipo : '';
+      const categoriaTipo = p.category && p.category.tipo ? p.category.tipo : '';
+      const regiaoValor = p.regiao || '';
+      const regiaoNome = regiaoMap[regiaoValor] || '';
+      const createdAt = p.created_at || p.createdAt || '';
+      const updatedAt = p.updated_at || p.updatedAt || '';
       const fields = [
         p.id,
         p.categoria_id,
         categoriaNome,
-        tipo,
+        categoriaTipo,
         p.nome,
         p.descricao || '',
         p.preco,
-        p.regiao || ''
+        regiaoNome,
+        regiaoValor,
+        createdAt,
+        updatedAt
       ];
       const row = fields.map(f => {
         const v = f === null || f === undefined ? '' : String(f);
@@ -204,8 +234,8 @@ export async function importCustomProducts(req, res) {
       else if (norm === 'tipo') key = 'tipo';
       else if (norm === 'nome' || norm.includes('produto') || norm.includes('oferta')) key = 'nome';
       else if (norm.includes('descricao') || norm.includes('descri')) key = 'descricao';
+      else if ((norm.includes('regiao') && !norm.includes('nome')) || norm.includes('ddd')) key = 'regiao';
       else if (norm.includes('preco') || norm.includes('preço') || norm === 'valor') key = 'preco';
-      else if (norm.includes('regiao') || norm.includes('região') || norm.includes('ddd')) key = 'regiao';
       if (key) mapping.push({ index, header: h, key });
     });
     if (!mapping.length) {
