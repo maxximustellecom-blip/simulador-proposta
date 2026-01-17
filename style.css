@@ -232,6 +232,9 @@ html, body {
 .card .form-group { margin-bottom: 1rem; }
 .card .actions { margin-top: 0.75rem; }
 @media (min-width: 920px) {
+  .container {
+    max-width: 1540px;
+  }
   .card {
     padding: 1.2rem;
     margin-bottom: 1.2rem;
@@ -571,10 +574,10 @@ select option[disabled], .select option[disabled] {
   .sidebar { display: block; }
   .bottomnav { display: none; }
   .container {
-    max-width: 1280px;
+    max-width: 1540px;
     width: auto;
-    margin-left: calc(220px + max(0px, (100vw - 220px - 1280px) / 2));
-    margin-right: calc(max(0px, (100vw - 220px - 1280px) / 2));
+    margin-left: calc(245px + max(0px, (100% - 245px - 1540px) / 2));
+    margin-right: calc(max(0px, (100% - 245px - 1540px) / 2));
     padding-left: 1rem;
     padding-right: 1rem;
   }
