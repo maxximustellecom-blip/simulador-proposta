@@ -1575,14 +1575,72 @@
             if (c.email) contatoParts.push(c.email);
             const contato = contatoParts.join(' • ');
 
+            let consultorNome = '-';
+            let consultorEmail = '';
+            try {
+                const u = JSON.parse(localStorage.getItem('authUser') || '{}');
+                if (u && u.name) consultorNome = u.name;
+                if (u && u.email) consultorEmail = u.email;
+            } catch {}
+            const consultorLinha = consultorEmail ? ('Consultor: ' + consultorNome + ' (' + consultorEmail + ')') : ('Consultor: ' + consultorNome);
+
+            const n = __negociacaoInfo || {};
+            const negParts = [];
+            if (n.tipo) negParts.push('Tipo: ' + n.tipo);
+            if (n.proposta) negParts.push('Proposta: ' + n.proposta);
+            if (n.data) negParts.push('Data: ' + n.data);
+            const statusNeg = (typeof __negociacaoStatus !== 'undefined' && __negociacaoStatus) ? __negociacaoStatus : (n.status || '');
+            if (statusNeg) negParts.push('Status: ' + statusNeg);
+            const negResumo = negParts.join(' • ') || '-';
+
+            const cabecalhoContrato = [
+                consultorLinha,
+                'Razão Social: ' + (c.name || '-'),
+                'CNPJ: ' + (formatCnpj(n.cnpj || c.cnpj || '') || '-'),
+                'Nome Fantasia: ' + (c.fantasy_name || '-'),
+                'Email: ' + (c.email || '-'),
+                'Telefone: ' + ((formatPhone(c.phone || '') || '-') ),
+                'Abertura: ' + (c.opening_date || '-'),
+                '________',
+                'Endereço: ' + (endereco || '-'),
+                'Ponto de referencia: ' + (c.complement || '-'),
+                '________',
+                'ADMINISTRADOR DO CONTRATO: ' + (c.gestor_nome || '-'),
+                'Nome: ' + (c.gestor_nome || '-'),
+                'RG/ORGÃO EXPEDITOR: ' + (c.gestor_rg || '-'),
+                'CPF: ' + (c.gestor_cpf || '-'),
+                'E-mail: ' + (c.email || '-'),
+                'Telefone: ' + ((formatPhone(c.gestor_tel1 || c.gestor_tel2 || c.phone || '') || '-') ),
+                '',
+                'REPRESENTANTE LEGAL: ' + (c.rep_nome || '-'),
+                'Nome: ' + (c.rep_nome || '-'),
+                'RG/ORGÃO EXPEDITOR: ' + (c.rep_rg || '-'),
+                '',
+                'SOCIO 1: ',
+                'Nome: ',
+                'RG/ORGÃO EXPEDITOR: ',
+                'CPF: ',
+                'SOCIO 2: ',
+                'Nome: ',
+                'RG/ORGÃO EXPEDITOR: ',
+                'CPF: ',
+                '',
+                'TESTEMUNHA 1: ',
+                'Nome: ',
+                'CPF: ',
+                'TESTEMUNHA 2: ',
+                'Nome: ',
+                'CPF: ',
+                '_______________',
+                'Negociação: ' + negResumo
+            ].join('\n');
+
             const header = [
                 '✨ Proposta Padrão • Maxximus Telecom',
                 '🏢 Cliente: ' + ((document.getElementById('clienteNome').textContent) || '-'),
                 '🧾 CNPJ: ' + ((document.getElementById('clienteCnpj').textContent) || '-'),
                 (endereco ? '📍 Endereço: ' + endereco : ''),
                 (contato ? '📞 Contato: ' + contato : ''),
-                '� Tipo: ' + ((document.getElementById('negTipo').textContent) || '-'),
-                '� Status: ' + ((document.getElementById('negStatusLabel').textContent) || '-'),
                 '───────────────────────────────────'
             ].filter(l => l !== '').join('\n');
             const linhasTxt = __linhas.map((l, idx) => {
@@ -1591,31 +1649,7 @@
                 const dddTxt = l.ddd ? `DDD ${l.ddd}` : '-';
                 const numTxt = l.numero ? `\n    Número: ${l.numero}` : '';
                 
-                // Na proposta padrão não temos "Atual" detalhado, então omitimos ou deixamos traço
-                const atual = `- R$ 0,00`; 
                 const proposto = `${l.plano || '-'} ${l.pct || '-'}`;
-                const desc = '0%'; // Padrão não tem calculo explicito de desconto visualizado na tabela da mesma forma, mas se tiver pct, poderia ser. Vamos deixar fixo ou ajustavel se precisar.
-                // Ajustando para o template solicitado
-                // Campos solicitados anteriormente: Quantidade, Unitário, Total.
-                // O template do usuário mostra: Tipo, Atual, Proposto, Não Fid, Desconto, Preço Final, Economia.
-                // Mas o usuário pediu "ajuste os textos que te falei" (colocar quantidade, preço unitario, preço total, retirar valor nao fidelizado, retirar economia...).
-                // Então vou mesclar o DESIGN do template com os DADOS que ele pediu.
-                
-                /*
-                   Pedido anterior:
-                   - colocar quantidade
-                   - colocar preço unitario
-                   - colocar preço total
-                   - retirar valor nao fidelizado
-                   - retirar economia
-                   - resumo: receita atual -> plano atual
-                   - resumo: proposta -> nova proposta
-                   - resumo: retirar economia
-                   - resumo: retirar total de acessos
-                   - resumo: colocar total de dados atual
-                   - resumo: colocar total de dados nova proposta
-                */
-
                 const unitario = currency(l.valorPlano);
                 const totalLinhaVal = currency(totalLinha(l));
                 
@@ -1631,14 +1665,14 @@
             const resumo = [
                 '',
                 '📊 Resumo',
-                `   💰 Proposta Atual: R$ 0,00`, // Na padrão não temos valor atual detalhado
+                `   💰 Proposta Atual: R$ 0,00`,
                 `   🧾 Nova Proposta: ${total}`,
                 `   📦 Total de dados atual: ${formatMB(totalDadosAtualMB)}`,
                 `   🔢 Total de dados da nova proposta: ${formatMB(totalDadosNovoMB)}`,
                 '',
                 '🚀 Maxximus Telecom • Conectando sua empresa ao futuro'
             ].join('\n');
-            return header + '\n\n' + linhasTxt + '\n\n' + resumo;
+            return cabecalhoContrato + '\n\n' + header + '\n\n' + linhasTxt + '\n\n' + resumo;
         }
         function gerarRelatorioPdf() {
             try {
@@ -1822,10 +1856,13 @@
                 const headerY = y;
                 const tableX = marginLeft; // Tabela centralizada (mesmo X do texto)
                 // Definicao das colunas relative ao tableX
-                const colOfertaX = tableX + 10;
-                const colQtdX = tableX + 220;
-                const colTipoX = tableX + 300;
-                const colValorX = tableX + 400;
+                const colQtdX = tableX + 10;
+                const colTipoX = tableX + 60;
+                const colPlanoX = tableX + 120;
+                const colOfertaX = tableX + 220;
+                const colValorX = tableX + 330;
+                const colAparelhoX = tableX + 400;
+                const colValorApX = tableX + 470;
                 
                 const rowHeight = 16;
                 const headerSize = 11;
@@ -1860,33 +1897,42 @@
                 });
 
                 // Textos do cabecalho
-                lastPage.drawText('Oferta', { x: colOfertaX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
                 lastPage.drawText('Qtd', { x: colQtdX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
                 lastPage.drawText('Tipo', { x: colTipoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+                lastPage.drawText('Plano', { x: colPlanoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+                lastPage.drawText('Oferta', { x: colOfertaX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
                 lastPage.drawText('Valor', { x: colValorX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+                lastPage.drawText('Aparelho', { x: colAparelhoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+                lastPage.drawText('Valor ap.', { x: colValorApX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
 
                 let yLinha = headerY - rowHeight;
                 let totalSoma = 0;
                 
                 for (let i = 0; i < rowsToDraw; i++) {
                     const l = __linhas[i];
-                    const planoNome = String(l.plano || '-');
                     const qtd = String(l.quantidade || 1);
                     const tipo = String(l.tipoNegociacao || '-');
+                    const plano = String(l.categoria || '-');
+                    const oferta = String(l.plano || '-');
                     const linhaVal = totalLinha(l);
                     const valorLinha = currency(linhaVal);
+                    const aparelhoTipo = l.temAparelho === 'Sim' ? (l.tipoAparelho || '-') : '-';
+                    const valorAparelho = currency(l.valorAparelho || 0);
                     
                     totalSoma += linhaVal;
                     
-                    // Desenha os valores das colunas
-                    // Oferta (trunca se for muito longo para nao invadir qtd)
-                    let ofertaTexto = planoNome;
-                    if (ofertaTexto.length > 35) ofertaTexto = ofertaTexto.substring(0, 32) + '...';
+                    let planoTexto = plano;
+                    if (planoTexto.length > 18) planoTexto = planoTexto.substring(0, 15) + '...';
+                    let ofertaTexto = oferta;
+                    if (ofertaTexto.length > 22) ofertaTexto = ofertaTexto.substring(0, 19) + '...';
                     
-                    lastPage.drawText(ofertaTexto, { x: colOfertaX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(qtd, { x: colQtdX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(tipo, { x: colTipoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(planoTexto, { x: colPlanoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(ofertaTexto, { x: colOfertaX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(valorLinha, { x: colValorX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(aparelhoTipo, { x: colAparelhoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(valorAparelho, { x: colValorApX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     
                     yLinha -= rowHeight;
                 }

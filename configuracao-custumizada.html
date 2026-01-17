@@ -1222,14 +1222,71 @@
                 if (c.email) contatoParts.push(c.email);
                 const contato = contatoParts.join(' • ');
 
+                let consultorNome = '-';
+                let consultorEmail = '';
+                try {
+                    const u = JSON.parse(localStorage.getItem('authUser') || '{}');
+                    if (u && u.name) consultorNome = u.name;
+                    if (u && u.email) consultorEmail = u.email;
+                } catch {}
+                const consultorLinha = consultorEmail ? ('Consultor: ' + consultorNome + ' (' + consultorEmail + ')') : ('Consultor: ' + consultorNome);
+
+                const n = __negociacaoInfo || {};
+                const negParts = [];
+                if (n.tipo) negParts.push('Tipo: ' + n.tipo);
+                if (n.proposta) negParts.push('Proposta: ' + n.proposta);
+                if (n.data) negParts.push('Data: ' + n.data);
+                if (n.status) negParts.push('Status: ' + n.status);
+                const negResumo = negParts.join(' • ') || '-';
+
+                const cabecalhoContrato = [
+                    consultorLinha,
+                    'Razão Social: ' + (c.name || '-'),
+                    'CNPJ: ' + (formatCnpj(n.cnpj || c.cnpj || '') || '-'),
+                    'Nome Fantasia: ' + (c.fantasy_name || '-'),
+                    'Email: ' + (c.email || '-'),
+                    'Telefone: ' + ((formatPhone(c.phone || '') || '-') ),
+                    'Abertura: ' + (c.opening_date || '-'),
+                    '________',
+                    'Endereço: ' + (endereco || '-'),
+                    'Ponto de referencia: ' + (c.complement || '-'),
+                    '________',
+                    'ADMINISTRADOR DO CONTRATO: ' + (c.gestor_nome || '-'),
+                    'Nome: ' + (c.gestor_nome || '-'),
+                    'RG/ORGÃO EXPEDITOR: ' + (c.gestor_rg || '-'),
+                    'CPF: ' + (c.gestor_cpf || '-'),
+                    'E-mail: ' + (c.email || '-'),
+                    'Telefone: ' + ((formatPhone(c.gestor_tel1 || c.gestor_tel2 || c.phone || '') || '-') ),
+                    '',
+                    'REPRESENTANTE LEGAL: ' + (c.rep_nome || '-'),
+                    'Nome: ' + (c.rep_nome || '-'),
+                    'RG/ORGÃO EXPEDITOR: ' + (c.rep_rg || '-'),
+                    '',
+                    'SOCIO 1: ',
+                    'Nome: ',
+                    'RG/ORGÃO EXPEDITOR: ',
+                    'CPF: ',
+                    'SOCIO 2: ',
+                    'Nome: ',
+                    'RG/ORGÃO EXPEDITOR: ',
+                    'CPF: ',
+                    '',
+                    'TESTEMUNHA 1: ',
+                    'Nome: ',
+                    'CPF: ',
+                    'TESTEMUNHA 2: ',
+                    'Nome: ',
+                    'CPF: ',
+                    '_______________',
+                    'Negociação: ' + negResumo
+                ].join('\n');
+
                 const header = [
                     '✨ Proposta Customizada • Maxximus Telecom',
                     '🏢 Cliente: ' + ((document.getElementById('clienteNome').textContent) || '-'),
                     '🧾 CNPJ: ' + ((document.getElementById('clienteCnpj').textContent) || '-'),
                     (endereco ? '📍 Endereço: ' + endereco : ''),
                     (contato ? '📞 Contato: ' + contato : ''),
-                    '📌 Tipo: ' + ((document.getElementById('negTipo').textContent) || '-'),
-                    '🟢 Status: ' + ((document.getElementById('negStatusLabel').textContent) || '-'),
                     '───────────────────────────────────'
                 ].filter(l => l !== '').join('\n');
                 
@@ -1267,7 +1324,7 @@
                     '🚀 Maxximus Telecom • Conectando sua empresa ao futuro'
                 ].join('\n');
                 
-                const txt = header + '\n\n' + linhasTxt + '\n\n' + resumo;
+                const txt = cabecalhoContrato + '\n\n' + header + '\n\n' + linhasTxt + '\n\n' + resumo;
                 navigator.clipboard.writeText(txt).then(() => { toast('Proposta copiada', 'success'); }).catch(() => { toast('Erro ao copiar proposta', 'error'); });
             } catch { toast('Erro ao copiar proposta', 'error'); }
         }
@@ -1408,10 +1465,13 @@
                 y -= 8;
                 const headerY = y;
                 const tableX = marginLeft; // Tabela centralizada
-                const colOfertaX = tableX + 10;
-                const colQtdX = tableX + 220;
-                const colTipoX = tableX + 300;
-                const colValorX = tableX + 400;
+                const colQtdX = tableX + 10;
+                const colTipoX = tableX + 60;
+                const colPlanoX = tableX + 120;
+                const colOfertaX = tableX + 220;
+                const colValorX = tableX + 330;
+                const colAparelhoX = tableX + 400;
+                const colValorApX = tableX + 470;
                 
                 const rowHeight = 16;
                 const headerSize = 11;
@@ -1445,32 +1505,42 @@
                 });
 
                 // Textos do cabecalho
-                lastPage.drawText('Oferta', { x: colOfertaX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
                 lastPage.drawText('Qtd', { x: colQtdX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
                 lastPage.drawText('Tipo', { x: colTipoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+                lastPage.drawText('Plano', { x: colPlanoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+                lastPage.drawText('Oferta', { x: colOfertaX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
                 lastPage.drawText('Valor', { x: colValorX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+                lastPage.drawText('Aparelho', { x: colAparelhoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+                lastPage.drawText('Valor ap.', { x: colValorApX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
 
                 let yLinha = headerY - rowHeight;
                 let totalSoma = 0;
                 for (let i = 0; i < rowsToDraw; i++) {
                     const l = linhas[i];
-                    const planoNome = String(l.plano || '-');
                     const qtd = String(l.quantidade || 1);
                     const tipo = String(l.tipoNegociacao || '-');
+                    const plano = String(l.categoria || '-');
+                    const oferta = String(l.plano || '-');
                     const precoFinalUnit = calcularPrecoFinal(l);
                     const linhaVal = (Number(qtd)||0) * precoFinalUnit;
                     const totalLinhaValor = currency(linhaVal);
+                    const aparelhoTipo = l.temAparelho === 'Sim' ? (l.tipoAparelho || '-') : '-';
+                    const valorAparelho = currency(l.valorAparelho || 0);
                     
                     totalSoma += linhaVal;
                     
-                    // Oferta truncada
-                    let ofertaTexto = planoNome;
-                    if (ofertaTexto.length > 35) ofertaTexto = ofertaTexto.substring(0, 32) + '...';
+                    let planoTexto = plano;
+                    if (planoTexto.length > 18) planoTexto = planoTexto.substring(0, 15) + '...';
+                    let ofertaTexto = oferta;
+                    if (ofertaTexto.length > 22) ofertaTexto = ofertaTexto.substring(0, 19) + '...';
                     
-                    lastPage.drawText(ofertaTexto, { x: colOfertaX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(qtd, { x: colQtdX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(tipo, { x: colTipoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(planoTexto, { x: colPlanoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(ofertaTexto, { x: colOfertaX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(totalLinhaValor, { x: colValorX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(aparelhoTipo, { x: colAparelhoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(valorAparelho, { x: colValorApX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     
                     yLinha -= rowHeight;
                 }
