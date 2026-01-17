@@ -1466,12 +1466,12 @@
                 const headerY = y;
                 const tableX = marginLeft; // Tabela centralizada
                 const colQtdX = tableX + 10;
-                const colTipoX = tableX + 60;
-                const colPlanoX = tableX + 110;
-                const colOfertaX = tableX + 200;
-                const colAparelhoX = tableX + 320;
-                const colValorApX = tableX + 390;
-                const colValorX = tableX + 470;
+                const colTipoX = tableX + 55;
+                const colPlanoX = tableX + 100;
+                const colOfertaX = tableX + 185;
+                const colAparelhoX = tableX + 285;
+                const colValorApX = tableX + 355;
+                const colValorX = tableX + 425;
                 
                 const rowHeight = 16;
                 const headerSize = 9;
@@ -1529,9 +1529,9 @@
                     totalSoma += linhaVal;
                     
                     let planoTexto = plano;
-                    if (planoTexto.length > 18) planoTexto = planoTexto.substring(0, 15) + '...';
+                    if (planoTexto.length > 16) planoTexto = planoTexto.substring(0, 13) + '...';
                     let ofertaTexto = oferta;
-                    if (ofertaTexto.length > 18) ofertaTexto = ofertaTexto.substring(0, 15) + '...';
+                    if (ofertaTexto.length > 16) ofertaTexto = ofertaTexto.substring(0, 13) + '...';
                     
                     lastPage.drawText(qtd, { x: colQtdX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(tipo, { x: colTipoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
@@ -1545,7 +1545,7 @@
                 }
                 const yTotal = yLinha - 4;
                 const totalLabel = 'Valor Total: ' + totalProposto;
-                lastPage.drawText(totalLabel, { x: colValorX - 40, y: yTotal, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                lastPage.drawText(totalLabel, { x: colValorX - 10, y: yTotal, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
