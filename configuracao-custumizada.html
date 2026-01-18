@@ -1324,7 +1324,7 @@
                     '🚀 Maxximus Telecom • Conectando sua empresa ao futuro'
                 ].join('\n');
                 
-                const txt = cabecalhoContrato + '\n\n' + header + '\n\n' + linhasTxt + '\n\n' + resumo;
+                const txt = cabecalhoContrato + '\n\n' + '\n\n' + linhasTxt + '\n\n' + resumo;
                 navigator.clipboard.writeText(txt).then(() => { toast('Proposta copiada', 'success'); }).catch(() => { toast('Erro ao copiar proposta', 'error'); });
             } catch { toast('Erro ao copiar proposta', 'error'); }
         }
