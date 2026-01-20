@@ -179,6 +179,45 @@
             return contact.replace(/\D/g, '');
         }
 
+        function exportBatch(batchId) {
+            const leadsToExport = __leadsCache.filter(l => {
+                const bid = l.batch_id || 'avulso';
+                return String(bid) === String(batchId);
+            });
+
+            if (!leadsToExport.length) {
+                toast('Sem leads para exportar', 'error');
+                return;
+            }
+
+            const headers = ['CNPJ', 'Nome', 'Contato', 'Endereço', 'Status', 'Data Importação', 'Feedback'];
+            const csvContent = [
+                headers.join(';'),
+                ...leadsToExport.map(l => {
+                    const row = [
+                        l.cnpj || '',
+                        l.nome || '',
+                        l.contato || '',
+                        l.endereco || '',
+                        l.status || 'pendente',
+                        formatDate(l.created_at),
+                        l.feedback ? l.feedback.replace(/[\n\r]+/g, ' ') : ''
+                    ];
+                    return row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';');
+                })
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `leads_export_${batchId}_${new Date().getTime()}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         function toggleAccordion(btn) {
             const content = btn.nextElementSibling;
             const icon = btn.querySelector('.accordion-icon');
@@ -272,14 +311,19 @@
 
                 return `
                 <div class="accordion-item" style="border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 0.8rem; overflow: hidden; background: var(--surface);">
-                    <button class="accordion-header" onclick="toggleAccordion(this)" style="width: 100%; text-align: left; padding: 1rem; background: var(--surface); border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: var(--text);">
-                        <div style="display:flex; align-items:center; gap:0.5rem;">
-                            <i data-lucide="folder"></i>
-                            <span style="font-weight:600;">${g.name}</span>
-                            <span class="muted" style="font-size: 0.85rem; font-weight:400;">• ${count} leads • ${dateStr}</span>
+                    <div class="accordion-header" onclick="toggleAccordion(this)" style="text-align: left; padding: 1rem; background: var(--surface); border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: var(--text);">
+                        <div style="display:flex; align-items:center; gap:0.5rem; flex: 1; min-width: 0; padding-right: 10px;">
+                            <button type="button" class="btn btn-ghost btn-icon" title="Exportar CSV" onclick="event.stopPropagation(); exportBatch('${g.id}')">
+                                <i data-lucide="download"></i>
+                            </button>
+                            <i data-lucide="folder" style="flex-shrink: 0;"></i>
+                            <span style="font-weight:600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${g.name}</span>
+                            <span class="muted" style="font-size: 0.85rem; font-weight:400; white-space: nowrap; flex-shrink: 0;">• ${count} leads • ${dateStr}</span>
                         </div>
-                        <i data-lucide="chevron-down" class="accordion-icon" style="transition: transform 0.2s;"></i>
-                    </button>
+                        <div style="display:flex; align-items:center; gap:0.5rem; flex-shrink: 0;">
+                            <i data-lucide="chevron-down" class="accordion-icon" style="transition: transform 0.2s;"></i>
+                        </div>
+                    </div>
                     <div class="accordion-content" style="display: none; border-top: 1px solid var(--border);">
                         <div class="table-container" style="border:none; border-radius:0;">
                             <table>
