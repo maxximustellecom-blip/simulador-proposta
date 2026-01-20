@@ -1446,8 +1446,8 @@
                 const pageSize = lastPage.getSize();
                 const height = pageSize.height;
                 const fontSizeTitulo = 14;
-                const fontSizeLinha = 8;
-                const tableWidth = 500;
+                const fontSizeLinha = 7;
+                const tableWidth = 550;
                 const marginLeft = (pageSize.width - tableWidth) / 2; // Centralizado com a tabela
                 let y = height - 60;
                 lastPage.drawText('Proposta Comercial Customizada', { x: marginLeft, y, size: fontSizeTitulo, font, color: rgb(1, 1, 1) });
@@ -1464,16 +1464,16 @@
                 y -= 8;
                 const headerY = y;
                 const tableX = marginLeft; // Tabela centralizada
-                const colQtdX = tableX + 10;
-                const colTipoX = tableX + 55;
-                const colPlanoX = tableX + 100;
-                const colOfertaX = tableX + 185;
-                const colAparelhoX = tableX + 285;
-                const colValorApX = tableX + 355;
-                const colValorX = tableX + 425;
+                const colQtdX = tableX + 5;
+                const colTipoX = tableX + 30;
+                const colPlanoX = tableX + 70;
+                const colOfertaX = tableX + 130;
+                const colAparelhoX = tableX + 250;
+                const colValorApX = tableX + 380;
+                const colValorX = tableX + 450;
                 
                 const rowHeight = 16;
-                const headerSize = 9;
+                const headerSize = 8;
                 const maxRows = Math.max(Math.floor((headerY - 60) / rowHeight) - 2, 0);
                 const rowsToDraw = Math.min(linhas.length, maxRows);
                 const tableTopY = headerY + 8;
@@ -1522,15 +1522,19 @@
                     const precoFinalUnit = calcularPrecoFinal(l);
                     const linhaVal = (Number(qtd)||0) * precoFinalUnit;
                     const totalLinhaValor = currency(linhaVal);
-                    const aparelhoTipo = l.temAparelho === 'Sim' ? (l.tipoAparelho || '-') : '-';
-                    const valorAparelho = currency(l.valorAparelho || 0);
+                    
+                    const aparelhoTipo = l.temAparelho === 'Sim' ? (l.modeloAparelho || '-') : '-';
+                    const valAp = Number(l.valorAparelho || 0);
+                    let valorParcelaCalc = 0;
+                     if (l.temAparelho === 'Sim' && l.tipoAparelho === 'VF 24x' && valAp > 0) {
+                         valorParcelaCalc = valAp / 24;
+                    }
+                    const valorAparelho = currency(valorParcelaCalc || 0);
                     
                     totalSoma += linhaVal;
                     
                     let planoTexto = plano;
-                    if (planoTexto.length > 16) planoTexto = planoTexto.substring(0, 13) + '...';
                     let ofertaTexto = oferta;
-                    if (ofertaTexto.length > 16) ofertaTexto = ofertaTexto.substring(0, 13) + '...';
                     
                     lastPage.drawText(qtd, { x: colQtdX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(tipo, { x: colTipoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
