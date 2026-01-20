@@ -1447,7 +1447,7 @@
                 const height = pageSize.height;
                 const fontSizeTitulo = 14;
                 const fontSizeLinha = 7;
-                const tableWidth = 550;
+                const tableWidth = 570;
                 const marginLeft = (pageSize.width - tableWidth) / 2; // Centralizado com a tabela
                 let y = height - 60;
                 lastPage.drawText('Proposta Comercial Customizada', { x: marginLeft, y, size: fontSizeTitulo, font, color: rgb(1, 1, 1) });
@@ -1467,10 +1467,10 @@
                 const colQtdX = tableX + 5;
                 const colTipoX = tableX + 30;
                 const colPlanoX = tableX + 70;
-                const colOfertaX = tableX + 160;
-                const colAparelhoX = tableX + 350;
-                const colValorApX = tableX + 430;
-                const colValorX = tableX + 500;
+                const colOfertaX = tableX + 180;
+                const colAparelhoX = tableX + 380;
+                const colValorApX = tableX + 460;
+                const colValorX = tableX + 520;
                 
                 const rowHeight = 16;
                 const headerSize = 8;
@@ -1548,7 +1548,7 @@
                 }
                 const yTotal = yLinha - 4;
                 const totalLabel = 'Valor Total: ' + totalProposto;
-                lastPage.drawText(totalLabel, { x: colValorX - 10, y: yTotal, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                lastPage.drawText(totalLabel, { x: colValorX - 60, y: yTotal, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
