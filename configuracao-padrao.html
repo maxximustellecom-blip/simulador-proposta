@@ -154,7 +154,27 @@
                         <button id="novaBtn" class="btn btn-ghost" type="button"><i data-lucide="rotate-ccw"></i><span>Resetar Proposta</span></button>
                         <button id="copiarBtn" class="btn btn-ghost" type="button" title="Copiar máscara"><i data-lucide="copy"></i><span>Máscara</span></button>
                         <button id="relatorioBtn" class="btn btn-ghost" type="button" title="Gerar Relatório"><i data-lucide="file-text"></i><span>Gerar Relatório</span></button>
-                        <button id="propostaComercialBtn" class="btn btn-ghost" type="button" title="Gerar Proposta Comercial"><i data-lucide="file-text"></i><span>Gerar Proposta Comercial</span></button>
+                        <div id="propostaDropdownWrap" style="position:relative; display:inline-block;">
+                            <button id="propostaComercialBtn" class="btn btn-ghost" type="button" title="Gerar Proposta Comercial" style="display:inline-flex; align-items:center; gap:0.4rem;">
+                                <i data-lucide="file-text"></i>
+                                <span>Gerar Proposta</span>
+                                <i data-lucide="chevron-down"></i>
+                            </button>
+                            <div id="propostaDropdownMenu" class="search-select-dropdown" style="min-width: 240px;">
+                                <button id="propostaItemCompleto" class="dropdown-item" type="button">
+                                    <i data-lucide="file-text"></i>
+                                    <span>Completo</span>
+                                </button>
+                                <button id="propostaItemResumidoPdf" class="dropdown-item" type="button">
+                                    <i data-lucide="file-text"></i>
+                                    <span>Resumido (PDF)</span>
+                                </button>
+                                <button id="propostaItemResumidoImg" class="dropdown-item" type="button">
+                                    <i data-lucide="image"></i>
+                                    <span>Resumido (Imagem)</span>
+                                </button>
+                            </div>
+                        </div>
                         <button id="salvarBtn" class="btn btn-primary" type="button" title="Salvar"><i data-lucide="save"></i><span>Salvar</span></button>
                     </div>
                 </section>
@@ -2072,8 +2092,35 @@
             }
         }
         document.addEventListener('DOMContentLoaded', () => {
+            const wrap = document.getElementById('propostaDropdownWrap');
             const propostaBtn = document.getElementById('propostaComercialBtn');
-            if (propostaBtn) propostaBtn.addEventListener('click', gerarPropostaComercialPdf);
+            const menu = document.getElementById('propostaDropdownMenu');
+            const itemCompleto = document.getElementById('propostaItemCompleto');
+            const itemResPdf = document.getElementById('propostaItemResumidoPdf');
+            const itemResImg = document.getElementById('propostaItemResumidoImg');
+            if (propostaBtn && menu) {
+                propostaBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const isShown = menu.classList.contains('show');
+                    if (isShown) {
+                        menu.classList.remove('show');
+                        menu.style.display = 'none';
+                    } else {
+                        menu.classList.add('show');
+                        menu.style.display = 'block';
+                    }
+                    if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+                });
+                document.addEventListener('click', (e) => {
+                    if (!wrap.contains(e.target)) {
+                        menu.classList.remove('show');
+                        menu.style.display = 'none';
+                    }
+                });
+            }
+            if (itemCompleto) itemCompleto.addEventListener('click', () => { menu.classList.remove('show'); menu.style.display = 'none'; gerarPropostaComercialPdf(); });
+            if (itemResPdf) itemResPdf.addEventListener('click', async () => { menu.classList.remove('show'); menu.style.display = 'none'; await gerarPropostaComercialPdfResumido(); });
+            if (itemResImg) itemResImg.addEventListener('click', async () => { menu.classList.remove('show'); menu.style.display = 'none'; await gerarPropostaComercialImagem(); });
         });
         async function gerarPropostaComercialPdf() {
             try {
@@ -2218,6 +2265,206 @@
                 URL.revokeObjectURL(url);
             } catch {
                 toast('Erro ao gerar proposta comercial', 'error');
+            }
+        }
+        async function gerarPropostaComercialPdfResumido() {
+            try {
+                if (window.location && window.location.protocol === 'file:') {
+                    toast('Para gerar a proposta comercial, abra esta tela via HTTP (http:// ou https://), não diretamente pelo arquivo local.', 'error');
+                    return;
+                }
+                if (!window.PDFLib || !document || !document.body) { toast('Biblioteca de PDF indisponível', 'error'); return; }
+                const baseRes = await fetch('proposta-comercial.pdf').catch(() => null);
+                if (!baseRes.ok) { toast('Modelo de proposta comercial não encontrado', 'error'); return; }
+                const existingPdfBytes = await baseRes.arrayBuffer();
+                const PDFDocument = window.PDFLib.PDFDocument;
+                const StandardFonts = window.PDFLib.StandardFonts;
+                const rgb = window.PDFLib.rgb;
+                const pdfDoc = await PDFDocument.load(existingPdfBytes);
+                const pages = pdfDoc.getPages();
+                const lastPage = pages[pages.length - 1];
+                const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+                const n = __negociacaoInfo || {};
+                const c = __clienteInfo || {};
+                const totalFormatado = currency(totalGeral());
+                const pageSize = lastPage.getSize();
+                const height = pageSize.height;
+                const tableWidth = 570;
+                const fontSizeTitulo = 14;
+                const fontSizeLinha = 7;
+                const marginLeft = (pageSize.width - tableWidth) / 2;
+                let y = height - 60;
+                lastPage.drawText('Proposta Comercial', { x: marginLeft, y, size: fontSizeTitulo, font, color: rgb(1, 1, 1) });
+                y -= 22;
+                ['Cliente: ' + (__clienteInfo?.name || '-'), 'CNPJ: ' + formatCnpj(__negociacaoInfo?.cnpj || __clienteInfo?.cnpj || '')].forEach(line => {
+                    if (y < 80) return;
+                    lastPage.drawText(line, { x: marginLeft, y, size: fontSizeLinha, font, color: rgb(1,1,1) });
+                    y -= 16;
+                });
+                y -= 8;
+                const headerY = y;
+                const tableX = marginLeft;
+                const colQtdX = tableX + 5;
+                const colTipoX = tableX + 30;
+                const colPlanoX = tableX + 70;
+                const colOfertaX = tableX + 180;
+                const colAparelhoX = tableX + 380;
+                const colValorApX = tableX + 460;
+                const colValorX = tableX + 520;
+                const rowHeight = 16;
+                const headerSize = 8;
+                const maxRows = Math.max(Math.floor((headerY - 60) / rowHeight) - 2, 0);
+                const rowsToDraw = Math.min(__linhas.length, maxRows);
+                const tableTopY = headerY + 8;
+                const tableHeight = (1 + rowsToDraw + 1) * rowHeight + 8;
+                const tableBottomY = Math.max(tableTopY - tableHeight, 40);
+                const rectHeight = tableTopY - tableBottomY;
+                lastPage.drawRectangle({ x: tableX, y: tableBottomY, width: tableWidth, height: rectHeight, color: rgb(1,1,1), borderColor: rgb(0.85,0.85,0.85), borderWidth: 1 });
+                lastPage.drawRectangle({ x: tableX, y: headerY - 4, width: tableWidth, height: rowHeight + 4, color: rgb(0.95,0.95,0.95), borderColor: rgb(0.9,0.9,0.9), borderWidth: 0 });
+                lastPage.drawText('Qtd', { x: colQtdX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
+                lastPage.drawText('Tipo', { x: colTipoX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
+                lastPage.drawText('Plano', { x: colPlanoX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
+                lastPage.drawText('Oferta', { x: colOfertaX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
+                lastPage.drawText('Aparelho', { x: colAparelhoX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
+                lastPage.drawText('Valor ap.', { x: colValorApX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
+                lastPage.drawText('Valor', { x: colValorX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
+                let yLinha = headerY - rowHeight;
+                for (let i = 0; i < rowsToDraw; i++) {
+                    const l = __linhas[i];
+                    const qtd = String(l.quantidade || 1);
+                    const tipo = String(l.tipoNegociacao || '-');
+                    const plano = String(l.categoria || '-');
+                    const oferta = String(l.plano || '-');
+                    const linhaVal = totalLinha(l);
+                    const valorLinha = currency(linhaVal);
+                    const aparelhoTipo = l.temAparelho === 'Sim' ? (l.modeloAparelho || '-') : '-';
+                    let valorParcelaCalc = l.valorParcela;
+                    const valAp = Number(l.valorAparelho || 0);
+                    if (l.temAparelho === 'Sim' && l.tipoAparelho === 'VF 24x' && valAp > 0) { valorParcelaCalc = valAp / 24; }
+                    const valorAparelho = currency(valorParcelaCalc || 0);
+                    lastPage.drawText(qtd, { x: colQtdX, y: yLinha, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(tipo, { x: colTipoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(plano, { x: colPlanoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(oferta, { x: colOfertaX, y: yLinha, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(aparelhoTipo, { x: colAparelhoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(valorAparelho, { x: colValorApX, y: yLinha, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(valorLinha, { x: colValorX, y: yLinha, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    yLinha -= rowHeight;
+                }
+                const totalLabel = 'Valor Total: ' + totalFormatado;
+                lastPage.drawText(totalLabel, { x: colValorX - 60, y: yLinha - 4, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                const newPdf = await PDFDocument.create();
+                const [copied] = await newPdf.copyPages(pdfDoc, [pages.length - 1]);
+                newPdf.addPage(copied);
+                const pdfBytes = await newPdf.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'proposta-comercial-resumida.pdf';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            } catch {
+                toast('Erro ao gerar proposta resumida', 'error');
+            }
+        }
+        async function gerarPropostaComercialImagem() {
+            try {
+                const widthPt = 595;
+                const heightPt = 842;
+                const scale = 2;
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.floor(widthPt * scale);
+                canvas.height = Math.floor(heightPt * scale);
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                const tableWidthPt = 570;
+                const marginLeftPt = (widthPt - tableWidthPt) / 2;
+                const fontTitulo = 14 * scale;
+                const fontLinha = 12 * scale * (7/10);
+                let y = (heightPt - 60) * scale;
+                ctx.fillStyle = '#111111';
+                ctx.font = `${fontTitulo}px Arial`;
+                ctx.fillText('Proposta Comercial', marginLeftPt * scale, y);
+                y -= 22 * scale;
+                ctx.font = `${fontLinha}px Arial`;
+                const c = __clienteInfo || {};
+                const n = __negociacaoInfo || {};
+                const lines = ['Cliente: ' + (c.name || '-'), 'CNPJ: ' + formatCnpj(n.cnpj || c.cnpj || '')];
+                lines.forEach(line => {
+                    if (y < 80 * scale) return;
+                    ctx.fillText(line, marginLeftPt * scale, y);
+                    y -= 16 * scale;
+                });
+                y -= 8 * scale;
+                const headerY = y;
+                const tableX = marginLeftPt * scale;
+                const colQtdX = tableX + 5 * scale;
+                const colTipoX = tableX + 30 * scale;
+                const colPlanoX = tableX + 70 * scale;
+                const colOfertaX = tableX + 180 * scale;
+                const colAparelhoX = tableX + 380 * scale;
+                const colValorApX = tableX + 460 * scale;
+                const colValorX = tableX + 520 * scale;
+                const rowHeight = 16 * scale;
+                const maxRows = Math.max(Math.floor(((headerY / scale) - 60) / 16) - 2, 0);
+                const rowsToDraw = Math.min(__linhas.length, maxRows);
+                const tableTopY = headerY + 8 * scale;
+                const tableHeight = (1 + rowsToDraw + 1) * rowHeight + 8 * scale;
+                const tableBottomY = Math.max(tableTopY - tableHeight, 40 * scale);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(tableX, tableBottomY, tableWidthPt * scale, (tableTopY - tableBottomY));
+                ctx.strokeStyle = '#d9d9d9';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(tableX, tableBottomY, tableWidthPt * scale, (tableTopY - tableBottomY));
+                ctx.fillStyle = '#f2f2f2';
+                ctx.fillRect(tableX, headerY - 4 * scale, tableWidthPt * scale, rowHeight + 4 * scale);
+                ctx.fillStyle = '#000000';
+                ctx.font = `${fontLinha}px Arial`;
+                ctx.fillText('Qtd', colQtdX, headerY);
+                ctx.fillText('Tipo', colTipoX, headerY);
+                ctx.fillText('Plano', colPlanoX, headerY);
+                ctx.fillText('Oferta', colOfertaX, headerY);
+                ctx.fillText('Aparelho', colAparelhoX, headerY);
+                ctx.fillText('Valor ap.', colValorApX, headerY);
+                ctx.fillText('Valor', colValorX, headerY);
+                let yLinha = headerY - rowHeight;
+                for (let i = 0; i < rowsToDraw; i++) {
+                    const l = __linhas[i];
+                    const qtd = String(l.quantidade || 1);
+                    const tipo = String(l.tipoNegociacao || '-');
+                    const plano = String(l.categoria || '-');
+                    const oferta = String(l.plano || '-');
+                    const linhaVal = totalLinha(l);
+                    const valorLinha = currency(linhaVal);
+                    const aparelhoTipo = l.temAparelho === 'Sim' ? (l.modeloAparelho || '-') : '-';
+                    let valorParcelaCalc = l.valorParcela;
+                    const valAp = Number(l.valorAparelho || 0);
+                    if (l.temAparelho === 'Sim' && l.tipoAparelho === 'VF 24x' && valAp > 0) { valorParcelaCalc = valAp / 24; }
+                    const valorAparelho = currency(valorParcelaCalc || 0);
+                    ctx.fillText(qtd, colQtdX, yLinha);
+                    ctx.fillText(tipo, colTipoX, yLinha);
+                    ctx.fillText(plano, colPlanoX, yLinha);
+                    ctx.fillText(oferta, colOfertaX, yLinha);
+                    ctx.fillText(aparelhoTipo, colAparelhoX, yLinha);
+                    ctx.fillText(valorAparelho, colValorApX, yLinha);
+                    ctx.fillText(valorLinha, colValorX, yLinha);
+                    yLinha -= rowHeight;
+                }
+                const totalLabel = 'Valor Total: ' + currency(totalGeral());
+                ctx.fillText(totalLabel, colValorX - 60 * scale, yLinha - 4 * scale);
+                const url = canvas.toDataURL('image/png');
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'proposta-comercial.png';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } catch {
+                toast('Erro ao gerar imagem da proposta', 'error');
             }
         }
         function salvarProposta(evt, shouldReload = true, skipValidation = false) {
