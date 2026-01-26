@@ -104,7 +104,13 @@ export async function getClients(req, res) {
     const and = [{ cnpj: { [Op.ne]: '00000000000000' } }];
     if (cnpj) {
       const clean = String(cnpj).replace(/\D/g, '');
-      and.push({ cnpj: clean });
+      if (clean) {
+        if (clean.length === 14) {
+          and.push({ cnpj: clean });
+        } else {
+          and.push({ cnpj: { [Op.like]: `%${clean}%` } });
+        }
+      }
     }
     const actor = req.user || null;
     if (!actor || actor.role !== 'admin') {
