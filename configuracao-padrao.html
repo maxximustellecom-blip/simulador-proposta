@@ -212,6 +212,10 @@
                         <div class="label">Tipo</div>
                         <select id="editTipo" class="select"></select>
                     </div>
+                    <div style="margin-top: 0.75rem;">
+                        <div class="label">QTD de Linhas</div>
+                        <input id="editQuantidade" type="number" min="1" step="1" class="input" style="width:120px;">
+                    </div>
                 </div>
 
                 <!-- 2. Plano Atual (Condicional) -->
@@ -288,18 +292,18 @@
                         </select>
                     </div>
                     <div id="areaPortabilidadeDetails" class="grid-2" style="margin-top: 1rem; display: none;">
-                        <div>
-                            <div class="label">Operadora Doadora</div>
-                            <select id="editOperadora" class="select"></select>
+                        <div style="display:none;">
+                            <div class="label">Quantidade de linhas a portar</div>
+                            <input id="editPortQtd" type="number" min="1" step="1" class="input" style="width:140px;">
                         </div>
                         <div>
-                            <div class="label">Número a Portar</div>
-                            <input id="editNumeroPortar" type="text" class="input" placeholder="00000-0000" maxlength="10">
+                            <button id="portAddBtn" type="button" class="btn btn-ghost"><i data-lucide="plus"></i><span>Adicionar linha a portar</span></button>
                         </div>
+                        <div id="portBlocksContainer" style="margin-top: 1rem;"></div>
                     </div>
 
                     <!-- Aparelho -->
-                    <div style="margin-top: 1rem; border-top: 1px solid #e5e7eb; padding-top: 1rem;">
+                    <div id="areaAparelhoBlock" style="margin-top: 1rem; border-top: 1px solid #e5e7eb; padding-top: 1rem;">
                         <div class="label">Incluir aparelho?</div>
                         <select id="editTemAparelho" class="select">
                             <option value="Não">Não</option>
@@ -569,6 +573,8 @@
                             planoAtualGB: l.planoAtualGB || '',
                             precoAtual: Number(l.precoAtual || 0),
                             numeroPortar: l.numeroPortar || '',
+                            portarQtd: Number(l.portarQtd || (Array.isArray(l.portarItens) ? l.portarItens.length : 0)),
+                            portarItens: Array.isArray(l.portarItens) ? l.portarItens : [],
                             quantidade: Number(l.quantidade || 1),
                             categoria: cat,
                             plano: planoNome,
@@ -1031,6 +1037,8 @@
             // Numero
             const numEl = document.getElementById('editNumero');
             if (numEl) numEl.value = line.numero || '';
+            const qtdEl = document.getElementById('editQuantidade');
+            if (qtdEl) qtdEl.value = Number(line.quantidade || 1);
 
             // Plano Atual
             populate('editPlanoAtual', pctAtualOptionsHtml(line.planoAtualGB), line.planoAtualGB);
@@ -1047,9 +1055,13 @@
             const opOpts = ['<option value="">Selecione...</option>'].concat(ops.map(o => `<option value="${o}">${o}</option>`)).join('');
             populate('editOperadora', opOpts, line.operadoraDoadora);
 
-            // Numero Portar
-            const numPortEl = document.getElementById('editNumeroPortar');
-            if (numPortEl) numPortEl.value = line.numeroPortar || '';
+            const portQtdEl = document.getElementById('editPortQtd');
+            if (portQtdEl) {
+                const savedCount = Array.isArray(line.portarItens) ? line.portarItens.length : 0;
+                const initialPq = Number(line.portarQtd || 0) || (savedCount || (line.numeroPortar ? 1 : 0));
+                portQtdEl.value = initialPq;
+            }
+            renderPortBlocks(line);
 
             // Categoria (Filtered by Tipo)
             const catsByTipo = getFilteredCategorias(line.tipoNegociacao);
@@ -1151,12 +1163,12 @@
             if (praEl) praEl.disabled = isNovo;
 
             const portDetails = document.getElementById('areaPortabilidadeDetails');
-            if (portDetails) portDetails.style.display = (port === 'Sim') ? 'grid' : 'none';
-
-            const opEl = document.getElementById('editOperadora');
-            if (opEl) opEl.disabled = (port !== 'Sim');
-            const npEl = document.getElementById('editNumeroPortar');
-            if (npEl) npEl.disabled = (port !== 'Sim');
+            if (portDetails) portDetails.style.display = (port === 'Sim') ? 'block' : 'none';
+            const pqEl = document.getElementById('editPortQtd');
+            if (pqEl) pqEl.disabled = (port !== 'Sim');
+            const apBlock = document.getElementById('areaAparelhoBlock');
+            if (apBlock) apBlock.style.display = (port === 'Sim') ? 'none' : 'block';
+            if (port === 'Sim') renderPortBlocks(__linhas.find(l => Number(l.id) === Number(__currentEditId)) || {});
 
             const apDetails = document.getElementById('areaAparelhoDetails');
             if (apDetails) apDetails.style.display = (temAp === 'Sim') ? 'block' : 'none';
@@ -1177,11 +1189,24 @@
             document.getElementById('editLineClose').onclick = close;
             document.getElementById('editLineCancel').onclick = close;
 
-            const fields = ['editTipo', 'editPortabilidade', 'editTemAparelho', 'editTipoAparelho', 'editCategoria', 'editPlano', 'editValorAparelho', 'editDddNovo'];
+            const fields = ['editTipo', 'editPortabilidade', 'editTemAparelho', 'editTipoAparelho', 'editCategoria', 'editPlano', 'editValorAparelho', 'editDddNovo', 'editPortQtd'];
             fields.forEach(fid => {
                 const el = document.getElementById(fid);
                 if (el) el.addEventListener('change', () => handleEditModalChange(fid));
             });
+            const addBtn = document.getElementById('portAddBtn');
+            if (addBtn) {
+                addBtn.addEventListener('click', () => {
+                    const lineIdx = __linhas.findIndex(l => Number(l.id) === Number(__currentEditId));
+                    const line = lineIdx >= 0 ? __linhas[lineIdx] : {};
+                    if (!Array.isArray(line.portarItens)) line.portarItens = [];
+                    const currentItems = collectPortItemsFromDom();
+                    line.portarItens = currentItems.concat([{}]);
+                    const elQtd = document.getElementById('editPortQtd');
+                    if (elQtd) elQtd.value = line.portarItens.length;
+                    renderPortBlocks(line);
+                });
+            }
             
             // Adicionar input listener para cálculo em tempo real do valor do aparelho
             const valApInput = document.getElementById('editValorAparelho');
@@ -1306,9 +1331,207 @@
                 }
             }
             
+            if (fieldId === 'editPortQtd') {
+                renderPortBlocks(__linhas.find(l => Number(l.id) === Number(__currentEditId)) || {});
+            }
             updateEditModalState();
         }
 
+        function collectPortItemsFromDom() {
+            const items = [];
+            const container = document.getElementById('portBlocksContainer');
+            if (!container) return items;
+            const count = container.querySelectorAll('input[id^="portNum_"]').length;
+            for (let i = 1; i <= count; i++) {
+                const get = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+                const tipoPi = get('portTipo_' + i);
+                const valPi = Number(get('portValor_' + i) || 0);
+                const parcelaPi = (tipoPi === 'VF 24x' && valPi > 0) ? (valPi / 24) : 0;
+                items.push({
+                    operadoraDoadora: get('portOperadora_' + i) || '',
+                    numeroPortar: get('portNum_' + i) || '',
+                    nome: get('portNome_' + i) || '',
+                    cpf: get('portCpf_' + i) || '',
+                    temAparelho: get('portTem_' + i) || 'Não',
+                    tipoAparelho: tipoPi || 'Comodato',
+                    modeloAparelho: get('portModelo_' + i) || '',
+                    valorAparelho: valPi || 0,
+                    valorParcela: parcelaPi || 0
+                });
+            }
+            return items;
+        }
+        function renderPortBlocks(currentLine) {
+            const container = document.getElementById('portBlocksContainer');
+            if (!container) return;
+            const port = document.getElementById('editPortabilidade').value;
+            if (port !== 'Sim') { container.innerHTML = ''; return; }
+            const savedItems = Array.isArray(currentLine.portarItens) ? currentLine.portarItens : [];
+            let qtd = Number(document.getElementById('editPortQtd').value || 0) || Number(currentLine.portarQtd || 0);
+            if (!qtd && savedItems.length) {
+                const el = document.getElementById('editPortQtd');
+                if (el) el.value = savedItems.length;
+                qtd = savedItems.length;
+            }
+            let items = savedItems.slice(0, qtd);
+            if ((!qtd || items.length === 0) && (currentLine.numeroPortar || currentLine.operadoraDoadora)) {
+                const el = document.getElementById('editPortQtd');
+                qtd = 1;
+                if (el) el.value = 1;
+                items = [{
+                    operadoraDoadora: currentLine.operadoraDoadora || '',
+                    numeroPortar: currentLine.numeroPortar || '',
+                    nome: '',
+                    cpf: '',
+                    temAparelho: 'Não',
+                    tipoAparelho: 'Comodato',
+                    modeloAparelho: '',
+                    valorAparelho: 0,
+                    valorParcela: 0
+                }];
+            }
+            while (items.length < qtd) items.push({});
+            const html = items.map((it, idx) => {
+                const n = idx + 1;
+                const tem = it.temAparelho || 'Não';
+                const tipoAp = it.tipoAparelho || 'Comodato';
+                const parcela = (tipoAp === 'VF 24x' && Number(it.valorAparelho || 0) > 0) ? (Number(it.valorAparelho || 0) / 24) : 0;
+                const ops = ['Claro','Vivo','TIM','Oi'];
+                return `
+                <div style="border:1px solid #e5e7eb; border-radius:8px; padding:0.75rem; margin-top:0.75rem;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+                        <div style="font-weight:600;">Linha ${n}</div>
+                        <button type="button" id="portDel_${n}" class="btn btn-ghost btn-icon" title="Remover" style="width:28px; height:28px; min-height:28px; padding:0; border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
+                    </div>
+                    <div style="margin-bottom:0.5rem;">
+                        <div class="label">Operadora Doadora</div>
+                        <select id="portOperadora_${n}" class="select">
+                            ${['<option value="">Selecione...</option>'].concat(ops.map(o => `<option value="${o}"${(it.operadoraDoadora===o)?' selected':''}>${o}</option>`)).join('')}
+                        </select>
+                    </div>
+                    <div class="grid-3">
+                        <div>
+                            <div class="label">Número da linha a portar</div>
+                            <input id="portNum_${n}" type="text" class="input" placeholder="00000-0000" maxlength="10" value="${it.numeroPortar || ''}">
+                        </div>
+                        <div>
+                            <div class="label">Nome</div>
+                            <input id="portNome_${n}" type="text" class="input" value="${it.nome || ''}">
+                        </div>
+                        <div>
+                            <div class="label">CPF</div>
+                            <input id="portCpf_${n}" type="text" class="input" maxlength="14" value="${it.cpf || ''}">
+                        </div>
+                    </div>
+                    <div style="margin-top:0.5rem;">
+                        <div class="label">Incluir aparelho?</div>
+                        <select id="portTem_${n}" class="select">
+                            <option value="Não"${tem==='Não'?' selected':''}>Não</option>
+                            <option value="Sim"${tem==='Sim'?' selected':''}>Sim</option>
+                        </select>
+                    </div>
+                    <div id="portApArea_${n}" style="margin-top:0.5rem; display:${tem==='Sim'?'block':'none'};">
+                        <div class="grid-2" style="margin-bottom: 0.5rem;">
+                            <div>
+                                <div class="label">Tipo Aparelho</div>
+                                <select id="portTipo_${n}" class="select">
+                                    <option value="Comodato"${tipoAp==='Comodato'?' selected':''}>Comodato</option>
+                                    <option value="VF 24x"${tipoAp==='VF 24x'?' selected':''}>VF 24x</option>
+                                </select>
+                            </div>
+                            <div>
+                                <div class="label">Modelo</div>
+                                <input id="portModelo_${n}" type="text" class="input" value="${it.modeloAparelho || ''}">
+                            </div>
+                        </div>
+                        <div class="grid-2">
+                            <div>
+                                <div class="label">Valor Aparelho</div>
+                                <input id="portValor_${n}" type="number" step="0.01" class="input" value="${Number(it.valorAparelho || 0)}">
+                            </div>
+                            <div>
+                                <div class="label">Valor Parcela (24x)</div>
+                                <div id="portParcela_${n}" class="info-badge">${currency(parcela)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+            container.innerHTML = html;
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+            for (let i = 1; i <= qtd; i++) {
+                const it = items[i - 1] || {};
+                const opEl = document.getElementById('portOperadora_' + i);
+                const numEl = document.getElementById('portNum_' + i);
+                const nomeEl = document.getElementById('portNome_' + i);
+                const cpfEl = document.getElementById('portCpf_' + i);
+                const temEl = document.getElementById('portTem_' + i);
+                const tipoEl = document.getElementById('portTipo_' + i);
+                const modeloEl = document.getElementById('portModelo_' + i);
+                const valorEl = document.getElementById('portValor_' + i);
+                const parcelaEl = document.getElementById('portParcela_' + i);
+                const apArea = document.getElementById('portApArea_' + i);
+                if (opEl) opEl.value = it.operadoraDoadora || opEl.value || '';
+                if (numEl) numEl.value = it.numeroPortar || numEl.value || '';
+                if (nomeEl) nomeEl.value = it.nome || nomeEl.value || '';
+                if (cpfEl) cpfEl.value = it.cpf || cpfEl.value || '';
+                if (temEl) temEl.value = it.temAparelho || temEl.value || 'Não';
+                if (tipoEl) tipoEl.value = it.tipoAparelho || tipoEl.value || 'Comodato';
+                if (modeloEl) modeloEl.value = it.modeloAparelho || modeloEl.value || '';
+                if (valorEl) valorEl.value = Number(it.valorAparelho || valorEl.value || 0);
+                const parcelaCalc = (String(tipoEl && tipoEl.value) === 'VF 24x' && Number(valorEl && valorEl.value || 0) > 0)
+                    ? (Number(valorEl && valorEl.value || 0) / 24)
+                    : Number(it.valorParcela || 0);
+                if (parcelaEl) parcelaEl.textContent = currency(parcelaCalc || 0);
+                if (apArea) apArea.style.display = ((temEl && temEl.value) === 'Sim') ? 'block' : 'none';
+            }
+            Array.from(container.querySelectorAll('input[id^="portNum_"]')).forEach(el => {
+                el.addEventListener('input', (e) => {
+                    const v = e.target.value.replace(/\D/g, '');
+                    e.target.value = v.length > 5 ? v.slice(0,5)+'-'+v.slice(5,9) : v;
+                });
+            });
+            Array.from(container.querySelectorAll('input[id^="portCpf_"]')).forEach(el => {
+                el.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/\D/g, '');
+                });
+            });
+            Array.from(container.querySelectorAll('select[id^="portTem_"]')).forEach(el => {
+                el.addEventListener('change', (e) => {
+                    const n = e.target.id.split('_')[1];
+                    const area = document.getElementById('portApArea_' + n);
+                    if (area) area.style.display = (e.target.value === 'Sim') ? 'block' : 'none';
+                });
+            });
+            Array.from(container.querySelectorAll('select[id^="portTipo_"], input[id^="portValor_"]')).forEach(el => {
+                el.addEventListener('change', () => {
+                    const n = el.id.split('_')[1];
+                    const tipo = document.getElementById('portTipo_' + n).value;
+                    const val = Number(document.getElementById('portValor_' + n).value || 0);
+                    const out = document.getElementById('portParcela_' + n);
+                    if (out) out.textContent = currency(tipo === 'VF 24x' ? (val/24) : 0);
+                });
+            });
+            Array.from(container.querySelectorAll('button[id^="portDel_"]')).forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const n = Number(btn.id.split('_')[1]);
+                    const elQtd = document.getElementById('editPortQtd');
+                    let qtd = Number(elQtd && elQtd.value || 0);
+                    if (qtd <= 1) {
+                        toast('Mínimo de 1 item de portabilidade', 'error');
+                        return;
+                    }
+                    const idx = n - 1;
+                    const line = __linhas.find(l => Number(l.id) === Number(__currentEditId)) || {};
+                    const items = collectPortItemsFromDom();
+                    if (idx >= 0 && idx < items.length) items.splice(idx, 1);
+                    qtd = Math.max(0, qtd - 1);
+                    if (elQtd) elQtd.value = Math.max(items.length, qtd);
+                    line.portarItens = items;
+                    renderPortBlocks(line);
+                });
+            });
+        }
         function saveEditModal() {
             if (!__currentEditId) return false;
             const getValue = (id) => document.getElementById(id).value;
@@ -1333,10 +1556,24 @@
             
             const port = getValue('editPortabilidade');
             if (port === 'Sim') {
-                const op = getValue('editOperadora');
-                const np = getValue('editNumeroPortar');
-                if (!op) erros.push('Selecione a Operadora Doadora para portabilidade');
-                if (!np || np.length < 8) erros.push('Informe o Número a Portar válido');
+                const pqInput = Number(getValue('editPortQtd') || 0);
+                const pqDom = document.querySelectorAll('#portBlocksContainer input[id^="portNum_"]').length;
+                const pq = Math.max(pqInput, pqDom);
+                if (!pq || pq < 1) erros.push('Informe a quantidade de linhas a portar');
+                for (let i = 1; i <= pq; i++) {
+                    const opi = getValue('portOperadora_' + i);
+                    const num = getValue('portNum_' + i);
+                    const nome = getValue('portNome_' + i);
+                    const cpf = getValue('portCpf_' + i);
+                    const tem = getValue('portTem_' + i);
+                    const tipoPi = getValue('portTipo_' + i);
+                    const valPi = Number(getValue('portValor_' + i) || 0);
+                    if (!opi) erros.push('Selecione a Operadora Doadora para Linha ' + i);
+                    if (!num || num.replace(/\D/g,'').length < 8) erros.push('Informe o Número da linha a portar válido para Linha ' + i);
+                    if (!nome) erros.push('Informe o Nome para Linha ' + i);
+                    if (!cpf || cpf.replace(/\D/g,'').length !== 11) erros.push('Informe o CPF válido para Linha ' + i);
+                    if (tem === 'Sim' && tipoPi !== 'Comodato' && valPi <= 0) erros.push('Informe o valor do aparelho para Linha ' + i);
+                }
             }
             
             const temAp = getValue('editTemAparelho');
@@ -1369,8 +1606,32 @@
 
             __linhas = __linhas.map(l => {
                 if (Number(l.id) !== Number(__currentEditId)) return l;
+                let portarItens = [];
+                let portarQtd = 0;
+                if (port === 'Sim') {
+                    const pqInput = Number(getValue('editPortQtd') || 0);
+                    const pqDom = document.querySelectorAll('#portBlocksContainer input[id^="portNum_"]').length;
+                    portarQtd = Math.max(pqInput, pqDom);
+                    for (let i = 1; i <= portarQtd; i++) {
+                        const tipoPi = getValue('portTipo_' + i);
+                        const valPi = Number(getValue('portValor_' + i) || 0);
+                        const parcelaPi = (tipoPi === 'VF 24x' && valPi > 0) ? (valPi / 24) : 0;
+                        portarItens.push({
+                            operadoraDoadora: getValue('portOperadora_' + i) || '',
+                            numeroPortar: getValue('portNum_' + i) || '',
+                            nome: getValue('portNome_' + i) || '',
+                            cpf: getValue('portCpf_' + i) || '',
+                            temAparelho: getValue('portTem_' + i) || 'Não',
+                            tipoAparelho: tipoPi || 'Comodato',
+                            modeloAparelho: getValue('portModelo_' + i) || '',
+                            valorAparelho: valPi || 0,
+                            valorParcela: parcelaPi || 0
+                        });
+                    }
+                }
                 return {
                     ...l,
+                    quantidade: Number(getValue('editQuantidade') || l.quantidade || 1),
                     ddd: getValue('editDddNovo') || getValue('editDdd'),
                     dddAtual: getValue('editDdd'),
                     tipoNegociacao: tipoVal,
@@ -1378,8 +1639,10 @@
                     planoAtualGB: getValue('editPlanoAtual'),
                     precoAtual: Number(getValue('editPrecoAtual') || 0),
                     portabilidade: getValue('editPortabilidade'),
-                    operadoraDoadora: getValue('editOperadora'),
-                    numeroPortar: getValue('editNumeroPortar'),
+                    operadoraDoadora: (portarItens[0] && portarItens[0].operadoraDoadora) ? portarItens[0].operadoraDoadora : '',
+                    numeroPortar: (portarItens[0] && portarItens[0].numeroPortar) ? portarItens[0].numeroPortar : '',
+                    portarQtd: portarQtd,
+                    portarItens: portarItens,
                     categoria: catVal,
                     plano: planoVal,
                     pct: pct === '-' ? '' : pct,
@@ -1412,6 +1675,8 @@
                 planoAtualGB: src.planoAtualGB || '',
                 precoAtual: Number(src.precoAtual || 0),
                 numeroPortar: src.numeroPortar || '',
+                portarQtd: Number(src.portarQtd || 0),
+                portarItens: Array.isArray(src.portarItens) ? src.portarItens.map(it => ({ ...it })) : [],
                 quantidade: Number(src.quantidade || 1),
                 categoria: src.categoria || (__categorias[0]?.nome || ''),
                 plano: src.plano || '',
@@ -1999,6 +2264,8 @@
                 planoAtualGB: '',
                 precoAtual: 0,
                 numeroPortar: '',
+                portarQtd: 0,
+                portarItens: [],
                 quantidade: 1,
                 categoria: (getFilteredCategorias('Novo')[0]?.nome || (__categorias[0]?.nome || '')),
                 plano: '',
