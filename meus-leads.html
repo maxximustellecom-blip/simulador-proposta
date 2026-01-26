@@ -20,11 +20,11 @@
             <div class="card-body">
                 <section class="section filters-section-sticky" style="margin-top: 20px;">
                     <div id="filtersLeads" class="filters">
-                        <div>
+                        <div style="flex: 1; min-width: 200px;">
                             <div class="label">Buscar</div>
                             <input id="leadsFilterText" class="input" type="text" placeholder="Nome, CNPJ ou Contato">
                         </div>
-                        <div style="margin-left: 1rem;">
+                        <div style="flex: 1; min-width: 150px;">
                             <div class="label">Status</div>
                             <select id="leadsFilterStatus" class="select" style="min-width: 150px;">
                                 <option value="">Todos</option>
@@ -33,7 +33,7 @@
                                 <option value="pendente">Pendente</option>
                             </select>
                         </div>
-                        <div style="display:flex; align-items:flex-end; gap:0.5rem; margin-left:auto; justify-content:flex-end;">
+                        <div style="display:flex; align-items:flex-end; gap:0.5rem;">
                             <button id="leadsFilterClear" class="btn btn-ghost" type="button" title="Limpar">
                                 <i data-lucide="rotate-ccw"></i>
                                 <span>Limpar</span>
@@ -230,7 +230,7 @@
             }
         }
 
-        function renderLeads(leads) {
+        function renderLeads(leads, openBatchId = null) {
             const container = document.getElementById('leadsContainer');
             const countEl = document.getElementById('leadsCount');
             
@@ -279,6 +279,10 @@
             const groupsHtml = pageGroups.map(g => {
                 const dateStr = formatDate(g.date).split(' ')[0];
                 const count = g.leads.length;
+
+                const isOpen = openBatchId && String(g.id) === String(openBatchId);
+                const displayStyle = isOpen ? 'display: block;' : 'display: none;';
+                const iconTransform = isOpen ? 'transform: rotate(180deg);' : '';
                 
                 const rows = g.leads.map(l => {
                     let rowStyle = '';
@@ -321,10 +325,10 @@
                             <span class="muted" style="font-size: 0.85rem; font-weight:400; white-space: nowrap; flex-shrink: 0;">• ${count} leads • ${dateStr}</span>
                         </div>
                         <div style="display:flex; align-items:center; gap:0.5rem; flex-shrink: 0;">
-                            <i data-lucide="chevron-down" class="accordion-icon" style="transition: transform 0.2s;"></i>
+                            <i data-lucide="chevron-down" class="accordion-icon" style="transition: transform 0.2s; ${iconTransform}"></i>
                         </div>
                     </div>
-                    <div class="accordion-content" style="display: none; border-top: 1px solid var(--border);">
+                    <div class="accordion-content" style="${displayStyle} border-top: 1px solid var(--border);">
                         <div class="table-container" style="border:none; border-radius:0;">
                             <table>
                                 <thead>
@@ -405,13 +409,15 @@
                 });
                 
                 const lead = __leadsCache.find(l => l.id === __currentLeadId);
+                let currentBatchId = null;
                 if (lead) {
                     lead.feedback = feedback;
                     lead.status = status;
+                    currentBatchId = lead.batch_id || 'avulso';
                 }
                 
                 // Re-render to update row colors
-                renderLeads(__currentFilteredLeads);
+                renderLeads(__currentFilteredLeads, currentBatchId);
                 
                 closeFeedback();
                 toast('Salvo com sucesso!', 'success');

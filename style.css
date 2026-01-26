@@ -670,11 +670,12 @@ select option[disabled], .select option[disabled] {
 #filtersTipos .input, #filtersTipos .select { width: 100%; box-sizing: border-box; min-width: 0; }
 #filtersTipos .btn-icon { border-color: var(--border); }
 #filtersLeads {
-  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
   background: var(--surface);
   border-radius: 12px;
   gap: 0.6rem;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) auto;
 }
 #filtersLeads .input, #filtersLeads .select { width: 100%; box-sizing: border-box; min-width: 0; }
 @media (max-width: 919px) {
@@ -694,8 +695,7 @@ select option[disabled], .select option[disabled] {
   #filtersProdutos > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
   #filtersTipos { grid-template-columns: 1fr; }
   #filtersTipos > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
-  #filtersLeads { grid-template-columns: 1fr; }
-  #filtersLeads > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
+
 }
 @media (max-width: 1024px) and (min-width: 920px) {
   #filtersHistorico { grid-template-columns: 1fr 1fr; }
@@ -714,8 +714,7 @@ select option[disabled], .select option[disabled] {
   #filtersProdutos > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
   #filtersTipos { grid-template-columns: 1fr 1fr; }
   #filtersTipos > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
-  #filtersLeads { grid-template-columns: 1fr 1fr; }
-  #filtersLeads > div:last-child { grid-column: 1 / -1; justify-content: flex-end; }
+
 }
 .chart-card canvas { max-width: 100%; }
 .chart-card { padding: 1rem; }

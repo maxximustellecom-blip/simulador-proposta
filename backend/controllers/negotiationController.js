@@ -50,6 +50,13 @@ export async function createNegotiation(req, res) {
     if (!cleanCnpj || !tipo || !proposta) {
       return res.status(400).json({ error: 'cnpj, tipo e proposta são obrigatórios' });
     }
+    
+    // Determine creator: if admin and creator_id provided, use it; otherwise use current user
+    let creatorId = req.user.id;
+    if (req.user.role === 'admin' && req.body.creator_id) {
+      creatorId = Number(req.body.creator_id);
+    }
+
     const negotiation = await Negotiation.create({
       cnpj: cleanCnpj,
       tipo,
@@ -57,7 +64,7 @@ export async function createNegotiation(req, res) {
       valor: valor !== undefined ? Number(valor || 0) : null,
       status: status || 'Em andamento',
       data: data ? String(data).split('-').reverse().join('/') : new Date().toLocaleDateString('pt-BR'),
-      created_by: req.user.id
+      created_by: creatorId
     });
 
     await PedidoDeVenda.create({
@@ -96,6 +103,12 @@ export async function updateNegotiation(req, res) {
     if (valor !== undefined) negotiation.valor = Number(valor || 0);
     if (status) negotiation.status = status;
     if (data) negotiation.data = String(data).includes('-') ? String(data).split('-').reverse().join('/') : String(data);
+    
+    // Allow admin to update creator
+    if (req.user.role === 'admin' && req.body.creator_id) {
+      negotiation.created_by = Number(req.body.creator_id);
+    }
+
     await negotiation.save();
 
     // Se o status foi atualizado, reflete no PedidoDeVenda

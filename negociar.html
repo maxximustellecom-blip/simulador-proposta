@@ -216,7 +216,11 @@
             });
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         }
-        function openModal() { document.getElementById('negociarModal').classList.add('show'); }
+        function openModal() {
+            const div = document.getElementById('divCriadoPor');
+            if (div) div.style.display = (__userRole === 'admin') ? 'block' : 'none';
+            document.getElementById('negociarModal').classList.add('show');
+        }
         function closeModal() {
             const modal = document.getElementById('negociarModal');
             if (modal) modal.classList.remove('show');
@@ -226,6 +230,7 @@
             const mTipo = document.getElementById('mTipo');
             const mProposta = document.getElementById('mProposta');
             const mStatus = document.getElementById('mStatus');
+            const mCriadoPor = document.getElementById('mCriadoPor');
             const headTitleEl = document.querySelector('#negociarModal .modal-head div');
             if (mClienteHidden) mClienteHidden.value = '';
             if (mClienteSearch) mClienteSearch.value = '';
@@ -234,6 +239,7 @@
             // if (mTipo) mTipo.value = '1º VENDA'; // Removed hardcoded default
             if (mProposta) mProposta.value = 'PROPOSTA PADRÃO';
             if (mStatus) mStatus.value = 'Em andamento';
+            if (mCriadoPor) mCriadoPor.value = '';
             __editingNegId = null;
             if (headTitleEl) headTitleEl.textContent = 'Nova proposta';
         }
@@ -268,6 +274,14 @@
             
             document.getElementById('mProposta').value = n?.proposta || 'PROPOSTA PADRÃO';
             document.getElementById('mStatus').value = n?.status || 'Em andamento';
+            
+            const selCriadoPor = document.getElementById('mCriadoPor');
+            if (selCriadoPor) {
+                // Try to match creator id. n.creator is expected to be { id, name }
+                if (n && n.creator && n.creator.id) selCriadoPor.value = n.creator.id;
+                else selCriadoPor.value = '';
+            }
+
             __editingNegId = Number(id);
             const headTitleEl = document.querySelector('#negociarModal .modal-head div');
             if (headTitleEl) headTitleEl.textContent = 'Editar proposta';
@@ -320,6 +334,13 @@
                 const status = document.getElementById('mStatus').value;
                 if (!cnpj || !tipo || !proposta) return;
                 const payload = { cnpj, tipo, proposta, status };
+                
+                // Add creator_id if available (admin feature)
+                const mCriadoPor = document.getElementById('mCriadoPor');
+                if (mCriadoPor && mCriadoPor.value) {
+                    payload.creator_id = mCriadoPor.value;
+                }
+
                 let res;
                 if (__editingNegId) {
                     res = await api('/negotiations/' + String(__editingNegId), { method: 'PUT', body: JSON.stringify(payload) });
@@ -363,6 +384,23 @@
                 }
             } catch {}
         }
+        async function carregarUsuariosSelect() {
+            try {
+                // Only load if admin
+                const auth = localStorage.getItem('authUser');
+                const u = JSON.parse(auth || '{}');
+                if (u.role !== 'admin') return;
+
+                const list = await api('/auth/users', { method: 'GET' }).catch(() => []);
+                const arr = Array.isArray(list) ? list : [];
+                const select = document.getElementById('mCriadoPor');
+                if (!select) return;
+                
+                let html = '<option value="">Selecione...</option>';
+                html += arr.map(user => `<option value="${user.id}">${user.name}</option>`).join('');
+                select.innerHTML = html;
+            } catch {}
+        }
         document.addEventListener('DOMContentLoaded', async () => {
             const auth = localStorage.getItem('authUser');
             if (!auth) { window.location.href = 'login.html'; return; }
@@ -373,6 +411,7 @@
                 } catch { __userRole = ''; }
                 
                 await carregarTiposSelect();
+                await carregarUsuariosSelect();
                 await carregarClientes();
                 renderClienteDropdown('');
                 const params = new URLSearchParams(window.location.search || '');
@@ -404,6 +443,15 @@
                 if (mTipo && mTipo.options.length > 0) mTipo.selectedIndex = 0;
                 
                 document.getElementById('mProposta').value = 'PROPOSTA PADRÃO';
+                
+                // Set default creator to current user
+                try {
+                    const auth = localStorage.getItem('authUser');
+                    const u = JSON.parse(auth || '{}');
+                    const sel = document.getElementById('mCriadoPor');
+                    if (sel && u.id) sel.value = u.id;
+                } catch {}
+
                 openModal();
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             });
@@ -518,6 +566,12 @@
                             <option value="Em andamento">EM ANDAMENTO</option>
                             <option value="Concluída">CONCLUÍDA</option>
                             <option value="Cancelada">CANCELADA</option>
+                        </select>
+                    </div>
+                    <div id="divCriadoPor" style="display: none;">
+                        <div class="label">Criado por</div>
+                        <select id="mCriadoPor" class="select">
+                            <option value="">Carregando...</option>
                         </select>
                     </div>
                 </div>
