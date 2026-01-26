@@ -363,15 +363,42 @@ export async function listAllLeads(req, res) {
       return res.status(401).json({ error: 'unauthorized' });
     }
     
+    const { q, status, seller_id } = req.query;
+
     const whereBatch = {};
     if (actor.role !== 'admin') {
       whereBatch.assigned_to = Number(actor.id);
+    } else if (seller_id) {
+      // Se for admin e tiver filtro de vendedor
+      whereBatch.assigned_to = Number(seller_id);
     }
     
     const limit = req.query.limit ? Number(req.query.limit) : 1000;
     const offset = req.query.offset ? Number(req.query.offset) : 0;
 
+    const whereLead = {};
+    if (status) {
+        if (status === 'pendente') {
+            whereLead.status = null;
+        } else {
+            whereLead.status = status;
+        }
+    }
+
+    if (q) {
+        const { Op } = await import('sequelize');
+        const search = `%${q}%`;
+        whereLead[Op.or] = [
+            { cnpj: { [Op.like]: search } },
+            { email: { [Op.like]: search } },
+            { contato: { [Op.like]: search } },
+            { endereco: { [Op.like]: search } }
+            // Note: 'nome' is inside payload JSON, difficult to search with simple LIKE in all dialects without specific functions
+        ];
+    }
+
     const leads = await Lead.findAll({
+      where: whereLead,
       include: [
         { 
           model: LeadBatch, 

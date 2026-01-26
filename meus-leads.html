@@ -33,6 +33,12 @@
                                 <option value="pendente">Pendente</option>
                             </select>
                         </div>
+                        <div id="divFilterVendedor" style="flex: 1; min-width: 150px; display: none;">
+                            <div class="label">Vendedor</div>
+                            <select id="fVendedor" class="select" style="min-width: 150px;">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
                         <div style="display:flex; align-items:flex-end; gap:0.5rem;">
                             <button id="leadsFilterClear" class="btn btn-ghost" type="button" title="Limpar">
                                 <i data-lucide="rotate-ccw"></i>
@@ -138,10 +144,29 @@
                 if (u && u.role) headers['x-user-role'] = String(u.role);
                 if (u && u.name) headers['x-user-name'] = String(u.name);
             } catch {}
+            
+            // Build Query String if params exist
+            let queryStr = '';
+            if (options.params) {
+                const sp = new URLSearchParams();
+                for (const k in options.params) {
+                    if (options.params[k] !== null && options.params[k] !== undefined && options.params[k] !== '') {
+                        sp.append(k, options.params[k]);
+                    }
+                }
+                const qs = sp.toString();
+                if (qs) queryStr = '?' + qs;
+            }
+
             if (options.body instanceof FormData) {
                 delete headers['Content-Type'];
             }
-            const res = await fetch(API_BASE + path, { ...options, headers });
+            
+            // Remove params from options before fetch to avoid passing it to fetch
+            const fetchOptions = { ...options };
+            delete fetchOptions.params;
+
+            const res = await fetch(API_BASE + path + queryStr, { ...fetchOptions, headers });
             if (!res.ok) {
                 const err = await res.json().catch(function () { return {}; });
                 throw new Error(err.error || ('HTTP ' + res.status));
@@ -158,11 +183,44 @@
             } catch { return iso; }
         }
 
+        async function carregarUsuariosSelect() {
+            try {
+                const auth = localStorage.getItem('authUser');
+                const u = JSON.parse(auth || '{}');
+                if (u.role !== 'admin') return;
+
+                const list = await api('/auth/users', { method: 'GET' }).catch(() => []);
+                const arr = Array.isArray(list) ? list : [];
+                
+                const html = '<option value="">Todos</option>' + arr.map(user => `<option value="${user.id}">${user.name}</option>`).join('');
+                
+                const selectFilter = document.getElementById('fVendedor');
+                const divFilter = document.getElementById('divFilterVendedor');
+                
+                if (selectFilter) {
+                    selectFilter.innerHTML = html;
+                    if (divFilter) divFilter.style.display = 'block';
+                    selectFilter.addEventListener('change', () => loadLeads());
+                }
+            } catch {}
+        }
+
         async function loadLeads() {
             const container = document.getElementById('leadsContainer');
             const countEl = document.getElementById('leadsCount');
+            
+            const txt = document.getElementById('leadsFilterText').value;
+            const status = document.getElementById('leadsFilterStatus').value;
+            const sellerId = document.getElementById('fVendedor') ? document.getElementById('fVendedor').value : '';
+
             try {
-                const leads = await api('/leads/mine');
+                const leads = await api('/leads/mine', { 
+                    params: { 
+                        q: txt, 
+                        status: status,
+                        seller_id: sellerId
+                    } 
+                });
                 __leadsCache = leads;
                 __currentFilteredLeads = leads;
                 renderLeads(leads);
@@ -436,43 +494,18 @@
             document.getElementById('feedbackCancel').addEventListener('click', closeFeedback);
             document.getElementById('feedbackSave').addEventListener('click', saveFeedback);
 
-            function apply() {
-                const txt = (filterText.value || '').toLowerCase();
-                const status = filterStatus.value;
-
-                const filtered = __leadsCache.filter(l => {
-                    // Text filter
-                    const str = [
-                        l.cnpj, 
-                        l.nome, 
-                        l.contato, 
-                        l.endereco
-                    ].map(s => String(s || '').toLowerCase()).join(' ');
-                    const matchText = str.includes(txt);
-
-                    // Status filter
-                    let matchStatus = true;
-                    if (status) {
-                        if (status === 'pendente') {
-                            matchStatus = !l.status;
-                        } else {
-                            matchStatus = l.status === status;
-                        }
-                    }
-
-                    return matchText && matchStatus;
-                });
-                __currentPage = 1;
-                renderLeads(filtered);
-            }
-
-            filterText.addEventListener('input', apply);
-            filterStatus.addEventListener('change', apply);
+            filterText.addEventListener('input', () => loadLeads());
+            filterStatus.addEventListener('change', () => loadLeads());
+            
             btnClear.addEventListener('click', () => {
                 filterText.value = '';
                 filterStatus.value = '';
-                apply();
+                if(document.getElementById('fVendedor')) document.getElementById('fVendedor').value = '';
+                loadLeads();
             });
+
+            carregarUsuariosSelect();
+            loadLeads();
         }
 
         async function checkAuth() {
