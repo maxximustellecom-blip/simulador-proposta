@@ -4,14 +4,18 @@ function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
 
 export async function listNegotiations(req, res) {
   try {
-    const { cnpj, status, data } = req.query || {};
+    const { cnpj, status, data, creator_id } = req.query || {};
     let list = await Negotiation.findAll({
       include: [{ model: User, as: 'creator', attributes: ['id', 'name'] }],
       order: [['created_at', 'DESC']]
     });
     if (req.user && req.user.role === 'user' && req.user.id) {
       list = list.filter(n => Number(n.created_by || 0) === Number(req.user.id));
+    } else if (creator_id) {
+      // If admin and creator_id filter provided
+      list = list.filter(n => Number(n.created_by || 0) === Number(creator_id));
     }
+
     if (cnpj) {
       const needle = onlyDigits(cnpj);
       list = list.filter(n => onlyDigits(n.cnpj || '').includes(needle));

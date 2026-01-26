@@ -53,11 +53,17 @@
                                 <option value="Cancelada">Cancelada</option>
                             </select>
                         </div>
+                        <div id="divFilterVendedor" style="display:none;">
+                            <div class="label">Vendedor</div>
+                            <select id="fVendedor" class="select">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
                         <div>
                             <div class="label">Data</div>
                             <input id="fData" class="input" type="date">
                         </div>
-                        <div style="display:flex; align-items:flex-end; gap:0.5rem;">
+                        <div style="display:flex; align-items:flex-end; justify-content: flex-end; gap:0.5rem;">
                             <button id="buscarBtn" class="btn btn-primary" type="button" title="Buscar"><i data-lucide="search"></i><span>Buscar</span></button>
                             <button id="limparBtn" class="btn btn-ghost" type="button" title="Limpar"><i data-lucide="rotate-ccw"></i><span>Limpar</span></button>
                         </div>
@@ -248,10 +254,12 @@
                 const cnpj = onlyDigits(document.getElementById('fCnpj').value);
                 const status = document.getElementById('fStatus').value;
                 const data = document.getElementById('fData').value;
+                const vendedor = document.getElementById('fVendedor') ? document.getElementById('fVendedor').value : '';
                 const params = [];
                 if (cnpj) params.push('cnpj=' + encodeURIComponent(cnpj));
                 if (status && status !== 'Todos') params.push('status=' + encodeURIComponent(status));
                 if (data) params.push('data=' + encodeURIComponent(data));
+                if (vendedor) params.push('creator_id=' + encodeURIComponent(vendedor));
                 const qs = params.length ? ('?' + params.join('&')) : '';
                 const list = await api('/negotiations' + qs, { method: 'GET' }).catch(() => []);
                 __negociacoes = Array.isArray(list) ? list : [];
@@ -396,9 +404,19 @@
                 const select = document.getElementById('mCriadoPor');
                 if (!select) return;
                 
-                let html = '<option value="">Selecione...</option>';
-                html += arr.map(user => `<option value="${user.id}">${user.name}</option>`).join('');
-                select.innerHTML = html;
+                const html = '<option value="">Todos</option>' + arr.map(user => `<option value="${user.id}">${user.name}</option>`).join('');
+                
+                // Populate modal select
+                const selectModal = document.getElementById('mCriadoPor');
+                if (selectModal) selectModal.innerHTML = '<option value="">Selecione...</option>' + arr.map(user => `<option value="${user.id}">${user.name}</option>`).join('');
+
+                // Populate filter select
+                const selectFilter = document.getElementById('fVendedor');
+                const divFilter = document.getElementById('divFilterVendedor');
+                if (selectFilter) {
+                    selectFilter.innerHTML = html;
+                    if (divFilter) divFilter.style.display = 'block';
+                }
             } catch {}
         }
         document.addEventListener('DOMContentLoaded', async () => {
@@ -460,6 +478,8 @@
                 document.getElementById('fCnpj').value = '';
                 document.getElementById('fStatus').value = 'Todos';
                 document.getElementById('fData').value = '';
+                const fVendedor = document.getElementById('fVendedor');
+                if (fVendedor) fVendedor.value = '';
                 buscar();
             });
             document.getElementById('mSalvar').addEventListener('click', salvarNegociacao);
