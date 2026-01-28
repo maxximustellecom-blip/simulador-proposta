@@ -1,4 +1,4 @@
-import { Negotiation, User, PedidoDeVenda } from '../models/index.js';
+import { Negotiation, User, Client, PedidoDeVenda } from '../models/index.js';
 
 function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
 
@@ -6,7 +6,10 @@ export async function listNegotiations(req, res) {
   try {
     const { cnpj, status, data, creator_id } = req.query || {};
     let list = await Negotiation.findAll({
-      include: [{ model: User, as: 'creator', attributes: ['id', 'name'] }],
+      include: [
+        { model: User, as: 'creator', attributes: ['id', 'name'] },
+        { model: Client, as: 'client' }
+      ],
       order: [['created_at', 'DESC']]
     });
     if (req.user && req.user.role === 'user' && req.user.id) {
@@ -38,7 +41,7 @@ export async function listNegotiations(req, res) {
       data: n.data,
       created_by: n.created_by !== null && n.created_by !== undefined ? Number(n.created_by) : null,
       creator: n.creator ? { id: n.creator.id, name: n.creator.name } : null,
-      razaoSocial: n.razaoSocial
+      razaoSocial: n.client ? (n.client.name || '') : ''
     })));
   } catch (err) {
     return res.status(500).json({ error: 'erro ao listar negociações', details: String(err && err.message ? err.message : err) });
