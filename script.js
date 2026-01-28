@@ -79,11 +79,11 @@
         '</div>' +
         '<div class="nav-title" id="adminTitle" style="display:' + (isAdmin ? 'block' : 'none') + '">Admin</div>' +
         '<button id="adminToggle" class="nav-dropdown' + (adminOpen ? ' open' : '') + '" type="button" style="display:' + (isAdmin ? 'flex' : 'none') + ';">' +
-          '<div class="left"><i data-lucide="shield-check"></i><span>Administração</span></div>' +
+          '<div class="left"><i data-lucide="shield-check"></i><span>Gestão</span></div>' +
           '<div class="chev"><i data-lucide="chevron-down"></i></div>' +
         '</button>' +
         '<div id="adminMenu" class="nav-subgroup" style="display:' + ((isAdmin && adminOpen) ? 'flex' : 'none') + ';">' +
-          '<a href="pedido-vendas.html" class="nav-sublink' + (isActive('pedido-vendas') ? ' active' : '') + '"><i data-lucide="shopping-cart"></i><span>Pedidos de Vendas</span></a>' +
+          '<a href="pedido-vendas.html" class="nav-sublink' + (isActive('pedido-vendas') ? ' active' : '') + '"><i data-lucide="shopping-cart"></i><span>Gestão de Vendas</span></a>' +
           '<a href="usuarios.html" class="nav-sublink' + (isActive('usuarios') ? ' active' : '') + '"><i data-lucide="users"></i><span>Usuários</span></a>' +
           '<a href="leads.html" class="nav-sublink' + (isActive('leads') ? ' active' : '') + '"><i data-lucide="file-spreadsheet"></i><span>Leads</span></a>' +
           '<a href="perfis-acesso.html" class="nav-sublink' + (isActive('perfis-acesso') ? ' active' : '') + '"><i data-lucide="shield"></i><span>Perfis de Acesso</span></a>' +
