@@ -37,7 +37,8 @@ export async function listNegotiations(req, res) {
       status: n.status,
       data: n.data,
       created_by: n.created_by !== null && n.created_by !== undefined ? Number(n.created_by) : null,
-      creator: n.creator ? { id: n.creator.id, name: n.creator.name } : null
+      creator: n.creator ? { id: n.creator.id, name: n.creator.name } : null,
+      razaoSocial: n.razaoSocial
     })));
   } catch (err) {
     return res.status(500).json({ error: 'erro ao listar negociações', details: String(err && err.message ? err.message : err) });

@@ -79,7 +79,6 @@
                             <thead>
                                 <tr>
                                     <th>CNPJ</th>
-                                    <th>Tipo</th>
                                     <th>Proposta</th>
                                     <th>Valor</th>
                                     <th>Status</th>
@@ -157,9 +156,9 @@
             document.getElementById('countLabel').textContent = arr.length + ' ' + (arr.length === 1 ? 'item' : 'itens');
             tbody.innerHTML = arr.map(n => `
                 <tr>
+                    <td>${formatCnpj(n.razaoSocial || '')}</td>
                     <td>${formatCnpj(n.cnpj || '')}</td>
-                    <td>${n.tipo || '-'}</td>
-                    <td><span class="ellipsis">${n.proposta || '-'}</span></td>
+                    <td><span class="ellipsis">${n.proposta === "PROPOSTA PADRÃO" ? "PADRÃO" : "CUSTOMIZADA" || '-'}</span></td>
                     <td>${(n.valor !== undefined && n.valor !== null) ? currency(n.valor) : '-'}</td>
                     <td>${statusChip(n.status || '-')}</td>
                     <td>${n.data || '-'}</td>
