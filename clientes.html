@@ -466,8 +466,9 @@
                         auth2_cpf: String(document.getElementById('mAuth2Cpf').value || '').trim() || null,
                         auth2_contato: String(document.getElementById('mAuth2Contato').value || '').trim() || null
                     };
-                    if (!payload.name || !payload.cnpj) { toast('Nome e CNPJ são obrigatórios', 'error'); return; }
-                    if (!payload.auth1_nome) { toast('1º Autorizado: Nome é obrigatório', 'error'); return; }
+
+                    if (!payload.cnpj) { toast('CNPJ são obrigatórios', 'error'); return; }
+
                     await api('/clients', { method: 'POST', body: JSON.stringify(payload) });
                     toast('Cliente salvo', 'success');
                     closeModal();

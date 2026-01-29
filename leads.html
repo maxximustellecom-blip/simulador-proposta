@@ -382,21 +382,28 @@
                             let statusLabel = '<span class="chip">Pendente</span>';
                             let borderStyle = 'border-left: 3px solid var(--border);';
                             
+                            let scheduledHtml = '';
                             if (l.status === 'lead_interessado') {
-                                statusLabel = '<span class="chip" style="background:rgba(16,185,129,0.18); color:#065F46; font-size:0.7rem; padding:0.1rem 0.35rem;">Lead Interessado</span>';
-                                borderStyle = 'border-left: 3px solid #10B981;';
+                                statusLabel = '<span class="chip" style="background:rgba(34, 197, 94, 0.1); color:#15803d; font-size:0.7rem; padding:0.1rem 0.35rem;">Lead Interessado</span>';
+                                borderStyle = 'border-left: 3px solid #22c55e;';
                             } else if (l.status === 'lead_nao_interessado') {
-                                statusLabel = '<span class="chip" style="background:rgba(239,68,68,0.18); color:#991B1B; font-size:0.7rem; padding:0.1rem 0.35rem;">Lead Não Interessado</span>';
-                                borderStyle = 'border-left: 3px solid #EF4444;';
+                                statusLabel = '<span class="chip" style="background:rgba(239, 68, 68, 0.1); color:#b91c1c; font-size:0.7rem; padding:0.1rem 0.35rem;">Lead Não Interessado</span>';
+                                borderStyle = 'border-left: 3px solid #ef4444;';
                             } else if (l.status === 'aguardando_contato') {
-                                statusLabel = '<span class="chip" style="background:rgba(234,179,8,0.18); color:#854D0E; font-size:0.7rem; padding:0.1rem 0.35rem;">Aguardando Contato</span>';
-                                borderStyle = 'border-left: 3px solid #EAB308;';
+                                statusLabel = '<span class="chip" style="background:rgba(59, 130, 246, 0.1); color:#1d4ed8; font-size:0.7rem; padding:0.1rem 0.35rem;">Aguardando Contato</span>';
+                                borderStyle = 'border-left: 3px solid #3b82f6;';
+                                if (l.contact_scheduled_at) {
+                                    scheduledHtml = `<div style="margin-top:0.3rem; font-size:0.75rem; color:#1d4ed8; font-weight:500;">
+                                        <i data-lucide="calendar" style="width:12px; height:12px; vertical-align:middle; margin-right:2px;"></i>
+                                        Agendado: ${formatDateTime(l.contact_scheduled_at)}
+                                    </div>`;
+                                }
                             } else if (l.status === 'apto') {
-                                statusLabel = '<span class="chip" style="background:rgba(16,185,129,0.18); color:#065F46; font-size:0.7rem; padding:0.1rem 0.35rem;">Apto</span>';
-                                borderStyle = 'border-left: 3px solid #10B981;';
+                                statusLabel = '<span class="chip" style="background:rgba(34, 197, 94, 0.1); color:#15803d; font-size:0.7rem; padding:0.1rem 0.35rem;">Apto</span>';
+                                borderStyle = 'border-left: 3px solid #22c55e;';
                             } else if (l.status === 'nao_apto') {
-                                statusLabel = '<span class="chip" style="background:rgba(239,68,68,0.18); color:#991B1B; font-size:0.7rem; padding:0.1rem 0.35rem;">Não Apto</span>';
-                                borderStyle = 'border-left: 3px solid #EF4444;';
+                                statusLabel = '<span class="chip" style="background:rgba(239, 68, 68, 0.1); color:#b91c1c; font-size:0.7rem; padding:0.1rem 0.35rem;">Não Apto</span>';
+                                borderStyle = 'border-left: 3px solid #ef4444;';
                             }
 
                             return `
@@ -407,6 +414,7 @@
                                             <div style="font-weight:600; font-size:0.9rem;">${nome}</div>
                                             <div class="muted" style="font-size:0.78rem;">CNPJ: ${l.cnpj || '-'}</div>
                                             <div class="muted" style="font-size:0.78rem;">${l.contato || '-'}</div>
+                                            ${scheduledHtml}
                                         </div>
                                         <div>${statusLabel}</div>
                                     </div>
