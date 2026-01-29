@@ -8,7 +8,7 @@ const Lead = sequelize.define('Lead', {
   email: { type: DataTypes.STRING(160), allowNull: true },
   contato: { type: DataTypes.STRING(160), allowNull: true },
   endereco: { type: DataTypes.STRING(255), allowNull: true },
-  status: { type: DataTypes.STRING(50), allowNull: true }, // 'apto', 'nao_apto'
+  status: { type: DataTypes.STRING(50), allowNull: true }, // 'lead_interessado', 'lead_nao_interessado', 'aguardando_contato'
   feedback: { type: DataTypes.TEXT, allowNull: true },
   payload: { type: DataTypes.JSON, allowNull: true }
 }, {

@@ -382,7 +382,16 @@
                             let statusLabel = '<span class="chip">Pendente</span>';
                             let borderStyle = 'border-left: 3px solid var(--border);';
                             
-                            if (l.status === 'apto') {
+                            if (l.status === 'lead_interessado') {
+                                statusLabel = '<span class="chip" style="background:rgba(16,185,129,0.18); color:#065F46; font-size:0.7rem; padding:0.1rem 0.35rem;">Lead Interessado</span>';
+                                borderStyle = 'border-left: 3px solid #10B981;';
+                            } else if (l.status === 'lead_nao_interessado') {
+                                statusLabel = '<span class="chip" style="background:rgba(239,68,68,0.18); color:#991B1B; font-size:0.7rem; padding:0.1rem 0.35rem;">Lead Não Interessado</span>';
+                                borderStyle = 'border-left: 3px solid #EF4444;';
+                            } else if (l.status === 'aguardando_contato') {
+                                statusLabel = '<span class="chip" style="background:rgba(234,179,8,0.18); color:#854D0E; font-size:0.7rem; padding:0.1rem 0.35rem;">Aguardando Contato</span>';
+                                borderStyle = 'border-left: 3px solid #EAB308;';
+                            } else if (l.status === 'apto') {
                                 statusLabel = '<span class="chip" style="background:rgba(16,185,129,0.18); color:#065F46; font-size:0.7rem; padding:0.1rem 0.35rem;">Apto</span>';
                                 borderStyle = 'border-left: 3px solid #10B981;';
                             } else if (l.status === 'nao_apto') {
