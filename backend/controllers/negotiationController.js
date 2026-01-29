@@ -24,8 +24,13 @@ export async function listNegotiations(req, res) {
       list = list.filter(n => onlyDigits(n.cnpj || '').includes(needle));
     }
     if (razao) {
-      const needle = String(razao).trim().toUpperCase();
-      list = list.filter(n => (n.client?.name || '').toUpperCase().includes(needle));
+      const normalize = (s) => String(s || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+      const needle = normalize(razao).trim();
+      list = list.filter(n => {
+        const name = normalize(n.client?.name);
+        const fantasy = normalize(n.client?.fantasy_name);
+        return name.includes(needle) || fantasy.includes(needle);
+      });
     }
     if (status && status !== 'Todos') {
       const s = String(status);

@@ -364,6 +364,20 @@
             </div>
         </div>
     </div>
+
+    <!-- Máscara Modal -->
+    <div id="mascaraModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Máscara da Proposta</div><button id="mascaraClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <textarea id="mascaraText" class="input" style="width:100%; min-height:300px; resize:vertical;" readonly></textarea>
+            </div>
+            <div class="modal-actions">
+                <button id="mascaraCloseBtn" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Fechar</span></button>
+                <button id="mascaraCopyBtn" class="btn btn-primary" type="button"><i data-lucide="copy"></i><span>Copiar Texto</span></button>
+            </div>
+        </div>
+    </div>
     <script src="script.js"></script>
     <script>
         const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
@@ -1865,7 +1879,7 @@
                 if (u && u.name) consultorNome = u.name;
                 if (u && u.email) consultorEmail = u.email;
             } catch {}
-            const consultorLinha = consultorEmail ? ('Consultor: ' + consultorNome + ' (' + consultorEmail + ')') : ('Consultor: ' + consultorNome);
+            const consultorLinha = consultorEmail ? ('Consultor: ' + consultorNome) : ('Consultor: ' + consultorNome);
 
             const n = __negociacaoInfo || {};
             const negParts = [];
@@ -1914,7 +1928,6 @@
                 'TESTEMUNHA 2: ',
                 'Nome: ',
                 'CPF: ',
-                '_______________',
             ].join('\n');
 
             const header = [
@@ -1934,12 +1947,29 @@
                 const proposto = `${l.plano || '-'} ${l.pct || '-'}`;
                 const unitario = currency(l.valorPlano);
                 const totalLinhaVal = currency(totalLinha(l));
+
+                let extras = '';
+                if (l.portabilidade === 'Sim') {
+                    extras += `\n    Portabilidade: Sim`;
+                    if (l.operadoraDoadora) extras += `\n    Operadora Doadora: ${l.operadoraDoadora}`;
+                    if (l.numeroPortar) extras += `\n    Número a Portar: ${l.numeroPortar}`;
+                    if (Array.isArray(l.portarItens) && l.portarItens.length > 0) {
+                         extras += `\n    Itens Portabilidade: ${l.portarItens.length}`;
+                    }
+                }
+                if (l.temAparelho === 'Sim') {
+                    extras += `\n    Aparelho: Sim`;
+                    if (l.modeloAparelho) extras += `\n    Modelo: ${l.modeloAparelho}`;
+                    if (l.tipoAparelho) extras += `\n    Tipo Aparelho: ${l.tipoAparelho}`;
+                    if (l.valorAparelho) extras += `\n    Valor Aparelho: ${currency(l.valorAparelho)}`;
+                    if (l.valorParcela) extras += `\n    Valor Parcela: ${currency(l.valorParcela)}`;
+                }
                 
                 return `${em} Linha ${idx + 1}
     Qtd: ${l.quantidade}
     DDD: ${dddTxt}${numTxt}
     Tipo: ${l.tipoNegociacao || '-'}
-    Oferta: ${proposto}
+    Oferta: ${proposto}${extras}
     Unitário: ${unitario}
     Total: ${totalLinhaVal}`;
             }).join('\n\n');
@@ -1954,7 +1984,7 @@
                 '',
                 '🚀 Maxximus Telecom • Conectando sua empresa ao futuro'
             ].join('\n');
-            return cabecalhoContrato + '\n\n' + '\n\n' + linhasTxt + '\n\n' + resumo;
+            return cabecalhoContrato + linhasTxt + '\n\n' + resumo;
         }
         function gerarRelatorioPdf() {
             try {
@@ -2536,7 +2566,31 @@
             }
             try {
                 const txt = gerarMensagemBonita();
-                if (navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                const modal = document.getElementById('mascaraModal');
+                const textarea = document.getElementById('mascaraText');
+                if (modal && textarea) {
+                    textarea.value = txt;
+                    modal.classList.add('show');
+                    
+                    const btnClose = document.getElementById('mascaraClose');
+                    if (btnClose) btnClose.onclick = () => modal.classList.remove('show');
+                    
+                    const btnClose2 = document.getElementById('mascaraCloseBtn');
+                    if (btnClose2) btnClose2.onclick = () => modal.classList.remove('show');
+
+                    const btnCopy = document.getElementById('mascaraCopyBtn');
+                    if (btnCopy) {
+                        btnCopy.onclick = () => {
+                            if (navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                                navigator.clipboard.writeText(txt);
+                                toast('Proposta copiada', 'success');
+                                modal.classList.remove('show');
+                            } else {
+                                toast('Erro ao copiar', 'error');
+                            }
+                        };
+                    }
+                } else if (navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
                     navigator.clipboard.writeText(txt);
                     toast('Proposta copiada', 'success');
                 }
