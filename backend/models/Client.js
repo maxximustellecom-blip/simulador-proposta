@@ -7,6 +7,7 @@ const Client = sequelize.define('Client', {
   cnpj: { type: DataTypes.STRING(20), allowNull: false },
   created_by: { type: DataTypes.INTEGER, allowNull: true },
   fantasy_name: { type: DataTypes.STRING(160), allowNull: true },
+  tipo_empresa: { type: DataTypes.STRING(60), allowNull: true },
   email: { type: DataTypes.STRING(160), allowNull: true },
   phone: { type: DataTypes.STRING(40), allowNull: true },
   cep: { type: DataTypes.STRING(20), allowNull: true },

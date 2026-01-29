@@ -5,7 +5,7 @@ export async function upsertClient(req, res) {
   try {
     const {
       name, cnpj,
-      fantasy_name, email, phone,
+      fantasy_name, tipo_empresa, email, phone,
       cep, state, city, neighborhood, street, number, complement,
       opening_date,
       rep_nome, rep_cpf, rep_rg, rep_tel1, rep_tel2,
@@ -24,6 +24,7 @@ export async function upsertClient(req, res) {
         name, cnpj,
         created_by: ownerId,
         fantasy_name: fantasy_name || null,
+        tipo_empresa: tipo_empresa || null,
         email: email || null,
         phone: phone || null,
         cep: cep || null,
@@ -64,6 +65,7 @@ export async function upsertClient(req, res) {
     let changed = false;
     if (client.name !== name) { client.name = name; changed = true; }
     if (client.fantasy_name !== (fantasy_name || null)) { client.fantasy_name = fantasy_name || null; changed = true; }
+    if (client.tipo_empresa !== (tipo_empresa || null)) { client.tipo_empresa = tipo_empresa || null; changed = true; }
     if (client.email !== (email || null)) { client.email = email || null; changed = true; }
     if (client.phone !== (phone || null)) { client.phone = phone || null; changed = true; }
     if (client.cep !== (cep || null)) { client.cep = cep || null; changed = true; }

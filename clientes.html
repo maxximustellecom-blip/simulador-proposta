@@ -134,6 +134,21 @@
                         <div class="field"><span class="label-inline">Razão Social</span><input id="mNome" class="input" type="text" placeholder="Razão Social"></div>
                         <div class="field"><span class="label-inline">Nome Fantasia</span><input id="mFantasia" class="input" type="text" placeholder="Nome Fantasia"></div>
                     </div>
+                    <div class="grid-2" style="margin-top: 1rem;">
+                         <div class="field"><span class="label-inline">Tipo da Empresa</span>
+                             <select id="mTipoEmpresa" class="input">
+                                 <option value="">Selecione...</option>
+                                 <option value="Sociedade Anônima (S/A)">Sociedade Anônima (S/A)</option>
+                                 <option value="Sociedade Limitada (LTDA)">Sociedade Limitada (LTDA)</option>
+                                 <option value="Sociedade em Conta de Participação">Sociedade em Conta de Participação</option>
+                                 <option value="Empresário Individual">Empresário Individual</option>
+                                 <option value="MEI">MEI</option>
+                                 <option value="EIRELI">EIRELI</option>
+                                 <option value="Condomínios">Condomínios</option>
+                                 <option value="Igrejas / Organizações Religiosas">Igrejas / Organizações Religiosas</option>
+                             </select>
+                         </div>
+                    </div>
                 </div>
 
                 <!-- Seção 2: Contato e Endereço -->
@@ -426,6 +441,7 @@
                         name: String(document.getElementById('mNome').value || '').trim(),
                         cnpj: onlyDigits(document.getElementById('mCnpj').value || ''),
                         fantasy_name: String(document.getElementById('mFantasia').value || '').trim() || null,
+                        tipo_empresa: String(document.getElementById('mTipoEmpresa').value || '').trim() || null,
                         email: String(document.getElementById('mEmail').value || '').trim() || null,
                         phone: String(document.getElementById('mPhone').value || '').trim() || null,
                         cep: String(document.getElementById('mCep').value || '').trim() || null,
@@ -481,6 +497,7 @@
                 document.getElementById('mCnpj').value = formatCnpj(c.cnpj || '');
                 document.getElementById('mNome').value = c.name || '';
                 document.getElementById('mFantasia').value = c.fantasy_name || '';
+                document.getElementById('mTipoEmpresa').value = c.tipo_empresa || '';
                 document.getElementById('mEmail').value = c.email || '';
                 document.getElementById('mPhone').value = formatPhone(c.phone || '');
                 document.getElementById('mAbertura').value = c.opening_date || '';
@@ -515,7 +532,7 @@
             }
             function limparCampos() {
                 preencherCampos({ 
-                    cnpj: '', name: '', fantasy_name: '', email: '', phone: '', opening_date: '', 
+                    cnpj: '', name: '', fantasy_name: '', tipo_empresa: '', email: '', phone: '', opening_date: '', 
                      cep: '', state: '', city: '', neighborhood: '', street: '', number: '', complement: '',
                      rep_nome: '', rep_cpf: '', rep_rg: '', rep_tel1: '', rep_tel2: '',
                      gestor_nome: '', gestor_cpf: '', gestor_rg: '', gestor_tel1: '', gestor_tel2: '',
