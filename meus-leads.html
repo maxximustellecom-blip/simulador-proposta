@@ -100,6 +100,10 @@
                         <option value="aguardando_contato">Aguardando Contato</option>
                     </select>
                 </div>
+                <div class="form-group" id="scheduledDateWrapper" style="display:none; margin-top: 1rem;">
+                    <label class="label" style="margin-bottom:0.5rem; display:block;">Data e Hora do Contato</label>
+                    <input id="feedbackDate" class="input" type="datetime-local">
+                </div>
                 <br>
                 <div class="form-group">
                     <label class="label" style="margin-bottom:0.5rem; display:block;">Feedback / Observações</label>
@@ -444,7 +448,30 @@
             input.value = lead ? (lead.feedback || '') : '';
             
             const statusSelect = document.getElementById('feedbackStatus');
-            statusSelect.value = lead ? (lead.status || '') : '';
+            const currentStatus = lead ? (lead.status || '') : '';
+            statusSelect.value = currentStatus;
+            
+            const dateWrapper = document.getElementById('scheduledDateWrapper');
+            const dateInput = document.getElementById('feedbackDate');
+            
+            if (dateWrapper && dateInput) {
+                let dateVal = '';
+                if (lead && lead.contact_scheduled_at) {
+                    try {
+                        const d = new Date(lead.contact_scheduled_at);
+                        if (!isNaN(d.getTime())) {
+                            dateVal = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                        }
+                    } catch {}
+                }
+                dateInput.value = dateVal;
+                
+                if (currentStatus === 'aguardando_contato') {
+                    dateWrapper.style.display = 'block';
+                } else {
+                    dateWrapper.style.display = 'none';
+                }
+            }
             
             const modal = document.getElementById('feedbackModal');
             modal.classList.add('show');
@@ -465,10 +492,16 @@
             const statusSelect = document.getElementById('feedbackStatus');
             const status = statusSelect.value;
             
+            const dateInput = document.getElementById('feedbackDate');
+            let contact_scheduled_at = null;
+            if (status === 'aguardando_contato' && dateInput && dateInput.value) {
+                contact_scheduled_at = dateInput.value;
+            }
+            
             try {
                 await api('/leads/' + __currentLeadId, { 
                     method: 'PUT', 
-                    body: JSON.stringify({ feedback, status }) 
+                    body: JSON.stringify({ feedback, status, contact_scheduled_at }) 
                 });
                 
                 const lead = __leadsCache.find(l => l.id === __currentLeadId);
@@ -476,6 +509,7 @@
                 if (lead) {
                     lead.feedback = feedback;
                     lead.status = status;
+                    lead.contact_scheduled_at = contact_scheduled_at;
                     currentBatchId = lead.batch_id || 'avulso';
                 }
                 
@@ -498,6 +532,16 @@
             document.getElementById('feedbackClose').addEventListener('click', closeFeedback);
             document.getElementById('feedbackCancel').addEventListener('click', closeFeedback);
             document.getElementById('feedbackSave').addEventListener('click', saveFeedback);
+
+            const feedbackStatus = document.getElementById('feedbackStatus');
+            if (feedbackStatus) {
+                feedbackStatus.addEventListener('change', function() {
+                    const wrapper = document.getElementById('scheduledDateWrapper');
+                    if (wrapper) {
+                        wrapper.style.display = this.value === 'aguardando_contato' ? 'block' : 'none';
+                    }
+                });
+            }
 
             filterText.addEventListener('input', () => loadLeads());
             filterStatus.addEventListener('change', () => loadLeads());

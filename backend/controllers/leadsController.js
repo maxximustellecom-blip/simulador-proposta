@@ -316,6 +316,7 @@ export async function getBatchDetail(req, res) {
           contato,
           endereco: l.endereco,
           status: l.status,
+          contact_scheduled_at: l.contact_scheduled_at,
           feedback: l.feedback,
           payload: l.payload
         };
@@ -452,6 +453,7 @@ export async function listAllLeads(req, res) {
           contato,
           endereco: l.endereco,
           status: l.status,
+          contact_scheduled_at: l.contact_scheduled_at,
           feedback: l.feedback,
           created_at: l.createdAt
         };
@@ -494,10 +496,11 @@ export async function updateLead(req, res) {
       }
     }
 
-    const { status, feedback } = req.body;
+    const { status, feedback, contact_scheduled_at } = req.body;
     
     if (status !== undefined) lead.status = status;
     if (feedback !== undefined) lead.feedback = feedback;
+    if (contact_scheduled_at !== undefined) lead.contact_scheduled_at = contact_scheduled_at;
 
     await lead.save();
 
