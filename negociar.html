@@ -45,13 +45,8 @@
                             <input id="fCnpj" class="input" type="text" placeholder="00.000.000/0000-00" autocomplete="off">
                         </div>
                         <div>
-                            <div class="label">Status</div>
-                            <select id="fStatus" class="select">
-                                <option value="Todos">Todos</option>
-                                <option value="Em andamento">Em andamento</option>
-                                <option value="Concluída">Concluída</option>
-                                <option value="Cancelada">Cancelada</option>
-                            </select>
+                            <div class="label">Razão Social</div>
+                            <input id="fRazao" class="input" type="text" placeholder="Nome do cliente" autocomplete="off">
                         </div>
                         <div id="divFilterVendedor" style="display:none;">
                             <div class="label">Vendedor</div>
@@ -82,14 +77,13 @@
                                     <th>CNPJ</th>
                                     <th>Proposta</th>
                                     <th>Valor</th>
-                                    <th>Status</th>
                                     <th>Data</th>
                                     <th>Consultor</th>
                                     <th class="col-actions" style="min-width:160px;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="negocTbody">
-                                <tr><td colspan="8">
+                                <tr><td colspan="7">
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
@@ -120,6 +114,27 @@
                 throw new Error(err.error || ('HTTP ' + res.status));
             }
             return res.json();
+        }
+        function toast(msg, type) {
+            const el = document.getElementById('toast');
+            if (!el) return;
+            el.textContent = msg;
+            if (type === 'success') {
+                el.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+                el.style.color = '#FFFFFF';
+                el.style.borderColor = 'transparent';
+            } else if (type === 'error') {
+                el.style.background = 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)';
+                el.style.color = '#FFFFFF';
+                el.style.borderColor = 'transparent';
+            } else {
+                el.style.background = 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)';
+                el.style.color = '#FFFFFF';
+                el.style.borderColor = 'transparent';
+            }
+            el.style.display = 'block';
+            clearTimeout(window.__toastTimer);
+            window.__toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2500);
         }
         function currency(v) {
             try { return (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })).format(Number(v || 0)); } catch { return 'R$ 0,00'; }
@@ -155,24 +170,28 @@
             const tbody = document.getElementById('negocTbody');
             const arr = Array.isArray(list) ? list : [];
             document.getElementById('countLabel').textContent = arr.length + ' ' + (arr.length === 1 ? 'item' : 'itens');
-            tbody.innerHTML = arr.map(n => `
-                <tr>
+            tbody.innerHTML = arr.map(n => {
+                const isConcluida = String(n.status || '').toLowerCase().includes('conclu');
+                const rowStyle = isConcluida ? ' style=\"background:#ecfdf5;\"' : '';
+                return `
+                <tr${rowStyle}>
                     <td>${n.razaoSocial}</td>
                     <td>${formatCnpj(n.cnpj || '')}</td>
                     <td><span class="ellipsis">${n.proposta === "PROPOSTA PADRÃO" ? "PADRÃO" : "CUSTOMIZADA" || '-'}</span></td>
                     <td>${(n.valor !== undefined && n.valor !== null) ? currency(n.valor) : '-'}</td>
-                    <td>${statusChip(n.status || '-')}</td>
                     <td>${n.data || '-'}</td>
                     <td>${n.creator && n.creator.name ? n.creator.name : '-'}</td>
                     <td class="col-actions">
                         <div class="table-actions">
                             <button type="button" class="btn btn-ghost" title="Configurar" onclick="configurarNegociacao(${n.id})"><i data-lucide="settings"></i></button>
+                            <button type="button" class="btn btn-ghost" title="Enviar BKO" onclick="enviarBko(${n.id})" ${(__userRole !== 'admin' && String(n.status) === 'Concluída') ? 'disabled' : ''}><i data-lucide="send"></i></button>
                             <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="editarNegociacao(${n.id})" ${(__userRole !== 'admin' && String(n.status) === 'Concluída') ? 'disabled' : ''}><i data-lucide="edit-3"></i></button>
                             <button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="excluirNegociacao(${n.id})" ${(__userRole !== 'admin' && String(n.status) === 'Concluída') ? 'disabled' : ''} style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
                         </div>
                     </td>
                 </tr>
-            `).join('') || '<tr><td colspan="9" class="muted">Sem resultados</td></tr>';
+            `;
+            }).join('') || '<tr><td colspan="7" class="muted">Sem resultados</td></tr>';
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         }
         function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
@@ -252,13 +271,13 @@
         async function buscar() {
             try {
                 const cnpj = onlyDigits(document.getElementById('fCnpj').value);
-                const status = document.getElementById('fStatus').value;
                 const data = document.getElementById('fData').value;
+                const razao = document.getElementById('fRazao').value;
                 const vendedor = document.getElementById('fVendedor') ? document.getElementById('fVendedor').value : '';
                 const params = [];
                 if (cnpj) params.push('cnpj=' + encodeURIComponent(cnpj));
-                if (status && status !== 'Todos') params.push('status=' + encodeURIComponent(status));
                 if (data) params.push('data=' + encodeURIComponent(data));
+                if (razao) params.push('razao=' + encodeURIComponent(razao));
                 if (vendedor) params.push('creator_id=' + encodeURIComponent(vendedor));
                 const qs = params.length ? ('?' + params.join('&')) : '';
                 const list = await api('/negotiations' + qs, { method: 'GET' }).catch(() => []);
@@ -330,6 +349,19 @@
                 const btn = document.getElementById('confirmNegociacaoConfirm');
                 if (btn) btn.dataset.id = String(id);
                 const m = document.getElementById('confirmNegociacaoModal');
+                if (m) m.classList.add('show');
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+            } catch {}
+        };
+        window.enviarBko = function(id) {
+            try {
+                const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
+                const txt = (n ? ((n.tipo || '-') + ' • ' + (n.proposta || '-') + ' • ' + formatCnpj(n.cnpj || '')) : ('ID ' + String(id)));
+                const t = document.getElementById('confirmBkoText');
+                if (t) t.textContent = txt;
+                const btn = document.getElementById('confirmBkoConfirm');
+                if (btn) btn.dataset.id = String(id);
+                const m = document.getElementById('confirmBkoModal');
                 if (m) m.classList.add('show');
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             } catch {}
@@ -476,8 +508,8 @@
             document.getElementById('buscarBtn').addEventListener('click', buscar);
             document.getElementById('limparBtn').addEventListener('click', () => {
                 document.getElementById('fCnpj').value = '';
-                document.getElementById('fStatus').value = 'Todos';
                 document.getElementById('fData').value = '';
+                document.getElementById('fRazao').value = '';
                 const fVendedor = document.getElementById('fVendedor');
                 if (fVendedor) fVendedor.value = '';
                 buscar();
@@ -505,6 +537,31 @@
                         buscar();
                     } catch {
                         fecharConfirm();
+                    }
+                });
+            }
+            {
+                const modal = document.getElementById('confirmBkoModal');
+                const btnClose = document.getElementById('confirmBkoClose');
+                const btnCancel = document.getElementById('confirmBkoCancel');
+                const btnConfirm = document.getElementById('confirmBkoConfirm');
+                function fecharBko() {
+                    if (btnConfirm) btnConfirm.dataset.id = '';
+                    if (modal) modal.classList.remove('show');
+                }
+                if (btnClose) btnClose.addEventListener('click', fecharBko);
+                if (btnCancel) btnCancel.addEventListener('click', fecharBko);
+                if (btnConfirm) btnConfirm.addEventListener('click', async () => {
+                    const id = Number(btnConfirm.dataset.id || 0);
+                    if (!id) { fecharBko(); return; }
+                    try {
+                        await api('/negotiations/' + id, { method: 'PUT', body: JSON.stringify({ status: 'Concluída' }) });
+                        fecharBko();
+                        toast('Enviado ao BKO.', 'success');
+                        buscar();
+                    } catch {
+                        toast('Falha ao enviar ao BKO', 'error');
+                        fecharBko();
                     }
                 });
             }
@@ -612,6 +669,19 @@
             <div class="modal-actions">
                 <button id="confirmNegociacaoCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
                 <button id="confirmNegociacaoConfirm" class="btn btn-ghost" type="button" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i><span>Excluir</span></button>
+            </div>
+        </div>
+    </div>
+    <div id="confirmBkoModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Enviar BKO</div><button id="confirmBkoClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="label">Confirmar envio ao BKO e concluir a negociação?</div>
+                <div id="confirmBkoText" class="muted" style="margin-top:0.5rem;"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmBkoCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
+                <button id="confirmBkoConfirm" class="btn btn-primary" type="button"><i data-lucide="check"></i><span>Confirmar</span></button>
             </div>
         </div>
     </div>

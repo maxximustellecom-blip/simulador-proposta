@@ -4,7 +4,7 @@ function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
 
 export async function listNegotiations(req, res) {
   try {
-    const { cnpj, status, data, creator_id } = req.query || {};
+    const { cnpj, status, data, creator_id, razao } = req.query || {};
     let list = await Negotiation.findAll({
       include: [
         { model: User, as: 'creator', attributes: ['id', 'name'] },
@@ -22,6 +22,10 @@ export async function listNegotiations(req, res) {
     if (cnpj) {
       const needle = onlyDigits(cnpj);
       list = list.filter(n => onlyDigits(n.cnpj || '').includes(needle));
+    }
+    if (razao) {
+      const needle = String(razao).trim().toUpperCase();
+      list = list.filter(n => (n.client?.name || '').toUpperCase().includes(needle));
     }
     if (status && status !== 'Todos') {
       const s = String(status);
