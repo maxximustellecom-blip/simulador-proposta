@@ -753,7 +753,7 @@ select option[disabled], .select option[disabled] {
   border-radius: 14px;
   box-shadow: var(--shadow);
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;

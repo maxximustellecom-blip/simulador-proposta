@@ -57,6 +57,37 @@
             font-weight: 500;
             color: var(--text);
         }
+        .mascara-content {
+            width: 100%;
+            max-height: 500px;
+            overflow-y: auto;
+            background: #f9fafb;
+        }
+        .mascara-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .mascara-card:last-child { margin-bottom: 0; }
+        .mascara-card-title {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+        .mascara-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+        .mascara-label { color: var(--muted); }
+        .mascara-val { font-weight: 500; text-align: right; }
     </style>
 </head>
 <body>
@@ -1574,32 +1605,32 @@
                 ].filter(l => l !== '').join('\n');
                 
                 const linhasTxt = linhas.map((l, idx) => {
-                const tipo = String(l.tipoNegociacao || '-').toLowerCase();
-                const em = tipo.includes('reneg') ? '🔁' : (tipo.includes('adti') || tipo.includes('adit') ? '➕' : '🌟');
-                const acessoFmt = l.ddd ? `DDD ${l.ddd}` : '-';
-                const numFmt = l.numero ? `\n    Número: ${l.numero}` : '';
-                const atual = `${l.planoAtualGB || '-'} ${currency(l.precoAtual || 0)}`;
-                const proposto = `${l.plano || '-'} ${l.pct || '-'}`;
-                
-                const unitario = currency(calcularPrecoFinal(l));
-                const totalLinha = currency(calcularPrecoFinal(l) * (Number(l.quantidade) || 1));
-                const desc = Number(l.desconto || 0) + '%';
-                
-                let extras = '';
-                if (l.portabilidade === 'Sim') {
-                    extras += `\n    Portabilidade: Sim`;
-                    if (l.operadoraDoadora) extras += `\n    Operadora Doadora: ${l.operadoraDoadora}`;
-                    if (l.numeroPortar) extras += `\n    Número a Portar: ${l.numeroPortar}`;
-                }
-                if (l.temAparelho === 'Sim') {
-                    extras += `\n    Aparelho: Sim`;
-                    if (l.modeloAparelho) extras += `\n    Modelo: ${l.modeloAparelho}`;
-                    if (l.tipoAparelho) extras += `\n    Tipo Aparelho: ${l.tipoAparelho}`;
-                    if (l.valorAparelho) extras += `\n    Valor Aparelho: ${currency(l.valorAparelho)}`;
-                    if (l.valorParcela) extras += `\n    Valor Parcela: ${currency(l.valorParcela)}`;
-                }
+                    const tipo = String(l.tipoNegociacao || '-').toLowerCase();
+                    const em = tipo.includes('reneg') ? '🔁' : (tipo.includes('adti') || tipo.includes('adit') ? '➕' : '🌟');
+                    const acessoFmt = l.ddd ? `DDD ${l.ddd}` : '-';
+                    const numFmt = l.numero ? `\n    Número: ${l.numero}` : '';
+                    const atual = `${l.planoAtualGB || '-'} ${currency(l.precoAtual || 0)}`;
+                    const proposto = `${l.plano || '-'} ${l.pct || '-'}`;
+                    
+                    const unitario = currency(calcularPrecoFinal(l));
+                    const totalLinha = currency(calcularPrecoFinal(l) * (Number(l.quantidade) || 1));
+                    const desc = Number(l.desconto || 0) + '%';
+                    
+                    let extras = '';
+                    if (l.portabilidade === 'Sim') {
+                        extras += `\n    Portabilidade: Sim`;
+                        if (l.operadoraDoadora) extras += `\n    Operadora Doadora: ${l.operadoraDoadora}`;
+                        if (l.numeroPortar) extras += `\n    Número a Portar: ${l.numeroPortar}`;
+                    }
+                    if (l.temAparelho === 'Sim') {
+                        extras += `\n    Aparelho: Sim`;
+                        if (l.modeloAparelho) extras += `\n    Modelo: ${l.modeloAparelho}`;
+                        if (l.tipoAparelho) extras += `\n    Tipo Aparelho: ${l.tipoAparelho}`;
+                        if (l.valorAparelho) extras += `\n    Valor Aparelho: ${currency(l.valorAparelho)}`;
+                        if (l.valorParcela) extras += `\n    Valor Parcela: ${currency(l.valorParcela)}`;
+                    }
 
-                return `${em} Linha ${idx + 1}
+                    return `${em} Linha ${idx + 1}
     Qtd: ${l.quantidade}
     DDD: ${acessoFmt}${numFmt}
     Tipo: ${l.tipoNegociacao || '-'}
@@ -1608,7 +1639,7 @@
     Desconto: ${desc}
     Unitário: ${unitario}
     Total: ${totalLinha}`;
-            }).join('\n\n');
+                }).join('\n\n');
                 
                 const resumo = [
                     '📊 Resumo',
@@ -1622,11 +1653,101 @@
                 
                 const txt = cabecalhoContrato + linhasTxt + '\n\n' + resumo;
                 
+                // --- Gera HTML dos cards ---
+                const cardsHtml = linhas.map((l, idx) => {
+                    const tipo = String(l.tipoNegociacao || '-').toLowerCase();
+                    const em = tipo.includes('reneg') ? '🔁' : (tipo.includes('adti') || tipo.includes('adit') ? '➕' : '🌟');
+                    const acessoFmt = l.ddd ? `DDD ${l.ddd}` : '-';
+                    const numFmt = l.numero ? l.numero : '';
+                    const atual = `${l.planoAtualGB || '-'} ${currency(l.precoAtual || 0)}`;
+                    const proposto = `${l.plano || '-'} ${l.pct || '-'}`;
+                    
+                    const unitario = currency(calcularPrecoFinal(l));
+                    const totalLinha = currency(calcularPrecoFinal(l) * (Number(l.quantidade) || 1));
+                    const desc = Number(l.desconto || 0) + '%';
+                    
+                    let extrasHtml = '';
+                    if (l.portabilidade === 'Sim') {
+                        extrasHtml += `
+                        <div class="mascara-row"><span class="mascara-label">Portabilidade</span><span class="mascara-val">Sim</span></div>
+                        ${l.operadoraDoadora ? `<div class="mascara-row"><span class="mascara-label">Op. Doadora</span><span class="mascara-val">${l.operadoraDoadora}</span></div>` : ''}
+                        ${l.numeroPortar ? `<div class="mascara-row"><span class="mascara-label">Núm. Portar</span><span class="mascara-val">${l.numeroPortar}</span></div>` : ''}
+                        `;
+                    }
+                    if (l.temAparelho === 'Sim') {
+                        extrasHtml += `
+                        <div class="mascara-row"><span class="mascara-label">Aparelho</span><span class="mascara-val">Sim</span></div>
+                        ${l.modeloAparelho ? `<div class="mascara-row"><span class="mascara-label">Modelo</span><span class="mascara-val">${l.modeloAparelho}</span></div>` : ''}
+                        ${l.tipoAparelho ? `<div class="mascara-row"><span class="mascara-label">Tipo Ap.</span><span class="mascara-val">${l.tipoAparelho}</span></div>` : ''}
+                        ${l.valorAparelho ? `<div class="mascara-row"><span class="mascara-label">Valor Ap.</span><span class="mascara-val">${currency(l.valorAparelho)}</span></div>` : ''}
+                        ${l.valorParcela ? `<div class="mascara-row"><span class="mascara-label">Valor Parcela</span><span class="mascara-val">${currency(l.valorParcela)}</span></div>` : ''}
+                        `;
+                    }
+
+                    return `
+                    <div class="mascara-card">
+                        <div class="mascara-card-title">${em} Linha ${idx + 1}</div>
+                        <div class="mascara-row"><span class="mascara-label">Qtd</span><span class="mascara-val">${l.quantidade}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">DDD</span><span class="mascara-val">${acessoFmt}</span></div>
+                        ${numFmt ? `<div class="mascara-row"><span class="mascara-label">Número</span><span class="mascara-val">${numFmt}</span></div>` : ''}
+                        <div class="mascara-row"><span class="mascara-label">Tipo</span><span class="mascara-val">${l.tipoNegociacao || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Atual</span><span class="mascara-val">${atual}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Oferta</span><span class="mascara-val">${proposto}</span></div>
+                        ${extrasHtml}
+                        <div class="mascara-row"><span class="mascara-label">Desconto</span><span class="mascara-val">${desc}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Unitário</span><span class="mascara-val">${unitario}</span></div>
+                        <div class="mascara-row" style="margin-top:0.5rem; border-top:1px dashed #e5e7eb; padding-top:0.25rem;"><span class="mascara-label" style="font-weight:600; color:var(--primary);">Total</span><span class="mascara-val" style="font-weight:700; color:var(--primary);">${totalLinha}</span></div>
+                    </div>
+                    `;
+                }).join('');
+
+                const cabecalhoHtml = `
+                    <div class="mascara-card">
+                        <div class="mascara-card-title">Dados do Contrato</div>
+                        
+                        <div class="mascara-row" style="margin-top:0.5rem; margin-bottom:0.25rem; color:var(--primary); font-weight:600; border-bottom:1px dashed var(--border); padding-bottom:0.25rem;">Empresa</div>
+                        <div class="mascara-row"><span class="mascara-label">Razão Social</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.name || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Nome Fantasia</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.fantasy_name || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">CNPJ</span><span class="mascara-val">${formatCnpj(n.cnpj || c.cnpj || '')}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Abertura</span><span class="mascara-val">${c.opening_date || '-'}</span></div>
+                        
+                        <div class="mascara-row" style="margin-top:0.8rem; margin-bottom:0.25rem; color:var(--primary); font-weight:600; border-bottom:1px dashed var(--border); padding-bottom:0.25rem;">Contato & Endereço</div>
+                        <div class="mascara-row"><span class="mascara-label">Email</span><span class="mascara-val" style="text-align:right; max-width:60%; word-break:break-all;">${c.email || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Telefone</span><span class="mascara-val">${formatPhone(c.phone || '') || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Endereço</span><span class="mascara-val" style="text-align:right; max-width:60%;">${endereco || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Complemento</span><span class="mascara-val">${c.complement || '-'}</span></div>
+
+                        <div class="mascara-row" style="margin-top:0.8rem; margin-bottom:0.25rem; color:var(--primary); font-weight:600; border-bottom:1px dashed var(--border); padding-bottom:0.25rem;">Responsáveis</div>
+                        <div class="mascara-row"><span class="mascara-label">Admin. Contrato</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.gestor_nome || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">CPF Admin</span><span class="mascara-val">${c.gestor_cpf || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Rep. Legal</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.rep_nome || '-'}</span></div>
+                        
+                        <div class="mascara-row" style="margin-top:0.8rem; margin-bottom:0.25rem; color:var(--primary); font-weight:600; border-bottom:1px dashed var(--border); padding-bottom:0.25rem;">Consultor</div>
+                        <div class="mascara-row"><span class="mascara-label">Nome</span><span class="mascara-val">${consultorNome}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Email</span><span class="mascara-val" style="text-align:right; max-width:60%; word-break:break-all;">${consultorEmail}</span></div>
+                    </div>
+                `;
+
+                const resumoHtml = `
+                    <div class="mascara-card">
+                        <div class="mascara-card-title">Resumo</div>
+                        <div class="mascara-row"><span class="mascara-label">Proposta Atual</span><span class="mascara-val">${totalAtual}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Nova Proposta</span><span class="mascara-val">${totalProposto}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Total Dados Atual</span><span class="mascara-val">${formatMB(totalDadosAtualMB)}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Total Dados Novo</span><span class="mascara-val">${formatMB(totalDadosNovoMB)}</span></div>
+                        <div style="margin-top:1rem; text-align:center; font-size:0.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:0.5rem;">
+                            🚀 Maxximus Telecom • Conectando sua empresa ao futuro
+                        </div>
+                    </div>
+                `;
+
+                const fullHtml = cabecalhoHtml + cardsHtml + resumoHtml;
+
                 const modal = document.getElementById('mascaraModal');
-                const textarea = document.getElementById('mascaraText');
+                const contentDiv = document.getElementById('mascaraContent');
                 
-                if (modal && textarea) {
-                    textarea.value = txt;
+                if (modal && contentDiv) {
+                    contentDiv.innerHTML = fullHtml;
                     modal.classList.add('show');
                     
                     const btnClose = document.getElementById('mascaraClose');
@@ -2520,7 +2641,7 @@
         <div class="modal-card">
             <div class="modal-head"><div>Máscara da Proposta</div><button id="mascaraClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
             <div class="modal-body">
-                <textarea id="mascaraText" class="input" style="width:100%; min-height:300px; resize:vertical;" readonly></textarea>
+                <div id="mascaraContent" class="mascara-content"></div>
             </div>
             <div class="modal-actions">
                 <button id="mascaraCloseBtn" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Fechar</span></button>
