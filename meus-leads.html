@@ -350,9 +350,9 @@
                 
                 const rows = g.leads.map(l => {
                     let rowStyle = '';
-                    if (l.status === 'lead_interessado') rowStyle = 'background-color: #d4e1ff;'; // Green// Green
+                    if (l.status === 'lead_interessado') rowStyle = 'background-color: rgba(34, 197, 94, 0.1);'; // Green
                     else if (l.status === 'lead_nao_interessado') rowStyle = 'background-color: rgba(239, 68, 68, 0.1);'; // Red
-                    else if (l.status === 'aguardando_contato') rowStyle = 'background-color: rgba(234, 179, 8, 0.1);'; // Yellow
+                    else if (l.status === 'aguardando_contato') rowStyle = 'background-color: rgba(59, 130, 246, 0.1);'; // Blue
                     else if (l.status === 'apto') rowStyle = 'background-color: rgba(34, 197, 94, 0.1);'; // Legacy support
                     else if (l.status === 'nao_apto') rowStyle = 'background-color: rgba(239, 68, 68, 0.1);'; // Legacy support
 
