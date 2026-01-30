@@ -558,7 +558,11 @@
 
             let foundType = null;
             if (__clienteInfo && __clienteInfo.tipo_empresa) {
-                const found = ATTACHMENT_CONFIG.find(c => c.type === __clienteInfo.tipo_empresa);
+                const val = __clienteInfo.tipo_empresa.toLowerCase().trim();
+                const found = ATTACHMENT_CONFIG.find(c => {
+                    const t = c.type.toLowerCase();
+                    return t === val || t.includes(val) || val.includes(t);
+                });
                 if (found) foundType = found.type;
             }
 
@@ -680,7 +684,13 @@
                     });
                 }
             } else if (containerReq) {
-                 containerReq.innerHTML = `<div class="muted" style="font-style:italic; padding:0.5rem;">Selecione o tipo de empresa para ver a lista de documentos obrigatórios.</div>`;
+                 if (__clienteInfo && !__currentEntityType) {
+                     containerReq.innerHTML = `<div class="muted" style="font-style:italic; padding:0.5rem;">Tipo de empresa não identificado no cadastro. Selecione manualmente acima ou atualize o cadastro do cliente.</div>`;
+                 } else if (!__clienteInfo) {
+                     containerReq.innerHTML = `<div class="muted" style="font-style:italic; padding:0.5rem;">Carregando informações do cliente...</div>`;
+                 } else {
+                     containerReq.innerHTML = `<div class="muted" style="font-style:italic; padding:0.5rem;">Selecione o tipo de empresa para ver a lista de documentos obrigatórios.</div>`;
+                 }
             }
 
             // 2. Render Generic Attachments

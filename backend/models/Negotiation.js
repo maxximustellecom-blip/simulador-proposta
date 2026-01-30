@@ -18,8 +18,8 @@ const Negotiation = sequelize.define('Negotiation', {
   underscored: true
 });
 
-Client.hasMany(Negotiation, { foreignKey: 'cnpj', sourceKey: 'cnpj', as: 'negotiations' });
-Negotiation.belongsTo(Client, { foreignKey: 'cnpj', targetKey: 'cnpj', as: 'client' });
+Client.hasMany(Negotiation, { foreignKey: 'cnpj', sourceKey: 'cnpj', as: 'negotiations', constraints: false });
+Negotiation.belongsTo(Client, { foreignKey: 'cnpj', targetKey: 'cnpj', as: 'client', constraints: false });
 
 User.hasMany(Negotiation, { foreignKey: 'created_by', as: 'createdNegotiations' });
 Negotiation.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
