@@ -2416,6 +2416,16 @@
                         const rightDiv = document.createElement('div');
                         
                         if (existing) {
+                            // View Button
+                            const btnView = document.createElement('a');
+                            btnView.href = `${API_BASE}/negotiations/${__negociacaoId}/custom-attachments/${existing.id}/content`;
+                            btnView.target = '_blank';
+                            btnView.className = 'btn btn-ghost btn-sm';
+                            btnView.style.textDecoration = 'none';
+                            btnView.style.marginRight = '0.5rem';
+                            btnView.innerHTML = `<i data-lucide="eye" style="width:16px; margin-right:4px;"></i> Ver`;
+                            rightDiv.appendChild(btnView);
+
                             // Delete button
                             const btnDel = document.createElement('button');
                             btnDel.className = 'btn btn-ghost btn-icon';
