@@ -19,6 +19,26 @@ const PedidoDeVenda = sequelize.define('PedidoDeVenda', {
     type: DataTypes.STRING,
     allowNull: false,
     defaultValue: 'Pendente'
+  },
+  num_p2b: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  num_radar: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  data_entrada: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  data_input: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  data_ativacao: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 }, {
   tableName: 'pedidos_de_venda',

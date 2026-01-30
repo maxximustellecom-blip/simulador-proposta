@@ -1,4 +1,4 @@
-import { PedidoDeVenda, Negotiation, NegociacaoProposta, NegociacaoPropostaCustomizada, Client } from '../models/index.js';
+import { PedidoDeVenda, Negotiation, NegociacaoProposta, NegociacaoPropostaCustomizada, Client, User } from '../models/index.js';
 import { Op } from 'sequelize';
 
 export async function obterDetalhesPedido(req, res) {
@@ -57,6 +57,7 @@ export async function listarPedidosConcluidos(req, res) {
           as: 'negotiation',
           include: [
             { model: Client, as: 'client' },
+            { model: User, as: 'creator' },
             { model: NegociacaoProposta, as: 'proposal' },
             { model: NegociacaoPropostaCustomizada, as: 'customProposal' }
           ],
@@ -92,9 +93,16 @@ export async function listarPedidosConcluidos(req, res) {
       return {
         id: p.id,
         negotiation_id: p.negotiation_id,
+        consultor: neg.creator?.name || '',
         razaoSocial: neg.client?.name || '',
         cnpj: neg.cnpj,
         tipo: neg.tipo,
+        numP2B: p.num_p2b || '',
+        numRadar: p.num_radar || '',
+        dataEntrada: p.data_entrada || new Date(p.created_at).toLocaleDateString('pt-BR'),
+        dataInput: p.data_input || '',
+        dataAtivacao: p.data_ativacao || '',
+        statusPedido: p.status,
         proposta: neg.proposta,
         valor: neg.valor,
         status: neg.status,

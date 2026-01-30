@@ -280,17 +280,19 @@
                     <table id="tabelaPrincipal">
                         <thead>
                             <tr>
+                                <th style="min-width: 150px;">Consultor</th>
                                 <th style="min-width: 200px;">Razão Social</th>
-                                <th style="min-width: 100px;">Total Acessos</th>
-                                <th style="min-width: 100px;">Fatura Total</th>
-                                <th style="min-width: 120px;">Status Proposta</th>
-                                <th style="min-width: 120px;">Status Pedido</th>
-                                <th style="min-width: 120px;">Data</th>
+                                <th style="min-width: 100px;">Nº P2B</th>
+                                <th style="min-width: 100px;">Nº Radar</th>
+                                <th style="min-width: 120px;">Data Entrada</th>
+                                <th style="min-width: 120px;">Data Input</th>
+                                <th style="min-width: 120px;">Data Ativação</th>
+                                <th style="min-width: 150px;">Status do Pedido</th>
                                 <th style="min-width: 100px;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tbodyBackend">
-                            <tr><td colspan="8" class="text-center p-4">Carregando...</td></tr>
+                            <tr><td colspan="9" class="text-center p-4">Carregando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -574,17 +576,19 @@
         function renderBackendTable(data) {
             const tbody = document.getElementById('tbodyBackend');
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4">Nenhum pedido concluído encontrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center p-4">Nenhum pedido concluído encontrado.</td></tr>';
                 return;
             }
             tbody.innerHTML = data.map(item => `
                 <tr>
+                    <td>${item.consultor || '-'}</td>
                     <td>${item.razaoSocial || item.cliente || '-'}</td>
-                    <td>${item.totalAcessos || 0}</td>
-                    <td>${(item.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                    <td><span class="${getStatusClass(item.status)}">${item.status || '-'}</span></td>
-                    <td><span class="chip-status in-progress">Entrada</span></td>
-                    <td>${item.data || '-'}</td>
+                    <td>${item.numP2B || '-'}</td>
+                    <td>${item.numRadar || '-'}</td>
+                    <td>${item.dataEntrada || '-'}</td>
+                    <td>${item.dataInput || '-'}</td>
+                    <td>${item.dataAtivacao || '-'}</td>
+                    <td><span class="${getStatusClass(item.statusPedido || item.status)}">${item.statusPedido || item.status || '-'}</span></td>
                     <td>
                         <button class="btn btn-ghost btn-sm" title="Configurar" style="gap: 5px;" onclick="configurarPedido('${item.id}')">
                             <i data-lucide="settings"></i>Configurar
