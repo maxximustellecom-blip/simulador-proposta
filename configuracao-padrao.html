@@ -171,11 +171,22 @@
                 <section class="section" style="margin-top:1rem;">
                     <div class="label">Anexos</div>
                     <div style="margin-top:0.5rem;">
-                        <div id="attachmentsList" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;"></div>
-                        <label class="btn btn-ghost" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.5rem;">
-                            <i data-lucide="paperclip"></i><span>Adicionar anexo</span>
-                            <input type="file" id="fileInput" style="display:none;">
-                        </label>
+                        <div style="margin-bottom: 1rem;">
+                            <div class="label" style="font-size:0.85rem; color:var(--muted); margin-bottom:0.25rem;">Tipo de Empresa / Documentação</div>
+                            <select id="entityTypeSelect" class="select" style="width:100%; max-width:400px;">
+                                <option value="">Selecione o tipo de empresa...</option>
+                            </select>
+                        </div>
+                        <div id="entityRequirementsContainer"></div>
+                        
+                        <div style="margin-top:1.5rem; border-top:1px solid #e5e7eb; padding-top:1rem;">
+                            <div class="label" style="margin-bottom:0.5rem;">Outros Anexos</div>
+                            <div id="attachmentsList" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;"></div>
+                            <label class="btn btn-ghost" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.5rem;">
+                                <i data-lucide="paperclip"></i><span>Adicionar anexo extra</span>
+                                <input type="file" id="fileInput" style="display:none;">
+                            </label>
+                        </div>
                     </div>
                 </section>
                 <section style="margin-top:1rem;">
@@ -412,6 +423,68 @@
     <script src="script.js"></script>
     <script>
         const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
+        
+        const ATTACHMENT_CONFIG = [
+            {
+                type: "Sociedade Anônima (S/A)",
+                docs: [
+                    "Estatuto Social + Ata última assembleia",
+                    "RG + CPF dos representantes",
+                    "Comprovante de endereço",
+                    "Ata eleição diretores",
+                    "Procuração (se necessário)"
+                ]
+            },
+            {
+                type: "Sociedade Limitada (LTDA)",
+                docs: [
+                    "Contrato Social + última alteração",
+                    "RG + CPF dos representantes",
+                    "Comprovante de endereço",
+                    "Ata de nomeação (se aplicável)",
+                    "Procuração (se necessário)"
+                ]
+            },
+            {
+                type: "Empresário Individual (EI)",
+                docs: [
+                    "Requerimento de Empresário",
+                    "RG + CPF do titular",
+                    "Comprovante de endereço",
+                    "Cartão CNPJ"
+                ]
+            },
+            {
+                type: "Microempreendedor Individual (MEI)",
+                docs: [
+                    "Certificado da Condição de MEI (CCMEI)",
+                    "RG + CPF do titular",
+                    "Comprovante de endereço",
+                    "Cartão CNPJ"
+                ]
+            },
+            {
+                type: "Condomínio",
+                docs: [
+                    "Convenção do Condomínio",
+                    "Ata de Eleição do Síndico",
+                    "RG + CPF do Síndico",
+                    "Comprovante de endereço"
+                ]
+            },
+            {
+                type: "Associação / Entidade",
+                docs: [
+                    "Estatuto Social",
+                    "Ata de Eleição da Diretoria",
+                    "RG + CPF do Presidente",
+                    "Comprovante de endereço"
+                ]
+            }
+        ];
+
+        let __currentEntityType = '';
+
         async function api(path, options = {}) {
             const authRaw = localStorage.getItem('authUser');
             let headers = { 'Content-Type': 'application/json' };
@@ -464,16 +537,145 @@
             } catch { toast('Erro ao carregar anexos', 'error'); }
         }
 
-        function renderAttachments(list) {
-            const container = document.getElementById('attachmentsList');
-            if (!container) return;
-            container.innerHTML = '';
+        function initEntityTypeSelector() {
+            const sel = document.getElementById('entityTypeSelect');
+            if (!sel) return;
             
-            if (!Array.isArray(list) || list.length === 0) {
-                return;
+            sel.innerHTML = '<option value="">Selecione o tipo de empresa...</option>';
+            ATTACHMENT_CONFIG.forEach(cfg => {
+                const opt = document.createElement('option');
+                opt.value = cfg.type;
+                opt.textContent = cfg.type;
+                sel.appendChild(opt);
+            });
+
+            sel.addEventListener('change', () => {
+                __currentEntityType = sel.value;
+                loadAttachments();
+            });
+        }
+
+        function renderAttachments(list) {
+            const containerGeneric = document.getElementById('attachmentsList');
+            const containerReq = document.getElementById('entityRequirementsContainer');
+            
+            if (containerGeneric) containerGeneric.innerHTML = '';
+            if (containerReq) containerReq.innerHTML = '';
+
+            const safeList = Array.isArray(list) ? list : [];
+
+            // 1. Render Requirements based on selected Entity Type
+            if (__currentEntityType && containerReq) {
+                const config = ATTACHMENT_CONFIG.find(c => c.type === __currentEntityType);
+                if (config) {
+                    config.docs.forEach(docName => {
+                        const categoryKey = `${config.type} - ${docName}`;
+                        const existing = safeList.find(a => a.category === categoryKey);
+                        
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        card.style.padding = '1rem';
+                        card.style.marginBottom = '0.5rem';
+                        card.style.border = existing ? '1px solid #10B981' : '1px solid #e5e7eb';
+                        card.style.background = existing ? '#ecfdf5' : '#fff';
+                        card.style.display = 'flex';
+                        card.style.alignItems = 'center';
+                        card.style.justifyContent = 'space-between';
+                        
+                        const leftDiv = document.createElement('div');
+                        leftDiv.style.display = 'flex';
+                        leftDiv.style.alignItems = 'center';
+                        leftDiv.style.gap = '0.75rem';
+
+                        // Icon
+                        const iconDiv = document.createElement('div');
+                        if (existing) {
+                            iconDiv.innerHTML = `<i data-lucide="check-circle" style="color:#10B981; width:20px; height:20px;"></i>`;
+                        } else {
+                            iconDiv.innerHTML = `<i data-lucide="file-warning" style="color:#F59E0B; width:20px; height:20px;"></i>`;
+                        }
+                        
+                        const infoDiv = document.createElement('div');
+                        const title = document.createElement('div');
+                        title.style.fontWeight = '600';
+                        title.style.fontSize = '0.9rem';
+                        title.style.color = existing ? '#065F46' : '#374151';
+                        title.textContent = docName;
+                        
+                        const sub = document.createElement('div');
+                        sub.style.fontSize = '0.8rem';
+                        sub.style.color = existing ? '#047857' : '#6B7280';
+                        if (existing) {
+                            sub.innerHTML = `Anexado: <strong>${existing.file_name}</strong>`;
+                        } else {
+                            sub.textContent = 'Documento pendente';
+                        }
+                        
+                        infoDiv.appendChild(title);
+                        infoDiv.appendChild(sub);
+                        leftDiv.appendChild(iconDiv);
+                        leftDiv.appendChild(infoDiv);
+
+                        const rightDiv = document.createElement('div');
+                        
+                        if (existing) {
+                            // View Button
+                            const btnView = document.createElement('a');
+                            btnView.href = `${API_BASE}/negotiations/${__negociacaoId}/attachments/${existing.id}/content`;
+                            btnView.target = '_blank';
+                            btnView.className = 'btn btn-ghost btn-sm';
+                            btnView.style.textDecoration = 'none';
+                            btnView.style.marginRight = '0.5rem';
+                            btnView.innerHTML = `<i data-lucide="eye" style="width:16px; margin-right:4px;"></i> Ver`;
+                            rightDiv.appendChild(btnView);
+
+                            // Delete button
+                            const btnDel = document.createElement('button');
+                            btnDel.className = 'btn btn-ghost btn-icon';
+                            btnDel.style.color = '#EF4444';
+                            btnDel.innerHTML = `<i data-lucide="trash-2" style="width:18px; height:18px;"></i>`;
+                            btnDel.title = 'Remover anexo';
+                            btnDel.onclick = () => deleteAttachment(existing.id);
+                            rightDiv.appendChild(btnDel);
+                        } else {
+                            // Upload button
+                            const lbl = document.createElement('label');
+                            lbl.className = 'btn btn-sm btn-primary';
+                            lbl.style.cursor = 'pointer';
+                            lbl.innerHTML = `<i data-lucide="upload" style="width:14px; height:14px; margin-right:4px;"></i> Anexar`;
+                            
+                            const inp = document.createElement('input');
+                            inp.type = 'file';
+                            inp.style.display = 'none';
+                            inp.onchange = (e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                    handleCategoryUpload(e.target.files[0], categoryKey);
+                                }
+                            };
+                            
+                            lbl.appendChild(inp);
+                            rightDiv.appendChild(lbl);
+                        }
+
+                        card.appendChild(leftDiv);
+                        card.appendChild(rightDiv);
+                        containerReq.appendChild(card);
+                    });
+                }
+            } else if (containerReq) {
+                 containerReq.innerHTML = `<div class="muted" style="font-style:italic; padding:0.5rem;">Selecione o tipo de empresa acima para ver a lista de documentos obrigatórios.</div>`;
             }
 
-            list.forEach(att => {
+            // 2. Render Generic Attachments
+            safeList.forEach(att => {
+                if (__currentEntityType) {
+                    const config = ATTACHMENT_CONFIG.find(c => c.type === __currentEntityType);
+                    if (config) {
+                        const isReq = config.docs.some(doc => att.category === `${config.type} - ${doc}`);
+                        if (isReq) return;
+                    }
+                }
+
                 const div = document.createElement('div');
                 div.className = 'chip';
                 div.style.display = 'inline-flex';
@@ -482,17 +684,21 @@
                 div.style.padding = '0.5rem';
                 div.style.border = '1px solid #e5e7eb';
                 div.style.borderRadius = '6px';
+                div.style.background = '#fff';
                 
-                const iconName = getIconForType(att.file_type);
+                const iconName = getIconForType(att.file_type || '');
                 
                 div.innerHTML = `
                     <i data-lucide="${iconName}" style="width:16px; height:16px;"></i>
-                    <a href="${API_BASE}/negotiations/${__negociacaoId}/attachments/${att.id}/content" target="_blank" style="text-decoration:none; color:inherit; font-size:0.9rem;">${att.file_name}</a>
+                    <div style="display:flex; flex-direction:column;">
+                        <a href="${API_BASE}/negotiations/${__negociacaoId}/attachments/${att.id}/content" target="_blank" style="text-decoration:none; color:inherit; font-size:0.9rem; font-weight:500;">${att.file_name}</a>
+                        ${att.category ? `<span style="font-size:0.7rem; color:var(--muted);">${att.category}</span>` : ''}
+                    </div>
                     <button type="button" class="btn btn-ghost btn-icon" style="width:20px; height:20px; min-height:20px; padding:0;" onclick="deleteAttachment(${att.id})">
                         <i data-lucide="x" style="width:14px; height:14px;"></i>
                     </button>
                 `;
-                container.appendChild(div);
+                containerGeneric.appendChild(div);
             });
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         }
@@ -504,6 +710,29 @@
             return 'file';
         }
 
+        async function handleCategoryUpload(file, category) {
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('fileName', file.name);
+            formData.append('fileType', file.type);
+            formData.append('category', category);
+
+            try {
+                await api(`/negotiations/${__negociacaoId}/attachments`, {
+                    method: 'POST',
+                    body: formData
+                });
+                toast('Anexo enviado com sucesso', 'success');
+                loadAttachments();
+            } catch {
+                toast('Erro ao enviar anexo', 'error');
+            } finally {
+                // No input to clear here since we created it dynamically
+            }
+        }
+
         async function handleFileUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -512,6 +741,7 @@
             formData.append('file', file);
             formData.append('fileName', file.name);
             formData.append('fileType', file.type);
+            // No category for generic upload
 
             try {
                 await api(`/negotiations/${__negociacaoId}/attachments`, {
@@ -595,6 +825,7 @@
                 __negociacaoStatus = exists && exists.status ? String(exists.status) : 'Em andamento';
                 __negociacaoInfo = exists || null;
                 await initConfiguracao();
+                initEntityTypeSelector();
                 await loadAttachments();
                 const fileInput = document.getElementById('fileInput');
                 if (fileInput) fileInput.addEventListener('change', handleFileUpload);

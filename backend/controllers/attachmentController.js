@@ -5,7 +5,7 @@ export async function listAttachments(req, res) {
     const negotiationId = req.params.id;
     const list = await NegociacaoPropostaAnexos.findAll({
       where: { negotiation_id: negotiationId },
-      attributes: ['id', 'file_name', 'file_type', 'created_at'] // Don't return blob in list
+      attributes: ['id', 'file_name', 'file_type', 'created_at', 'category'] // Don't return blob in list
     });
     res.json(list);
   } catch (error) {
@@ -16,16 +16,18 @@ export async function listAttachments(req, res) {
 export async function uploadAttachment(req, res) {
   try {
     const negotiationId = req.params.id;
-    let fileName, fileType, buffer;
+    let fileName, fileType, buffer, category;
 
     if (req.file) {
       fileName = req.file.originalname;
       fileType = req.file.mimetype;
       buffer = req.file.buffer;
+      category = req.body.category;
     } else {
       const body = req.body;
       fileName = body.fileName;
       fileType = body.fileType;
+      category = body.category;
       const fileData = body.fileData;
       if (fileData) {
         const base64Data = fileData.replace(/^data:(.*,)?/, '');
@@ -41,7 +43,8 @@ export async function uploadAttachment(req, res) {
       negotiation_id: negotiationId,
       file_name: fileName,
       file_type: fileType || 'application/octet-stream',
-      file_data: buffer
+      file_data: buffer,
+      category: category || null
     });
 
     res.status(201).json({ id: attachment.id, file_name: attachment.file_name });
@@ -95,7 +98,7 @@ export async function listCustomAttachments(req, res) {
     const negotiationId = req.params.id;
     const list = await NegociacaoPropostaCustomizadaAnexos.findAll({
       where: { negotiation_id: negotiationId },
-      attributes: ['id', 'file_name', 'file_type', 'created_at']
+      attributes: ['id', 'file_name', 'file_type', 'created_at', 'category']
     });
     res.json(list);
   } catch (error) {
@@ -106,16 +109,18 @@ export async function listCustomAttachments(req, res) {
 export async function uploadCustomAttachment(req, res) {
   try {
     const negotiationId = req.params.id;
-    let fileName, fileType, buffer;
+    let fileName, fileType, buffer, category;
 
     if (req.file) {
       fileName = req.file.originalname;
       fileType = req.file.mimetype;
       buffer = req.file.buffer;
+      category = req.body.category;
     } else {
       const body = req.body;
       fileName = body.fileName;
       fileType = body.fileType;
+      category = body.category;
       const fileData = body.fileData;
       if (fileData) {
         const base64Data = fileData.replace(/^data:(.*,)?/, '');
@@ -131,7 +136,8 @@ export async function uploadCustomAttachment(req, res) {
       negotiation_id: negotiationId,
       file_name: fileName,
       file_type: fileType || 'application/octet-stream',
-      file_data: buffer
+      file_data: buffer,
+      category: category || null
     });
 
     res.status(201).json({ id: attachment.id, file_name: attachment.file_name });

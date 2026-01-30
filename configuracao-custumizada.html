@@ -192,11 +192,22 @@
                 <section class="section" style="margin-top:1rem;">
                     <div class="label">Anexos</div>
                     <div style="margin-top:0.5rem;">
-                        <div id="attachmentsList" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;"></div>
-                        <label class="btn btn-ghost" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.5rem;">
-                            <i data-lucide="paperclip"></i><span>Adicionar anexo</span>
-                            <input type="file" id="fileInput" style="display:none;">
-                        </label>
+                        <div style="margin-bottom: 1rem;">
+                            <div class="label" style="font-size:0.85rem; color:var(--muted); margin-bottom:0.25rem;">Tipo de Empresa / Documentação</div>
+                            <select id="entityTypeSelect" class="select" style="width:100%; max-width:400px;">
+                                <option value="">Selecione o tipo de empresa...</option>
+                            </select>
+                        </div>
+                        <div id="entityRequirementsContainer"></div>
+
+                        <div style="margin-top:1.5rem; border-top:1px solid #e5e7eb; padding-top:1rem;">
+                            <div class="label" style="margin-bottom:0.5rem;">Outros Anexos</div>
+                            <div id="attachmentsList" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;"></div>
+                            <label class="btn btn-ghost" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.5rem;">
+                                <i data-lucide="paperclip"></i><span>Adicionar anexo extra</span>
+                                <input type="file" id="fileInput" style="display:none;">
+                            </label>
+                        </div>
                     </div>
                 </section>
                 <section style="margin-top:1rem;">
@@ -315,6 +326,64 @@
         let __planosPorTipo = { novo: [], aditivo: [], renegociacao: [] };
         let __pctsPorTipo = { novo: [], aditivo: [], renegociacao: [] };
         let __map = {};
+        let __currentEntityType = "";
+
+        const ATTACHMENT_CONFIG = [
+            {
+                type: "Sociedade Anônima (S/A)",
+                docs: [
+                    "Estatuto Social + Ata última assembleia",
+                    "RG + CPF dos representantes",
+                    "Comprovante de endereço",
+                    "Ata eleição diretores",
+                    "Procuração (se necessário)"
+                ]
+            },
+            {
+                type: "Sociedade Limitada (LTDA)",
+                docs: [
+                    "Contrato Social + Última alteração",
+                    "RG + CPF dos sócios",
+                    "Comprovante de endereço",
+                    "Procuração (se necessário)"
+                ]
+            },
+            {
+                type: "Empresário Individual (EI)",
+                docs: [
+                    "Requerimento de Empresário",
+                    "RG + CPF do titular",
+                    "Comprovante de endereço"
+                ]
+            },
+            {
+                type: "Microempreendedor Individual (MEI)",
+                docs: [
+                    "Certificado da Condição de MEI (CCMEI)",
+                    "RG + CPF do titular",
+                    "Comprovante de endereço"
+                ]
+            },
+            {
+                type: "Condomínio",
+                docs: [
+                    "Convenção do Condomínio",
+                    "Ata de Eleição do Síndico",
+                    "RG + CPF do Síndico",
+                    "Comprovante de endereço"
+                ]
+            },
+            {
+                type: "Associação / Entidade",
+                docs: [
+                    "Estatuto Social",
+                    "Ata de Eleição da Diretoria",
+                    "RG + CPF do Presidente",
+                    "Comprovante de endereço"
+                ]
+            }
+        ];
+
         function normalizeTipoKey(t) {
             const k = String(t || '').toLowerCase();
             if (k.includes('reneg')) return 'renegociacao';
@@ -2214,6 +2283,46 @@
                 toast('Erro ao gerar imagem da proposta', 'error');
             }
         }
+        function initEntitySelector() {
+            const sel = document.getElementById('entityTypeSelect');
+            if (!sel) return;
+            
+            sel.innerHTML = '<option value="">Selecione o tipo de empresa...</option>';
+            ATTACHMENT_CONFIG.forEach(cfg => {
+                const opt = document.createElement('option');
+                opt.value = cfg.type;
+                opt.textContent = cfg.type;
+                sel.appendChild(opt);
+            });
+
+            sel.addEventListener('change', (e) => {
+                __currentEntityType = e.target.value;
+                loadAttachments(); // Re-render to show correct cards
+            });
+        }
+
+        async function handleCategorizedUpload(file, categoryName) {
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('fileName', file.name);
+            formData.append('fileType', file.type);
+            formData.append('category', categoryName);
+
+            try {
+                toast('Enviando...', 'info');
+                await api(`/negotiations/${__negociacaoId}/custom-attachments`, {
+                    method: 'POST',
+                    body: formData
+                });
+                toast('Anexo enviado!', 'success');
+                loadAttachments();
+            } catch (err) {
+                console.error(err);
+                toast('Erro ao enviar anexo', 'error');
+            }
+        }
+
         async function loadAttachments() {
             try {
                 const list = await api(`/negotiations/${__negociacaoId}/custom-attachments`, { method: 'GET' }).catch(() => []);
@@ -2222,35 +2331,144 @@
         }
 
         function renderAttachments(list) {
-            const container = document.getElementById('attachmentsList');
-            if (!container) return;
-            container.innerHTML = '';
+            const containerGeneric = document.getElementById('attachmentsList');
+            const containerReq = document.getElementById('entityRequirementsContainer');
             
-            if (!Array.isArray(list) || list.length === 0) {
-                return;
+            if (containerGeneric) containerGeneric.innerHTML = '';
+            if (containerReq) containerReq.innerHTML = '';
+
+            const safeList = Array.isArray(list) ? list : [];
+
+            // 1. Render Requirements based on selected Entity Type
+            if (__currentEntityType && containerReq) {
+                const config = ATTACHMENT_CONFIG.find(c => c.type === __currentEntityType);
+                if (config) {
+                    config.docs.forEach(docName => {
+                        const categoryKey = `${config.type} - ${docName}`;
+                        const existing = safeList.find(a => a.category === categoryKey);
+                        
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        card.style.padding = '1rem';
+                        card.style.marginBottom = '0.5rem';
+                        card.style.border = existing ? '1px solid #10B981' : '1px solid #e5e7eb';
+                        card.style.background = existing ? '#ecfdf5' : '#fff';
+                        card.style.display = 'flex';
+                        card.style.alignItems = 'center';
+                        card.style.justifyContent = 'space-between';
+                        
+                        const leftDiv = document.createElement('div');
+                        leftDiv.style.display = 'flex';
+                        leftDiv.style.alignItems = 'center';
+                        leftDiv.style.gap = '0.75rem';
+
+                        // Icon
+                        const iconDiv = document.createElement('div');
+                        if (existing) {
+                            iconDiv.innerHTML = `<i data-lucide="check-circle" style="color:#10B981; width:20px; height:20px;"></i>`;
+                        } else {
+                            iconDiv.innerHTML = `<i data-lucide="file-warning" style="color:#F59E0B; width:20px; height:20px;"></i>`;
+                        }
+                        
+                        const infoDiv = document.createElement('div');
+                        const title = document.createElement('div');
+                        title.style.fontWeight = '600';
+                        title.style.fontSize = '0.9rem';
+                        title.style.color = existing ? '#065F46' : '#374151';
+                        title.textContent = docName;
+                        
+                        const sub = document.createElement('div');
+                        sub.style.fontSize = '0.8rem';
+                        sub.style.color = existing ? '#047857' : '#6B7280';
+                        if (existing) {
+                            sub.innerHTML = `Anexado: <strong>${existing.file_name}</strong>`;
+                        } else {
+                            sub.textContent = 'Documento pendente';
+                        }
+                        
+                        infoDiv.appendChild(title);
+                        infoDiv.appendChild(sub);
+                        leftDiv.appendChild(iconDiv);
+                        leftDiv.appendChild(infoDiv);
+
+                        const rightDiv = document.createElement('div');
+                        
+                        if (existing) {
+                            // Delete button
+                            const btnDel = document.createElement('button');
+                            btnDel.className = 'btn btn-ghost btn-icon';
+                            btnDel.style.color = '#EF4444';
+                            btnDel.innerHTML = `<i data-lucide="trash-2" style="width:18px; height:18px;"></i>`;
+                            btnDel.title = 'Remover anexo';
+                            btnDel.onclick = () => deleteAttachment(existing.id);
+                            rightDiv.appendChild(btnDel);
+                        } else {
+                            // Upload button
+                            const lbl = document.createElement('label');
+                            lbl.className = 'btn btn-sm btn-primary';
+                            lbl.style.cursor = 'pointer';
+                            lbl.innerHTML = `<i data-lucide="upload" style="width:14px; height:14px; margin-right:4px;"></i> Anexar`;
+                            
+                            const inp = document.createElement('input');
+                            inp.type = 'file';
+                            inp.style.display = 'none';
+                            inp.onchange = (e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                    handleCategorizedUpload(e.target.files[0], categoryKey);
+                                }
+                            };
+                            
+                            lbl.appendChild(inp);
+                            rightDiv.appendChild(lbl);
+                        }
+
+                        card.appendChild(leftDiv);
+                        card.appendChild(rightDiv);
+                        containerReq.appendChild(card);
+                    });
+                }
+            } else if (containerReq) {
+                containerReq.innerHTML = `<div class="muted" style="font-style:italic; padding:0.5rem;">Selecione o tipo de empresa acima para ver a lista de documentos obrigatórios.</div>`;
             }
 
-            list.forEach(att => {
-                const div = document.createElement('div');
-                div.className = 'chip';
-                div.style.display = 'inline-flex';
-                div.style.alignItems = 'center';
-                div.style.gap = '0.5rem';
-                div.style.padding = '0.5rem';
-                div.style.border = '1px solid #e5e7eb';
-                div.style.borderRadius = '6px';
-                
-                const iconName = getIconForType(att.file_type);
-                
-                div.innerHTML = `
-                    <i data-lucide="${iconName}" style="width:16px; height:16px;"></i>
-                    <a href="${API_BASE}/negotiations/${__negociacaoId}/custom-attachments/${att.id}/content" target="_blank" style="text-decoration:none; color:inherit; font-size:0.9rem;">${att.file_name}</a>
-                    <button type="button" class="btn btn-ghost btn-icon" style="width:20px; height:20px; min-height:20px; padding:0;" onclick="deleteAttachment(${att.id})">
-                        <i data-lucide="x" style="width:14px; height:14px;"></i>
-                    </button>
-                `;
-                container.appendChild(div);
-            });
+            // 2. Render Generic Attachments
+            if (containerGeneric) {
+                safeList.forEach(att => {
+                    // Filter out attachments that are already shown in the Requirements section
+                    if (__currentEntityType) {
+                        const config = ATTACHMENT_CONFIG.find(c => c.type === __currentEntityType);
+                        if (config) {
+                            const isReq = config.docs.some(doc => att.category === `${config.type} - ${doc}`);
+                            if (isReq) return;
+                        }
+                    }
+
+                    const div = document.createElement('div');
+                    div.className = 'chip';
+                    div.style.display = 'inline-flex';
+                    div.style.alignItems = 'center';
+                    div.style.gap = '0.5rem';
+                    div.style.padding = '0.5rem';
+                    div.style.border = '1px solid #e5e7eb';
+                    div.style.borderRadius = '6px';
+                    div.style.background = '#fff';
+                    
+                    const iconName = getIconForType(att.file_type || '');
+                    
+                    div.innerHTML = `
+                        <i data-lucide="${iconName}" style="width:16px; height:16px;"></i>
+                        <div style="display:flex; flex-direction:column;">
+                            <a href="${API_BASE}/negotiations/${__negociacaoId}/custom-attachments/${att.id}/content" target="_blank" style="text-decoration:none; color:inherit; font-size:0.9rem; font-weight:500;">${att.file_name}</a>
+                            ${att.category ? `<span style="font-size:0.7rem; color:var(--muted);">${att.category}</span>` : ''}
+                        </div>
+                        <button type="button" class="btn btn-ghost btn-icon" style="width:20px; height:20px; min-height:20px; padding:0;" onclick="deleteAttachment(${att.id})">
+                            <i data-lucide="x" style="width:14px; height:14px;"></i>
+                        </button>
+                    `;
+                    containerGeneric.appendChild(div);
+                });
+            }
+
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         }
 
@@ -2355,6 +2573,11 @@
                 renderClienteBasico();
                 await carregarPropostaSalva();
                 loadAttachments();
+                initEntitySelector();
+                
+                const fileInput = document.getElementById('fileInput');
+                if (fileInput) fileInput.addEventListener('change', handleFileUpload);
+
                 bindEditModalEvents();
                 const addLinhaBtn = document.getElementById('addLinhaBtn');
                 const salvarBtn = document.getElementById('salvarBtn');
@@ -2426,8 +2649,6 @@
                 }
                 const anotacoesEl = document.getElementById('fAnotacoes');
                 if (anotacoesEl) anotacoesEl.addEventListener('blur', () => salvarProposta());
-                const fileInput = document.getElementById('fileInput');
-                if (fileInput) fileInput.addEventListener('change', handleFileUpload);
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             } catch (e) {
                 console.error(e);
