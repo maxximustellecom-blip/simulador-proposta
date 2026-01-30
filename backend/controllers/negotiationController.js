@@ -86,7 +86,7 @@ export async function createNegotiation(req, res) {
 
     await PedidoDeVenda.create({
       negotiation_id: negotiation.id,
-      status: status || 'Em andamento'
+      status: 'Pendente'
     });
 
     return res.status(201).json({

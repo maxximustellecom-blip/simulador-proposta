@@ -588,7 +588,7 @@
                     <td>${item.dataEntrada || '-'}</td>
                     <td>${item.dataInput || '-'}</td>
                     <td>${item.dataAtivacao || '-'}</td>
-                    <td><span class="${getStatusClass(item.statusPedido || item.status)}">${item.statusPedido || item.status || '-'}</span></td>
+                    <td><span class="${getStatusClass(item.status )}">${item.status  || '-'}</span></td>
                     <td>
                         <button class="btn btn-ghost btn-sm" title="Configurar" style="gap: 5px;" onclick="configurarPedido('${item.id}')">
                             <i data-lucide="settings"></i>Configurar
