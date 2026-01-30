@@ -192,7 +192,7 @@
                 <section class="section" style="margin-top:1rem;">
                     <div class="label">Anexos</div>
                     <div style="margin-top:0.5rem;">
-                        <div style="margin-bottom: 1rem;">
+                        <div id="entityTypeContainer" style="margin-bottom: 1rem; display:none;">
                             <div class="label" style="font-size:0.85rem; color:var(--muted); margin-bottom:0.25rem;">Tipo de Empresa / Documentação</div>
                             <select id="entityTypeSelect" class="select" style="width:100%; max-width:400px;">
                                 <option value="">Selecione o tipo de empresa...</option>
@@ -2283,22 +2283,39 @@
                 toast('Erro ao gerar imagem da proposta', 'error');
             }
         }
-        function initEntitySelector() {
+        function applyEntityRules() {
             const sel = document.getElementById('entityTypeSelect');
-            if (!sel) return;
+            const container = document.getElementById('entityTypeContainer');
             
-            sel.innerHTML = '<option value="">Selecione o tipo de empresa...</option>';
-            ATTACHMENT_CONFIG.forEach(cfg => {
-                const opt = document.createElement('option');
-                opt.value = cfg.type;
-                opt.textContent = cfg.type;
-                sel.appendChild(opt);
-            });
+            // Populate select if empty
+            if (sel && sel.options.length <= 1) {
+                ATTACHMENT_CONFIG.forEach(cfg => {
+                    const opt = document.createElement('option');
+                    opt.value = cfg.type;
+                    opt.textContent = cfg.type;
+                    sel.appendChild(opt);
+                });
+                
+                sel.addEventListener('change', (e) => {
+                    __currentEntityType = e.target.value;
+                    loadAttachments();
+                });
+            }
 
-            sel.addEventListener('change', (e) => {
-                __currentEntityType = e.target.value;
-                loadAttachments(); // Re-render to show correct cards
-            });
+            let foundType = null;
+            if (__clienteInfo && __clienteInfo.tipo_empresa) {
+                const found = ATTACHMENT_CONFIG.find(c => c.type === __clienteInfo.tipo_empresa);
+                if (found) foundType = found.type;
+            }
+
+            if (foundType) {
+                __currentEntityType = foundType;
+                if (sel) sel.value = foundType;
+                if (container) container.style.display = 'none';
+            } else {
+                // Not found: show select
+                if (container) container.style.display = 'block';
+            }
         }
 
         async function handleCategorizedUpload(file, categoryName) {
@@ -2428,7 +2445,7 @@
                     });
                 }
             } else if (containerReq) {
-                containerReq.innerHTML = `<div class="muted" style="font-style:italic; padding:0.5rem;">Selecione o tipo de empresa acima para ver a lista de documentos obrigatórios.</div>`;
+                containerReq.innerHTML = `<div class="muted" style="font-style:italic; padding:0.5rem;">Selecione o tipo de empresa para ver a lista de documentos obrigatórios.</div>`;
             }
 
             // 2. Render Generic Attachments
@@ -2572,8 +2589,8 @@
                 await carregarClienteBasico();
                 renderClienteBasico();
                 await carregarPropostaSalva();
+                applyEntityRules();
                 loadAttachments();
-                initEntitySelector();
                 
                 const fileInput = document.getElementById('fileInput');
                 if (fileInput) fileInput.addEventListener('change', handleFileUpload);

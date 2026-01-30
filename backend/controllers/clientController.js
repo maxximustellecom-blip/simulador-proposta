@@ -96,7 +96,12 @@ export async function upsertClient(req, res) {
     if (changed) await client.save();
     return res.json(client);
   } catch (err) {
-    return res.status(500).json({ error: 'erro ao salvar cliente', details: String(err && err.message ? err.message : err) });
+    console.error('Error saving client:', err);
+    return res.status(500).json({ 
+      error: 'erro ao salvar cliente', 
+      details: err.message || String(err),
+      validationErrors: err.errors ? err.errors.map(e => ({ message: e.message, path: e.path, value: e.value })) : []
+    });
   }
 }
 
