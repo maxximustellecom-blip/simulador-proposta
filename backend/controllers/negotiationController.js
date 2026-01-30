@@ -132,7 +132,15 @@ export async function updateNegotiation(req, res) {
     if (status) {
       const pedido = await PedidoDeVenda.findOne({ where: { negotiation_id: negotiation.id } });
       if (pedido) {
-        pedido.status = status;
+        const s = String(status).toLowerCase();
+        if (s === 'concluída' || s === 'concluida') {
+          pedido.status = 'Entrada';
+          if (!pedido.data_entrada) {
+             pedido.data_entrada = new Date().toLocaleDateString('pt-BR');
+          }
+        } else {
+          pedido.status = status;
+        }
         await pedido.save();
       }
     }
