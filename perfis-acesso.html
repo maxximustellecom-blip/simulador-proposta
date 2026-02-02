@@ -181,6 +181,9 @@
                             <thead>
                                 <tr>
                                     <th style="width:20%">Nível</th>
+                                    <th>Novo</th>
+                                    <th>Aditivo</th>
+                                    <th>Portabilidade</th>
                                     <th>Renov.</th>
                                     <th>U. Fibra</th>
                                     <th>WTTX</th>
@@ -240,6 +243,9 @@
                             <thead>
                                 <tr>
                                     <th style="width:20%">Nível</th>
+                                    <th>Novo</th>
+                                    <th>Aditivo</th>
+                                    <th>Portabilidade</th>
                                     <th>Renov.</th>
                                     <th>U. Fibra</th>
                                     <th>WTTX</th>
@@ -426,6 +432,9 @@
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><span class="level-badge">${data && data.level_group ? data.level_group : ''}</span><input type="hidden" value="${data && data.level_group ? data.level_group : ''}"></td>
+                <td><input type="text" class="commission-input" placeholder="%" value="${data && data.novo !== undefined ? data.novo : ''}"></td>
+                <td><input type="text" class="commission-input" placeholder="%" value="${data && data.aditivo !== undefined ? data.aditivo : ''}"></td>
+                <td><input type="text" class="commission-input" placeholder="%" value="${data && data.portabilidade !== undefined ? data.portabilidade : ''}"></td>
                 <td><input type="text" class="commission-input" placeholder="%" value="${data && data.renovacao !== undefined ? data.renovacao : ''}"></td>
                 <td><input type="text" class="commission-input" placeholder="%" value="${data && data.ultra_fibra !== undefined ? data.ultra_fibra : ''}"></td>
                 <td><input type="text" class="commission-input" placeholder="%" value="${data && data.wttx !== undefined ? data.wttx : ''}"></td>
@@ -457,11 +466,14 @@
                 if (inputs.length > 0) {
                     products.push({
                         level_group: inputs[0].value,
-                        renovacao: inputs[1].value,
-                        ultra_fibra: inputs[2].value,
-                        wttx: inputs[3].value,
-                        m2m: inputs[4].value,
-                        controle: inputs[5].value
+                        novo: inputs[1].value,
+                        aditivo: inputs[2].value,
+                        portabilidade: inputs[3].value,
+                        renovacao: inputs[4].value,
+                        ultra_fibra: inputs[5].value,
+                        wttx: inputs[6].value,
+                        m2m: inputs[7].value,
+                        controle: inputs[8].value
                     });
                 }
             });
@@ -487,7 +499,7 @@
             
             const products = DEFAULT_COMMISSION_ROWS.map(name => {
                 const existing = (config && config.products) ? config.products.find(p => p.level_group === name) : null;
-                return existing || { level_group: name, renovacao: '', ultra_fibra: '', wttx: '', m2m: '', controle: '' };
+                return existing || { level_group: name, novo: '', aditivo: '', portabilidade: '', renovacao: '', ultra_fibra: '', wttx: '', m2m: '', controle: '' };
             });
 
             levels.forEach(l => addLevelRow(levelTbodyId, l));
