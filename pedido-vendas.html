@@ -299,37 +299,7 @@
             </section> 
         </div>
 
-        <div id="cardConfiguracao" class="card mb-6" style="display: none;">
-            <div class="card-head">
-                <div class="card-title">
-                    <span>Configuração do Cliente</span>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="action-buttons mb-6">
-                    <button class="btn btn-blue" onclick="adicionarVenda()">
-                        <i data-lucide="plus" size="18"></i> Nova Venda
-                    </button>
-                    <button class="btn btn-green" onclick="exportarDados()">
-                        <i data-lucide="download" size="18"></i> Exportar CSV
-                    </button>
-                </div>
-
-                <div class="table-container">
-                    <table id="tabelaVendas">
-                        <thead>
-                            <tr>
-                                <th style="min-width: 120px;">Tipo</th>
-                                <th style="min-width: 80px;">Qtd</th>
-                                <th style="min-width: 100px;">Total</th>
-                                <th style="min-width: 140px;">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbodyVendas"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        <!-- Card removido conforme solicitação -->
     </main>
     <script src="script.js"></script>
     <div id="toast" class="toast"></div>
@@ -734,17 +704,8 @@
                 }
 
                 salvarVendas(); // Update UI
-
-                const card = document.getElementById('cardConfiguracao');
-                const titulo = document.getElementById('nomeClienteConfiguracao');
-                
-                if (titulo) {
-                    titulo.textContent = detalhes.razaoSocial || 'Cliente';
-                }
-                
-                if (card) {
-                    card.style.display = 'block';
-                    setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                if (vendas.length > 0) {
+                    openEditVenda(vendas[0].id);
                 }
 
             } catch (e) {
@@ -775,71 +736,39 @@
             const v = vendas.find(x => x.id === id);
             if (!v) return;
             const modal = document.getElementById('editVendaModal');
-            document.getElementById('vEditStatus').innerHTML = statusPedido.map(s => `<option value="${s}">${s}</option>`).join('');
-            document.getElementById('vEditStatus').value = v.status || '1-Entrada';
-            document.getElementById('vEditTipo').value = v.tipoVenda || 'Novo';
-            document.getElementById('vEditQtd').value = String(v.qtdAcessos || 1);
-            
-            const catOpts = getCategoriasOptions(v.tipoVenda);
-            const catSel = document.getElementById('vEditPlano');
-            catSel.innerHTML = ['<option value="">Selecione</option>'].concat(catOpts.map(n => `<option value="${n}">${n}</option>`)).join('');
-            catSel.value = v.plano || '';
-            
-            const ofertas = getOfertasOptions(v.plano, v.regiaoValidade);
-            const ofSel = document.getElementById('vEditOferta');
-            ofSel.innerHTML = ['<option value="">Selecione</option>'].concat(ofertas.map(n => `<option value="${n.nome || n}">${n.nome || n}</option>`)).join('');
-            ofSel.value = v.oferta || '';
-            
-            const regSel = document.getElementById('vEditRegiao');
-            const regOpts = REGIOES_LIST.map(r => `<option value="${r.v}">${r.l}</option>`);
-            regSel.innerHTML = ['<option value="">Selecione</option>'].concat(regOpts).join('');
-            regSel.value = v.regiaoValidade || '';
-            
-            document.getElementById('vEditPct').value = v.pct || '';
-            document.getElementById('vEditValorPlano').value = v.valorPlano || '';
-            document.getElementById('vEditPortabilidade').value = v.portabilidade || 'NÃO';
-            document.getElementById('vEditOperadora').value = v.operadora || '';
-            document.getElementById('vEditDataAgendamento').value = v.dataAgendamento || '';
-            document.getElementById('vEditAcesso').value = v.acesso || '';
-            document.getElementById('vEditRegiao').value = v.regiaoValidade || '';
-            document.getElementById('vEditAparelhos').value = v.aparelhos || '';
-            
-            // Populate Identificação
-            document.getElementById('vEditNumP2B').value = v.numP2B || v.numPedido || '';
-            document.getElementById('vEditNumRadar').value = v.numRadar || v.numPropostaVenda || '';
-            document.getElementById('vEditRazao').value = v.razaoSocial || '';
-            document.getElementById('vEditCnpj').value = v.cnpj || '';
-            // Consultor field: Use v.consultorSupervisor if available, otherwise fallback to v.vendedor (from backend) or creator name if accessible
-            // Looking at the data flow, v might come from the table which has 'vendedor' property populated from creator.name in backend
-            document.getElementById('vEditConsultor').value = v.consultorSupervisor || v.vendedor || '';
-
-            // Populate Dates
-            document.getElementById('vEditDataEntrada').value = v.dataEntrada || '';
-            document.getElementById('vEditDataInput').value = v.dataInput || '';
-            document.getElementById('vEditDataAtivacao').value = v.dataAtivacao || '';
-
-            // Populate Chip
-            document.getElementById('vEditFastChip').value = v.fastChip || 'NÃO';
-            document.getElementById('vEditIccid').value = v.iccid || '';
-
-            // Populate Observação
-            document.getElementById('vEditObservacao').value = v.observacao || '';
-            
-            // Computed Total (Disabled)
-            document.getElementById('vEditFaturaTotal').value = v.faturaTotal || '0,00';
-            
+            const statusEl = document.getElementById('vEditStatus');
+            if (statusEl) {
+                statusEl.innerHTML = statusPedido.map(s => `<option value="${s}">${s}</option>`).join('');
+                statusEl.value = v.status || '1-Entrada';
+            }
+            const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+            setVal('vEditDataEntrada', v.dataEntrada);
+            setVal('vEditDataInput', v.dataInput);
+            setVal('vEditDataAtivacao', v.dataAtivacao);
+            setVal('vEditNumP2B', v.numP2B || v.numPedido);
+            setVal('vEditNumRadar', v.numRadar || v.numPropostaVenda);
+            setVal('vEditRazao', v.razaoSocial);
+            setVal('vEditCnpj', v.cnpj);
+            setVal('vEditConsultor', v.consultorSupervisor || v.vendedor);
+            setVal('vEditFastChip', v.fastChip || 'NÃO');
+            setVal('vEditIccid', v.iccid);
+            setVal('vEditObservacao', v.observacao);
+            const setBin = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || ''; };
+            setBin('vViewTipo', v.tipoVenda || 'Novo');
+            setBin('vViewQtd', String(v.qtdAcessos || 1));
+            setBin('vViewAcesso', v.acesso || '');
+            setBin('vViewPlano', v.plano || '');
+            setBin('vViewOferta', v.oferta || '');
+            setBin('vViewRegiao', v.regiaoValidade || '');
+            setBin('vViewPct', v.pct || '');
+            setBin('vViewValorPlano', v.valorPlano || '');
+            const qtdNum = parseFloat(v.qtdAcessos || 1);
+            const vpNum = parseFloat(String(v.valorPlano || '0').replace(',', '.'));
+            const fatura = (vpNum * qtdNum).toFixed(2).replace('.', ',');
+            setBin('vViewFaturaTotal', v.faturaTotal || fatura);
             updateEditVendaState();
-            const fmt = (el) => {
-                if(!el) return;
-                el.addEventListener('input', (e) => {
-                    const v = e.target.value.replace(/\D/g, '');
-                    e.target.value = v.length > 5 ? v.slice(0,5)+'-'+v.slice(5,9) : v;
-                });
-            };
-            fmt(document.getElementById('vEditAcesso'));
-            // fmt(document.getElementById('vEditAcessoPortar')); // Element removed or renamed? Check HTML.
-            
-            document.getElementById('vEditPortabilidade').addEventListener('change', updateEditVendaState);
+            const portEl = document.getElementById('vEditPortabilidade');
+            if (portEl) portEl.addEventListener('change', updateEditVendaState);
             modal.classList.add('show');
             if (window.lucide) window.lucide.createIcons();
         }
@@ -851,7 +780,8 @@
         function updateEditVendaState() {
             // Removed appliance logic as fields were simplified to single input
             
-            const port = document.getElementById('vEditPortabilidade').value;
+            const portEl = document.getElementById('vEditPortabilidade');
+            const port = portEl ? portEl.value : 'NÃO';
             // Check if portDetails exists (it might not if simplified)
             // But looking at HTML, section "Portabilidade" exists.
             // Wait, looking at HTML Read: 
@@ -1106,6 +1036,7 @@
 
         function renderTable() {
             const tbody = document.getElementById('tbodyVendas');
+            if (!tbody) return;
             tbody.innerHTML = '';
             
             // Removed filtering logic as requested
@@ -1177,7 +1108,7 @@
     <div id="editVendaModal" class="modal">
         <div class="modal-card" style="max-width: 900px; width: 95%;">
             <div class="modal-head">
-                <div>Configurar Linha</div>
+                <div>Detalhes do Pedido</div>
                 <button class="btn btn-ghost btn-icon" onclick="closeEditVenda()"><i data-lucide="x"></i></button>
             </div>
             <div class="modal-body">
@@ -1185,8 +1116,8 @@
                     <div class="section-header">
                         <i data-lucide="info" class="section-icon"></i>
                         <div>
-                            <div class="section-title">Status e Datas</div>
-                            <div class="section-desc">Situação do pedido</div>
+                            <div class="section-title">Informações do Pedido</div>
+                            <div class="section-desc">Dados básicos do pedido</div>
                         </div>
                     </div>
                     <div class="grid-3">
@@ -1206,17 +1137,6 @@
                             <div class="label">Data Ativação</div>
                             <input id="vEditDataAtivacao" type="date" class="input">
                         </div>
-                    </div>
-                </div>
-                <div class="section-block">
-                    <div class="section-header">
-                        <i data-lucide="building" class="section-icon"></i>
-                        <div>
-                            <div class="section-title">Identificação</div>
-                            <div class="section-desc">Dados do cliente e pedido</div>
-                        </div>
-                    </div>
-                    <div class="grid-3">
                         <div>
                             <div class="label">Nº P2B</div>
                             <input id="vEditNumP2B" type="text" class="input">
@@ -1226,16 +1146,27 @@
                             <input id="vEditNumRadar" type="text" class="input">
                         </div>
                         <div>
+                            <div class="label">Consultor</div>
+                            <input id="vEditConsultor" type="text" class="input">
+                        </div>
+                    </div>
+                </div>
+                <div class="section-block">
+                    <div class="section-header">
+                        <i data-lucide="building" class="section-icon"></i>
+                        <div>
+                            <div class="section-title">Identificação do Cliente</div>
+                            <div class="section-desc">Dados do cliente e pedido</div>
+                        </div>
+                    </div>
+                    <div class="grid-3">
+                        <div>
                             <div class="label">Razão Social</div>
                             <input id="vEditRazao" type="text" class="input">
                         </div>
                         <div>
                             <div class="label">CNPJ</div>
                             <input id="vEditCnpj" type="text" class="input">
-                        </div>
-                        <div>
-                            <div class="label">Consultor</div>
-                            <input id="vEditConsultor" type="text" class="input">
                         </div>
                     </div>
                 </div>
@@ -1244,123 +1175,53 @@
                         <i data-lucide="package" class="section-icon"></i>
                         <div>
                             <div class="section-title">Configuração da Venda</div>
-                            <div class="section-desc">Tipo, plano e valores</div>
+                            <div class="section-desc">Planos, Ofertas e valores</div>
                         </div>
                     </div>
                     <div class="grid-3">
                         <div>
                             <div class="label">Tipo de Venda</div>
-                            <select id="vEditTipo" class="select">
-                                <option value="Novo">Novo</option>
-                                <option value="Aditivo">Aditivo</option>
-                                <option value="Renegociação">Renegociação</option>
-                            </select>
+                            <div id="vViewTipo" class="input" style="pointer-events:none;"></div>
                         </div>
                         <div>
                             <div class="label">Qtd</div>
-                            <input id="vEditQtd" type="number" min="1" class="input">
+                            <div id="vViewQtd" class="input" style="pointer-events:none;"></div>
                         </div>
                         <div>
                             <div class="label">Acesso</div>
-                            <input id="vEditAcesso" type="text" class="input" placeholder="00000-0000" maxlength="10">
+                            <div id="vViewAcesso" class="input" style="pointer-events:none;"></div>
                         </div>
                     </div>
                     <div class="grid-3" style="margin-top: 0.75rem;">
                         <div>
                             <div class="label">Plano</div>
-                            <select id="vEditPlano" class="select"></select>
+                            <div id="vViewPlano" class="input" style="pointer-events:none;"></div>
                         </div>
                         <div>
                             <div class="label">Oferta</div>
-                            <select id="vEditOferta" class="select"></select>
+                            <div id="vViewOferta" class="input" style="pointer-events:none;"></div>
                         </div>
                         <div>
                             <div class="label">Região</div>
-                            <select id="vEditRegiao" class="select"></select>
+                            <div id="vViewRegiao" class="input" style="pointer-events:none;"></div>
                         </div>
                     </div>
                     <div class="grid-3" style="margin-top: 0.75rem;">
                         <div>
                             <div class="label">Pct</div>
-                            <input id="vEditPct" type="text" class="input">
+                            <div id="vViewPct" class="input" style="pointer-events:none;"></div>
                         </div>
                         <div>
                             <div class="label">Valor Plano (R$)</div>
-                            <input id="vEditValorPlano" type="number" step="0.01" class="input">
+                            <div id="vViewValorPlano" class="input" style="pointer-events:none;"></div>
                         </div>
                         <div>
                             <div class="label">Total</div>
-                            <input id="vEditFaturaTotal" type="text" class="input" disabled>
+                            <div id="vViewFaturaTotal" class="input" style="pointer-events:none;"></div>
                         </div>
                     </div>
                 </div>
-                <div class="section-block">
-                    <div class="section-header">
-                        <i data-lucide="shuffle" class="section-icon"></i>
-                        <div>
-                            <div class="section-title">Portabilidade</div>
-                            <div class="section-desc">Detalhes do port-in</div>
-                        </div>
-                    </div>
-                    <div class="grid-3">
-                        <div>
-                            <div class="label">Port-in</div>
-                            <select id="vEditPortabilidade" class="select">
-                                <option value="NÃO">NÃO</option>
-                                <option value="SIM">SIM</option>
-                            </select>
-                        </div>
-                        <div>
-                            <div class="label">Op. Doadora</div>
-                            <input id="vEditOperadora" type="text" class="input">
-                        </div>
-                        <div>
-                            <div class="label">Data Port-in</div>
-                            <input id="vEditDataAgendamento" type="date" class="input">
-                        </div>
-                    </div>
-                </div>
-                <div class="section-block">
-                    <div class="section-header">
-                        <i data-lucide="cpu" class="section-icon"></i>
-                        <div>
-                            <div class="section-title">Acesso e Chip</div>
-                            <div class="section-desc">Chip e ICCID</div>
-                        </div>
-                    </div>
-                    <div class="grid-3">
-                        <div>
-                            <div class="label">Fast Chip</div>
-                            <select id="vEditFastChip" class="select">
-                                <option value="NÃO">NÃO</option>
-                                <option value="SIM">SIM</option>
-                            </select>
-                        </div>
-                        <div>
-                            <div class="label">ICCID</div>
-                            <input id="vEditIccid" type="text" class="input">
-                        </div>
-                    </div>
-                </div>
-                <div class="section-block">
-                    <div class="section-header">
-                        <i data-lucide="edit-3" class="section-icon"></i>
-                        <div>
-                            <div class="section-title">Aparelhos e Observação</div>
-                            <div class="section-desc">Informações adicionais</div>
-                        </div>
-                    </div>
-                    <div class="grid-2">
-                        <div>
-                            <div class="label">Aparelhos</div>
-                            <input id="vEditAparelhos" type="text" class="input">
-                        </div>
-                        <div>
-                            <div class="label">Observação</div>
-                            <input id="vEditObservacao" type="text" class="input">
-                        </div>
-                    </div>
-                </div>
+                <!-- Seções removidas conforme solicitado -->
             </div>
             <div class="modal-actions">
                 <button class="btn btn-ghost" type="button" onclick="closeEditVenda()"><i data-lucide="x"></i><span>Cancelar</span></button>
