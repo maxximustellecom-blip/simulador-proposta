@@ -119,3 +119,41 @@ export async function listarPedidosConcluidos(req, res) {
     return res.status(500).json({ error: 'Erro interno ao listar pedidos.' });
   }
 }
+
+export async function atualizarPedidoDeVenda(req, res) {
+  try {
+    const { id } = req.params;
+    const {
+      status,
+      num_p2b,
+      num_radar,
+      data_entrada,
+      data_input,
+      data_ativacao
+    } = req.body || {};
+    const pedido = await PedidoDeVenda.findByPk(id);
+    if (!pedido) {
+      return res.status(404).json({ error: 'Pedido não encontrado' });
+    }
+    if (status !== undefined && status !== null) pedido.status = String(status);
+    if (num_p2b !== undefined) pedido.num_p2b = num_p2b || null;
+    if (num_radar !== undefined) pedido.num_radar = num_radar || null;
+    if (data_entrada !== undefined) pedido.data_entrada = data_entrada || null;
+    if (data_input !== undefined) pedido.data_input = data_input || null;
+    if (data_ativacao !== undefined) pedido.data_ativacao = data_ativacao || null;
+    await pedido.save();
+    return res.json({
+      id: pedido.id,
+      negotiation_id: pedido.negotiation_id,
+      status: pedido.status,
+      num_p2b: pedido.num_p2b,
+      num_radar: pedido.num_radar,
+      data_entrada: pedido.data_entrada,
+      data_input: pedido.data_input,
+      data_ativacao: pedido.data_ativacao
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar pedido de venda:', error);
+    return res.status(500).json({ error: 'Erro interno ao atualizar pedido.' });
+  }
+}

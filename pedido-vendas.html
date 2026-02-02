@@ -589,6 +589,7 @@
             renderBackendTable(filtered);
         }
 
+        let __currentPedidoId = null;
         async function configurarPedido(id) {
             const item = backendData.find(i => String(i.id) === String(id));
             if (!item) {
@@ -598,6 +599,7 @@
 
             try {
                 const detalhes = await api(`/pedidos-venda/${id}/detalhes`);
+                __currentPedidoId = id;
                 
                 if (detalhes.linhas && detalhes.linhas.length > 0) {
                     vendas = detalhes.linhas.map((linha, index) => {
@@ -761,7 +763,14 @@
             setVal('vEditNumRadar', v.numRadar || v.numPropostaVenda);
             setText('vViewRazao', v.razaoSocial);
             setText('vViewCnpj', formatCpfCnpj(v.cnpj));
-            setVal('vEditConsultor', v.consultorSupervisor || v.vendedor);
+            try {
+                const authRaw = localStorage.getItem('authUser');
+                const auth = JSON.parse(authRaw || '{}');
+                const userName = auth && auth.name ? String(auth.name) : '';
+                setVal('vEditConsultor', v.consultorSupervisor || userName);
+            } catch {
+                setVal('vEditConsultor', v.consultorSupervisor || '');
+            }
             setVal('vEditFastChip', v.fastChip || 'NÃO');
             setVal('vEditIccid', v.iccid);
             setVal('vEditObservacao', v.observacao);
@@ -838,7 +847,7 @@
                 </div>
             `;
         }
-        function saveEditVenda() {
+        async function saveEditVenda() {
             if (!__currentEditVendaId) return false;
             const v = vendas.find(x => x.id === __currentEditVendaId);
             if (!v) return false;
@@ -863,6 +872,7 @@
             v.dataAtivacao = getVal('vEditDataAtivacao');
             v.numP2B = getVal('vEditNumP2B');
             v.numRadar = getVal('vEditNumRadar');
+            v.consultorSupervisor = getVal('vEditConsultor') || v.consultorSupervisor;
             v.fastChip = getVal('vEditFastChip');
             v.iccid = getVal('vEditIccid');
             v.observacao = getVal('vEditObservacao');
@@ -875,6 +885,26 @@
             const cnpjEl = document.getElementById('vViewCnpj');
             if (razaoEl) razaoEl.textContent = v.razaoSocial || '';
             if (cnpjEl) cnpjEl.textContent = formatCpfCnpj(v.cnpj || '');
+            if (__currentPedidoId) {
+                try {
+                    const payload = {
+                        status: v.status || undefined,
+                        num_p2b: v.numP2B || undefined,
+                        num_radar: v.numRadar || undefined,
+                        data_entrada: v.dataEntrada || undefined,
+                        data_input: v.dataInput || undefined,
+                        data_ativacao: v.dataAtivacao || undefined
+                    };
+                    await api(`/pedidos-venda/${__currentPedidoId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(payload)
+                    });
+                    toast('Pedido atualizado com sucesso!');
+                } catch (e) {
+                    console.error(e);
+                    toast('Falha ao atualizar pedido: ' + e.message, 'error');
+                }
+            }
             salvarVendas();
             closeEditVenda();
             return true;
