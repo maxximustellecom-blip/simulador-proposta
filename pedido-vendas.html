@@ -733,6 +733,13 @@
                 renderResumoVenda();
             }
         }
+        function formatCpfCnpj(s) {
+            if (!s) return '';
+            const digits = String(s).replace(/\D/g, '');
+            if (digits.length === 11) return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+            if (digits.length === 14) return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+            return s;
+        }
 
         let __currentEditVendaId = null;
         function openEditVenda(id) {
@@ -746,13 +753,14 @@
                 statusEl.value = v.status || '1-Entrada';
             }
             const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+            const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || ''; };
             setVal('vEditDataEntrada', v.dataEntrada);
             setVal('vEditDataInput', v.dataInput);
             setVal('vEditDataAtivacao', v.dataAtivacao);
             setVal('vEditNumP2B', v.numP2B || v.numPedido);
             setVal('vEditNumRadar', v.numRadar || v.numPropostaVenda);
-            setVal('vEditRazao', v.razaoSocial);
-            setVal('vEditCnpj', v.cnpj);
+            setText('vViewRazao', v.razaoSocial);
+            setText('vViewCnpj', formatCpfCnpj(v.cnpj));
             setVal('vEditConsultor', v.consultorSupervisor || v.vendedor);
             setVal('vEditFastChip', v.fastChip || 'NÃO');
             setVal('vEditIccid', v.iccid);
@@ -803,14 +811,12 @@
                         <td style="padding: 0.5rem; border-bottom: 1px solid var(--border); text-align:center;">${qtd}</td>
                         <td style="padding: 0.5rem; border-bottom: 1px solid var(--border);">${v.plano || ''}</td>
                         <td style="padding: 0.5rem; border-bottom: 1px solid var(--border);">${v.oferta || ''}</td>
-                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border);">${v.regiaoValidade || ''}</td>
-                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border);">${v.pct || ''}</td>
                         <td style="padding: 0.5rem; border-bottom: 1px solid var(--border); text-align:right;">${v.valorPlano || ''}</td>
                         <td style="padding: 0.5rem; border-bottom: 1px solid var(--border); text-align:right;">${totalStr}</td>
                     </tr>
                 `;
             }).join('');
-            tbody.innerHTML = rows || `<tr><td colspan="9" style="text-align:center; color:#6b7280; padding: 0.75rem;">Nenhuma linha</td></tr>`;
+            tbody.innerHTML = rows || `<tr><td colspan="7" style="text-align:center; color:#6b7280; padding: 0.75rem;">Nenhuma linha</td></tr>`;
             const totalLinhas = vendas.length;
             const totalAcessos = vendas.reduce((sum, v) => sum + (parseInt(v.qtdAcessos || '0') || 0), 0);
             const totalFatura = vendas.reduce((sum, v) => {
@@ -865,6 +871,10 @@
             const vp = parseFloat(String(v.valorPlano || '0').replace(',', '.'));
             const f = (vp * qtd).toFixed(2).replace('.', ',');
             v.faturaTotal = f;
+            const razaoEl = document.getElementById('vViewRazao');
+            const cnpjEl = document.getElementById('vViewCnpj');
+            if (razaoEl) razaoEl.textContent = v.razaoSocial || '';
+            if (cnpjEl) cnpjEl.textContent = formatCpfCnpj(v.cnpj || '');
             salvarVendas();
             closeEditVenda();
             return true;
@@ -1198,11 +1208,11 @@
                     <div class="grid-3">
                         <div>
                             <div class="label">Razão Social</div>
-                            <input id="vEditRazao" type="text" class="input">
+                            <div id="vViewRazao" class="input" style="pointer-events:none;"></div>
                         </div>
                         <div>
                             <div class="label">CNPJ</div>
-                            <input id="vEditCnpj" type="text" class="input">
+                            <div id="vViewCnpj" class="input" style="pointer-events:none;"></div>
                         </div>
                     </div>
                 </div>
@@ -1237,8 +1247,6 @@
                                     <th style="padding: 0.5rem; text-align: center;">Qtd</th>
                                     <th style="padding: 0.5rem; text-align: left;">Plano</th>
                                     <th style="padding: 0.5rem; text-align: left;">Oferta</th>
-                                    <th style="padding: 0.5rem; text-align: left;">Região</th>
-                                    <th style="padding: 0.5rem; text-align: left;">Pct</th>
                                     <th style="padding: 0.5rem; text-align: right;">Valor Plano (R$)</th>
                                     <th style="padding: 0.5rem; text-align: right;">Total (R$)</th>
                                 </tr>
