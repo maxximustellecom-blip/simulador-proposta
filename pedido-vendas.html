@@ -728,6 +728,10 @@
         function salvarVendas() {
             localStorage.setItem('vendas_data', JSON.stringify(vendas));
             renderTable(); // Re-render to update grouping/colors
+            const modal = document.getElementById('editVendaModal');
+            if (modal && modal.classList.contains('show')) {
+                renderResumoVenda();
+            }
         }
 
         let __currentEditVendaId = null;
@@ -753,19 +757,7 @@
             setVal('vEditFastChip', v.fastChip || 'NÃO');
             setVal('vEditIccid', v.iccid);
             setVal('vEditObservacao', v.observacao);
-            const setBin = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || ''; };
-            setBin('vViewTipo', v.tipoVenda || 'Novo');
-            setBin('vViewQtd', String(v.qtdAcessos || 1));
-            setBin('vViewAcesso', v.acesso || '');
-            setBin('vViewPlano', v.plano || '');
-            setBin('vViewOferta', v.oferta || '');
-            setBin('vViewRegiao', v.regiaoValidade || '');
-            setBin('vViewPct', v.pct || '');
-            setBin('vViewValorPlano', v.valorPlano || '');
-            const qtdNum = parseFloat(v.qtdAcessos || 1);
-            const vpNum = parseFloat(String(v.valorPlano || '0').replace(',', '.'));
-            const fatura = (vpNum * qtdNum).toFixed(2).replace('.', ',');
-            setBin('vViewFaturaTotal', v.faturaTotal || fatura);
+            renderResumoVenda();
             updateEditVendaState();
             const portEl = document.getElementById('vEditPortabilidade');
             if (portEl) portEl.addEventListener('change', updateEditVendaState);
@@ -795,6 +787,50 @@
             const pd = (port === 'SIM');
             if(opEl) opEl.disabled = !pd;
             if(dataPortEl) dataPortEl.disabled = !pd;
+        }
+        function renderResumoVenda() {
+            const tbody = document.getElementById('vResumoTabela');
+            const header = document.getElementById('vResumoHeader');
+            if (!tbody || !header) return;
+            const rows = vendas.map(v => {
+                const qtd = parseInt(v.qtdAcessos || '0') || 0;
+                const vPlanoNum = parseFloat(String(v.valorPlano || '0').replace('.', '').replace(',', '.')) || 0;
+                const totalStr = v.faturaTotal || ( (vPlanoNum * qtd).toFixed(2).replace('.', ',') );
+                return `
+                    <tr>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border);">${v.linha || ''}</td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border);">${v.tipoVenda || ''}</td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border); text-align:center;">${qtd}</td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border);">${v.plano || ''}</td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border);">${v.oferta || ''}</td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border);">${v.regiaoValidade || ''}</td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border);">${v.pct || ''}</td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border); text-align:right;">${v.valorPlano || ''}</td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border); text-align:right;">${totalStr}</td>
+                    </tr>
+                `;
+            }).join('');
+            tbody.innerHTML = rows || `<tr><td colspan="9" style="text-align:center; color:#6b7280; padding: 0.75rem;">Nenhuma linha</td></tr>`;
+            const totalLinhas = vendas.length;
+            const totalAcessos = vendas.reduce((sum, v) => sum + (parseInt(v.qtdAcessos || '0') || 0), 0);
+            const totalFatura = vendas.reduce((sum, v) => {
+                const n = parseFloat(String(v.faturaTotal || '0').replace('.', '').replace(',', '.')) || 0;
+                return sum + n;
+            }, 0);
+            header.innerHTML = `
+                <div>
+                    <div class="label">Qtd de Linhas</div>
+                    <div class="input" style="pointer-events:none;">${totalLinhas}</div>
+                </div>
+                <div>
+                    <div class="label">Qtd de Acessos</div>
+                    <div class="input" style="pointer-events:none;">${totalAcessos}</div>
+                </div>
+                <div>
+                    <div class="label">Total Fatura (R$)</div>
+                    <div class="input" style="pointer-events:none;">${totalFatura.toFixed(2).replace('.', ',')}</div>
+                </div>
+            `;
         }
         function saveEditVenda() {
             if (!__currentEditVendaId) return false;
@@ -1174,51 +1210,41 @@
                     <div class="section-header">
                         <i data-lucide="package" class="section-icon"></i>
                         <div>
-                            <div class="section-title">Configuração da Venda</div>
-                            <div class="section-desc">Planos, Ofertas e valores</div>
+                            <div class="section-title">Configuração da Venda (Resumo)</div>
+                            <div class="section-desc">Resumo das linhas, valores e preços</div>
                         </div>
                     </div>
-                    <div class="grid-3">
+                    <div id="vResumoHeader" class="grid-3" style="margin-bottom: 0.75rem;">
                         <div>
-                            <div class="label">Tipo de Venda</div>
-                            <div id="vViewTipo" class="input" style="pointer-events:none;"></div>
+                            <div class="label">Qtd de Linhas</div>
+                            <div class="input" style="pointer-events:none;">0</div>
                         </div>
                         <div>
-                            <div class="label">Qtd</div>
-                            <div id="vViewQtd" class="input" style="pointer-events:none;"></div>
+                            <div class="label">Qtd de Acessos</div>
+                            <div class="input" style="pointer-events:none;">0</div>
                         </div>
                         <div>
-                            <div class="label">Acesso</div>
-                            <div id="vViewAcesso" class="input" style="pointer-events:none;"></div>
-                        </div>
-                    </div>
-                    <div class="grid-3" style="margin-top: 0.75rem;">
-                        <div>
-                            <div class="label">Plano</div>
-                            <div id="vViewPlano" class="input" style="pointer-events:none;"></div>
-                        </div>
-                        <div>
-                            <div class="label">Oferta</div>
-                            <div id="vViewOferta" class="input" style="pointer-events:none;"></div>
-                        </div>
-                        <div>
-                            <div class="label">Região</div>
-                            <div id="vViewRegiao" class="input" style="pointer-events:none;"></div>
+                            <div class="label">Total Fatura (R$)</div>
+                            <div class="input" style="pointer-events:none;">0,00</div>
                         </div>
                     </div>
-                    <div class="grid-3" style="margin-top: 0.75rem;">
-                        <div>
-                            <div class="label">Pct</div>
-                            <div id="vViewPct" class="input" style="pointer-events:none;"></div>
-                        </div>
-                        <div>
-                            <div class="label">Valor Plano (R$)</div>
-                            <div id="vViewValorPlano" class="input" style="pointer-events:none;"></div>
-                        </div>
-                        <div>
-                            <div class="label">Total</div>
-                            <div id="vViewFaturaTotal" class="input" style="pointer-events:none;"></div>
-                        </div>
+                    <div class="table-responsive" style="overflow-x:auto;">
+                        <table style="width:100%; border-collapse: collapse; font-size: 0.85rem;">
+                            <thead style="background: var(--blue-600); color: white;">
+                                <tr>
+                                    <th style="padding: 0.5rem; text-align: left;">Linha</th>
+                                    <th style="padding: 0.5rem; text-align: left;">Tipo</th>
+                                    <th style="padding: 0.5rem; text-align: center;">Qtd</th>
+                                    <th style="padding: 0.5rem; text-align: left;">Plano</th>
+                                    <th style="padding: 0.5rem; text-align: left;">Oferta</th>
+                                    <th style="padding: 0.5rem; text-align: left;">Região</th>
+                                    <th style="padding: 0.5rem; text-align: left;">Pct</th>
+                                    <th style="padding: 0.5rem; text-align: right;">Valor Plano (R$)</th>
+                                    <th style="padding: 0.5rem; text-align: right;">Total (R$)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vResumoTabela"></tbody>
+                        </table>
                     </div>
                 </div>
                 <!-- Seções removidas conforme solicitado -->
