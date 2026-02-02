@@ -12,7 +12,8 @@ export async function obterDetalhesPedido(req, res) {
           include: [
             { model: NegociacaoProposta, as: 'proposal' },
             { model: NegociacaoPropostaCustomizada, as: 'customProposal' },
-            { model: Client, as: 'client' }
+            { model: Client, as: 'client' },
+            { model: User, as: 'creator' }
           ]
         }
       ]
@@ -40,6 +41,13 @@ export async function obterDetalhesPedido(req, res) {
       tipo: tipo,
       razaoSocial: pedido.negotiation.client?.name || '',
       cnpj: pedido.negotiation.cnpj || '',
+      status: pedido.status || '',
+      numP2B: pedido.num_p2b || '',
+      numRadar: pedido.num_radar || '',
+      dataEntrada: pedido.data_entrada || '',
+      dataInput: pedido.data_input || '',
+      dataAtivacao: pedido.data_ativacao || '',
+      consultor: pedido.negotiation.creator?.name || '',
       linhas: linhas
     });
   } catch (error) {
