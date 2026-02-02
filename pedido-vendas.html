@@ -903,6 +903,7 @@
                         body: JSON.stringify(payload)
                     });
                     toast('Pedido atualizado com sucesso!');
+                    await fetchPedidosBackend();
                 } catch (e) {
                     console.error(e);
                     toast('Falha ao atualizar pedido: ' + e.message, 'error');
