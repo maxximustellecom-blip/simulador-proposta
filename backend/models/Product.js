@@ -9,7 +9,8 @@ const Product = sequelize.define('Product', {
   nome: { type: DataTypes.STRING(200), allowNull: false },
   descricao: { type: DataTypes.STRING(255), allowNull: true },
   preco: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
-  regiao: { type: DataTypes.TEXT, allowNull: true }
+  regiao: { type: DataTypes.TEXT, allowNull: true },
+  tipos: { type: DataTypes.TEXT, allowNull: true }
 }, {
   tableName: 'products',
   timestamps: true,
@@ -20,4 +21,3 @@ Category.hasMany(Product, { foreignKey: 'categoria_id', as: 'products' });
 Product.belongsTo(Category, { foreignKey: 'categoria_id', as: 'category' });
 
 export default Product;
-

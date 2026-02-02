@@ -73,6 +73,7 @@ export async function listarPedidosConcluidos(req, res) {
 
     // Formatting the response to match what the frontend table likely expects
     const result = pedidos.map(p => {
+      
       const neg = p.negotiation || {};
       const prop = neg.proposal || null;
       const cust = neg.customProposal || null;

@@ -573,6 +573,11 @@
             }
         }
 
+        function formatData(d) {
+            if (!d || d === 'Invalid Date') return '(não informado)';
+            return d;
+        }
+
         function renderBackendTable(data) {
             const tbody = document.getElementById('tbodyBackend');
             if (!data || data.length === 0) {
@@ -585,10 +590,10 @@
                     <td>${item.razaoSocial || item.cliente || '-'}</td>
                     <td>${item.numP2B || '-'}</td>
                     <td>${item.numRadar || '-'}</td>
-                    <td>${item.dataEntrada || '-'}</td>
-                    <td>${item.dataInput || '-'}</td>
-                    <td>${item.dataAtivacao || '-'}</td>
-                    <td><span class="${getStatusClass(item.status )}">${item.status  || '-'}</span></td>
+                    <td>${formatData(item.dataEntrada)}</td>
+                    <td>${formatData(item.dataInput)}</td>
+                    <td>${formatData(item.dataAtivacao)}</td>
+                    <td><span class="${getStatusClass(item.statusPedido )}">${item.statusPedido  || '-'}</span></td>
                     <td>
                         <button class="btn btn-ghost btn-sm" title="Configurar" style="gap: 5px;" onclick="configurarPedido('${item.id}')">
                             <i data-lucide="settings"></i>Configurar

@@ -73,7 +73,7 @@ export async function listProducts(req, res) {
 
 export async function createProduct(req, res) {
   try {
-    const { categoria_id, nome, descricao, preco, regiao } = req.body || {};
+    const { categoria_id, nome, descricao, preco, regiao, tipos } = req.body || {};
     const cid = Number(categoria_id || 0);
     if (!cid || !nome) return res.status(400).json({ error: 'categoria_id e nome são obrigatórios' });
     const cat = await Category.findByPk(cid);
@@ -83,7 +83,8 @@ export async function createProduct(req, res) {
       nome,
       descricao: descricao || null,
       preco: Number(preco || 0),
-      regiao: regiao
+      regiao: regiao,
+      tipos: tipos || null
     });
     const full = await Product.findByPk(prod.id, { include: [{ model: Category, as: 'category' }] });
     return res.status(201).json(full);
@@ -96,7 +97,7 @@ export async function updateProduct(req, res) {
   try {
     const id = Number(req.params.id || 0);
     if (!id) return res.status(400).json({ error: 'id inválido' });
-    const { categoria_id, nome, descricao, preco, regiao } = req.body || {};
+    const { categoria_id, nome, descricao, preco, regiao, tipos } = req.body || {};
     const prod = await Product.findByPk(id);
     if (!prod) return res.status(404).json({ error: 'produto não encontrado' });
     if (categoria_id) {
@@ -109,6 +110,7 @@ export async function updateProduct(req, res) {
     if (descricao !== undefined) prod.descricao = descricao || null;
     if (preco !== undefined) prod.preco = Number(preco || 0);
     if (regiao !== undefined) prod.regiao = regiao || null;
+    if (tipos !== undefined) prod.tipos = tipos || null;
     await prod.save();
     const full = await Product.findByPk(prod.id, { include: [{ model: Category, as: 'category' }] });
     return res.json(full);
