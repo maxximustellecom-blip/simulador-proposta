@@ -80,6 +80,7 @@ export async function createCustomProduct(req, res) {
     if (!cat) return res.status(404).json({ error: 'categoria não encontrada' });
     const prod = await CustomProduct.create({
       categoria_id: cid,
+      group_id: 1,
       nome,
       descricao: descricao || null,
       preco: Number(preco || 0),
