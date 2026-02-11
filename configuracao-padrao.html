@@ -597,8 +597,8 @@
                         card.className = 'card';
                         card.style.padding = '1rem';
                         card.style.marginBottom = '0.5rem';
-                        card.style.border = existing ? '1px solid #10B981' : '1px solid #e5e7eb';
-                        card.style.background = existing ? '#ecfdf5' : '#fff';
+                        card.style.border = existing ? '1px solid var(--pill-border)' : '1px solid var(--border)';
+                        card.style.background = existing ? 'var(--pill-bg)' : 'var(--surface)';
                         card.style.display = 'flex';
                         card.style.alignItems = 'center';
                         card.style.justifyContent = 'space-between';
@@ -611,21 +611,21 @@
                         // Icon
                         const iconDiv = document.createElement('div');
                         if (existing) {
-                            iconDiv.innerHTML = `<i data-lucide="check-circle" style="color:#10B981; width:20px; height:20px;"></i>`;
+                            iconDiv.innerHTML = `<i data-lucide="check-circle" style="color: var(--pill-text); width:20px; height:20px;"></i>`;
                         } else {
-                            iconDiv.innerHTML = `<i data-lucide="file-warning" style="color:#F59E0B; width:20px; height:20px;"></i>`;
+                            iconDiv.innerHTML = `<i data-lucide="file-warning" style="color: var(--muted); width:20px; height:20px;"></i>`;
                         }
                         
                         const infoDiv = document.createElement('div');
                         const title = document.createElement('div');
                         title.style.fontWeight = '600';
                         title.style.fontSize = '0.9rem';
-                        title.style.color = existing ? '#065F46' : '#374151';
+                        title.style.color = 'var(--text)';
                         title.textContent = docName;
                         
                         const sub = document.createElement('div');
                         sub.style.fontSize = '0.8rem';
-                        sub.style.color = existing ? '#047857' : '#6B7280';
+                        sub.style.color = existing ? 'var(--pill-text)' : 'var(--muted)';
                         if (existing) {
                             sub.innerHTML = `Anexado: <strong>${existing.file_name}</strong>`;
                         } else {
@@ -653,7 +653,7 @@
                             // Delete button
                             const btnDel = document.createElement('button');
                             btnDel.className = 'btn btn-ghost btn-icon';
-                            btnDel.style.color = '#EF4444';
+                            btnDel.style.color = 'var(--danger)';
                             btnDel.innerHTML = `<i data-lucide="trash-2" style="width:18px; height:18px;"></i>`;
                             btnDel.title = 'Remover anexo';
                             btnDel.onclick = () => deleteAttachment(existing.id);
@@ -709,9 +709,9 @@
                 div.style.alignItems = 'center';
                 div.style.gap = '0.5rem';
                 div.style.padding = '0.5rem';
-                div.style.border = '1px solid #e5e7eb';
+                div.style.border = '1px solid var(--border)';
                 div.style.borderRadius = '6px';
-                div.style.background = '#fff';
+                div.style.background = 'var(--surface)';
                 
                 const iconName = getIconForType(att.file_type || '');
                 
