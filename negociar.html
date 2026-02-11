@@ -172,7 +172,7 @@
             document.getElementById('countLabel').textContent = arr.length + ' ' + (arr.length === 1 ? 'item' : 'itens');
             tbody.innerHTML = arr.map(n => {
                 const isConcluida = String(n.status || '').toLowerCase().includes('conclu');
-                const rowStyle = isConcluida ? ' style=\"background:#ecfdf5;\"' : '';
+                const rowStyle = isConcluida ? ' style="background: var(--pill-bg);"' : '';
                 return `
                 <tr${rowStyle}>
                     <td>${n.razaoSocial}</td>
