@@ -2210,15 +2210,28 @@
         }
         async function gerarPropostaComercialImagem() {
             try {
+                const img = new Image();
+                img.src = 'proposta-comercial.png';
+                await new Promise((resolve, reject) => {
+                    img.onload = () => resolve();
+                    img.onerror = () => reject(new Error('template_not_found'));
+                });
                 const widthPt = 595;
                 const heightPt = 842;
-                const scale = 2;
+                const imgWidth = img.naturalWidth || img.width;
+                const imgHeight = img.naturalHeight || img.height;
+                if (!imgWidth || !imgHeight) {
+                    toast('Modelo de proposta comercial (imagem) não encontrado', 'error');
+                    return;
+                }
                 const canvas = document.createElement('canvas');
-                canvas.width = Math.floor(widthPt * scale);
-                canvas.height = Math.floor(heightPt * scale);
+                canvas.width = imgWidth;
+                canvas.height = imgHeight;
                 const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, imgWidth, imgHeight);
+                const scaleX = imgWidth / widthPt;
+                const scaleY = imgHeight / heightPt;
+                const scale = Math.min(scaleX, scaleY);
                 const tableWidthPt = 570;
                 const marginLeftPt = (widthPt - tableWidthPt) / 2;
                 const fontTitulo = 14 * scale;
@@ -2303,7 +2316,7 @@
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
-            } catch {
+            } catch (e) {
                 toast('Erro ao gerar imagem da proposta', 'error');
             }
         }
