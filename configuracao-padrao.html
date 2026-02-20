@@ -2863,14 +2863,47 @@
                 const cabecalhoHtml = `
                     <div class="mascara-card">
                         <div class="mascara-card-title">Dados do Contrato</div>
+                        
                         <div class="mascara-row" style="margin-top:0.5rem; margin-bottom:0.25rem; color:var(--primary); font-weight:600; border-bottom:1px dashed var(--border); padding-bottom:0.25rem;">Empresa</div>
                         <div class="mascara-row"><span class="mascara-label">Razão Social</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.name || '-'}</span></div>
                         <div class="mascara-row"><span class="mascara-label">Nome Fantasia</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.fantasy_name || '-'}</span></div>
                         <div class="mascara-row"><span class="mascara-label">CNPJ</span><span class="mascara-val">${formatCnpj(n.cnpj || c.cnpj || '')}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Data de Abertura</span><span class="mascara-val">${c.opening_date || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Tipo de Empresa</span><span class="mascara-val">${c.tipo_empresa || '-'}</span></div>
                         
-                        <div class="mascara-row" style="margin-top:0.8rem; margin-bottom:0.25rem; color:var(--primary); font-weight:600; border-bottom:1px dashed var(--border); padding-bottom:0.25rem;">Contato</div>
-                        <div class="mascara-row"><span class="mascara-label">Email</span><span class="mascara-val" style="text-align:right; max-width:60%; word-break:break-all;">${c.email || '-'}</span></div>
-                        <div class="mascara-row"><span class="mascara-label">Telefone</span><span class="mascara-val">${formatPhone(c.phone || '') || '-'}</span></div>
+                        <div class="mascara-row" style="margin-top:0.8rem; margin-bottom:0.25rem; color:var(--primary); font-weight:600; border-bottom:1px dashed var(--border); padding-bottom:0.25rem;">Contato e Endereço</div>
+                        <div class="mascara-row"><span class="mascara-label">Email Corporativo</span><span class="mascara-val" style="text-align:right; max-width:60%; word-break:break-all;">${c.email || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Telefone Principal</span><span class="mascara-val">${formatPhone(c.phone || '') || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">CEP</span><span class="mascara-val">${c.cep || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">UF</span><span class="mascara-val">${c.state || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Cidade</span><span class="mascara-val">${c.city || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Bairro</span><span class="mascara-val">${c.neighborhood || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Logradouro</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.street || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Número</span><span class="mascara-val">${c.number || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Complemento</span><span class="mascara-val">${c.complement || '-'}</span></div>
+
+                        <div class="mascara-row" style="margin-top:0.8rem; margin-bottom:0.25rem; color:var(--primary); font-weight:600; border-bottom:1px dashed var(--border); padding-bottom:0.25rem;">Representante Legal</div>
+                        <div class="mascara-row"><span class="mascara-label">Nome Completo</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.rep_nome || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">CPF</span><span class="mascara-val">${c.rep_cpf || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">RG</span><span class="mascara-val">${c.rep_rg || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Tel. Contato (1)</span><span class="mascara-val">${c.rep_tel1 || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Tel. Contato (2)</span><span class="mascara-val">${c.rep_tel2 || '-'}</span></div>
+
+                        <div class="mascara-row" style="margin-top:0.8rem; margin-bottom:0.25rem; color:var(--primary); font-weight:600; border-bottom:1px dashed var(--border); padding-bottom:0.25rem;">Gestor de Conta</div>
+                        <div class="mascara-row"><span class="mascara-label">Nome Completo</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.gestor_nome || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">CPF</span><span class="mascara-val">${c.gestor_cpf || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">RG</span><span class="mascara-val">${c.gestor_rg || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Tel. Contato (1)</span><span class="mascara-val">${c.gestor_tel1 || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Tel. Contato (2)</span><span class="mascara-val">${c.gestor_tel2 || '-'}</span></div>
+
+                        <div class="mascara-row" style="margin-top:0.8rem; margin-bottom:0.25rem; color:var(--primary); font-weight:600; border-bottom:1px dashed var(--border); padding-bottom:0.25rem;">Pessoas Autorizadas</div>
+                        <div class="mascara-row"><span class="mascara-label">1º Autorizado - Nome</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.auth1_nome || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">1º Autorizado - CPF</span><span class="mascara-val">${c.auth1_cpf || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">1º Autorizado - RG</span><span class="mascara-val">${c.auth1_rg || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">1º Autorizado - Contato</span><span class="mascara-val">${c.auth1_contato || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">2º Autorizado - Nome</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.auth2_nome || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">2º Autorizado - CPF</span><span class="mascara-val">${c.auth2_cpf || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">2º Autorizado - Contato</span><span class="mascara-val">${c.auth2_contato || '-'}</span></div>
                     </div>
                 `;
 
