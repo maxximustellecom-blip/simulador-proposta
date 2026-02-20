@@ -2716,7 +2716,8 @@
                 const marginLeftPt = (widthPt - tableWidthPt) / 2;
                 const fontTitulo = 14 * scale;
                 const fontLinha = 12 * scale * (7/10);
-                let y = (heightPt - 60) * scale;
+                const topStartPt = 150;
+                let y = topStartPt * scale;
                 ctx.fillStyle = '#111111';
                 ctx.font = `${fontTitulo}px Arial`;
                 ctx.fillText('Proposta Comercial', marginLeftPt * scale, y);
@@ -2741,7 +2742,8 @@
                 const colValorApX = tableX + 460 * scale;
                 const colValorX = tableX + 520 * scale;
                 const rowHeight = 16 * scale;
-                const maxRows = Math.max(Math.floor(((headerY / scale) - 60) / 16) - 2, 0);
+                const availableHeightPt = Math.max(heightPt - (headerY / scale) - 60, 0);
+                const maxRows = Math.max(Math.floor(availableHeightPt / 16) - 2, 0);
                 const rowsToDraw = Math.min(__linhas.length, maxRows);
                 const tableTopY = headerY + 8 * scale;
                 const tableHeight = (1 + rowsToDraw + 1) * rowHeight + 8 * scale;
