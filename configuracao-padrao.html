@@ -87,7 +87,7 @@
             font-size: 0.9rem;
         }
         .mascara-label { color: var(--muted); }
-        .mascara-val { font-weight: 500; text-align: right; }
+        .mascara-val { font-weight: 500; text-align: right; display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.5rem; }
     </style>
 </head>
 <body>
@@ -409,7 +409,7 @@
 
     <!-- Máscara Modal -->
     <div id="mascaraModal" class="modal">
-        <div class="modal-card">
+        <div class="modal-card" style="width: 1000px; max-width: 96vw;">
             <div class="modal-head"><div>Máscara da Proposta</div><button id="mascaraClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
             <div class="modal-body">
                 <div id="mascaraContent" class="mascara-content"></div>
@@ -2181,43 +2181,55 @@
 
             const cabecalhoContrato = [
                 consultorLinha,
+                'Empresa:',
                 'Razão Social: ' + (c.name || '-'),
-                'CNPJ: ' + (formatCnpj(n.cnpj || c.cnpj || '') || '-'),
                 'Nome Fantasia: ' + (c.fantasy_name || '-'),
-                'Email: ' + (c.email || '-'),
-                'Telefone: ' + ((formatPhone(c.phone || '') || '-') ),
-                'Abertura: ' + (c.opening_date || '-'),
+                'CNPJ: ' + (formatCnpj(n.cnpj || c.cnpj || '') || '-'),
+                'Data de Abertura: ' + (c.opening_date || '-'),
+                'Tipo de Empresa: ' + (c.tipo_empresa || '-'),
                 '________',
-                'Endereço: ' + (endereco || '-'),
+                'Contato e Endereço:',
+                'Email Corporativo: ' + (c.email || '-'),
+                'Telefone Principal: ' + ((formatPhone(c.phone || '') || '-') ),
+                'CEP: ' + (c.cep || '-'),
+                'UF: ' + (c.state || '-'),
+                'Cidade: ' + (c.city || '-'),
+                'Bairro: ' + (c.neighborhood || '-'),
+                'Logradouro: ' + (c.street || '-'),
+                'Número: ' + (c.number || '-'),
                 'Complemento: ' + (c.complement || '-'),
+                'Ponto de Referência: ' + (c.reference_point || '-'),
                 '________',
-                'ADMINISTRADOR DO CONTRATO: ' + (c.gestor_nome || '-'),
-                'Nome: ' + (c.gestor_nome || '-'),
-                'RG/ORGÃO EXPEDITOR: ' + (c.gestor_rg || '-'),
+                'Representante Legal:',
+                'Nome Completo: ' + (c.rep_nome || '-'),
+                'CPF: ' + (c.rep_cpf || '-'),
+                'RG: ' + (c.rep_rg || '-'),
+                'Tel. Contato (1): ' + (c.rep_tel1 || '-'),
+                'Email: ' + (c.rep_email || '-'),
+                '________',
+                'Administrador de Contrato:',
+                'Nome Completo: ' + (c.gestor_nome || '-'),
                 'CPF: ' + (c.gestor_cpf || '-'),
-                'E-mail: ' + (c.email || '-'),
-                'Telefone: ' + ((formatPhone(c.gestor_tel1 || c.gestor_tel2 || c.phone || '') || '-') ),
-                '',
-                'REPRESENTANTE LEGAL: ' + (c.rep_nome || '-'),
-                'Nome: ' + (c.rep_nome || '-'),
-                'RG/ORGÃO EXPEDITOR: ' + (c.rep_rg || '-'),
-                '',
-                'SOCIO 1: ',
-                'Nome: ',
-                'RG/ORGÃO EXPEDITOR: ',
-                'CPF: ',
-                'SOCIO 2: ',
-                'Nome: ',
-                'RG/ORGÃO EXPEDITOR: ',
-                'CPF: ',
-                '',
-                'TESTEMUNHA 1: ',
-                'Nome: ',
-                'CPF: ',
-                'TESTEMUNHA 2: ',
-                'Nome: ',
-                'CPF: ',
-                 '',
+                'RG: ' + (c.gestor_rg || '-'),
+                'Tel. Contato (1): ' + (c.gestor_tel1 || '-'),
+                'Email: ' + (c.gestor_email || '-'),
+                '________',
+                'Pessoas Autorizadas:',
+                '1º Autorizado - Nome: ' + (c.auth1_nome || '-'),
+                '1º Autorizado - CPF: ' + (c.auth1_cpf || '-'),
+                '1º Autorizado - Contato: ' + (c.auth1_contato || '-'),
+                '2º Autorizado - Nome: ' + (c.auth2_nome || '-'),
+                '2º Autorizado - CPF: ' + (c.auth2_cpf || '-'),
+                '2º Autorizado - Contato: ' + (c.auth2_contato || '-'),
+                '________',
+                'Sócios:',
+                'Sócio 1 - Nome: ' + (c.socio1_nome || '-'),
+                'Sócio 1 - CPF: ' + (c.socio1_cpf || '-'),
+                'Sócio 1 - Contato: ' + (c.socio1_contato || '-'),
+                'Sócio 2 - Nome: ' + (c.socio2_nome || '-'),
+                'Sócio 2 - CPF: ' + (c.socio2_cpf || '-'),
+                'Sócio 2 - Contato: ' + (c.socio2_contato || '-'),
+                ''
             ].join('\n');
 
             const header = [
@@ -2895,20 +2907,21 @@
                         <div class="mascara-row"><span class="mascara-label">Logradouro</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.street || '-'}</span></div>
                         <div class="mascara-row"><span class="mascara-label">Número</span><span class="mascara-val">${c.number || '-'}</span></div>
                         <div class="mascara-row"><span class="mascara-label">Complemento</span><span class="mascara-val">${c.complement || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Ponto de Referência</span><span class="mascara-val">${c.reference_point || '-'}</span></div>
 
                         <div class="mascara-row" style="margin-top:0.8rem; margin-bottom:0.25rem; color:var(--primary); font-weight:600; border-bottom:1px dashed var(--border); padding-bottom:0.25rem;">Representante Legal</div>
                         <div class="mascara-row"><span class="mascara-label">Nome Completo</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.rep_nome || '-'}</span></div>
                         <div class="mascara-row"><span class="mascara-label">CPF</span><span class="mascara-val">${c.rep_cpf || '-'}</span></div>
                         <div class="mascara-row"><span class="mascara-label">RG</span><span class="mascara-val">${c.rep_rg || '-'}</span></div>
                         <div class="mascara-row"><span class="mascara-label">Tel. Contato (1)</span><span class="mascara-val">${c.rep_tel1 || '-'}</span></div>
-                        <div class="mascara-row"><span class="mascara-label">Tel. Contato (2)</span><span class="mascara-val">${c.rep_tel2 || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Email</span><span class="mascara-val" style="text-align:right; max-width:60%; word-break:break-all;">${c.rep_email || '-'}</span></div>
 
                         <div class="mascara-row" style="margin-top:0.8rem; margin-bottom:0.25rem; color:var(--primary); font-weight:600; border-bottom:1px dashed var(--border); padding-bottom:0.25rem;">Gestor de Conta</div>
                         <div class="mascara-row"><span class="mascara-label">Nome Completo</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.gestor_nome || '-'}</span></div>
                         <div class="mascara-row"><span class="mascara-label">CPF</span><span class="mascara-val">${c.gestor_cpf || '-'}</span></div>
                         <div class="mascara-row"><span class="mascara-label">RG</span><span class="mascara-val">${c.gestor_rg || '-'}</span></div>
                         <div class="mascara-row"><span class="mascara-label">Tel. Contato (1)</span><span class="mascara-val">${c.gestor_tel1 || '-'}</span></div>
-                        <div class="mascara-row"><span class="mascara-label">Tel. Contato (2)</span><span class="mascara-val">${c.gestor_tel2 || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Email</span><span class="mascara-val" style="text-align:right; max-width:60%; word-break:break-all;">${c.gestor_email || '-'}</span></div>
 
                         <div class="mascara-row" style="margin-top:0.8rem; margin-bottom:0.25rem; color:var(--primary); font-weight:600; border-bottom:1px dashed var(--border); padding-bottom:0.25rem;">Pessoas Autorizadas</div>
                         <div class="mascara-row"><span class="mascara-label">1º Autorizado - Nome</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.auth1_nome || '-'}</span></div>
@@ -2918,6 +2931,14 @@
                         <div class="mascara-row"><span class="mascara-label">2º Autorizado - Nome</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.auth2_nome || '-'}</span></div>
                         <div class="mascara-row"><span class="mascara-label">2º Autorizado - CPF</span><span class="mascara-val">${c.auth2_cpf || '-'}</span></div>
                         <div class="mascara-row"><span class="mascara-label">2º Autorizado - Contato</span><span class="mascara-val">${c.auth2_contato || '-'}</span></div>
+
+                        <div class="mascara-row" style="margin-top:0.8rem; margin-bottom:0.25rem; color:var(--primary); font-weight:600; border-bottom:1px dashed var(--border); padding-bottom:0.25rem;">Sócios</div>
+                        <div class="mascara-row"><span class="mascara-label">Sócio 1 - Nome</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.socio1_nome || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Sócio 1 - CPF</span><span class="mascara-val">${c.socio1_cpf || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Sócio 1 - Contato</span><span class="mascara-val">${c.socio1_contato || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Sócio 2 - Nome</span><span class="mascara-val" style="text-align:right; max-width:60%;">${c.socio2_nome || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Sócio 2 - CPF</span><span class="mascara-val">${c.socio2_cpf || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Sócio 2 - Contato</span><span class="mascara-val">${c.socio2_contato || '-'}</span></div>
                     </div>
                 `;
 
@@ -2993,6 +3014,34 @@
                     
                     const btnClose2 = document.getElementById('mascaraCloseBtn');
                     if (btnClose2) btnClose2.onclick = () => modal.classList.remove('show');
+
+                    try {
+                        const contratoCard = contentDiv.querySelector('.mascara-card');
+                        if (contratoCard) {
+                            const rows = contratoCard.querySelectorAll('.mascara-row');
+                            rows.forEach(row => {
+                                const val = row.querySelector('.mascara-val');
+                                if (!val) return;
+                                const btn = document.createElement('button');
+                                btn.type = 'button';
+                                btn.className = 'btn btn-ghost btn-icon';
+                                btn.style.marginLeft = '0.5rem';
+                                btn.title = 'Copiar';
+                                btn.innerHTML = '<i data-lucide="copy"></i>';
+                                btn.onclick = () => {
+                                    const t = (val.textContent || '').trim();
+                                    if (navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                                        navigator.clipboard.writeText(t);
+                                        toast('Copiado', 'success');
+                                    } else {
+                                        toast('Erro ao copiar', 'error');
+                                    }
+                                };
+                                row.appendChild(btn);
+                            });
+                            if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+                        }
+                    } catch {}
 
                     const btnCopy = document.getElementById('mascaraCopyBtn');
                     if (btnCopy) {

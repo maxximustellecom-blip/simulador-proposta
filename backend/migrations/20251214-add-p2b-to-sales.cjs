@@ -2,13 +2,19 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.addColumn('sales', 'p2b', {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-      defaultValue: 0
-    });
+    const table = await queryInterface.describeTable('sales');
+    if (!table.p2b) {
+      await queryInterface.addColumn('sales', 'p2b', {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        defaultValue: 0
+      });
+    }
   },
   down: async (queryInterface) => {
-    await queryInterface.removeColumn('sales', 'p2b');
+    const table = await queryInterface.describeTable('sales');
+    if (table.p2b) {
+      await queryInterface.removeColumn('sales', 'p2b');
+    }
   }
 };

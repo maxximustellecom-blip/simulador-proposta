@@ -2,12 +2,18 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.addColumn('access_profiles', 'commission_config', {
-      type: Sequelize.JSON,
-      allowNull: true
-    });
+    const table = await queryInterface.describeTable('access_profiles');
+    if (!table.commission_config) {
+      await queryInterface.addColumn('access_profiles', 'commission_config', {
+        type: Sequelize.JSON,
+        allowNull: true
+      });
+    }
   },
   down: async (queryInterface) => {
-    await queryInterface.removeColumn('access_profiles', 'commission_config');
+    const table = await queryInterface.describeTable('access_profiles');
+    if (table.commission_config) {
+      await queryInterface.removeColumn('access_profiles', 'commission_config');
+    }
   }
 };
