@@ -87,7 +87,7 @@
             font-size: 0.9rem;
         }
         .mascara-label { color: var(--muted); }
-        .mascara-val { font-weight: 500; text-align: right; }
+        .mascara-val { font-weight: 500; text-align: right; display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.5rem; }
     </style>
 </head>
 <body>
@@ -1894,7 +1894,7 @@
                                         toast('Erro ao copiar', 'error');
                                     }
                                 };
-                                row.appendChild(btn);
+                                val.appendChild(btn);
                             });
                             if (window.lucide && window.lucide.createIcons) { window.lucide.createIcons(); }
                         }
