@@ -282,17 +282,14 @@
                             <tr>
                                 <th style="min-width: 150px;">Consultor</th>
                                 <th style="min-width: 200px;">Razão Social</th>
-                                <th style="min-width: 100px;">Nº P2B</th>
-                                <th style="min-width: 100px;">Nº Radar</th>
-                                <th style="min-width: 120px;">Data Entrada</th>
-                                <th style="min-width: 120px;">Data Input</th>
-                                <th style="min-width: 120px;">Data Ativação</th>
+                                <th style="min-width: 160px;">Nº P2B / Nº Radar</th>
+                                <th style="min-width: 200px;">Datas</th>
                                 <th style="min-width: 150px;">Status do Pedido</th>
                                 <th style="min-width: 100px;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tbodyBackend">
-                            <tr><td colspan="9" class="text-center p-4">Carregando...</td></tr>
+                            <tr><td colspan="6" class="text-center p-4">Carregando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -539,7 +536,7 @@
             } catch (error) {
                 console.error(error);
                 document.getElementById('tbodyBackend').innerHTML = 
-                    '<tr><td colspan="8" class="text-center p-4 text-red-600">Erro ao carregar dados do backend.</td></tr>';
+                    '<tr><td colspan="6" class="text-center p-4 text-red-600">Erro ao carregar dados do backend.</td></tr>';
             }
         }
 
@@ -563,22 +560,26 @@
         function renderBackendTable(data) {
             const tbody = document.getElementById('tbodyBackend');
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center p-4">Nenhum pedido concluído encontrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">Nenhum pedido concluído encontrado.</td></tr>';
                 return;
             }
             tbody.innerHTML = data.map(item => `
                 <tr>
                     <td>${item.consultor || '-'}</td>
                     <td>${item.razaoSocial || item.cliente || '-'}</td>
-                    <td>${item.numP2B || '-'}</td>
-                    <td>${item.numRadar || '-'}</td>
-                    <td>${formatData(item.dataEntrada)}</td>
-                    <td>${formatData(item.dataInput)}</td>
-                    <td>${formatData(item.dataAtivacao)}</td>
+                    <td>
+                        <div><span class="muted">P2B:</span> ${item.numP2B || '-'}</div>
+                        <div><span class="muted">Radar:</span> ${item.numRadar || '-'}</div>
+                    </td>
+                    <td>
+                        <div><span class="muted">Entrada:</span> ${formatData(item.dataEntrada)}</div>
+                        <div><span class="muted">Input:</span> ${formatData(item.dataInput)}</div>
+                        <div><span class="muted">Ativação:</span> ${formatData(item.dataAtivacao)}</div>
+                    </td>
                     <td><span class="${getStatusClass(item.statusPedido )}">${item.statusPedido  || '-'}</span></td>
                     <td>
                         <button class="btn btn-ghost btn-sm" title="Configurar" style="gap: 5px;" onclick="configurarPedido('${item.id}')">
-                            <i data-lucide="settings"></i>Configurar
+                            <i data-lucide="settings"></i>
                         </button>
                     </td>
                 </tr>
