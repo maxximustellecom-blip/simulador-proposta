@@ -1739,7 +1739,7 @@
                 const cardsHtml = linhas.map((l, idx) => {
                     const tipo = String(l.tipoNegociacao || '-').toLowerCase();
                     const em = tipo.includes('reneg') ? '🔁' : (tipo.includes('adti') || tipo.includes('adit') ? '➕' : '🌟');
-                    const acessoFmt = l.ddd ? `DDD ${l.ddd}` : '-';
+                    const acessoFmt = l.ddd ? `${l.ddd}` : '-';
                     const numFmt = l.numero ? l.numero : '';
                     const atual = `${l.planoAtualGB || '-'} ${currency(l.precoAtual || 0)}`;
                     const proposto = `${l.plano || '-'} ${l.pct || '-'}`;
