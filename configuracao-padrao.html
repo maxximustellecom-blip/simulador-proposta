@@ -2269,7 +2269,7 @@
                 
                 return `${em} Linha ${idx + 1}
     Qtd: ${l.quantidade}
-    DDD: ${dddTxt}${numTxt}
+    DDD: ${dddTxt?.replace("DDD", "")}${numTxt}
     Tipo: ${l.tipoNegociacao || '-'}
     Oferta: ${proposto}${extras}
     Unitário: ${unitario}
@@ -2277,12 +2277,6 @@
             }).join('\n\n');
             
             const resumo = [
-                '',
-                '📊 Resumo',
-                `   💰 Proposta Atual: R$ 0,00`,
-                `   🧾 Nova Proposta: ${total}`,
-                `   📦 Total de dados atual: ${formatMB(totalDadosAtualMB)}`,
-                `   🔢 Total de dados da nova proposta: ${formatMB(totalDadosNovoMB)}`,
                 '',
                 '🚀 Maxximus Telecom • Conectando sua empresa ao futuro'
             ].join('\n');
