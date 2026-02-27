@@ -14,11 +14,11 @@ export const startScheduler = () => {
     try {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      const dateStr = tomorrow.toISOString().split('T')[0];
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
       const appointments = await Appointment.findAll({
         where: {
-          date: dateStr,
+          date: tomorrowStr,
           notified: false
         },
         include: [{ model: User, as: 'user' }]
@@ -28,7 +28,7 @@ export const startScheduler = () => {
 
       for (const appt of appointments) {
         const userName = appt.user ? appt.user.name : 'Usuário';
-        const message = `Olá ${userName}, lembrete de compromisso para amanhã (${dateStr}) às ${appt.time}: ${appt.title}`;
+        const message = `Olá ${userName}, lembrete de compromisso para amanhã (${tomorrowStr}) às ${appt.time}: ${appt.title}`;
 
         try {
           await axios.post(ZAPI_URL, {
