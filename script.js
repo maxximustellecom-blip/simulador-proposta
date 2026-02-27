@@ -17,10 +17,22 @@
     '<header class="topbar">' +
       '<div class="topbar-inner">' +
         '<div class="brand">' +
-          '<div class="brand-badge"></div>' +
-          '<div>MAXXIMUS TELECOM</div>' +
-        '</div>' +
+        '<div class="brand-badge"></div>' +
+        '<div>MAXXIMUS TELECOM</div>' +
+      '</div>' +
+      '<div style="display:flex; align-items:center; gap:0.75rem;">' +
         '<button id="themeToggle" class="theme-toggle" type="button" title="Alternar tema"><i class="icon-sun" data-lucide="sun"></i><i class="icon-moon" data-lucide="moon"></i></button>' +
+        '<div class="notification-container">' +
+          '<button id="notificationBtn" class="notification-btn" type="button" title="Notificações"><i data-lucide="bell"></i></button>' +
+          '<div id="notificationMenu" class="notification-menu">' +
+            '<div class="notification-header">' +
+              '<span>Compromissos de Hoje</span>' +
+            '</div>' +
+            '<div id="notificationList" class="notification-list">' +
+              '<div style="padding:1rem;text-align:center;color:var(--muted)">Carregando...</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
         '<div class="user">' +
           '<button id="userMenuBtn" class="user-btn">' +
             '<span id="userNameLabel">Usuário</span>' +
@@ -31,7 +43,8 @@
           '</div>' +
         '</div>' +
       '</div>' +
-    '</header>';
+    '</div>' +
+  '</header>';
   var simOpen = isActive('simular') || isActive('historico-simulacoes');
   var ofertaOpen = isActive('categorias') || isActive('produtos');
   var customOpen = isActive('categoria-customizada') || isActive('produto-customizado');
@@ -146,6 +159,8 @@
       e.preventDefault();
       var s = window.getComputedStyle(menuEl).display;
       menuEl.style.display = s === 'none' ? 'block' : 'none';
+      var nm = document.getElementById('notificationMenu');
+      if (nm) nm.classList.remove('show');
     });
     document.addEventListener('click', function (e) {
       if (!menuEl.contains(e.target) && !menuBtn.contains(e.target)) {
@@ -280,6 +295,67 @@
       });
     });
   } catch {}
+
+  // Notification Logic
+  var notifBtn = document.getElementById('notificationBtn');
+  var notifMenu = document.getElementById('notificationMenu');
+  var notifList = document.getElementById('notificationList');
+
+  async function loadNotifications() {
+    if (!notifList) return;
+    try {
+      var today = new Date().toISOString().split('T')[0];
+      var response = await fetch('https://others-maxximus-backend.pvuzyy.easypanel.host/appointments?from=' + today + '&to=' + today);
+      if (!response.ok) throw new Error('Erro ao buscar');
+      var data = await response.json();
+      
+      if (data.length === 0) {
+        notifList.innerHTML = '<div class="notification-empty">Nenhum compromisso para hoje.</div>';
+        if (notifBtn) notifBtn.classList.remove('has-new');
+      } else {
+        if (notifBtn) notifBtn.classList.add('has-new');
+        var html = '';
+        data.forEach(function(item) {
+          var time = item.time ? item.time.substring(0, 5) : '';
+          html += '<div class="notification-item">' +
+                    '<div class="notif-time">' + time + '</div>' +
+                    '<div class="notif-content">' +
+                      '<div class="notif-title">' + item.title + '</div>' +
+                      '<div class="notif-desc">' + (item.description || '') + '</div>' +
+                    '</div>' +
+                  '</div>';
+        });
+        notifList.innerHTML = html;
+      }
+    } catch (e) {
+      if (notifList) notifList.innerHTML = '<div class="notification-empty">Erro ao carregar notificações.</div>';
+      console.error(e);
+    }
+  }
+
+  if (notifBtn && notifMenu) {
+    // Load on init
+    loadNotifications();
+
+    notifBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var isShow = notifMenu.classList.contains('show');
+      if (isShow) {
+        notifMenu.classList.remove('show');
+      } else {
+        // Close other menus
+        if (menuEl) menuEl.style.display = 'none';
+        notifMenu.classList.add('show');
+        loadNotifications(); // Refresh on open
+      }
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!notifMenu.contains(e.target) && !notifBtn.contains(e.target)) {
+        notifMenu.classList.remove('show');
+      }
+    });
+  }
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
