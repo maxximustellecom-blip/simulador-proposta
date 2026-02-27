@@ -127,7 +127,7 @@ export async function upsertClient(req, res) {
 
 export async function getClients(req, res) {
   try {
-    const { cnpj } = req.query || {};
+    const { cnpj, user_id } = req.query || {};
     const and = [{ cnpj: { [Op.ne]: '00000000000000' } }];
     if (cnpj) {
       const clean = String(cnpj).replace(/\D/g, '');
@@ -142,6 +142,11 @@ export async function getClients(req, res) {
     const actor = req.user || null;
     if (!actor || actor.role !== 'admin') {
       and.push({ created_by: actor && actor.id ? Number(actor.id) : -1 });
+    } else {
+      if (user_id) {
+        const uid = Number(user_id);
+        if (uid) and.push({ created_by: uid });
+      }
     }
     const where = { [Op.and]: and };
     const clients = await Client.findAll({ where, order: [['name', 'ASC']] });

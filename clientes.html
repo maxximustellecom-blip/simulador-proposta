@@ -80,6 +80,12 @@
                             <div class="label">CNPJ</div>
                             <input id="fCnpj" class="input" type="text" placeholder="00.000.000/0000-00" autocomplete="off">
                         </div>
+                        <div id="filterUserContainer" style="display: none;">
+                            <div class="label">Cadastrado por</div>
+                            <select id="fUser" class="input">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
                         <div style="display:flex; align-items:flex-end; gap:0.5rem;">
                             <button id="buscarBtn" class="btn btn-primary" type="button" title="Buscar"><i data-lucide="search"></i><span>Buscar</span></button>
                             <button id="limparBtn" class="btn btn-ghost" type="button" title="Limpar"><i data-lucide="rotate-ccw"></i><span>Limpar</span></button>
@@ -359,7 +365,14 @@
             try {
                 const nome = String(document.getElementById('fNome').value || '').trim();
                 const cnpj = String(document.getElementById('fCnpj').value || '').trim();
-                const qs = cnpj ? ('?cnpj=' + encodeURIComponent(cnpj)) : '';
+                const userId = document.getElementById('fUser') ? document.getElementById('fUser').value : '';
+                
+                let qsParts = [];
+                if (cnpj) qsParts.push('cnpj=' + encodeURIComponent(cnpj));
+                if (userId) qsParts.push('user_id=' + encodeURIComponent(userId));
+                
+                const qs = qsParts.length > 0 ? ('?' + qsParts.join('&')) : '';
+
                 const list = await api('/clients' + qs, { method: 'GET' });
                 let arr = Array.isArray(list) ? list : [];
                 if (nome) {
@@ -372,6 +385,25 @@
                 renderClientsTable([]);
             }
         }
+
+        async function carregarUsuariosFiltro() {
+            try {
+                const users = await api('/auth/users', { method: 'GET' });
+                const sel = document.getElementById('fUser');
+                if (!sel) return;
+                sel.innerHTML = '<option value="">Todos</option>';
+                if (Array.isArray(users)) {
+                    users.forEach(u => {
+                        const opt = document.createElement('option');
+                        opt.value = u.id;
+                        opt.textContent = u.name;
+                        sel.appendChild(opt);
+                    });
+                }
+                const container = document.getElementById('filterUserContainer');
+                if (container) container.style.display = 'block';
+            } catch {}
+        }
         document.addEventListener('DOMContentLoaded', async () => {
             const auth = localStorage.getItem('authUser');
             if (!auth) { window.location.href = 'login.html'; return; }
@@ -383,6 +415,9 @@
                     isAdmin = (user && user.role === 'admin');
                     window.__isAdmin = isAdmin;
                     label.textContent = isAdmin ? (user.name + ' • Admin') : user.name;
+                    if (isAdmin) {
+                        carregarUsuariosFiltro();
+                    }
                 }
                 const roleChip = document.getElementById('roleChip');
                 if (roleChip) {
