@@ -18,9 +18,13 @@ import Regiao from './Regiao.js';
 import Tipo from './Tipo.js';
 import LeadBatch from './LeadBatch.js';
 import Lead from './Lead.js';
+import Appointment from './Appointment.js';
 
 Simulation.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 User.hasMany(Simulation, { foreignKey: 'created_by', as: 'simulations' });
+
+Appointment.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+User.hasMany(Appointment, { foreignKey: 'user_id', as: 'appointments' });
 
 User.belongsTo(AccessProfile, { foreignKey: 'profile_id', as: 'profile' });
 AccessProfile.hasMany(User, { foreignKey: 'profile_id', as: 'users' });
@@ -46,4 +50,4 @@ User.hasMany(LeadBatch, { foreignKey: 'created_by', as: 'createdLeadBatches' });
 LeadBatch.hasMany(Lead, { foreignKey: 'batch_id', as: 'leads' });
 Lead.belongsTo(LeadBatch, { foreignKey: 'batch_id', as: 'batch' });
 
-export { sequelize, User, Client, Simulation, Sale, Category, Product, Negotiation, NegociacaoProposta, CustomCategory, CustomProduct, NegociacaoPropostaCustomizada, NegociacaoPropostaAnexos, NegociacaoPropostaCustomizadaAnexos, AccessProfile, PedidoDeVenda, Regiao, Tipo, LeadBatch, Lead };
+export { sequelize, User, Client, Simulation, Sale, Category, Product, Negotiation, NegociacaoProposta, CustomCategory, CustomProduct, NegociacaoPropostaCustomizada, NegociacaoPropostaAnexos, NegociacaoPropostaCustomizadaAnexos, AccessProfile, PedidoDeVenda, Regiao, Tipo, LeadBatch, Lead, Appointment };

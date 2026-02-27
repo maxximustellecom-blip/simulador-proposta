@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda • Maxximus Telecom</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        /* Calendar Specific Styles matching System Theme */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .calendar-nav button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .calendar-nav button:hover {
+            background: var(--surface-strong);
+            border-color: var(--muted);
+        }
+        .calendar-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            min-width: 150px;
+            text-align: center;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .calendar-day-header {
+            background: var(--surface-strong);
+            padding: 1rem 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .calendar-day {
+            background: var(--bg);
+            min-height: 120px;
+            padding: 0.75rem;
+            cursor: pointer;
+            position: relative;
+            transition: background 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .calendar-day:hover {
+            background: var(--surface);
+        }
+        .calendar-day.other-month {
+            background: var(--surface);
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .calendar-day.other-month .day-number {
+            color: var(--muted);
+        }
+        .calendar-day.today {
+            background: rgba(37, 99, 235, 0.08); /* Primary color low opacity */
+        }
+        .day-number {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .calendar-day.today .day-number {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.4);
+        }
+        .day-badges {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+        }
+        .day-badge {
+            font-size: 0.75rem;
+            padding: 3px 6px;
+            background: rgba(37, 99, 235, 0.15);
+            color: var(--primary);
+            border-left: 2px solid var(--primary);
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+        
+        /* Modal Styles aligned with System */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .modal-overlay.open {
+            display: flex;
+            opacity: 1;
+        }
+        .agenda-modal {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: scale(0.95);
+            transition: transform 0.2s ease;
+        }
+        .modal-overlay.open .agenda-modal {
+            transform: scale(1);
+        }
+        .modal-head {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface);
+            border-radius: 16px 16px 0 0;
+        }
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            background: var(--bg);
+        }
+        .modal-foot {
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            background: var(--surface);
+            border-radius: 0 0 16px 16px;
+        }
+        
+        /* List Items */
+        .appt-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .appt-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            transition: border-color 0.2s;
+        }
+        .appt-item:hover {
+            border-color: var(--muted);
+        }
+        .appt-time {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 0.9rem;
+            margin-bottom: 0.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .appt-title {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 1rem;
+        }
+        .appt-desc {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-top: 0.4rem;
+            line-height: 1.4;
+        }
+        .delete-btn {
+            color: var(--danger);
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid transparent;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .delete-btn:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Form Elements */
+        .field { margin-bottom: 1.25rem; }
+        .label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+        .input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        .input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #1d4ed8;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .btn-ghost {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-ghost:hover {
+            background: var(--surface-strong);
+        }
+        .btn-icon {
+            padding: 0.5rem;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <div class="card">
+            <div class="card-head">
+                <div class="card-title">
+                    <i data-lucide="calendar" style="margin-right: 0.75rem; color: var(--primary);"></i>
+                    <span>Agenda de Compromissos</span>
+                </div>
+                <div>
+                    <button class="btn btn-primary" onclick="openAddModal()">
+                        <i data-lucide="plus"></i>
+                        <span>Novo Compromisso</span>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="calendar-header">
+                    <div class="calendar-nav">
+                        <button onclick="changeMonth(-1)" title="Mês anterior"><i data-lucide="chevron-left"></i></button>
+                        <button onclick="goToToday()" class="btn-ghost" style="width: auto; padding: 0 0.8rem; font-size: 0.9rem;">Hoje</button>
+                        <button onclick="changeMonth(1)" title="Próximo mês"><i data-lucide="chevron-right"></i></button>
+                    </div>
+                    <span class="calendar-title" id="currentMonthLabel">Janeiro 2026</span>
+                    <!-- Spacer for alignment -->
+                    <div style="width: 100px;"></div> 
+                </div>
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Days will be populated by JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Lista de Compromissos -->
+    <div id="listModal" class="modal-overlay">
+        <div class="agenda-modal">
+            <div class="modal-head">
+                <div class="modal-title" id="listModalDate">Compromissos</div>
+                <button class="btn btn-ghost btn-icon" onclick="closeModal('listModal')"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="appointmentsList" class="appt-list">
+                    <!-- Appointments list -->
+                </div>
+                <div id="noAppointments" style="text-align: center; padding: 3rem 1rem; color: var(--muted); display: none;">
+                    <i data-lucide="calendar-off" style="width: 48px; height: 48px; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <p>Nenhum compromisso agendado para este dia.</p>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button class="btn btn-ghost" onclick="closeModal('listModal')">Fechar</button>
+                <button class="btn btn-primary" onclick="openAddFromList()">Adicionar Novo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Novo Compromisso -->
+    <div id="addModal" class="modal-overlay">
+        <div class="agenda-modal">
+            <div class="modal-head">
+                <div class="modal-title">Novo Compromisso</div>
+                <button class="btn btn-ghost btn-icon" onclick="closeModal('addModal')"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="addForm" onsubmit="event.preventDefault(); saveAppointment();">
+                    <div class="field">
+                        <label class="label" for="fTitle">Título do Compromisso</label>
+                        <input type="text" id="fTitle" class="input" required placeholder="Ex: Reunião com Cliente X">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="field">
+                            <label class="label" for="fDate">Data</label>
+                            <input type="date" id="fDate" class="input" required>
+                        </div>
+                        <div class="field">
+                            <label class="label" for="fTime">Horário</label>
+                            <input type="time" id="fTime" class="input" required>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label" for="fDesc">Descrição (Opcional)</label>
+                        <textarea id="fDesc" class="input" rows="4" placeholder="Adicione detalhes, pauta ou observações importantes..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-foot">
+                <button class="btn btn-ghost" onclick="closeModal('addModal')">Cancelar</button>
+                <button class="btn btn-primary" type="submit" form="addForm">Salvar Compromisso</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
+
+        let currentDate = new Date();
+        let appointments = [];
+        let selectedDate = null;
+
+        async function api(path, options = {}) {
+            const authRaw = localStorage.getItem('authUser');
+            let headers = { 'Content-Type': 'application/json' };
+            try {
+                const u = JSON.parse(authRaw || '{}');
+                if (u && u.id) headers['x-user-id'] = String(u.id);
+                if (u && u.token) headers['Authorization'] = `Bearer ${u.token}`;
+            } catch {}
+            
+            const res = await fetch(`${API_BASE}${path}`, { ...options, headers: { ...headers, ...options.headers } });
+            if (!res.ok) throw new Error(await res.text());
+            return res.json();
+        }
+
+        async function loadAppointments() {
+            try {
+                // Carregar compromissos do mês atual (com margem)
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                
+                // Pegar alguns dias antes e depois para preencher a grade
+                const startStr = new Date(year, month, -6).toISOString().split('T')[0];
+                const endStr = new Date(year, month + 1, 7).toISOString().split('T')[0];
+
+                const data = await api(`/appointments?from=${startStr}&to=${endStr}`);
+                appointments = data;
+                renderCalendar();
+            } catch (error) {
+                console.error('Erro ao carregar compromissos:', error);
+                // Fallback visual vazio
+                appointments = [];
+                renderCalendar();
+            }
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
+            const weekDays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+            // Versão curta para mobile pode ser tratada via CSS ou media query se necessário, mas aqui usaremos abreviado por padrão
+            const weekDaysShort = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            
+            weekDaysShort.forEach(day => {
+                const el = document.createElement('div');
+                el.className = 'calendar-day-header';
+                el.textContent = day;
+                grid.appendChild(el);
+            });
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            document.getElementById('currentMonthLabel').textContent = 
+                new Date(year, month).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+                .replace(/^\w/, c => c.toUpperCase());
+
+            const firstDayOfMonth = new Date(year, month, 1);
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const startDay = firstDayOfMonth.getDay(); // 0-6
+
+            // Dias do mês anterior
+            const prevMonthDays = new Date(year, month, 0).getDate();
+            for (let i = startDay - 1; i >= 0; i--) {
+                const day = prevMonthDays - i;
+                const el = createDayElement(day, true, new Date(year, month - 1, day));
+                grid.appendChild(el);
+            }
+
+            // Dias do mês atual
+            const today = new Date();
+            for (let i = 1; i <= daysInMonth; i++) {
+                const isToday = i === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+                const el = createDayElement(i, false, new Date(year, month, i), isToday);
+                grid.appendChild(el);
+            }
+
+            // Dias do próximo mês
+            const totalCells = 42; // 6 linhas x 7 colunas
+            const currentCells = startDay + daysInMonth;
+            const remainingCells = totalCells - currentCells;
+            
+            for (let i = 1; i <= remainingCells; i++) {
+                const el = createDayElement(i, true, new Date(year, month + 1, i));
+                grid.appendChild(el);
+            }
+        }
+
+        function createDayElement(day, isOtherMonth, dateObj, isToday = false) {
+            const el = document.createElement('div');
+            el.className = `calendar-day ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}`;
+            
+            const dateStr = dateObj.toISOString().split('T')[0];
+            const dayAppts = appointments.filter(a => a.date === dateStr);
+            dayAppts.sort((a, b) => a.time.localeCompare(b.time));
+
+            let badgesHtml = '';
+            // Mostrar até 3 badges
+            dayAppts.slice(0, 3).forEach(a => {
+                badgesHtml += `<div class="day-badge" title="${a.time.slice(0,5)} - ${a.title}">${a.time.slice(0,5)} ${a.title}</div>`;
+            });
+            if (dayAppts.length > 3) {
+                badgesHtml += `<div class="day-badge" style="background:var(--surface-strong); color:var(--text); border:none; text-align:center;">+${dayAppts.length - 3} mais</div>`;
+            }
+
+            el.innerHTML = `
+                <div class="day-number">${day}</div>
+                <div class="day-badges">
+                    ${badgesHtml}
+                </div>
+            `;
+
+            el.onclick = () => openListModal(dateObj, dayAppts);
+            return el;
+        }
+
+        function changeMonth(delta) {
+            currentDate.setMonth(currentDate.getMonth() + delta);
+            loadAppointments();
+        }
+
+        function goToToday() {
+            currentDate = new Date();
+            loadAppointments();
+        }
+
+        // Modal Functions
+        function openListModal(date, dayAppts) {
+            selectedDate = date;
+            const dateStr = date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+            document.getElementById('listModalDate').textContent = dateStr.replace(/^\w/, c => c.toUpperCase());
+            
+            const listEl = document.getElementById('appointmentsList');
+            const noApptsEl = document.getElementById('noAppointments');
+            
+            listEl.innerHTML = '';
+            
+            if (!dayAppts || dayAppts.length === 0) {
+                noApptsEl.style.display = 'block';
+            } else {
+                noApptsEl.style.display = 'none';
+                dayAppts.forEach(appt => {
+                    const item = document.createElement('div');
+                    item.className = 'appt-item';
+                    item.innerHTML = `
+                        <div style="flex:1">
+                            <div class="appt-time"><i data-lucide="clock" style="width:14px;height:14px"></i> ${appt.time.slice(0,5)}</div>
+                            <div class="appt-title">${appt.title}</div>
+                            ${appt.description ? `<div class="appt-desc">${appt.description}</div>` : ''}
+                        </div>
+                        <button class="delete-btn" onclick="deleteAppointment(${appt.id})" title="Excluir Compromisso">
+                            <i data-lucide="trash-2" style="width:18px;height:18px"></i>
+                        </button>
+                    `;
+                    listEl.appendChild(item);
+                });
+                lucide.createIcons();
+            }
+            
+            document.getElementById('listModal').classList.add('open');
+        }
+
+        function openAddModal() {
+            document.getElementById('addForm').reset();
+            // Default to today or selected date
+            const d = selectedDate || new Date();
+            document.getElementById('fDate').value = d.toISOString().split('T')[0];
+            
+            // Default time to next hour
+            const now = new Date();
+            now.setMinutes(0);
+            now.setHours(now.getHours() + 1);
+            const timeStr = now.toTimeString().slice(0,5);
+            document.getElementById('fTime').value = timeStr;
+
+            document.getElementById('addModal').classList.add('open');
+            setTimeout(() => document.getElementById('fTitle').focus(), 100);
+        }
+
+        function openAddFromList() {
+            closeModal('listModal');
+            openAddModal();
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('open');
+        }
+
+        async function saveAppointment() {
+            const title = document.getElementById('fTitle').value;
+            const date = document.getElementById('fDate').value;
+            const time = document.getElementById('fTime').value;
+            const description = document.getElementById('fDesc').value;
+
+            if (!title || !date || !time) {
+                // Simples validação visual
+                const fields = ['fTitle', 'fDate', 'fTime'];
+                fields.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (!el.value) el.style.borderColor = 'var(--danger)';
+                    else el.style.borderColor = 'var(--border)';
+                });
+                return;
+            }
+
+            try {
+                // Show loading state if needed
+                const btn = document.querySelector('#addModal .btn-primary');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Salvando...';
+                btn.disabled = true;
+
+                await api('/appointments', {
+                    method: 'POST',
+                    body: JSON.stringify({ title, date, time, description })
+                });
+                
+                closeModal('addModal');
+                loadAppointments();
+                
+                // Reset button
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                
+            } catch (error) {
+                alert('Erro ao salvar: ' + error.message);
+                const btn = document.querySelector('#addModal .btn-primary');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteAppointment(id) {
+            if (!confirm('Tem certeza que deseja excluir este compromisso?')) return;
+            try {
+                await api(`/appointments/${id}`, { method: 'DELETE' });
+                // Refresh list if modal is open
+                if (document.getElementById('listModal').classList.contains('open') && selectedDate) {
+                    closeModal('listModal'); 
+                    loadAppointments();
+                } else {
+                    loadAppointments();
+                }
+            } catch (error) {
+                alert('Erro ao excluir: ' + error.message);
+            }
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            loadAppointments();
+            
+            // Close modals on escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeModal('listModal');
+                    closeModal('addModal');
+                }
+            });
+
+            // Close modal on click outside
+            document.querySelectorAll('.modal-overlay').forEach(overlay => {
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        closeModal(overlay.id);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

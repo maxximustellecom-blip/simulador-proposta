@@ -43,11 +43,13 @@
         '<div class="nav-title">Principal</div>' +
         '<div class="nav-group">' +
           '<a href="quadro-vendas.html" class="nav-link' + (isActive('quadro-vendas') ? ' active' : '') + '"><i data-lucide="layout-dashboard"></i><span>Quadro de Vendas</span></a>' +
+          '<a href="agenda.html" class="nav-link' + (isActive('agenda') ? ' active' : '') + '"><i data-lucide="calendar"></i><span>Agenda</span></a>' +
           '<a href="meus-leads.html" class="nav-link' + (isActive('meus-leads') ? ' active' : '') + '"><i data-lucide="file-text"></i><span>Meus Leads</span></a>' +
           '<a href="clientes.html" class="nav-link' + (isActive('clientes') ? ' active' : '') + '"><i data-lucide="building-2"></i><span>Clientes</span></a>' +
           '<a href="negociar.html" class="nav-link' + (isActive('negociar') ? ' active' : '') + '"><i data-lucide="handshake"></i><span>Propostas</span></a>' +
           '<a href="top-sellers.html" class="nav-link' + (isActive('top-sellers') ? ' active' : '') + '"><i data-lucide="star"></i><span>Top Sellers</span></a>' +
           '<a href="quadro-vendas.html" style="display: none;" class="nav-link' + (isActive('quadro-vendas') ? ' active' : '') + '"><i data-lucide="bar-chart-3"></i><span>Quadro de Vendas</span></a>' +
+          '<a href="agenda.html" style="display: none;" class="nav-link' + (isActive('agenda') ? ' active' : '') + '"><i data-lucide="calendar"></i><span>Agenda</span></a>' +
         '</div>' +
         '<div class="nav-title">Simulação</div>' +
         '<button id="simulacaoToggle" class="nav-dropdown' + (simOpen ? ' open' : '') + '" type="button">' +

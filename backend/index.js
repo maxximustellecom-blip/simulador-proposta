@@ -16,9 +16,13 @@ import pedidoDeVendaRouter from './routes/pedidoDeVenda.js';
 import regiaoRouter from './routes/regiao.js';
 import tipoRouter from './routes/tipo.js';
 import leadsRouter from './routes/leads.js';
+import appointmentRouter from './routes/appointment.js';
 import authContext from './middleware/authContext.js';
+import { startScheduler } from './services/scheduler.js';
 
 dotenv.config();
+
+startScheduler();
 
 const app = express();
 app.use(cors());
@@ -44,6 +48,7 @@ app.use('/pedidos-venda', pedidoDeVendaRouter);
 app.use('/regioes', regiaoRouter);
 app.use('/types', tipoRouter);
 app.use('/leads', leadsRouter);
+app.use('/appointments', appointmentRouter);
 
 const port = process.env.PORT || 3001;
 
