@@ -89,22 +89,22 @@
             </div>
             <div class="card-body">
                 <section class="section" style="margin-top: 20px;">
-                    <div id="filtersNegociacao" class="filters">
-                        <div>
+                    <div id="filtersNegociacao" style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;">
+                        <div style="flex: 1; min-width: 200px;">
                             <div class="label">CNPJ</div>
                             <input id="fCnpj" class="input" type="text" placeholder="00.000.000/0000-00" autocomplete="off">
                         </div>
-                        <div>
+                        <div style="flex: 1; min-width: 200px;">
                             <div class="label">Razão Social</div>
                             <input id="fRazao" class="input" type="text" placeholder="Nome do cliente" autocomplete="off">
                         </div>
-                        <div id="divFilterVendedor" style="display:none;">
+                        <div id="divFilterVendedor" style="display:none; flex: 1; min-width: 200px;">
                             <div class="label">Vendedor</div>
                             <select id="fVendedor" class="select">
                                 <option value="">Todos</option>
                             </select>
                         </div>
-                        <div>
+                        <div style="flex: 1; min-width: 200px;">
                             <div class="label">Tipo</div>
                             <select id="fTipoProposta" class="select">
                                 <option value="">Todos</option>
@@ -112,11 +112,11 @@
                                 <option value="CUSTOMIZADA">Customizada</option>
                             </select>
                         </div>
-                        <div>
+                        <div style="flex: 1; min-width: 160px;">
                             <div class="label">Data</div>
                             <input id="fData" class="input" type="date">
                         </div>
-                        <div style="display:flex; align-items:flex-end; justify-content: flex-end; gap:0.5rem;">
+                        <div style="display:flex; align-items:flex-end; margin-left: auto; gap:0.5rem;">
                             <button id="buscarBtn" class="btn btn-primary" type="button" title="Buscar"><i data-lucide="search"></i><span>Buscar</span></button>
                             <button id="limparBtn" class="btn btn-ghost" type="button" title="Limpar"><i data-lucide="rotate-ccw"></i><span>Limpar</span></button>
                         </div>
