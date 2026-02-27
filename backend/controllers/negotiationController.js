@@ -1,14 +1,22 @@
-import { Negotiation, User, Client, PedidoDeVenda } from '../models/index.js';
+import { Negotiation, User, Client, PedidoDeVenda, NegociacaoProposta, NegociacaoPropostaCustomizada } from '../models/index.js';
 
 function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
 
 export async function listNegotiations(req, res) {
   try {
-    const { cnpj, status, data, creator_id, razao } = req.query || {};
+    const { cnpj, status, data, creator_id, razao, tipo_proposta } = req.query || {};
     let list = await Negotiation.findAll({
       include: [
-        { model: User, as: 'creator', attributes: ['id', 'name'] },
-        { model: Client, as: 'client' }
+        { 
+          model: User, 
+          as: 'creator', 
+          attributes: ['id', 'name', 'role'],
+          where: (req.query.only_users === 'true') ? { role: 'user' } : undefined,
+          required: (req.query.only_users === 'true')
+        },
+        { model: Client, as: 'client' },
+        { model: NegociacaoProposta, as: 'proposal', attributes: ['total_acessos'] },
+        { model: NegociacaoPropostaCustomizada, as: 'customProposal', attributes: ['total_acessos'] }
       ],
       order: [['created_at', 'DESC']]
     });
@@ -17,6 +25,21 @@ export async function listNegotiations(req, res) {
     } else if (creator_id) {
       // If admin and creator_id filter provided
       list = list.filter(n => Number(n.created_by || 0) === Number(creator_id));
+    }
+
+    if (tipo_proposta) {
+      const tp = String(tipo_proposta).toUpperCase();
+      if (tp.includes('PADRAO') || tp.includes('PADRÃO')) {
+         list = list.filter(n => {
+             const p = String(n.proposta || '').toUpperCase();
+             return p.includes('PADRAO') || p.includes('PADRÃO');
+         });
+      } else if (tp.includes('CUSTOMIZADA')) {
+         list = list.filter(n => {
+             const p = String(n.proposta || '').toUpperCase();
+             return !p.includes('PADRAO') && !p.includes('PADRÃO');
+         });
+      }
     }
 
     if (cnpj) {
@@ -40,18 +63,22 @@ export async function listNegotiations(req, res) {
       const br = String(data).split('-').reverse().join('/');
       list = list.filter(n => String(n.data || '').includes(br));
     }
-    return res.json(list.map(n => ({
-      id: n.id,
-      cnpj: n.cnpj,
-      tipo: n.tipo,
-      proposta: n.proposta,
-      valor: n.valor !== null && n.valor !== undefined ? Number(n.valor) : null,
-      status: n.status,
-      data: n.data,
-      created_by: n.created_by !== null && n.created_by !== undefined ? Number(n.created_by) : null,
-      creator: n.creator ? { id: n.creator.id, name: n.creator.name } : null,
-      razaoSocial: n.client ? (n.client.name || '') : ''
-    })));
+    return res.json(list.map(n => {
+      const totalAcessos = n.customProposal ? n.customProposal.total_acessos : (n.proposal ? n.proposal.total_acessos : 0);
+      return {
+        id: n.id,
+        cnpj: n.cnpj,
+        tipo: n.tipo,
+        proposta: n.proposta,
+        valor: n.valor !== null && n.valor !== undefined ? Number(n.valor) : null,
+        status: n.status,
+        data: n.data,
+        created_by: n.created_by !== null && n.created_by !== undefined ? Number(n.created_by) : null,
+        creator: n.creator ? { id: n.creator.id, name: n.creator.name } : null,
+        razaoSocial: n.client ? (n.client.name || '') : '',
+        totalAcessos
+      };
+    }));
   } catch (err) {
     return res.status(500).json({ error: 'erro ao listar negociações', details: String(err && err.message ? err.message : err) });
   }

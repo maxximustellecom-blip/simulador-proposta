@@ -22,6 +22,56 @@
             border-bottom-left-radius: 14px;
             border-bottom-right-radius: 14px;
         }
+        .action-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            z-index: 50;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            min-width: 160px;
+            padding: 0.5rem;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .action-menu.show {
+            display: flex;
+        }
+        .action-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.7rem;
+            border-radius: 6px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+            font-size: 0.9rem;
+            transition: background 0.15s;
+        }
+        .action-item:hover {
+            background: var(--surface-strong);
+        }
+        .action-item:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .action-item.text-danger {
+            color: var(--danger);
+        }
+        .action-item.text-danger:hover {
+            background: rgba(239,68,68,0.1);
+        }
+        .action-item i {
+            width: 16px;
+            height: 16px;
+        }
     </style>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
@@ -55,6 +105,14 @@
                             </select>
                         </div>
                         <div>
+                            <div class="label">Tipo</div>
+                            <select id="fTipoProposta" class="select">
+                                <option value="">Todos</option>
+                                <option value="PADRÃO">Padrão</option>
+                                <option value="CUSTOMIZADA">Customizada</option>
+                            </select>
+                        </div>
+                        <div>
                             <div class="label">Data</div>
                             <input id="fData" class="input" type="date">
                         </div>
@@ -74,8 +132,8 @@
                             <thead>
                                 <tr>
                                     <th>Razão Social</th>
-                                    <th>CNPJ</th>
                                     <th>Proposta</th>
+                                    <th>Nº Acessos</th>
                                     <th>Valor</th>
                                     <th>Data</th>
                                     <th>Consultor</th>
@@ -173,20 +231,38 @@
             tbody.innerHTML = arr.map(n => {
                 const isConcluida = String(n.status || '').toLowerCase().includes('conclu');
                 const rowStyle = isConcluida ? ' style="background: var(--pill-bg);"' : '';
+                const isDisabled = (__userRole !== 'admin' && String(n.status) === 'Concluída') ? 'disabled' : '';
+                
                 return `
                 <tr${rowStyle}>
-                    <td>${n.razaoSocial}</td>
-                    <td>${formatCnpj(n.cnpj || '')}</td>
+                    <td>
+                        <div style="font-weight:600;">${n.razaoSocial || '-'}</div>
+                        <div class="muted" style="font-size:0.8rem; margin-top:2px;">${formatCnpj(n.cnpj || '')}</div>
+                    </td>
                     <td><span class="ellipsis">${n.proposta === "PROPOSTA PADRÃO" ? "PADRÃO" : "CUSTOMIZADA" || '-'}</span></td>
+                    <td>${n.totalAcessos || 0}</td>
                     <td>${(n.valor !== undefined && n.valor !== null) ? currency(n.valor) : '-'}</td>
                     <td>${n.data || '-'}</td>
                     <td>${n.creator && n.creator.name ? n.creator.name : '-'}</td>
                     <td class="col-actions">
-                        <div class="table-actions">
-                            <button type="button" class="btn btn-ghost" title="Configurar" onclick="configurarNegociacao(${n.id})"><i data-lucide="settings"></i></button>
-                            <button type="button" class="btn btn-ghost" title="Enviar BKO" onclick="enviarBko(${n.id})" ${(__userRole !== 'admin' && String(n.status) === 'Concluída') ? 'disabled' : ''}><i data-lucide="send"></i></button>
-                            <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="editarNegociacao(${n.id})" ${(__userRole !== 'admin' && String(n.status) === 'Concluída') ? 'disabled' : ''}><i data-lucide="edit-3"></i></button>
-                            <button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="excluirNegociacao(${n.id})" ${(__userRole !== 'admin' && String(n.status) === 'Concluída') ? 'disabled' : ''} style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>
+                        <div style="position:relative; display:inline-block;">
+                            <button type="button" class="btn btn-ghost btn-icon" title="Ações" onclick="toggleActionMenu(event, ${n.id})">
+                                <i data-lucide="more-vertical"></i>
+                            </button>
+                            <div id="action-menu-${n.id}" class="action-menu">
+                                <button type="button" class="action-item" onclick="configurarNegociacao(${n.id})">
+                                    <i data-lucide="settings"></i> Configurar
+                                </button>
+                                <button type="button" class="action-item" onclick="enviarBko(${n.id})" ${isDisabled}>
+                                    <i data-lucide="send"></i> Enviar BKO
+                                </button>
+                                <button type="button" class="action-item" onclick="editarNegociacao(${n.id})" ${isDisabled}>
+                                    <i data-lucide="edit-3"></i> Editar
+                                </button>
+                                <button type="button" class="action-item text-danger" onclick="excluirNegociacao(${n.id})" ${isDisabled}>
+                                    <i data-lucide="trash-2"></i> Excluir
+                                </button>
+                            </div>
                         </div>
                     </td>
                 </tr>
@@ -194,6 +270,22 @@
             }).join('') || '<tr><td colspan="7" class="muted">Sem resultados</td></tr>';
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         }
+
+        window.toggleActionMenu = function(e, id) {
+            e.stopPropagation();
+            // Close all others
+            document.querySelectorAll('.action-menu.show').forEach(el => {
+                if (el.id !== 'action-menu-' + id) el.classList.remove('show');
+            });
+            const menu = document.getElementById('action-menu-' + id);
+            if (menu) menu.classList.toggle('show');
+        };
+
+        // Close menus on click outside
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.action-menu.show').forEach(el => el.classList.remove('show'));
+        });
+
         function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
         async function carregarClientes() {
             try {
@@ -274,11 +366,13 @@
                 const data = document.getElementById('fData').value;
                 const razao = document.getElementById('fRazao').value;
                 const vendedor = document.getElementById('fVendedor') ? document.getElementById('fVendedor').value : '';
+                const tipoProposta = document.getElementById('fTipoProposta') ? document.getElementById('fTipoProposta').value : '';
                 const params = [];
                 if (cnpj) params.push('cnpj=' + encodeURIComponent(cnpj));
                 if (data) params.push('data=' + encodeURIComponent(data));
                 if (razao) params.push('razao=' + encodeURIComponent(razao));
                 if (vendedor) params.push('creator_id=' + encodeURIComponent(vendedor));
+                if (tipoProposta && tipoProposta !== 'Todos') params.push('tipo_proposta=' + encodeURIComponent(tipoProposta));
                 const qs = params.length ? ('?' + params.join('&')) : '';
                 const list = await api('/negotiations' + qs, { method: 'GET' }).catch(() => []);
                 __negociacoes = Array.isArray(list) ? list : [];
@@ -431,17 +525,16 @@
                 const u = JSON.parse(auth || '{}');
                 if (u.role !== 'admin') return;
 
-                const list = await api('/auth/users', { method: 'GET' }).catch(() => []);
+                const list = await api('/auth/users?only_users=true', { method: 'GET' }).catch(() => []);
                 const arr = Array.isArray(list) ? list : [];
                 const select = document.getElementById('mCriadoPor');
-                if (!select) return;
                 
-                const html = '<option value="">Todos</option>' + arr.map(user => `<option value="${user.id}">${user.name}</option>`).join('');
+                // Filter users to exclude admins if needed, but the endpoint now supports filtering
+                // Or we can filter here client-side just in case
+                const usersOnly = arr.filter(x => x.role !== 'admin');
                 
-                // Populate modal select
-                const selectModal = document.getElementById('mCriadoPor');
-                if (selectModal) selectModal.innerHTML = '<option value="">Selecione...</option>' + arr.map(user => `<option value="${user.id}">${user.name}</option>`).join('');
-
+                const html = '<option value="">Todos</option>' + usersOnly.map(user => `<option value="${user.id}">${user.name}</option>`).join('');
+                
                 // Populate filter select
                 const selectFilter = document.getElementById('fVendedor');
                 const divFilter = document.getElementById('divFilterVendedor');
@@ -449,6 +542,18 @@
                     selectFilter.innerHTML = html;
                     if (divFilter) divFilter.style.display = 'block';
                 }
+                
+                // Populate modal select (this one might need admins too? usually creator is user, but admin can create on behalf)
+                // Let's keep all users for modal creation if admin wants to assign to another admin?
+                // The requirement said "no filtro Vendedor listar somente usuarios e nao admins"
+                // So the filter definitely needs to be filtered.
+                
+                if (select) {
+                     // For the modal "Criado Por", maybe we want all users including admins? 
+                     // Or just sellers? Let's stick to the same list for consistency unless specified otherwise.
+                     select.innerHTML = '<option value="">Selecione...</option>' + usersOnly.map(user => `<option value="${user.id}">${user.name}</option>`).join('');
+                }
+
             } catch {}
         }
         document.addEventListener('DOMContentLoaded', async () => {
