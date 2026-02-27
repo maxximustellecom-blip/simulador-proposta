@@ -25,12 +25,12 @@
             <div class="card-body">
                 <section class="section filters-section-sticky" style="margin-top: 20px;">
                     <div id="filtersProdutos" class="filters">
-                        <div>
-                            <div class="label">Tipo</div>
-                            <select id="fProdTipo" class="select">
+
+                            <div class="label" style="display:none;">Tipo</div>
+                            <select id="fProdTipo" class="select" style="display:none;">
                                 <option value="" selected>Carregando...</option>
                             </select>
-                        </div>
+
                         <div>
                             <div class="label">Plano</div>
                             <select id="fProdCategoria" class="select"><option value="">Todas</option></select>
@@ -55,7 +55,6 @@
                             <thead>
                                 <tr>
                                     <th>Plano</th>
-                                    <th>Tipo</th>
                                     <th>Nome</th>
                                     <th>Região</th>
                                     <th>Preço&nbsp;(R$)</th>
@@ -115,9 +114,8 @@
         let __regioesMap = {};
         let __editingProdId = null;
         function catOptionLabel(c) {
-            const tipo = String(c && c.tipo ? c.tipo : '-');
             const nome = String(c ? (c.nome || c.name || '-') : '-');
-            return `[${tipo}] ${nome}`;
+            return `${nome}`;
         }
         async function carregarCategorias() {
             try {
@@ -271,7 +269,6 @@
                 return `
                 <tr>
                     <td><span class="ellipsis">${catName}</span></td>
-                    <td><span class="chip" style="${tipoChipStyle(tipoVal)}">${tipoVal}</span></td>
                     <td><span class="ellipsis">${nomeVal}</span></td>
                     <td><span class="ellipsis">${regiaoLabel}</span></td>
                     <td>${currency(precoVal)}</td>
@@ -423,8 +420,14 @@
                 novoBtn.addEventListener('click', () => {
                     __editingProdId = null;
                     const tipoEl = document.getElementById('mProdTipo');
-                    if (tipoEl) tipoEl.value = '';
-                    updateModalCategoriasOptions('');
+                    if (tipoEl) {
+                        if (tipoEl.options.length > 1) {
+                            tipoEl.selectedIndex = 1;
+                        } else {
+                            tipoEl.value = '';
+                        }
+                    }
+                    updateModalCategoriasOptions(tipoEl ? (tipoEl.value || '') : '');
                     document.getElementById('mProdCategoria').value = '';
                     document.getElementById('mProdNome').value = '';
                     document.getElementById('mProdDesc').value = '';
@@ -622,7 +625,7 @@
             <div class="modal-head"><div>Oferta</div><button id="mProdFechar" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
             <div class="modal-body">
                 <div class="grid-2-modal">
-                    <div class="field"><span class="label-inline">Tipo</span>
+                    <div class="field" style="display:none;"><span class="label-inline">Tipo</span>
                         <select id="mProdTipo" class="select">
                             <option value="" selected>Carregando...</option>
                         </select>
