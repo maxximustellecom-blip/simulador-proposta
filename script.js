@@ -26,7 +26,7 @@
           '<button id="notificationBtn" class="notification-btn" type="button" title="Notificações"><i data-lucide="bell"></i></button>' +
           '<div id="notificationMenu" class="notification-menu">' +
             '<div class="notification-header">' +
-              '<span>Compromissos de Hoje</span>' +
+              '<span>Notificações</span>' +
             '</div>' +
             '<div id="notificationList" class="notification-list">' +
               '<div style="padding:1rem;text-align:center;color:var(--muted)">Carregando...</div>' +
