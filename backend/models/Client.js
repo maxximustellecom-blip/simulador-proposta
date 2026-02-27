@@ -43,7 +43,8 @@ const Client = sequelize.define('Client', {
   socio1_contato: { type: DataTypes.STRING(160), allowNull: true },
   socio2_nome: { type: DataTypes.STRING(160), allowNull: true },
   socio2_cpf: { type: DataTypes.STRING(20), allowNull: true },
-  socio2_contato: { type: DataTypes.STRING(160), allowNull: true }
+  socio2_contato: { type: DataTypes.STRING(160), allowNull: true },
+  notes: { type: DataTypes.TEXT, allowNull: true }
 }, {
   tableName: 'clients',
   timestamps: true,

@@ -13,7 +13,8 @@ export async function upsertClient(req, res) {
       auth1_nome, auth1_cpf, auth1_rg, auth1_contato,
       auth2_nome, auth2_cpf, auth2_contato,
       socio1_nome, socio1_cpf, socio1_contato,
-      socio2_nome, socio2_cpf, socio2_contato
+      socio2_nome, socio2_cpf, socio2_contato,
+      notes
     } = req.body || {};
     if (!name || !cnpj) {
       return res.status(400).json({ error: 'name e cnpj são obrigatórios' });
@@ -62,7 +63,8 @@ export async function upsertClient(req, res) {
         socio1_contato: socio1_contato || null,
         socio2_nome: socio2_nome || null,
         socio2_cpf: socio2_cpf || null,
-        socio2_contato: socio2_contato || null
+        socio2_contato: socio2_contato || null,
+        notes: notes || null
       }
     });
     if (!created) {
@@ -113,6 +115,7 @@ export async function upsertClient(req, res) {
     if (client.socio2_nome !== (socio2_nome || null)) { client.socio2_nome = socio2_nome || null; changed = true; }
     if (client.socio2_cpf !== (socio2_cpf || null)) { client.socio2_cpf = socio2_cpf || null; changed = true; }
     if (client.socio2_contato !== (socio2_contato || null)) { client.socio2_contato = socio2_contato || null; changed = true; }
+    if (client.notes !== (notes || null)) { client.notes = notes || null; changed = true; }
     if (changed) await client.save();
     return res.json(client);
   } catch (err) {

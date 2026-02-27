@@ -280,6 +280,17 @@
                         <div class="field"><span class="label-inline">Contato</span><input id="mSoc2Contato" class="input" type="text" placeholder="(00) 00000-0000"></div>
                     </div>
                 </div>
+
+                <!-- Seção 7: Observações -->
+                <div class="modal-section">
+                    <div class="modal-section-title">
+                        <i data-lucide="message-square"></i>
+                        <span>Observações</span>
+                    </div>
+                    <div class="field">
+                        <textarea id="mObservacoes" class="input" style="min-height: 100px; resize: vertical;" placeholder="Insira observações sobre o cliente aqui..."></textarea>
+                    </div>
+                </div>
             </div>
             <div class="modal-actions">
                 <button id="mSalvar" class="btn btn-primary" type="button"><i data-lucide="save"></i><span>Salvar</span></button>
@@ -296,6 +307,17 @@
             <div class="modal-actions">
                 <button id="confirmDeleteCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
                 <button id="confirmDeleteConfirm" class="btn btn-ghost" type="button" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i><span>Excluir</span></button>
+            </div>
+        </div>
+    </div>
+    <div id="obsModal" class="modal">
+        <div class="modal-card" style="max-width: 500px;">
+            <div class="modal-head"><div>Observações</div><button id="obsClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div id="obsContent" style="white-space: pre-wrap; color: var(--text);"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="obsOk" class="btn btn-primary" type="button"><span>Fechar</span></button>
             </div>
         </div>
     </div>
@@ -349,7 +371,12 @@
             window.__clientsCache = sorted.slice();
             tbody.innerHTML = sorted.map(c => `
                 <tr>
-                    <td>${c.name}</td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <span>${c.name}</span>
+                            ${c.notes ? `<button class="btn btn-ghost btn-icon" style="color: #10B981; padding: 2px; height: auto;" title="Ver observações" onclick="verObservacao(${c.id})"><i data-lucide="message-square" style="width:16px; height:16px;"></i></button>` : ''}
+                        </div>
+                    </td>
                     <td>${c.cnpj}</td>
                     <td class="col-actions">
                         <div class="table-actions">
@@ -455,10 +482,29 @@
             const confirmCancel = document.getElementById('confirmDeleteCancel');
             const confirmConfirm = document.getElementById('confirmDeleteConfirm');
             const confirmText = document.getElementById('confirmDeleteText');
+            
+            const obsModal = document.getElementById('obsModal');
+            const obsClose = document.getElementById('obsClose');
+            const obsOk = document.getElementById('obsOk');
+            const obsContent = document.getElementById('obsContent');
+
             function openModal() { modal.classList.add('show'); }
             function closeModal() { modal.classList.remove('show'); }
             function openConfirm() { confirmModal.classList.add('show'); }
             function closeConfirm() { confirmModal.classList.remove('show'); }
+            
+            window.verObservacao = function(id) {
+                if (!window.__clientsCache) return;
+                const c = window.__clientsCache.find(x => x.id === id);
+                if (c && c.notes) {
+                    obsContent.textContent = c.notes;
+                    obsModal.classList.add('show');
+                }
+            };
+            function closeObs() { obsModal.classList.remove('show'); }
+            if (obsClose) obsClose.addEventListener('click', closeObs);
+            if (obsOk) obsOk.addEventListener('click', closeObs);
+
             function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
             function formatCnpj(s) {
                 const d = onlyDigits(s);
@@ -567,7 +613,8 @@
                         socio1_contato: String(document.getElementById('mSoc1Contato').value || '').trim() || null,
                         socio2_nome: String(document.getElementById('mSoc2Nome').value || '').trim() || null,
                         socio2_cpf: String(document.getElementById('mSoc2Cpf').value || '').trim() || null,
-                        socio2_contato: String(document.getElementById('mSoc2Contato').value || '').trim() || null
+                        socio2_contato: String(document.getElementById('mSoc2Contato').value || '').trim() || null,
+                        notes: String(document.getElementById('mObservacoes').value || '').trim() || null
                     };
 
                     if (!payload.cnpj) { toast('CNPJ são obrigatórios', 'error'); return; }
@@ -627,17 +674,19 @@
                 document.getElementById('mSoc2Nome').value = c.socio2_nome || '';
                 document.getElementById('mSoc2Cpf').value = c.socio2_cpf || '';
                 document.getElementById('mSoc2Contato').value = c.socio2_contato || '';
+                document.getElementById('mObservacoes').value = c.notes || '';
             }
             function limparCampos() {
                 preencherCampos({ 
                     cnpj: '', name: '', fantasy_name: '', tipo_empresa: '', email: '', phone: '', opening_date: '', 
-                     cep: '', state: '', city: '', neighborhood: '', street: '', number: '', complement: '', reference_point: '',
-                     rep_nome: '', rep_cpf: '', rep_rg: '', rep_tel1: '', rep_email: '',
-                     gestor_nome: '', gestor_cpf: '', gestor_rg: '', gestor_tel1: '', gestor_email: '',
-                     auth1_nome: '', auth1_cpf: '', auth1_rg: '', auth1_contato: '',
-                     auth2_nome: '', auth2_cpf: '', auth2_contato: '',
-                     socio1_nome: '', socio1_cpf: '', socio1_contato: '',
-                     socio2_nome: '', socio2_cpf: '', socio2_contato: ''
+                    cep: '', state: '', city: '', neighborhood: '', street: '', number: '', complement: '', reference_point: '',
+                    rep_nome: '', rep_cpf: '', rep_rg: '', rep_tel1: '', rep_email: '',
+                    gestor_nome: '', gestor_cpf: '', gestor_rg: '', gestor_tel1: '', gestor_email: '',
+                    auth1_nome: '', auth1_cpf: '', auth1_rg: '', auth1_contato: '',
+                    auth2_nome: '', auth2_cpf: '', auth2_contato: '',
+                    socio1_nome: '', socio1_cpf: '', socio1_contato: '',
+                    socio2_nome: '', socio2_cpf: '', socio2_contato: '',
+                    notes: ''
                 });
             }
             window.abrirDetalhes = function(id) {
