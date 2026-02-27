@@ -8,8 +8,8 @@ const ZAPI_TOKEN = 'Fa9be4d3c3cff47cb84b5d28e5ce3d58aS';
 const ADMIN_PHONE = '5561981644455';
 
 export const startScheduler = () => {
-  // Executa todo dia às 09:00
-  cron.schedule('0 9 * * *', async () => {
+  // Executa a cada 1 minuto
+  cron.schedule('* * * * *', async () => {
     console.log('[Scheduler] Verificando compromissos para amanhã...');
     try {
       const tomorrow = new Date();
