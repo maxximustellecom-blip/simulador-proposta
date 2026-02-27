@@ -189,6 +189,8 @@
                                     <th>WTTX</th>
                                     <th>M2M</th>
                                     <th>Controle</th>
+                                    <th>Migração PF/PJ</th>
+                                    <th>TT</th>
                                 </tr>
                             </thead>
                             <tbody id="createProductTableBody"></tbody>
@@ -251,6 +253,8 @@
                                     <th>WTTX</th>
                                     <th>M2M</th>
                                     <th>Controle</th>
+                                    <th>Migração PF/PJ</th>
+                                    <th>TT</th>
                                 </tr>
                             </thead>
                             <tbody id="editProductTableBody"></tbody>
@@ -440,6 +444,8 @@
                 <td><input type="text" class="commission-input" placeholder="%" value="${data && data.wttx !== undefined ? data.wttx : ''}"></td>
                 <td><input type="text" class="commission-input" placeholder="%" value="${data && data.m2m !== undefined ? data.m2m : ''}"></td>
                 <td><input type="text" class="commission-input" placeholder="%" value="${data && data.controle !== undefined ? data.controle : ''}"></td>
+                <td><input type="text" class="commission-input" placeholder="%" value="${data && data.migracao !== undefined ? data.migracao : ''}"></td>
+                <td><input type="text" class="commission-input" placeholder="%" value="${data && data.tt !== undefined ? data.tt : ''}"></td>
             `;
             tbody.appendChild(tr);
         }
@@ -473,7 +479,9 @@
                         ultra_fibra: inputs[5].value,
                         wttx: inputs[6].value,
                         m2m: inputs[7].value,
-                        controle: inputs[8].value
+                        controle: inputs[8].value,
+                        migracao: inputs[9].value,
+                        tt: inputs[10].value
                     });
                 }
             });
@@ -499,7 +507,7 @@
             
             const products = DEFAULT_COMMISSION_ROWS.map(name => {
                 const existing = (config && config.products) ? config.products.find(p => p.level_group === name) : null;
-                return existing || { level_group: name, novo: '', aditivo: '', portabilidade: '', renovacao: '', ultra_fibra: '', wttx: '', m2m: '', controle: '' };
+                return existing || { level_group: name, novo: '', aditivo: '', portabilidade: '', renovacao: '', ultra_fibra: '', wttx: '', m2m: '', controle: '', migracao: '', tt: '' };
             });
 
             levels.forEach(l => addLevelRow(levelTbodyId, l));
