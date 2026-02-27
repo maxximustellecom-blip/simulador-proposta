@@ -48,7 +48,7 @@
                                 <tr>
                                     <th>Nome</th>
                                     <th>Descrição</th>
-                                    <th>Tipo</th>
+                                    <th style="display:none;">Tipo</th>
                                     <th class="col-actions" style="min-width:160px;">Ações</th>
                                 </tr>
                             </thead>
@@ -111,7 +111,7 @@
                 <tr>
                     <td><span class="ellipsis">${c.nome || c.name || '-'}</span></td>
                     <td><span class="ellipsis">${c.descricao || c.description || '-'}</span></td>
-                    <td><span class="chip" style="${tipoChipStyle(c.tipo)}">${c.tipo || '-'}</span></td>
+                    <td style="display:none;"><span class="chip" style="${tipoChipStyle(c.tipo)}">${c.tipo || '-'}</span></td>
                     <td class="col-actions">
                         <div class="table-actions">
                             <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditarCategoria(${c.id})"><i data-lucide="edit-3"></i></button>
@@ -218,6 +218,8 @@
                 // If the list is empty, maybe add a default or leave empty
                 if (arr.length === 0) {
                     select.innerHTML = '<option value="">Sem tipos cadastrados</option>';
+                } else {
+                    if (arr.length > 0) select.selectedIndex = 0;
                 }
             } catch {
                 // Fail silently or show toast
@@ -342,7 +344,7 @@
                 <div class="grid-2-modal">
                     <div class="field"><span class="label-inline">Nome</span><input id="mCatNome" class="input" type="text" placeholder="Nome do plano"></div>
                     <div class="field"><span class="label-inline">Descrição</span><input id="mCatDesc" class="input" type="text" placeholder="Descrição (opcional)"></div>
-                    <div class="field"><span class="label-inline">Tipo</span>
+                    <div class="field" style="display:none;"><span class="label-inline">Tipo</span>
                         <select id="mCatTipo" class="select">
                             <option value="" disabled selected>Carregando...</option>
                         </select>

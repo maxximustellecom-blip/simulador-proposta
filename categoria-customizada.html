@@ -25,9 +25,13 @@
                     <div id="filtersCategorias" class="filters">
                         <div>
                             <div class="label">Nome</div>
-                            <input id="fCatNome" class="input" type="text" placeholder="Nome d plano" autocomplete="off">
+                            <input id="fCatNome" class="input" type="text" placeholder="Nome do plano" autocomplete="off">
                         </div>
                         <div>
+                            <div class="label">Descrição</div>
+                            <input id="fCatDesc" class="input" type="text" placeholder="Descrição" autocomplete="off">
+                        </div>
+                        <div style="display:none;">
                             <div class="label">Tipo</div>
                             <select id="fCatTipo" class="select">
                                 <option value="" selected>Carregando...</option>
@@ -49,7 +53,7 @@
                             <thead>
                                 <tr>
                                     <th>Nome</th>
-                                    <th>Tipo</th>
+                                    <th style="display:none;">Tipo</th>
                                     <th>Descrição</th>
                                     <th class="col-actions" style="min-width:160px;">Ações</th>
                                 </tr>
@@ -116,9 +120,11 @@
         }
         function aplicarFiltroCategorias() {
             const nome = String(document.getElementById('fCatNome').value || '').trim().toUpperCase();
+            const desc = String(document.getElementById('fCatDesc').value || '').trim().toUpperCase();
             const tipo = String(document.getElementById('fCatTipo').value || '').toLowerCase();
             let arr = (__categorias || []).slice();
             if (nome) arr = arr.filter(c => String(c.nome || c.name || '').toUpperCase().includes(nome));
+            if (desc) arr = arr.filter(c => String(c.descricao || c.description || '').toUpperCase().includes(desc));
             if (tipo) arr = arr.filter(c => String(c.tipo || '').toLowerCase() === tipo);
             renderCategoriasTable(arr);
         }
@@ -130,7 +136,7 @@
             tbody.innerHTML = arr.map(c => `
                 <tr>
                     <td><span class="ellipsis">${c.nome || '-'}</span></td>
-                    <td><span class="chip" style="${tipoChipStyle(c.tipo)}">${c.tipo || '-'}</span></td>
+                    <td style="display:none;"><span class="chip" style="${tipoChipStyle(c.tipo)}">${c.tipo || '-'}</span></td>
                     <td><span class="ellipsis">${c.descricao || '-'}</span></td>
                     <td class="col-actions">
                         <div class="table-actions">
@@ -231,7 +237,11 @@
                 const selectModal = document.getElementById('mCatTipo');
                 if (selectModal) {
                     selectModal.innerHTML = arr.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
-                    if (arr.length === 0) selectModal.innerHTML = '<option value="">Sem tipos cadastrados</option>';
+                    if (arr.length === 0) {
+                        selectModal.innerHTML = '<option value="">Sem tipos cadastrados</option>';
+                    } else {
+                        if (arr.length > 0) selectModal.selectedIndex = 0;
+                    }
                 }
 
                 // Filter Select
@@ -270,6 +280,7 @@
             if (buscarBtn) buscarBtn.addEventListener('click', aplicarFiltroCategorias);
             if (limparBtn) limparBtn.addEventListener('click', () => {
                 document.getElementById('fCatNome').value = '';
+                document.getElementById('fCatDesc').value = '';
                 document.getElementById('fCatTipo').value = '';
                 aplicarFiltroCategorias();
             });
@@ -327,7 +338,7 @@
             <div class="modal-body">
                 <div class="grid-2-modal">
                     <div class="field"><span class="label-inline">Nome</span><input id="mCatNome" class="input" type="text" placeholder="Nome do plano"></div>
-                    <div class="field"><span class="label-inline">Tipo</span>
+                    <div class="field" style="display:none;"><span class="label-inline">Tipo</span>
                         <select id="mCatTipo" class="select">
                             <option value="" disabled selected>Carregando...</option>
                         </select>
