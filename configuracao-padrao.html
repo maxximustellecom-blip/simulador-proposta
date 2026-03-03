@@ -268,10 +268,7 @@
                             <div class="section-desc">Informações básicas do número</div>
                         </div>
                     </div>
-                    <div>
-                        <div class="label">Tipo</div>
-                        <select id="editTipo" class="select"></select>
-                    </div>
+                    <input type="hidden" id="editTipo">
                     <div style="margin-top: 0.75rem;">
                         <div class="label">QTD de Linhas</div>
                         <input id="editQuantidade" type="number" min="1" step="1" class="input" style="width:120px;">
@@ -1002,11 +999,8 @@
         let __tiposBackend = [];
         function normalizeTipo(val) {
             const k = String(val || '').toLowerCase();
-            if (k === 'novo') return 'Novo';
-            if ((k.includes('1') && k.includes('venda')) || k.includes('primeira')) return 'Novo';
-            if (k === 'aditivo') return 'Aditivo';
-            if (k === 'renegociação' || k === 'renegociacao' || k === 'renovação' || k === 'renovacao') return 'Renegociação';
-            if (k === 'tt' || k === 'transferência') return 'Renegociação';
+            if (k.includes('reneg') || k.includes('renov') || k.includes('tt') || k.includes('migracao')) return 'Renegociação';
+            if (k.includes('adti') || k.includes('adit')) return 'Aditivo';
             return 'Novo';
         }
         function tipoOptionsHtml(sel) {
@@ -1353,7 +1347,19 @@
 
 
             // Tipo
-            populate('editTipo', tipoOptionsHtml(line.tipoNegociacao), line.tipoNegociacao);
+            // populate('editTipo', tipoOptionsHtml(line.tipoNegociacao), line.tipoNegociacao);
+            // document.getElementById('editTipo').value = line.tipoNegociacao || 'Novo';
+
+            // Try to find current product to get up-to-date type
+            const currentCatObj = (__categorias || []).find(c => c.nome === line.categoria);
+            const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
+            const currentProd = currentProds.find(p => p.nome === line.plano);
+            
+            let tipoParaUsar = line.tipoNegociacao || 'Novo';
+            if (currentProd && currentProd.tipos) {
+                 tipoParaUsar = Array.isArray(currentProd.tipos) ? currentProd.tipos.join(',') : currentProd.tipos;
+            }
+            document.getElementById('editTipo').value = tipoParaUsar;
             
             // Numero
             const numEl = document.getElementById('editNumero');
@@ -1384,13 +1390,13 @@
             }
             renderPortBlocks(line);
 
-            // Categoria (Filtered by Tipo)
-            const catsByTipo = getFilteredCategorias(line.tipoNegociacao);
-            const catOpts = catsByTipo.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
+            // Categoria (All)
+            const allCats = (__categorias || []).slice();
+            const catOpts = allCats.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
             populate('editCategoria', catOpts, line.categoria);
 
             // Plano (Filtered by Categoria AND DDD)
-            const currentCat = catsByTipo.find(c => c.nome === line.categoria);
+            const currentCat = allCats.find(c => c.nome === line.categoria);
             let planos = currentCat ? (__map[currentCat.id] || []) : [];
             
             const selDdd = line.ddd;
@@ -1459,15 +1465,12 @@
         }
 
         function updateEditModalState() {
-            if (!__currentEditId) return;
-            const line = __linhas.find(l => Number(l.id) === Number(__currentEditId));
-            
             const tipo = document.getElementById('editTipo').value;
             const isReneg = normalizeTipo(tipo).toLowerCase().includes('reneg');
             const port = document.getElementById('editPortabilidade').value;
             const temAp = document.getElementById('editTemAparelho').value;
             const tipoAp = document.getElementById('editTipoAparelho').value;
-
+            
             // Show/Hide Plano Atual card based on Renegociação
             const secPlanoAtual = document.getElementById('secPlanoAtual');
             if (secPlanoAtual) {
@@ -1477,11 +1480,11 @@
             const numEl = document.getElementById('editNumero');
             if (numEl) numEl.disabled = !isReneg;
 
-            const isNovo = ['Novo','Aditivo'].includes(normalizeTipo(tipo));
+            // Enable fields if Renegociação
             const paEl = document.getElementById('editPlanoAtual');
-            if (paEl) paEl.disabled = isNovo;
+            if (paEl) paEl.disabled = !isReneg;
             const praEl = document.getElementById('editPrecoAtual');
-            if (praEl) praEl.disabled = isNovo;
+            if (praEl) praEl.disabled = !isReneg;
 
             const portDetails = document.getElementById('areaPortabilidadeDetails');
             if (portDetails) portDetails.style.display = (port === 'Sim') ? 'block' : 'none';
@@ -1567,9 +1570,9 @@
 
             if (fieldId === 'editDddNovo' || fieldId === 'editCategoria') {
                 const catVal = getValue('editCategoria');
-                const tipoVal = getValue('editTipo');
-                const catsByTipo = getFilteredCategorias(tipoVal);
-                const catObj = catsByTipo.find(c => c.nome === catVal);
+                // Removed type filtering
+                const allCats = (__categorias || []).slice();
+                const catObj = allCats.find(c => c.nome === catVal);
                 let planos = catObj ? (__map[catObj.id] || []) : [];
                 
                 // Filter by DDD
@@ -1611,9 +1614,9 @@
             if (fieldId === 'editPlano') {
                 const planoVal = getValue('editPlano');
                 const catVal = getValue('editCategoria');
-                const tipoVal = getValue('editTipo');
-                const catsByTipo = getFilteredCategorias(tipoVal);
-                const catObj = catsByTipo.find(c => c.nome === catVal);
+                // Removed type filtering
+                const allCats = (__categorias || []).slice();
+                const catObj = allCats.find(c => c.nome === catVal);
                 const planos = catObj ? (__map[catObj.id] || []) : [];
                 const sel = planos.find(p => p.nome === planoVal);
 
@@ -1621,6 +1624,11 @@
                     const baseTxt = sel.descricao || sel.nome || '';
                     document.getElementById('editPct').textContent = parsePctFromText(baseTxt);
                     document.getElementById('editValorPlano').textContent = currency(sel.preco || 0);
+                    
+                    // NEW: Update type based on product
+                    const prodTipo = (sel.tipos && sel.tipos.length) ? (Array.isArray(sel.tipos) ? sel.tipos.join(',') : sel.tipos) : 'Novo';
+                    setValue('editTipo', prodTipo);
+                    updateEditModalState();
                 } else {
                     document.getElementById('editPct').textContent = '-';
                     document.getElementById('editValorPlano').textContent = currency(0);
@@ -1863,8 +1871,7 @@
             
             // Validation Logic
             const erros = [];
-            const normalize = (s) => String(s || '').toLowerCase();
-            const isReneg = normalize(tipoVal).includes('reneg');
+            const isReneg = normalizeTipo(tipoVal).toLowerCase().includes('reneg');
             
             if (isReneg) {
                 const pa = getValue('editPlanoAtual');
@@ -2026,10 +2033,16 @@
             }
             setLoading(false);
             const rows = __linhas.map((l, idx) => {
+                // Encontrar o produto para pegar o tipo
+                const catObj = __categorias.find(c => c.nome === l.categoria);
+                const produtosDaCat = catObj ? (__map[catObj.id] || []) : [];
+                const prod = produtosDaCat.find(p => p.nome === l.plano);
+                const tipoProduto = (prod && prod.tipos) ? prod.tipos : 'A DEFINIR';
+
                 return `
                     <tr>
                         <td>${idx + 1}</td>
-                        <td>${l.tipoNegociacao || '-'}</td>
+                        <td>${tipoProduto}</td>
                         <td>
                             <input type="number" min="1" class="input" style="width:90px; text-align:center;" value="${l.quantidade}"
                                    data-id="${l.id}" data-field="quantidade">
@@ -2241,7 +2254,8 @@
                 '───────────────────────────────────'
             ].filter(l => l !== '').join('\n');
             const linhasTxt = __linhas.map((l, idx) => {
-                const tipo = String(l.tipoNegociacao || 'Novo').toLowerCase();
+                const tipoRaw = String(l.tipoNegociacao || 'Novo');
+                const tipo = normalizeTipo(tipoRaw).toLowerCase();
                 const em = tipo.includes('reneg') ? '🔁' : (tipo.includes('adti') || tipo.includes('adit') ? '➕' : '🌟');
                 const dddTxt = l.ddd ? `DDD ${l.ddd}` : '-';
                 const numTxt = l.numero ? `\n    Número: ${l.numero}` : '';
@@ -2938,7 +2952,8 @@
 
                 const linhas = __linhas || [];
                 const cardsHtml = linhas.map((l, idx) => {
-                    const tipo = String(l.tipoNegociacao || '-').toLowerCase();
+                    const tipoRaw = String(l.tipoNegociacao || '-');
+                    const tipo = normalizeTipo(tipoRaw).toLowerCase();
                     const em = tipo.includes('reneg') ? '🔁' : (tipo.includes('adti') || tipo.includes('adit') ? '➕' : '🌟');
                     
                     const unitario = currency(l.valorPlano);
