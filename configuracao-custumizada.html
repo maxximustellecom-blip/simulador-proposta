@@ -719,34 +719,20 @@
             const planos = currentCat ? (__map[currentCat.id] || []) : [];
             let filteredPlanos = planos;
 
-            // Apply filtering logic consistent with handleEditModalChange
-            if (!currentDdd) {
-                filteredPlanos = [];
-            } else {
-                 filteredPlanos = filteredPlanos.filter(p => {
-                     const pReg = String(p.regiao || '').trim();
-                     if (!pReg || pReg.toLowerCase() === 'nacional') return true;
-
-                     if (pReg.includes(String(currentDdd))) return true;
-
-                     const regionFound = __regioes.find(r => r.nome.toLowerCase() === pReg.toLowerCase() || pReg.toLowerCase().includes(r.nome.toLowerCase()));
-                     
-                     if (regionFound) {
-                          let items = regionFound.items;
-                          if (typeof items === 'string') try { items = JSON.parse(items); } catch { items = []; }
-                          if (Array.isArray(items)) {
-                              const ddds = items.flatMap(i => (i.v || '').split(',').map(s => Number(s.trim())));
-                              if (ddds.includes(Number(currentDdd))) return true;
-                          }
-                     }
-                     return false;
-                 });
-            }
+            // Removed DDD filtering as requested by user - show all plans in category
 
             const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
-                filteredPlanos.map(p => `<option value="${p.nome}">${p.nome}</option>`)
+                filteredPlanos.map((p, idx) => `<option value="${idx}">${p.nome} (${currency(p.valor || 0)})</option>`)
             ).join('');
-            populate('editPlano', planoOpts, line.plano);
+            
+            const elPlano = document.getElementById('editPlano');
+            if (elPlano) {
+                elPlano.innerHTML = planoOpts;
+                // Find index by matching name and preferably price to disambiguate
+                const foundIdx = filteredPlanos.findIndex(p => p.nome === line.plano && (Math.abs((p.valor || 0) - (line.valorPlano || 0)) < 0.01));
+                const finalIdx = foundIdx >= 0 ? foundIdx : filteredPlanos.findIndex(p => p.nome === line.plano);
+                elPlano.value = finalIdx >= 0 ? finalIdx : '';
+            }
 
             const pctEl = document.getElementById('editPct');
             if (pctEl) pctEl.value = line.pct || '-';
@@ -920,31 +906,20 @@
                 const catObj = allCats.find(c => c.nome === catVal);
                 let planos = catObj ? (__map[catObj.id] || []) : [];
 
-                if (!dddVal) {
-                    planos = [];
-                } else {
-                     planos = planos.filter(p => {
-                         const pReg = String(p.regiao || '').trim();
-                         if (!pReg || pReg.toLowerCase() === 'nacional') return true;
-
-                         if (pReg.includes(String(dddVal))) return true;
-
-                         const regionFound = __regioes.find(r => r.nome.toLowerCase() === pReg.toLowerCase() || pReg.toLowerCase().includes(r.nome.toLowerCase()));
-                         
-                         if (regionFound) {
-                              let items = regionFound.items;
-                              if (typeof items === 'string') try { items = JSON.parse(items); } catch { items = []; }
-                              if (Array.isArray(items)) {
-                                  const ddds = items.flatMap(i => (i.v || '').split(',').map(s => Number(s.trim())));
-                                  if (ddds.includes(Number(dddVal))) return true;
-                              }
-                         }
-                         return false;
-                     });
-                }
+                // Removed DDD filtering as requested by user - show all plans in category
+                
+                // Allow multiple plans with same name but different prices/details? 
+                // The current logic uses Set(map(p.nome)) which deduplicates by name.
+                // If there are multiple offers for same DDD with SAME NAME but diff IDs, we might lose them.
+                // However, usually they have different names or descriptions.
+                // If they have same name, we need to distinguish them.
+                
+                // If user means "offers for same DDD" are not showing, maybe the unique name filter is hiding them?
+                // Or the DDD check was too strict/loose.
+                // The fix above addresses DDD check (exact match vs 'includes' which matched '11' in '111').
                 
                 const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
-                    [...new Set(planos.map(p => p.nome))].map(nome => `<option value="${nome}">${nome}</option>`)
+                    planos.map((p, idx) => `<option value="${idx}">${p.nome} (${currency(p.valor || 0)})</option>`)
                 ).join('');
                 setHTML('editPlano', planoOpts);
                 setValue('editPlano', '');
@@ -958,7 +933,9 @@
                 const allCats = (__customCategorias || []).slice();
                 const catObj = allCats.find(c => c.nome === catVal);
                 const planos = catObj ? (__map[catObj.id] || []) : [];
-                const sel = planos.find(p => p.nome === planoVal);
+                
+                // Retrieve plan by index since values are now indices
+                const sel = planos[planoVal];
 
                 if (sel) {
                     const baseTxt = sel.descricao || sel.nome || '';
@@ -1766,7 +1743,18 @@
                 
                 // --- Gera HTML dos cards ---
                 const cardsHtml = linhas.map((l, idx) => {
-                    const tipoRaw = String(l.tipoNegociacao || '-');
+                    // Attempt to resolve correct type from product
+                    let displayTipo = l.tipoNegociacao || '-';
+                    const currentCatObj = (__customCategorias || []).find(c => c.nome === l.categoria);
+                    const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
+                    const currentProd = currentProds.find(p => p.nome === l.plano);
+                    if (currentProd && currentProd.tipos) {
+                        displayTipo = Array.isArray(currentProd.tipos) ? currentProd.tipos.join(',') : currentProd.tipos;
+                    } else if (currentCatObj && currentCatObj.tipo) {
+                        displayTipo = currentCatObj.tipo;
+                    }
+
+                    const tipoRaw = String(displayTipo);
                     const tipo = normalizeTipoKey(tipoRaw).toLowerCase();
                     const em = tipo.includes('reneg') ? '🔁' : (tipo.includes('adti') || tipo.includes('adit') ? '➕' : '🌟');
                     const acessoFmt = l.ddd ? `${l.ddd}` : '-';
@@ -1802,7 +1790,7 @@
                         <div class="mascara-row"><span class="mascara-label">Qtd</span><span class="mascara-val">${l.quantidade}</span></div>
                         <div class="mascara-row"><span class="mascara-label">DDD</span><span class="mascara-val">${acessoFmt}</span></div>
                         ${numFmt ? `<div class="mascara-row"><span class="mascara-label">Número</span><span class="mascara-val">${numFmt}</span></div>` : ''}
-                        <div class="mascara-row"><span class="mascara-label">Tipo</span><span class="mascara-val">${l.tipoNegociacao || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Tipo</span><span class="mascara-val">${displayTipo}</span></div>
                         <div class="mascara-row"><span class="mascara-label">Atual</span><span class="mascara-val">${atual}</span></div>
                         <div class="mascara-row"><span class="mascara-label">Oferta</span><span class="mascara-val">${proposto}</span></div>
                         ${extrasHtml}

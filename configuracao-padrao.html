@@ -1395,41 +1395,26 @@
             const catOpts = allCats.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
             populate('editCategoria', catOpts, line.categoria);
 
-            // Plano (Filtered by Categoria AND DDD)
+            // Plano (Filtered by Categoria ONLY)
             const currentCat = allCats.find(c => c.nome === line.categoria);
             let planos = currentCat ? (__map[currentCat.id] || []) : [];
             
-            const selDdd = line.ddd;
-
-            if (!selDdd) {
-                planos = [];
-            } else {
-                planos = planos.filter(p => {
-                    const pReg = String(p.regiao || '').trim();
-                    if (!pReg || pReg.toLowerCase() === 'nacional') return true;
-
-                    // 1. Direct DDD match
-                    if (selDdd && pReg.includes(String(selDdd))) return true;
-
-                    // 2. Region Name match -> Check content
-                    const regionFound = __regioes.find(r => r.nome.toLowerCase() === pReg.toLowerCase() || pReg.toLowerCase().includes(r.nome.toLowerCase()));
-                    
-                    if (regionFound) {
-                            let items = regionFound.items;
-                            if (typeof items === 'string') try { items = JSON.parse(items); } catch { items = []; }
-                            if (Array.isArray(items)) {
-                                const ddds = items.flatMap(i => (i.v || '').split(',').map(s => Number(s.trim())));
-                                if (ddds.includes(Number(selDdd))) return true;
-                            }
-                    }
-                    return false;
-                });
-            }
+            // Removed DDD filtering as requested by user - show all plans in category
+            const selDdd = line.ddd; // Kept for reference but not used for filtering anymore
 
             const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
-                planos.map(p => `<option value="${p.nome}">${p.nome}</option>`)
+                planos.map((p, idx) => `<option value="${idx}">${p.nome} (${currency(p.preco || p.valor || p.valorPlano || 0)})</option>`)
             ).join('');
-            populate('editPlano', planoOpts, line.plano);
+            // populate('editPlano', planoOpts, line.plano); 
+            const elPlano = document.getElementById('editPlano');
+            if (elPlano) {
+                elPlano.innerHTML = planoOpts;
+                // Find index by matching name and preferably price to disambiguate
+                const foundIdx = planos.findIndex(p => p.nome === line.plano && (Math.abs((p.preco || p.valor || p.valorPlano || 0) - (line.valorPlano || 0)) < 0.01));
+                // Fallback to just name if price mismatch or not found (though price should match if saved correctly)
+                const finalIdx = foundIdx >= 0 ? foundIdx : planos.findIndex(p => p.nome === line.plano);
+                elPlano.value = finalIdx >= 0 ? finalIdx : '';
+            }
 
             // Read-only fields
             const pctEl = document.getElementById('editPct');
@@ -1575,36 +1560,11 @@
                 const catObj = allCats.find(c => c.nome === catVal);
                 let planos = catObj ? (__map[catObj.id] || []) : [];
                 
-                // Filter by DDD
+                // Removed DDD filtering as requested by user - show all plans in category
                 const selDdd = getValue('editDddNovo');
-
-                if (!selDdd) {
-                    planos = [];
-                } else {
-                    planos = planos.filter(p => {
-                        const pReg = String(p.regiao || '').trim();
-                        if (!pReg || pReg.toLowerCase() === 'nacional') return true;
-
-                        // 1. Direct DDD match
-                        if (selDdd && pReg.includes(String(selDdd))) return true;
-
-                        // 2. Region Name match -> Check content
-                        const regionFound = __regioes.find(r => r.nome.toLowerCase() === pReg.toLowerCase() || pReg.toLowerCase().includes(r.nome.toLowerCase()));
-                        
-                        if (regionFound) {
-                            let items = regionFound.items;
-                            if (typeof items === 'string') try { items = JSON.parse(items); } catch { items = []; }
-                            if (Array.isArray(items)) {
-                                const ddds = items.flatMap(i => (i.v || '').split(',').map(s => Number(s.trim())));
-                                if (ddds.includes(Number(selDdd))) return true;
-                            }
-                        }
-                        return false;
-                    });
-                }
                 
                 const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
-                    [...new Set(planos.map(p => p.nome))].map(nome => `<option value="${nome}">${nome}</option>`)
+                    planos.map((p, idx) => `<option value="${idx}">${p.nome} (${currency(p.preco || p.valor || p.valorPlano || 0)})</option>`)
                 ).join('');
                 setHTML('editPlano', planoOpts);
                 setValue('editPlano', '');
@@ -1618,7 +1578,8 @@
                 const allCats = (__categorias || []).slice();
                 const catObj = allCats.find(c => c.nome === catVal);
                 const planos = catObj ? (__map[catObj.id] || []) : [];
-                const sel = planos.find(p => p.nome === planoVal);
+                // Retrieve plan by index since values are now indices
+                const sel = planos[planoVal];
 
                 if (sel) {
                     const baseTxt = sel.descricao || sel.nome || '';
@@ -2254,7 +2215,16 @@
                 '───────────────────────────────────'
             ].filter(l => l !== '').join('\n');
             const linhasTxt = __linhas.map((l, idx) => {
-                const tipoRaw = String(l.tipoNegociacao || 'Novo');
+                // Attempt to resolve correct type from product
+                let displayTipo = l.tipoNegociacao || '-';
+                const currentCatObj = (__categorias || []).find(c => c.nome === l.categoria);
+                const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
+                const currentProd = currentProds.find(p => p.nome === l.plano);
+                if (currentProd && currentProd.tipos) {
+                    displayTipo = Array.isArray(currentProd.tipos) ? currentProd.tipos.join(',') : currentProd.tipos;
+                }
+                const tipoRaw = String(displayTipo);
+
                 const tipo = normalizeTipo(tipoRaw).toLowerCase();
                 const em = tipo.includes('reneg') ? '🔁' : (tipo.includes('adti') || tipo.includes('adit') ? '➕' : '🌟');
                 const dddTxt = l.ddd ? `DDD ${l.ddd}` : '-';
@@ -2284,7 +2254,7 @@
                 return `${em} Linha ${idx + 1}
     Qtd: ${l.quantidade}
     DDD: ${dddTxt?.replace("DDD", "")}${numTxt}
-    Tipo: ${l.tipoNegociacao || '-'}
+    Tipo: ${displayTipo}
     Oferta: ${proposto}${extras}
     Unitário: ${unitario}
     Total: ${totalLinhaVal}`;
@@ -2558,7 +2528,17 @@
                 for (let i = 0; i < rowsToDraw; i++) {
                     const l = __linhas[i];
                     const qtd = String(l.quantidade || 1);
-                    const tipo = String(l.tipoNegociacao || '-');
+                    
+                    // Attempt to resolve correct type from product
+                    let displayTipo = l.tipoNegociacao || '-';
+                    const currentCatObj = (__categorias || []).find(c => c.nome === l.categoria);
+                    const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
+                    const currentProd = currentProds.find(p => p.nome === l.plano);
+                    if (currentProd && currentProd.tipos) {
+                        displayTipo = Array.isArray(currentProd.tipos) ? currentProd.tipos.join(',') : currentProd.tipos;
+                    }
+                    const tipo = String(displayTipo);
+
                     const plano = String(l.categoria || '-');
                     const oferta = String(l.plano || '-');
                     const linhaVal = totalLinha(l);
@@ -2670,16 +2650,28 @@
                 for (let i = 0; i < rowsToDraw; i++) {
                     const l = __linhas[i];
                     const qtd = String(l.quantidade || 1);
-                    const tipo = String(l.tipoNegociacao || '-');
+                    
+                    // Attempt to resolve correct type from product
+                    let displayTipo = l.tipoNegociacao || '-';
+                    const currentCatObj = (__categorias || []).find(c => c.nome === l.categoria);
+                    const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
+                    const currentProd = currentProds.find(p => p.nome === l.plano);
+                    if (currentProd && currentProd.tipos) {
+                        displayTipo = Array.isArray(currentProd.tipos) ? currentProd.tipos.join(',') : currentProd.tipos;
+                    }
+                    const tipo = String(displayTipo);
+
                     const plano = String(l.categoria || '-');
                     const oferta = String(l.plano || '-');
                     const linhaVal = totalLinha(l);
                     const valorLinha = currency(linhaVal);
+                    
                     const aparelhoTipo = l.temAparelho === 'Sim' ? (l.modeloAparelho || '-') : '-';
                     let valorParcelaCalc = l.valorParcela;
                     const valAp = Number(l.valorAparelho || 0);
                     if (l.temAparelho === 'Sim' && l.tipoAparelho === 'VF 24x' && valAp > 0) { valorParcelaCalc = valAp / 24; }
                     const valorAparelho = currency(valorParcelaCalc || 0);
+                    
                     lastPage.drawText(qtd, { x: colQtdX, y: yLinha, size: fontSizeLinha, font, color: rgb(0,0,0) });
                     lastPage.drawText(tipo, { x: colTipoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0,0,0) });
                     lastPage.drawText(plano, { x: colPlanoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0,0,0) });
@@ -2984,11 +2976,20 @@
                          }
                     }
 
+                    // Attempt to resolve correct type from product if possible, or use saved type
+                    let displayTipo = l.tipoNegociacao || '-';
+                    const currentCatObj = (__categorias || []).find(c => c.nome === l.categoria);
+                    const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
+                    const currentProd = currentProds.find(p => p.nome === l.plano);
+                    if (currentProd && currentProd.tipos) {
+                        displayTipo = Array.isArray(currentProd.tipos) ? currentProd.tipos.join(',') : currentProd.tipos;
+                    }
+
                     return `
                     <div class="mascara-card">
                         <div class="mascara-card-title">${em} Linha ${idx + 1}</div>
                         <div class="mascara-row"><span class="mascara-label">Qtd</span><span class="mascara-val">${l.quantidade}</span></div>
-                        <div class="mascara-row"><span class="mascara-label">Tipo</span><span class="mascara-val">${l.tipoNegociacao || '-'}</span></div>
+                        <div class="mascara-row"><span class="mascara-label">Tipo</span><span class="mascara-val">${displayTipo}</span></div>
                         <div class="mascara-row"><span class="mascara-label">Plano</span><span class="mascara-val">${l.categoria || '-'}</span></div>
                         <div class="mascara-row"><span class="mascara-label">Oferta</span><span class="mascara-val">${l.plano || '-'}</span></div>
                         <div class="mascara-row"><span class="mascara-label">Unitário</span><span class="mascara-val">${unitario}</span></div>
