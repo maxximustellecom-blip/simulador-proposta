@@ -832,7 +832,7 @@
                 return `
                     <tr>
                         <td style="padding: 0.5rem; border-bottom: 1px solid var(--border);">${v.linha || ''}</td>
-                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border);">${v.tipoVenda || ''}</td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border); display: none;">${v.tipoVenda || ''}</td>
                         <td style="padding: 0.5rem; border-bottom: 1px solid var(--border); text-align:center;">${qtd}</td>
                         <td style="padding: 0.5rem; border-bottom: 1px solid var(--border);">${v.plano || ''}</td>
                         <td style="padding: 0.5rem; border-bottom: 1px solid var(--border);">${v.oferta || ''}</td>
@@ -1290,7 +1290,7 @@
                             <thead style="background: var(--blue-600); color: white;">
                                 <tr>
                                     <th style="padding: 0.5rem; text-align: left;">Linha</th>
-                                    <th style="padding: 0.5rem; text-align: left;">Tipo</th>
+                                    <th style="padding: 0.5rem; text-align: left; display: none;">Tipo</th>
                                     <th style="padding: 0.5rem; text-align: center;">Qtd</th>
                                     <th style="padding: 0.5rem; text-align: left;">Plano</th>
                                     <th style="padding: 0.5rem; text-align: left;">Oferta</th>
