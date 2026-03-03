@@ -619,7 +619,39 @@
                 if (fVendedor) fVendedor.value = '';
                 buscar();
             });
-            document.getElementById('mSalvar').addEventListener('click', salvarNegociacao);
+            document.getElementById('mSalvar').addEventListener('click', async () => {
+                const cliente = document.getElementById('mCliente').value;
+                const tipo = document.getElementById('mTipo').value;
+                const proposta = document.getElementById('mProposta').value;
+                const status = document.getElementById('mStatus').value;
+                const criadoPor = document.getElementById('mCriadoPor').value;
+                
+                if (!cliente) { toast('Selecione um cliente', 'error'); return; }
+                
+                const c = findClientByCnpj(cliente);
+                const body = {
+                    razaoSocial: c ? c.name : 'Cliente',
+                    cnpj: cliente,
+                    tipo: tipo || '1º VENDA', // Fallback
+                    proposta: proposta,
+                    status: status,
+                    creator_id: criadoPor || undefined // If admin wants to set creator
+                };
+                
+                try {
+                    if (__editingNegId) {
+                        await api('/negotiations/' + __editingNegId, { method: 'PUT', body: JSON.stringify(body) });
+                        toast('Proposta atualizada com sucesso', 'success');
+                    } else {
+                        await api('/negotiations', { method: 'POST', body: JSON.stringify(body) });
+                        toast('Proposta criada com sucesso', 'success');
+                    }
+                    closeModal();
+                    buscar();
+                } catch (e) {
+                    toast('Erro ao salvar: ' + e.message, 'error');
+                }
+            });
             document.getElementById('mFechar').addEventListener('click', closeModal);
             document.getElementById('fCnpj').addEventListener('input', (e) => { e.target.value = formatCnpj(e.target.value); });
             {
