@@ -2594,16 +2594,19 @@
                     
                     // Attempt to resolve correct type from product
                     let displayTipo = l.tipoNegociacao || '-';
+                    // Use description instead of name if available, otherwise use name
                     const currentCatObj = (__categorias || []).find(c => c.nome === l.categoria);
                     const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
                     const currentProd = currentProds.find(p => p.nome === l.plano);
+                    
                     if (currentProd && currentProd.tipos) {
                         displayTipo = Array.isArray(currentProd.tipos) ? currentProd.tipos.join(',') : currentProd.tipos;
                     }
                     const tipo = String(displayTipo);
 
                     const plano = String(l.categoria || '-');
-                    const oferta = String(l.plano || '-');
+                    const oferta = currentProd ? (currentProd.descricao || currentProd.nome || '-') : String(l.plano || '-');
+
                     const linhaVal = totalLinha(l);
                     const valorLinha = currency(linhaVal);
                     
@@ -2716,16 +2719,19 @@
                     
                     // Attempt to resolve correct type from product
                     let displayTipo = l.tipoNegociacao || '-';
+                    // Use description instead of name if available, otherwise use name
                     const currentCatObj = (__categorias || []).find(c => c.nome === l.categoria);
                     const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
                     const currentProd = currentProds.find(p => p.nome === l.plano);
+                    
                     if (currentProd && currentProd.tipos) {
                         displayTipo = Array.isArray(currentProd.tipos) ? currentProd.tipos.join(',') : currentProd.tipos;
                     }
                     const tipo = String(displayTipo);
 
                     const plano = String(l.categoria || '-');
-                    const oferta = String(l.plano || '-');
+                    const oferta = currentProd ? (currentProd.descricao || currentProd.nome || '-') : String(l.plano || '-');
+
                     const linhaVal = totalLinha(l);
                     const valorLinha = currency(linhaVal);
                     
@@ -2848,7 +2854,13 @@
                     const qtd = String(l.quantidade || 1);
                     const tipo = String(l.tipoNegociacao || '-');
                     const plano = String(l.categoria || '-');
-                    const oferta = String(l.plano || '-');
+                    
+                    // Use description instead of name if available, otherwise use name
+                    const currentCatObj = (__categorias || []).find(c => c.nome === l.categoria);
+                    const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
+                    const currentProd = currentProds.find(p => p.nome === l.plano);
+                    const oferta = currentProd ? (currentProd.descricao || currentProd.nome || '-') : String(l.plano || '-');
+
                     const linhaVal = totalLinha(l);
                     const valorLinha = currency(linhaVal);
                     const aparelhoTipo = l.temAparelho === 'Sim' ? (l.modeloAparelho || '-') : '-';

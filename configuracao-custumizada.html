@@ -2163,7 +2163,13 @@
                     const qtd = String(l.quantidade || 1);
                     const tipo = String(l.tipoNegociacao || '-');
                     const plano = String(l.categoria || '-');
-                    const oferta = String(l.plano || '-');
+                    
+                    // Use description instead of name if available, otherwise use name
+                    const currentCatObj = (__customCategorias || []).find(c => c.nome === l.categoria);
+                    const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
+                    const currentProd = currentProds.find(p => (p.nome || p.name) === l.plano);
+                    const oferta = currentProd ? (currentProd.descricao || currentProd.description || currentProd.nome || currentProd.name || '-') : String(l.plano || '-');
+
                     const precoFinalUnit = calcularPrecoFinal(l);
                     const linhaVal = (Number(qtd)||0) * precoFinalUnit;
                     const totalLinhaValor = currency(linhaVal);
@@ -2275,7 +2281,13 @@
                     const qtd = String(l.quantidade || 1);
                     const tipo = String(l.tipoNegociacao || '-');
                     const plano = String(l.categoria || '-');
-                    const oferta = String(l.plano || '-');
+                    
+                    // Use description instead of name if available, otherwise use name
+                    const currentCatObj = (__customCategorias || []).find(c => c.nome === l.categoria);
+                    const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
+                    const currentProd = currentProds.find(p => (p.nome || p.name) === l.plano);
+                    const oferta = currentProd ? (currentProd.descricao || currentProd.description || currentProd.nome || currentProd.name || '-') : String(l.plano || '-');
+
                     const precoFinalUnit = calcularPrecoFinal(l);
                     const linhaVal = (Number(qtd)||0) * precoFinalUnit;
                     const totalLinhaValor = currency(linhaVal);
@@ -2396,7 +2408,13 @@
                     const qtd = String(l.quantidade || 1);
                     const tipo = String(l.tipoNegociacao || '-');
                     const plano = String(l.categoria || '-');
-                    const oferta = String(l.plano || '-');
+                    
+                    // Use description instead of name if available, otherwise use name
+                    const currentCatObj = (__customCategorias || []).find(c => c.nome === l.categoria);
+                    const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
+                    const currentProd = currentProds.find(p => (p.nome || p.name) === l.plano);
+                    const oferta = currentProd ? (currentProd.descricao || currentProd.description || currentProd.nome || currentProd.name || '-') : String(l.plano || '-');
+
                     const precoFinalUnit = calcularPrecoFinal(l);
                     const linhaVal = (Number(qtd)||0) * precoFinalUnit;
                     const totalLinhaValor = currency(linhaVal);
