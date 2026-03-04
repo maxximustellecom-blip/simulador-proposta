@@ -381,6 +381,15 @@
                     "RG + CPF do Presidente",
                     "Comprovante de endereço"
                 ]
+            },
+            {
+                type: "Igrejas / Organizações Religiosas",
+                docs: [
+                    "Estatuto Social",
+                    "Ata de Eleição da Diretoria",
+                    "RG + CPF do Presidente/Pastor",
+                    "Comprovante de endereço"
+                ]
             }
         ];
 
@@ -639,6 +648,29 @@
         }
         let __currentEditId = null;
 
+        function filterPlansByDdd(plans, ddd) {
+            if (!ddd) return [];
+            const d = Number(ddd);
+            return plans.filter(p => {
+                const pReg = String(p.regiao || '').trim();
+                if (!pReg || pReg.toLowerCase() === 'nacional' || pReg.toLowerCase() === 'todas') return true;
+                if (pReg.includes(String(d))) return true;
+                const regionFound = (__regioes || []).find(r => r.nome.toLowerCase() === pReg.toLowerCase() || pReg.toLowerCase().includes(r.nome.toLowerCase()));
+                if (regionFound) {
+                    let items = regionFound.items;
+                    if (typeof items === 'string') try { items = JSON.parse(items); } catch { items = []; }
+                    if (Array.isArray(items)) {
+                        const ddds = items.flatMap(i => {
+                             if (i && typeof i === 'object' && i.v) return (i.v || '').split(',').map(s => Number(s.trim()));
+                             return [Number(i)];
+                        });
+                        if (ddds.includes(d)) return true;
+                    }
+                }
+                return false;
+            });
+        }
+
         function openEditModal(id) {
             const index = linhas.findIndex(l => Number(l.id) === Number(id));
             const line = linhas[index];
@@ -719,7 +751,8 @@
             const planos = currentCat ? (__map[currentCat.id] || []) : [];
             let filteredPlanos = planos;
 
-            // Removed DDD filtering as requested by user - show all plans in category
+            const selDdd = line.ddd;
+            filteredPlanos = filterPlansByDdd(filteredPlanos, selDdd);
 
             const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
                 filteredPlanos.map((p, idx) => `<option value="${idx}">${p.nome} (${currency(p.valor || 0)})</option>`)
@@ -906,20 +939,10 @@
                 const catObj = allCats.find(c => c.nome === catVal);
                 let planos = catObj ? (__map[catObj.id] || []) : [];
 
-                // Removed DDD filtering as requested by user - show all plans in category
-                
-                // Allow multiple plans with same name but different prices/details? 
-                // The current logic uses Set(map(p.nome)) which deduplicates by name.
-                // If there are multiple offers for same DDD with SAME NAME but diff IDs, we might lose them.
-                // However, usually they have different names or descriptions.
-                // If they have same name, we need to distinguish them.
-                
-                // If user means "offers for same DDD" are not showing, maybe the unique name filter is hiding them?
-                // Or the DDD check was too strict/loose.
-                // The fix above addresses DDD check (exact match vs 'includes' which matched '11' in '111').
+                const filteredPlanos = filterPlansByDdd(planos, dddVal);
                 
                 const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
-                    planos.map((p, idx) => `<option value="${idx}">${p.nome} (${currency(p.valor || 0)})</option>`)
+                    filteredPlanos.map((p, idx) => `<option value="${idx}">${p.nome} (${currency(p.valor || 0)})</option>`)
                 ).join('');
                 setHTML('editPlano', planoOpts);
                 setValue('editPlano', '');
@@ -932,8 +955,11 @@
                 // Removed type filtering
                 const allCats = (__customCategorias || []).slice();
                 const catObj = allCats.find(c => c.nome === catVal);
-                const planos = catObj ? (__map[catObj.id] || []) : [];
+                let planos = catObj ? (__map[catObj.id] || []) : [];
                 
+                const dddVal = getValue('editDddNovo');
+                planos = filterPlansByDdd(planos, dddVal);
+
                 // Retrieve plan by index since values are now indices
                 const sel = planos[planoVal];
 
@@ -1195,6 +1221,14 @@
             const catVal = getValue('editCategoria');
             const planoVal = getValue('editPlano');
 
+            // Resolve Plan Object
+            const allCats = (__customCategorias || []).slice();
+            const catObj = allCats.find(c => c.nome === catVal);
+            let planos = catObj ? (__map[catObj.id] || []) : [];
+            const dddNovo = getValue('editDddNovo');
+            planos = filterPlansByDdd(planos, dddNovo);
+            const selPlano = planos[planoVal];
+
             // Validation Logic
             const erros = [];
             const isReneg = normalizeTipoKey(tipoVal).toLowerCase().includes('reneg');
@@ -1295,7 +1329,7 @@
                     portarQtd: portarQtd,
                     portarItens: portarItens,
                     categoria: catVal,
-                    plano: planoVal,
+                    plano: selPlano ? (selPlano.nome || selPlano.name) : '',
                     pct: pct === '-' ? '' : pct,
                     valorPlano: valorPlano,
                     valorNaoFidelizado: valorNaoFid,
@@ -2403,8 +2437,20 @@
                     sel.appendChild(opt);
                 });
                 
-                sel.addEventListener('change', (e) => {
+                sel.addEventListener('change', async (e) => {
                     __currentEntityType = e.target.value;
+                    if (__clienteInfo && __clienteInfo.id) {
+                        try {
+                             await api('/clients/' + __clienteInfo.id, { 
+                                 method: 'PUT', 
+                                 body: JSON.stringify({ tipo_empresa: __currentEntityType }) 
+                             });
+                             __clienteInfo.tipo_empresa = __currentEntityType;
+                             toast('Tipo de empresa salvo', 'success');
+                        } catch(e) {
+                             console.error(e);
+                        }
+                    }
                     loadAttachments();
                 });
             }
@@ -2423,7 +2469,7 @@
             if (foundType) {
                 __currentEntityType = foundType;
                 if (sel) sel.value = foundType;
-                if (container) container.style.display = 'none';
+                if (container) container.style.display = 'block';
             } else {
                 // Not found: show select
                 if (container) container.style.display = 'block';

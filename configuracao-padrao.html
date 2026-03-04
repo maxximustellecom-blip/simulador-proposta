@@ -477,6 +477,15 @@
                     "RG + CPF do Presidente",
                     "Comprovante de endereço"
                 ]
+            },
+            {
+                type: "Igrejas / Organizações Religiosas",
+                docs: [
+                    "Estatuto Social",
+                    "Ata de Eleição da Diretoria",
+                    "RG + CPF do Presidente/Pastor",
+                    "Comprovante de endereço"
+                ]
             }
         ];
 
@@ -540,18 +549,38 @@
             
             // Populate select if empty
             if (sel && sel.options.length <= 1) {
-                ATTACHMENT_CONFIG.forEach(cfg => {
-                    const opt = document.createElement('option');
-                    opt.value = cfg.type;
-                    opt.textContent = cfg.type;
-                    sel.appendChild(opt);
-                });
-                
-                sel.addEventListener('change', () => {
-                    __currentEntityType = sel.value;
-                    loadAttachments();
-                });
+                // If the user already added options manually in HTML, we should check before appending duplicates
+                const hasOptions = sel.options.length > 1;
+                if (!hasOptions) {
+                    ATTACHMENT_CONFIG.forEach(cfg => {
+                        const opt = document.createElement('option');
+                        opt.value = cfg.type;
+                        opt.textContent = cfg.type;
+                        sel.appendChild(opt);
+                    });
+                }
             }
+
+            // Always attach the listener
+            sel.replaceWith(sel.cloneNode(true));
+            const newSel = document.getElementById('entityTypeSelect');
+
+            newSel.addEventListener('change', async () => {
+                __currentEntityType = newSel.value;
+                if (__clienteInfo && __clienteInfo.id) {
+                    try {
+                            await api('/clients/' + __clienteInfo.id, { 
+                                method: 'PUT', 
+                                body: JSON.stringify({ tipo_empresa: newSel.value }) 
+                            });
+                            __clienteInfo.tipo_empresa = newSel.value;
+                            toast('Tipo de empresa salvo', 'success');
+                    } catch(e) {
+                            console.error(e);
+                    }
+                }
+                loadAttachments();
+            });
 
             let foundType = null;
             if (__clienteInfo && __clienteInfo.tipo_empresa) {
@@ -565,8 +594,8 @@
 
             if (foundType) {
                 __currentEntityType = foundType;
-                if (sel) sel.value = foundType;
-                if (container) container.style.display = 'none';
+                if (newSel) newSel.value = foundType;
+                if (container) container.style.display = 'block';
             } else {
                 // Not found: show select
                 if (container) container.style.display = 'block';
@@ -1313,6 +1342,29 @@
         }
         let __currentEditId = null;
 
+        function filterPlansByDdd(plans, ddd) {
+            if (!ddd) return [];
+            const d = Number(ddd);
+            return plans.filter(p => {
+                const pReg = String(p.regiao || '').trim();
+                if (!pReg || pReg.toLowerCase() === 'nacional' || pReg.toLowerCase() === 'todas') return true;
+                if (pReg.includes(String(d))) return true;
+                const regionFound = (__regioes || []).find(r => r.nome.toLowerCase() === pReg.toLowerCase() || pReg.toLowerCase().includes(r.nome.toLowerCase()));
+                if (regionFound) {
+                    let items = regionFound.items;
+                    if (typeof items === 'string') try { items = JSON.parse(items); } catch { items = []; }
+                    if (Array.isArray(items)) {
+                        const ddds = items.flatMap(i => {
+                             if (i && typeof i === 'object' && i.v) return (i.v || '').split(',').map(s => Number(s.trim()));
+                             return [Number(i)];
+                        });
+                        if (ddds.includes(d)) return true;
+                    }
+                }
+                return false;
+            });
+        }
+
         function openEditModal(id) {
             const index = __linhas.findIndex(l => Number(l.id) === Number(id));
             const line = __linhas[index];
@@ -1395,12 +1447,12 @@
             const catOpts = allCats.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
             populate('editCategoria', catOpts, line.categoria);
 
-            // Plano (Filtered by Categoria ONLY)
+            // Plano (Filtered by Categoria AND DDD)
             const currentCat = allCats.find(c => c.nome === line.categoria);
             let planos = currentCat ? (__map[currentCat.id] || []) : [];
             
-            // Removed DDD filtering as requested by user - show all plans in category
-            const selDdd = line.ddd; // Kept for reference but not used for filtering anymore
+            const selDdd = line.ddd;
+            planos = filterPlansByDdd(planos, selDdd);
 
             const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
                 planos.map((p, idx) => `<option value="${idx}">${p.nome} (${currency(p.preco || p.valor || p.valorPlano || 0)})</option>`)
@@ -1560,8 +1612,8 @@
                 const catObj = allCats.find(c => c.nome === catVal);
                 let planos = catObj ? (__map[catObj.id] || []) : [];
                 
-                // Removed DDD filtering as requested by user - show all plans in category
                 const selDdd = getValue('editDddNovo');
+                planos = filterPlansByDdd(planos, selDdd);
                 
                 const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
                     planos.map((p, idx) => `<option value="${idx}">${p.nome} (${currency(p.preco || p.valor || p.valorPlano || 0)})</option>`)
@@ -1577,7 +1629,11 @@
                 // Removed type filtering
                 const allCats = (__categorias || []).slice();
                 const catObj = allCats.find(c => c.nome === catVal);
-                const planos = catObj ? (__map[catObj.id] || []) : [];
+                let planos = catObj ? (__map[catObj.id] || []) : [];
+                
+                const selDdd = getValue('editDddNovo');
+                planos = filterPlansByDdd(planos, selDdd);
+
                 // Retrieve plan by index since values are now indices
                 const sel = planos[planoVal];
 
@@ -1880,10 +1936,17 @@
                 return false;
             }
 
-            const catsByTipo = getFilteredCategorias(tipoVal);
-            const catObj = catsByTipo.find(c => c.nome === catVal);
-            const planos = catObj ? (__map[catObj.id] || []) : [];
-            const selPlano = planos.find(p => p.nome === planoVal);
+            // We need to find the category object. 
+            // NOTE: We should search in the full list of categories, not just the filtered ones by type.
+            // Because if the user changed the plan, the type might have changed, but the category is still valid in the general context.
+            const allCats = (__categorias || []).slice();
+            const catObj = allCats.find(c => c.nome === catVal);
+            let planos = catObj ? (__map[catObj.id] || []) : [];
+            
+            const dddNovo = getValue('editDddNovo');
+            planos = filterPlansByDdd(planos, dddNovo);
+
+            const selPlano = planos[planoVal];
             
             const valorPlano = selPlano ? Number(selPlano.preco || 0) : 0;
             const pct = document.getElementById('editPct').textContent;
@@ -1933,7 +1996,7 @@
                     portarQtd: portarQtd,
                     portarItens: portarItens,
                     categoria: catVal,
-                    plano: planoVal,
+                    plano: selPlano ? selPlano.nome : '',
                     pct: pct === '-' ? '' : pct,
                     valorPlano: valorPlano,
                     temAparelho: getValue('editTemAparelho'),

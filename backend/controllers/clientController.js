@@ -128,6 +128,36 @@ export async function upsertClient(req, res) {
   }
 }
 
+export async function updateClient(req, res) {
+  try {
+    const id = Number(req.params.id);
+    const actor = req.user;
+    if (!id) return res.status(400).json({ error: 'id required' });
+
+    const client = await Client.findByPk(id);
+    if (!client) return res.status(404).json({ error: 'not found' });
+
+    const isAdmin = actor && actor.role === 'admin';
+    const isOwner = actor && actor.id && Number(client.created_by || 0) === Number(actor.id);
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ error: 'forbidden' });
+    }
+
+    const fields = req.body || {};
+    Object.keys(fields).forEach(key => {
+        // Prevent changing immutable fields or sensitive ones if necessary
+        if (key !== 'id' && key !== 'created_by' && key !== 'createdAt' && key !== 'updatedAt') {
+             client[key] = fields[key];
+        }
+    });
+    
+    await client.save();
+    return res.json(client);
+  } catch (err) {
+    return res.status(500).json({ error: 'erro ao atualizar cliente', details: String(err && err.message ? err.message : err) });
+  }
+}
+
 export async function getClients(req, res) {
   try {
     const { cnpj, user_id } = req.query || {};

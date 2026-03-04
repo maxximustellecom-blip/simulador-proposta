@@ -263,7 +263,16 @@
                 const nomeVal = p && (p.nome || p.name) ? (p.nome || p.name) : '-';
                 const tipoVal = (p && p.category && p.category.tipo) ? p.category.tipo : '-';
                 const precoVal = Number(p.preco || 0);
-                const regiaoLabel = __regioesMap[p.regiao] || p.regiao || '-';
+
+                // Logic to display Region Name correctly
+                let regiaoLabel = __regioesMap[p.regiao];
+                if (!regiaoLabel) {
+                     const pRegClean = String(p.regiao || '').replace(/\s/g, '');
+                     const foundKey = Object.keys(__regioesMap).find(k => k.replace(/\s/g, '') === pRegClean);
+                     if (foundKey) regiaoLabel = __regioesMap[foundKey];
+                     else regiaoLabel = p.regiao || '-';
+                }
+
                 return `
                 <tr>
                     <td><span class="ellipsis">${catName}</span></td>
@@ -567,7 +576,8 @@
                     html += `<option value="${values}">${r.nome}</option>`;
                     
                     // Populate map for table display
-                    if (values) {
+                    // PREFER the FIRST occurrence of a value to match the select default behavior
+                    if (values && !__regioesMap[values]) {
                         __regioesMap[values] = r.nome;
                     }
                 });
