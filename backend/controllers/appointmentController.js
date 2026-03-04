@@ -45,6 +45,28 @@ export const create = async (req, res) => {
   }
 };
 
+export const update = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user ? req.user.id : null;
+    const { title, description, date, time } = req.body;
+
+    const [updated] = await Appointment.update(
+      { title, description, date, time },
+      { where: { id, user_id: userId } }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Not found or unauthorized' });
+    }
+
+    const item = await Appointment.findByPk(id);
+    res.json(item);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const remove = async (req, res) => {
   try {
     const { id } = req.params;

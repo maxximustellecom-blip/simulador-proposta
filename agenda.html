@@ -365,7 +365,7 @@
     <div id="addModal" class="modal-overlay">
         <div class="agenda-modal">
             <div class="modal-head">
-                <div class="modal-title">Novo Compromisso</div>
+                <div class="modal-title" id="modalTitle">Novo Compromisso</div>
                 <button class="btn btn-ghost btn-icon" onclick="closeModal('addModal')"><i data-lucide="x"></i></button>
             </div>
             <div class="modal-body">
@@ -557,9 +557,14 @@
                             <div class="appt-title">${appt.title}</div>
                             ${appt.description ? `<div class="appt-desc">${appt.description}</div>` : ''}
                         </div>
-                        <button class="delete-btn" onclick="deleteAppointment(${appt.id})" title="Excluir Compromisso">
-                            <i data-lucide="trash-2" style="width:18px;height:18px"></i>
-                        </button>
+                        <div style="display:flex;gap:4px">
+                            <button class="delete-btn" onclick="openEditModal(${appt.id}, '${appt.title}', '${appt.date}', '${appt.time}', '${(appt.description || '').replace(/'/g, "\\'")}')" title="Editar Compromisso" style="color:var(--primary); background:rgba(37,99,235,0.1)">
+                                <i data-lucide="edit-2" style="width:18px;height:18px"></i>
+                            </button>
+                            <button class="delete-btn" onclick="deleteAppointment(${appt.id})" title="Excluir Compromisso">
+                                <i data-lucide="trash-2" style="width:18px;height:18px"></i>
+                            </button>
+                        </div>
                     `;
                     listEl.appendChild(item);
                 });
@@ -569,8 +574,13 @@
             document.getElementById('listModal').classList.add('open');
         }
 
+        let editingApptId = null;
+
         function openAddModal() {
+            editingApptId = null;
             document.getElementById('addForm').reset();
+            document.getElementById('modalTitle').textContent = 'Novo Compromisso';
+            
             // Default to today or selected date
             const d = selectedDate || new Date();
             document.getElementById('fDate').value = d.toISOString().split('T')[0];
@@ -581,6 +591,21 @@
             now.setHours(now.getHours() + 1);
             const timeStr = now.toTimeString().slice(0,5);
             document.getElementById('fTime').value = timeStr;
+
+            document.getElementById('addModal').classList.add('open');
+            setTimeout(() => document.getElementById('fTitle').focus(), 100);
+        }
+
+        function openEditModal(id, title, date, time, description) {
+            closeModal('listModal');
+            editingApptId = id;
+            document.getElementById('addForm').reset();
+            document.getElementById('modalTitle').textContent = 'Editar Compromisso';
+            
+            document.getElementById('fTitle').value = title;
+            document.getElementById('fDate').value = date;
+            document.getElementById('fTime').value = time;
+            document.getElementById('fDesc').value = description || '';
 
             document.getElementById('addModal').classList.add('open');
             setTimeout(() => document.getElementById('fTitle').focus(), 100);
@@ -619,10 +644,17 @@
                 btn.innerHTML = 'Salvando...';
                 btn.disabled = true;
 
-                await api('/appointments', {
-                    method: 'POST',
-                    body: JSON.stringify({ title, date, time, description })
-                });
+                if (editingApptId) {
+                    await api(`/appointments/${editingApptId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ title, date, time, description })
+                    });
+                } else {
+                    await api('/appointments', {
+                        method: 'POST',
+                        body: JSON.stringify({ title, date, time, description })
+                    });
+                }
                 
                 closeModal('addModal');
                 loadAppointments();
