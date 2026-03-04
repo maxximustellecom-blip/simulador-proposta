@@ -2341,7 +2341,8 @@
                 const fontLinha = 12 * scale * (7/10);
                 const contentTopPt = 260;
                 let y = contentTopPt * scale;
-                ctx.fillStyle = '#111111';
+                // Set text color to white for the header section
+                ctx.fillStyle = '#FFFFFF';
                 ctx.font = `${fontTitulo}px Arial`;
                 ctx.fillText('Proposta Comercial Customizada', marginLeftPt * scale, y);
                 y += 22 * scale;
@@ -2355,6 +2356,9 @@
                     y += 16 * scale;
                 });
                 y += 8 * scale;
+                
+                // Reset fill style for table content
+                ctx.fillStyle = '#000000';
                 const tableX = marginLeftPt * scale;
                 const colQtdX = tableX + 5 * scale;
                 const colTipoX = tableX + 30 * scale;
