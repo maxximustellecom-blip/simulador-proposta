@@ -28,6 +28,7 @@
                                 <tr>
                                     <th>Nome</th>
                                     <th>Email</th>
+                                    <th>Celular</th>
                                     <th>Matrícula</th>
                                     <th>Tipo</th>
                                     <th>Perfil de Acesso</th>
@@ -64,11 +65,15 @@
                         <input id="uMatricula" class="input" type="text" placeholder="Ex: 12345" autocomplete="off">
                     </div>
                     <div>
-                        <div class="label">Senha</div>
-                        <input id="uPassword" class="input" type="password" placeholder="••••••••">
+                        <div class="label">Celular</div>
+                        <input id="uCelular" class="input" type="text" placeholder="(99) 99999-9999" autocomplete="off" maxlength="15">
                     </div>
                 </div>
                 <div class="grid-2" style="margin-top:0.75rem;">
+                    <div>
+                        <div class="label">Senha</div>
+                        <input id="uPassword" class="input" type="password" placeholder="••••••••">
+                    </div>
                     <div>
                         <div class="label">Tipo</div>
                         <select id="uRole" class="select">
@@ -76,6 +81,8 @@
                             <option value="admin">Admin</option>
                         </select>
                     </div>
+                </div>
+                <div class="grid-2" style="margin-top:0.75rem;">
                     <div>
                         <div class="label">Perfil de Acesso</div>
                         <select id="uProfileId" class="select">
@@ -108,6 +115,10 @@
                 <div class="section" style="padding:0.8rem; margin-top:0.6rem;">
                     <div class="label">Matrícula</div>
                     <input id="editMatricula" class="input" type="text" placeholder="Matrícula">
+                </div>
+                <div class="section" style="padding:0.8rem; margin-top:0.6rem;">
+                    <div class="label">Celular</div>
+                    <input id="editCelular" class="input" type="text" placeholder="(99) 99999-9999" maxlength="15">
                 </div>
                 <div class="section" style="padding:0.8rem; margin-top:0.6rem;">
                     <div class="label">Tipo</div>
@@ -194,6 +205,12 @@
             document.getElementById('cadastroUserModal').classList.remove('show');
             limparFormulario();
         }
+        function formatPhone(v) {
+            v = String(v || '').replace(/\D/g,'');
+            if (!v) return '-';
+            if (v.length > 10) return v.replace(/^(\d\d)(\d{5})(\d{4}).*/, '($1) $2-$3');
+            return v.replace(/^(\d\d)(\d{4})(\d{4}).*/, '($1) $2-$3');
+        }
         function renderUsersTable(users) {
             const tbody = document.getElementById('usersTbody');
             __usersCache = Array.isArray(users) ? users.slice() : [];
@@ -201,6 +218,7 @@
                 <tr>
                     <td>${u.name}</td>
                     <td>${u.email}</td>
+                    <td>${formatPhone(u.celular)}</td>
                     <td>${u.matricula || '-'}</td>
                     <td>${u.role}</td>
                     <td>${u.profile ? u.profile.name : '-'}</td>
@@ -227,6 +245,7 @@
             document.getElementById('uName').value = '';
             document.getElementById('uEmail').value = '';
             document.getElementById('uMatricula').value = '';
+            document.getElementById('uCelular').value = '';
             document.getElementById('uPassword').value = '';
             document.getElementById('uRole').value = 'user';
             document.getElementById('uProfileId').value = '';
@@ -238,6 +257,7 @@
             document.getElementById('editName').value = u.name || '';
             document.getElementById('editEmail').value = u.email || '';
             document.getElementById('editMatricula').value = u.matricula || '';
+            document.getElementById('editCelular').value = u.celular || '';
             document.getElementById('editRole').value = u.role || 'user';
             document.getElementById('editProfileId').value = (u.profile && u.profile.id) ? u.profile.id : '';
             document.getElementById('editPassword').value = '';
@@ -252,11 +272,12 @@
             const name = (document.getElementById('editName').value || '').trim();
             const email = (document.getElementById('editEmail').value || '').trim();
             const matricula = (document.getElementById('editMatricula').value || '').trim();
+            const celular = (document.getElementById('editCelular').value || '').trim();
             const role = document.getElementById('editRole').value || 'user';
             const profile_id = document.getElementById('editProfileId').value || null;
             const password = (document.getElementById('editPassword').value || '').trim();
             if (!name || !email) { toast('Preencha nome e email', 'error'); return; }
-            const payload = { name, email, role, matricula, profile_id };
+            const payload = { name, email, role, matricula, celular, profile_id };
             if (password) payload.password = password;
             try {
                 await api('/auth/users/' + __editUserId, { method: 'PUT', body: JSON.stringify(payload) });
@@ -295,6 +316,7 @@
             const name = (document.getElementById('uName').value || '').trim();
             const email = (document.getElementById('uEmail').value || '').trim();
             const matricula = (document.getElementById('uMatricula').value || '').trim();
+            const celular = (document.getElementById('uCelular').value || '').trim();
             const password = (document.getElementById('uPassword').value || '').trim();
             const role = document.getElementById('uRole').value || 'user';
             const profile_id = document.getElementById('uProfileId').value || null;
@@ -303,7 +325,7 @@
                 return;
             }
             try {
-                await api('/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password, role, matricula, profile_id }) });
+                await api('/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password, role, matricula, celular, profile_id }) });
                 toast('Usuário cadastrado', 'success');
                 limparFormulario();
                 try { document.getElementById('cadastroUserModal').classList.remove('show'); } catch {}
@@ -313,6 +335,12 @@
             }
         }
         document.addEventListener('DOMContentLoaded', async () => {
+            ['uCelular', 'editCelular'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', e => {
+                    e.target.value = formatPhone(e.target.value);
+                });
+            });
             const auth = localStorage.getItem('authUser');
             if (!auth) { window.location.href = 'login.html'; return; }
             if (!isAdminUser()) { window.location.href = 'dashboard.html'; return; }
