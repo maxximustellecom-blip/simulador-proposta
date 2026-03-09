@@ -726,7 +726,7 @@
             populate('editPlanoAtual', pctAtualOptionsHtml(line.planoAtualGB), line.planoAtualGB);
 
             const precoEl = document.getElementById('editPrecoAtual');
-            if (precoEl) precoEl.value = line.precoAtual || 0;
+            if (precoEl) precoEl.value = currency(line.precoAtual || 0);
 
             populate('editPortabilidade', '<option value="Não">Não</option><option value="Sim">Sim</option>', line.portabilidade);
 
@@ -771,10 +771,10 @@
             if (pctEl) pctEl.value = line.pct || '-';
             
             const valPlanoEl = document.getElementById('editValorPlano');
-            if (valPlanoEl) valPlanoEl.value = line.valorPlano || 0;
+            if (valPlanoEl) valPlanoEl.value = currency(line.valorPlano || 0);
 
             const valNaoFidEl = document.getElementById('editValorNaoFid');
-            if (valNaoFidEl) valNaoFidEl.value = line.valorNaoFidelizado || 0;
+            if (valNaoFidEl) valNaoFidEl.value = currency(line.valorNaoFidelizado || 0);
 
             const descEl = document.getElementById('editDesconto');
             if (descEl) descEl.value = line.desconto || 0;
@@ -792,7 +792,7 @@
             if (modeloEl) modeloEl.value = line.modeloAparelho || '';
             
             const valApEl = document.getElementById('editValorAparelho');
-            if (valApEl) valApEl.value = line.valorAparelho || 0;
+            if (valApEl) valApEl.value = currency(line.valorAparelho || 0);
 
             const valParcEl = document.getElementById('editValorParcela');
             if (valParcEl) valParcEl.value = currency(line.valorParcela);
@@ -886,25 +886,23 @@
                 });
             });
 
-            ['editValorPlano', 'editValorNaoFid', 'editDesconto', 'editPrecoAtual', 'editValorAparelho'].forEach(fid => {
+            ['editValorPlano', 'editDesconto', 'editPrecoAtual', 'editValorAparelho'].forEach(fid => {
                 const el = document.getElementById(fid);
-                if (el) el.addEventListener('input', () => {
-                     const desc = Number(document.getElementById('editDesconto').value || 0);
-                     const base = Number(document.getElementById('editValorNaoFid').value || 0);
-                     const final = base * (1 - desc/100);
-                     document.getElementById('editValorFinal').value = currency(final);
-                     
-                     const pAtual = Number(document.getElementById('editPrecoAtual').value || 0);
-                     document.getElementById('editEconomia').value = currency(pAtual - final);
-
-                     const valAp = Number(document.getElementById('editValorAparelho').value || 0);
-                     const tipoAp = document.getElementById('editTipoAparelho').value;
-                     if (tipoAp === 'VF 24x') {
-                        document.getElementById('editValorParcela').value = currency(valAp / 24);
-                     } else {
-                        document.getElementById('editValorParcela').value = currency(0);
-                     }
-                });
+                if (el) {
+                    el.addEventListener('input', (e) => {
+                        // If it's a currency field, mask it
+                        if (fid !== 'editDesconto') {
+                            let val = e.target.value.replace(/\D/g, '');
+                            if (val) {
+                                val = (parseInt(val) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                                e.target.value = val;
+                            } else {
+                                e.target.value = '';
+                            }
+                        }
+                        handleEditModalChange(fid);
+                    });
+                }
             });
 
             document.getElementById('editLineSave').onclick = () => {
@@ -918,6 +916,28 @@
             const getValue = (id) => document.getElementById(id).value;
             const setValue = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
             const setHTML = (id, h) => { const el = document.getElementById(id); if (el) el.innerHTML = h; };
+            
+            const parseMoney = (v) => {
+                if (!v) return 0;
+                if (typeof v === 'number') return v;
+                return Number(v.replace(/\D/g, '')) / 100;
+            };
+
+            const updateCalculations = () => {
+                 const final = parseMoney(getValue('editValorPlano'));
+                 setValue('editValorFinal', currency(final));
+                 
+                 const pAtual = parseMoney(getValue('editPrecoAtual'));
+                 setValue('editEconomia', currency(pAtual - final));
+
+                 const valAp = parseMoney(getValue('editValorAparelho'));
+                 const tipoAp = getValue('editTipoAparelho');
+                 if (tipoAp === 'VF 24x') {
+                    setValue('editValorParcela', currency(valAp / 24));
+                 } else {
+                    setValue('editValorParcela', currency(0));
+                 }
+            };
 
             // editTipo change handler removed/ignored as it is now hidden and auto-set
 
@@ -966,8 +986,11 @@
                 if (sel) {
                     const baseTxt = sel.descricao || sel.nome || '';
                     setValue('editPct', parsePctFromText(baseTxt));
-                    setValue('editValorPlano', sel.valor || 0);
-                    setValue('editValorNaoFid', sel.valor || 0);
+                    
+                    const valor = Number(sel.valor || 0);
+                    setValue('editValorNaoFid', currency(valor));
+                    setValue('editValorPlano', currency(valor));
+                    setValue('editDesconto', 0);
                     
                     // NEW: Update type based on product (custom products might not have 'tipos' array, check structure)
                     // CustomProduct schema has 'category' object which has 'tipo'.
@@ -987,10 +1010,35 @@
 
                 } else {
                     setValue('editPct', '-');
-                    setValue('editValorPlano', 0);
-                    setValue('editValorNaoFid', 0);
+                    setValue('editValorPlano', currency(0));
+                    setValue('editValorNaoFid', currency(0));
+                    setValue('editDesconto', 0);
                 }
-                document.getElementById('editValorPlano').dispatchEvent(new Event('input'));
+                updateCalculations();
+            }
+
+            if (fieldId === 'editValorPlano') {
+                const vnf = parseMoney(getValue('editValorNaoFid'));
+                const vp = parseMoney(getValue('editValorPlano'));
+                if (vnf > 0) {
+                    const newDesc = ((vnf - vp) / vnf) * 100;
+                    setValue('editDesconto', newDesc.toFixed(2));
+                }
+                updateCalculations();
+            }
+
+            if (fieldId === 'editDesconto') {
+                const vnf = parseMoney(getValue('editValorNaoFid'));
+                const desc = Number(getValue('editDesconto') || 0);
+                if (vnf > 0) {
+                    const newVp = vnf * (1 - desc/100);
+                    setValue('editValorPlano', currency(newVp));
+                }
+                updateCalculations();
+            }
+
+            if (fieldId === 'editPrecoAtual' || fieldId === 'editValorAparelho') {
+                updateCalculations();
             }
 
             if (fieldId === 'editTipoAparelho' || fieldId === 'editTemAparelho') {
@@ -1010,6 +1058,7 @@
                     setValue('editValorAparelho', 0);
                     setValue('editValorParcela', currency(0));
                 }
+                updateCalculations();
             }
             
             if (fieldId === 'editPortQtd') {
@@ -1279,12 +1328,18 @@
                 return false;
             }
             
-            const valorPlano = Number(getValue('editValorPlano') || 0);
-            const valorNaoFid = Number(getValue('editValorNaoFid') || 0);
+            const parseMoney = (v) => {
+                if (!v) return 0;
+                if (typeof v === 'number') return v;
+                return Number(v.replace(/\D/g, '')) / 100;
+            };
+
+            const valorPlano = parseMoney(getValue('editValorPlano'));
+            const valorNaoFid = parseMoney(getValue('editValorNaoFid'));
             const desconto = Number(getValue('editDesconto') || 0);
             const pct = getValue('editPct');
 
-            const valorAp = Number(getValue('editValorAparelho') || 0);
+            const valorAp = parseMoney(getValue('editValorAparelho'));
             const tipoAp = getValue('editTipoAparelho');
             let valorParcela = 0;
             if (tipoAp === 'VF 24x') valorParcela = valorAp / 24;
@@ -1322,7 +1377,7 @@
                     tipoNegociacao: tipoVal,
                     numero: getValue('editNumero'),
                     planoAtualGB: getValue('editPlanoAtual'),
-                    precoAtual: Number(getValue('editPrecoAtual') || 0),
+                    precoAtual: parseMoney(getValue('editPrecoAtual')),
                     portabilidade: getValue('editPortabilidade'),
                     operadoraDoadora: (portarItens[0] && portarItens[0].operadoraDoadora) ? portarItens[0].operadoraDoadora : '',
                     numeroPortar: (portarItens[0] && portarItens[0].numeroPortar) ? portarItens[0].numeroPortar : '',
@@ -2959,18 +3014,18 @@
                         </div>
                         <div>
                             <div class="label">Valor Plano (R$)</div>
-                            <input id="editValorPlano" type="number" step="0.01" class="input">
+                            <input id="editValorPlano" type="text" class="input">
                         </div>
                         <div>
-                            <div class="label">Valor Não Fid. (R$)</div>
-                            <input id="editValorNaoFid" type="number" step="0.01" class="input">
+                            <div class="label">Valor Não Fidelizado (R$)</div>
+                            <input id="editValorNaoFid" type="text" class="input" readonly style="background-color: #f3f4f6; cursor: not-allowed;">
                         </div>
                         <div>
                             <div class="label">% Desc.</div>
                             <input id="editDesconto" type="number" step="0.01" class="input">
                         </div>
                     </div>
-                    <div class="grid-2">
+                    <div class="grid-2" style="display:none;">
                         <div>
                             <div class="label">Valor c/Desc.</div>
                             <input id="editValorFinal" type="text" class="input" readonly disabled style="background-color: #e5e7eb; font-weight: 600; color: var(--primary);">

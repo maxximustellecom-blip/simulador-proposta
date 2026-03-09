@@ -331,13 +331,19 @@
                             <select id="editPlano" class="select"></select>
                         </div>
                     </div>
-                    <div style="display:none;">
-                        <div class="label">Pacote de Dados</div>
-                        <div id="editPct" class="info-badge">-</div>
-                    </div>
-                    <div style="margin-top: 1rem;">
-                        <div class="label">Valor do Plano</div>
-                        <div id="editValorPlano" class="info-badge" style="background: #ecfdf5; color: #047857;">R$ 0,00</div>
+                    <div class="grid-3" style="margin-bottom: 1rem;">
+                        <div>
+                            <div class="label">Valor Não Fidelizado</div>
+                            <input id="editValorNaoFid" type="number" step="0.01" class="input" readonly style="background-color: #f3f4f6; cursor: not-allowed;">
+                        </div>
+                        <div>
+                            <div class="label">Desconto (%)</div>
+                            <input id="editPct" type="number" step="0.01" class="input">
+                        </div>
+                        <div>
+                            <div class="label">Valor do Plano</div>
+                            <input id="editValorPlano" type="number" step="0.01" class="input">
+                        </div>
                     </div>
                     
                     <!-- Portabilidade -->
@@ -1550,7 +1556,7 @@
             document.getElementById('editLineClose').onclick = close;
             document.getElementById('editLineCancel').onclick = close;
 
-            const fields = ['editTipo', 'editPortabilidade', 'editTemAparelho', 'editTipoAparelho', 'editCategoria', 'editPlano', 'editValorAparelho', 'editDddNovo', 'editPortQtd'];
+            const fields = ['editTipo', 'editPortabilidade', 'editTemAparelho', 'editTipoAparelho', 'editCategoria', 'editPlano', 'editValorAparelho', 'editDddNovo', 'editPortQtd', 'editValorPlano', 'editPct'];
             fields.forEach(fid => {
                 const el = document.getElementById(fid);
                 if (el) el.addEventListener('change', () => handleEditModalChange(fid));
@@ -1574,6 +1580,12 @@
             if (valApInput) {
                 valApInput.addEventListener('input', () => handleEditModalChange('editValorAparelho'));
             }
+
+            // Real-time calculation for Plan Value and Pct
+            ['editValorPlano', 'editPct'].forEach(fid => {
+                const el = document.getElementById(fid);
+                if (el) el.addEventListener('input', () => handleEditModalChange(fid));
+            });
             
             ['editNumero', 'editNumeroPortar'].forEach(fid => {
                 const el = document.getElementById(fid);
@@ -1639,16 +1651,55 @@
 
                 if (sel) {
                     const baseTxt = sel.descricao || sel.nome || '';
-                    document.getElementById('editPct').textContent = parsePctFromText(baseTxt);
-                    document.getElementById('editValorPlano').textContent = currency(sel.preco || 0);
+                    
+                    // Parse discount percentage from description
+                    const pctMatch = baseTxt.match(/(\d+(?:[\.,]\d+)?)%\s*(?:OFF|de\s*desconto)/i);
+                    let pctVal = 0;
+                    if (pctMatch) {
+                        pctVal = Number(pctMatch[1].replace(',', '.'));
+                    }
+
+                    const valorPlano = Number(sel.preco || sel.valor || sel.valorPlano || 0);
+                    let valorNaoFid = valorPlano;
+                    
+                    if (pctVal > 0 && pctVal < 100) {
+                        // If discount exists, calculate original price
+                        valorNaoFid = valorPlano / (1 - (pctVal / 100));
+                    } else {
+                        // If no discount, assume price is the non-loyalty price (0% discount)
+                        valorNaoFid = valorPlano;
+                    }
+
+                    setValue('editValorNaoFid', valorNaoFid.toFixed(2));
+                    setValue('editPct', pctVal.toFixed(2));
+                    setValue('editValorPlano', valorPlano.toFixed(2));
                     
                     // NEW: Update type based on product
                     const prodTipo = (sel.tipos && sel.tipos.length) ? (Array.isArray(sel.tipos) ? sel.tipos.join(',') : sel.tipos) : 'Novo';
                     setValue('editTipo', prodTipo);
                     updateEditModalState();
                 } else {
-                    document.getElementById('editPct').textContent = '-';
-                    document.getElementById('editValorPlano').textContent = currency(0);
+                    setValue('editValorNaoFid', 0);
+                    setValue('editPct', 0);
+                    setValue('editValorPlano', 0);
+                }
+            }
+
+            if (fieldId === 'editValorPlano') {
+                const vnf = Number(getValue('editValorNaoFid') || 0);
+                const vp = Number(getValue('editValorPlano') || 0);
+                if (vnf > 0) {
+                    const newPct = ((vnf - vp) / vnf) * 100;
+                    setValue('editPct', newPct.toFixed(2));
+                }
+            }
+
+            if (fieldId === 'editPct') {
+                const vnf = Number(getValue('editValorNaoFid') || 0);
+                const pct = Number(getValue('editPct') || 0);
+                if (vnf > 0) {
+                    const newVp = vnf * (1 - (pct / 100));
+                    setValue('editValorPlano', newVp.toFixed(2));
                 }
             }
 
@@ -1948,8 +1999,8 @@
 
             const selPlano = planos[planoVal];
             
-            const valorPlano = selPlano ? Number(selPlano.preco || 0) : 0;
-            const pct = document.getElementById('editPct').textContent;
+            const valorPlano = Number(document.getElementById('editValorPlano').value || 0);
+            const pct = document.getElementById('editPct').value;
 
             const valorAp = Number(getValue('editValorAparelho') || 0);
             const tipoAp = getValue('editTipoAparelho');
@@ -1997,7 +2048,7 @@
                     portarItens: portarItens,
                     categoria: catVal,
                     plano: selPlano ? selPlano.nome : '',
-                    pct: pct === '-' ? '' : pct,
+                    pct: pct,
                     valorPlano: valorPlano,
                     temAparelho: getValue('editTemAparelho'),
                     tipoAparelho: tipoAp,
