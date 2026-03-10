@@ -299,7 +299,7 @@
                         </div>
                         <div>
                             <div class="label">Preço Atual</div>
-                            <input id="editPrecoAtual" type="number" step="0.01" min="0" class="input">
+                            <input id="editPrecoAtual" type="text" class="input">
                         </div>
                     </div>
                 </div>
@@ -330,19 +330,19 @@
                             <div class="label">Oferta</div>
                             <select id="editPlano" class="select"></select>
                         </div>
-                    </div>
+                     </div>
                     <div class="grid-3" style="margin-bottom: 1rem;">
                         <div>
                             <div class="label">Valor Não Fidelizado</div>
-                            <input id="editValorNaoFid" type="number" step="0.01" class="input" readonly style="background-color: #f3f4f6; cursor: not-allowed;">
-                        </div>
-                        <div>
-                            <div class="label">Desconto (%)</div>
-                            <input id="editPct" type="number" step="0.01" class="input">
+                            <input id="editValorNaoFid" type="text" class="input" readonly style="background-color: #f3f4f6; cursor: not-allowed;">
                         </div>
                         <div>
                             <div class="label">Valor do Plano</div>
-                            <input id="editValorPlano" type="number" step="0.01" class="input">
+                            <input id="editValorPlano" type="text" class="input">
+                        </div>
+                         <div>
+                            <div class="label">Desconto (%)</div>
+                            <input id="editPct" type="number" step="0.01" class="input">
                         </div>
                     </div>
                     
@@ -390,7 +390,7 @@
                         <div class="grid-2">
                             <div>
                                 <div class="label">Valor Aparelho</div>
-                                <input id="editValorAparelho" type="number" class="input" step="0.01">
+                                <input id="editValorAparelho" type="text" class="input">
                             </div>
                             <div>
                                 <div class="label">Valor Parcela (24x)</div>
@@ -947,6 +947,12 @@
         function currency(v) {
             try { return (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })).format(Number(v || 0)); } catch { return 'R$ 0,00'; }
         }
+        function parseMoney(v) {
+            if (v === null || v === undefined) return 0;
+            if (typeof v === 'number') return v;
+            const digits = String(v).replace(/\D/g, '');
+            return digits ? (Number(digits) / 100) : 0;
+        }
         function formatCnpj(s) {
             const d = String(s || '').replace(/\D/g, '');
             if (d.length !== 14) return d;
@@ -1430,7 +1436,7 @@
 
             // Preco Atual
             const precoEl = document.getElementById('editPrecoAtual');
-            if (precoEl) precoEl.value = line.precoAtual || 0;
+            if (precoEl) precoEl.value = currency(line.precoAtual || 0);
 
             // Portabilidade
             populate('editPortabilidade', '<option value="Não">Não</option><option value="Sim">Sim</option>', line.portabilidade);
@@ -1474,12 +1480,19 @@
                 elPlano.value = finalIdx >= 0 ? finalIdx : '';
             }
 
-            // Read-only fields
             const pctEl = document.getElementById('editPct');
-            if (pctEl) pctEl.textContent = line.pct || '-';
+            if (pctEl) pctEl.value = Number(line.pct || 0) || 0;
             
             const valPlanoEl = document.getElementById('editValorPlano');
-            if (valPlanoEl) valPlanoEl.textContent = currency(line.valorPlano);
+            if (valPlanoEl) valPlanoEl.value = currency(line.valorPlano || 0);
+
+            const valNaoFidEl = document.getElementById('editValorNaoFid');
+            if (valNaoFidEl) {
+                const vp = Number(line.valorPlano || 0);
+                const pct = Number(line.pct || 0);
+                const base = (pct > 0 && pct < 100) ? (vp / (1 - (pct / 100))) : vp;
+                valNaoFidEl.value = currency(base || 0);
+            }
 
             // Aparelho
             populate('editTemAparelho', '<option value="Não">Não</option><option value="Sim">Sim</option>', line.temAparelho);
@@ -1489,7 +1502,7 @@
             if (modeloEl) modeloEl.value = line.modeloAparelho || '';
             
             const valApEl = document.getElementById('editValorAparelho');
-            if (valApEl) valApEl.value = line.valorAparelho || 0;
+            if (valApEl) valApEl.value = currency(line.valorAparelho || 0);
 
             const valParcEl = document.getElementById('editValorParcela');
             if (valParcEl) valParcEl.textContent = currency(line.valorParcela);
@@ -1575,17 +1588,25 @@
                 });
             }
             
-            // Adicionar input listener para cálculo em tempo real do valor do aparelho
-            const valApInput = document.getElementById('editValorAparelho');
-            if (valApInput) {
-                valApInput.addEventListener('input', () => handleEditModalChange('editValorAparelho'));
-            }
-
-            // Real-time calculation for Plan Value and Pct
-            ['editValorPlano', 'editPct'].forEach(fid => {
+            ['editPrecoAtual', 'editValorPlano', 'editValorAparelho'].forEach(fid => {
                 const el = document.getElementById(fid);
-                if (el) el.addEventListener('input', () => handleEditModalChange(fid));
+                if (!el) return;
+                el.addEventListener('input', (e) => {
+                    let digits = String(e.target.value || '').replace(/\D/g, '');
+                    if (digits) {
+                        e.target.value = (parseInt(digits) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    } else {
+                        e.target.value = '';
+                    }
+                    handleEditModalChange(fid);
+                });
+                el.addEventListener('blur', (e) => {
+                    if (!String(e.target.value || '').trim()) e.target.value = currency(0);
+                });
             });
+
+            const pctEl = document.getElementById('editPct');
+            if (pctEl) pctEl.addEventListener('input', () => handleEditModalChange('editPct'));
             
             ['editNumero', 'editNumeroPortar'].forEach(fid => {
                 const el = document.getElementById(fid);
@@ -1670,24 +1691,24 @@
                         valorNaoFid = valorPlano;
                     }
 
-                    setValue('editValorNaoFid', valorNaoFid.toFixed(2));
+                    setValue('editValorNaoFid', currency(valorNaoFid));
                     setValue('editPct', pctVal.toFixed(2));
-                    setValue('editValorPlano', valorPlano.toFixed(2));
+                    setValue('editValorPlano', currency(valorPlano));
                     
                     // NEW: Update type based on product
                     const prodTipo = (sel.tipos && sel.tipos.length) ? (Array.isArray(sel.tipos) ? sel.tipos.join(',') : sel.tipos) : 'Novo';
                     setValue('editTipo', prodTipo);
                     updateEditModalState();
                 } else {
-                    setValue('editValorNaoFid', 0);
+                    setValue('editValorNaoFid', currency(0));
                     setValue('editPct', 0);
-                    setValue('editValorPlano', 0);
+                    setValue('editValorPlano', currency(0));
                 }
             }
 
             if (fieldId === 'editValorPlano') {
-                const vnf = Number(getValue('editValorNaoFid') || 0);
-                const vp = Number(getValue('editValorPlano') || 0);
+                const vnf = parseMoney(getValue('editValorNaoFid'));
+                const vp = parseMoney(getValue('editValorPlano'));
                 if (vnf > 0) {
                     const newPct = ((vnf - vp) / vnf) * 100;
                     setValue('editPct', newPct.toFixed(2));
@@ -1695,11 +1716,11 @@
             }
 
             if (fieldId === 'editPct') {
-                const vnf = Number(getValue('editValorNaoFid') || 0);
+                const vnf = parseMoney(getValue('editValorNaoFid'));
                 const pct = Number(getValue('editPct') || 0);
                 if (vnf > 0) {
                     const newVp = vnf * (1 - (pct / 100));
-                    setValue('editValorPlano', newVp.toFixed(2));
+                    setValue('editValorPlano', currency(newVp));
                 }
             }
 
@@ -1709,7 +1730,7 @@
                 if (tem !== 'Sim') {
                     setValue('editTipoAparelho', '');
                     setValue('editModeloAparelho', '');
-                    setValue('editValorAparelho', 0);
+                    setValue('editValorAparelho', currency(0));
                     document.getElementById('editValorParcela').textContent = currency(0);
                 } else {
                      if (fieldId === 'editTemAparelho' && !tipo) {
@@ -1719,10 +1740,10 @@
                      
                      const currentTipo = getValue('editTipoAparelho');
                      if (currentTipo === 'Comodato') {
-                        setValue('editValorAparelho', 0);
+                        setValue('editValorAparelho', currency(0));
                         document.getElementById('editValorParcela').textContent = currency(0);
                      } else if (currentTipo === 'VF 24x') {
-                        const valAp = Number(getValue('editValorAparelho') || 0);
+                        const valAp = parseMoney(getValue('editValorAparelho'));
                         document.getElementById('editValorParcela').textContent = currency(valAp / 24);
                      }
                 }
@@ -1742,7 +1763,7 @@
             for (let i = 1; i <= count; i++) {
                 const get = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
                 const tipoPi = get('portTipo_' + i);
-                const valPi = Number(get('portValor_' + i) || 0);
+                const valPi = parseMoney(get('portValor_' + i));
                 const parcelaPi = (tipoPi === 'VF 24x' && valPi > 0) ? (valPi / 24) : 0;
                 items.push({
                     operadoraDoadora: get('portOperadora_' + i) || '',
@@ -1844,7 +1865,7 @@
                         <div class="grid-2">
                             <div>
                                 <div class="label">Valor Aparelho</div>
-                                <input id="portValor_${n}" type="number" step="0.01" class="input" value="${Number(it.valorAparelho || 0)}">
+                                <input id="portValor_${n}" type="text" class="input" value="${currency(Number(it.valorAparelho || 0))}">
                             </div>
                             <div>
                                 <div class="label">Valor Parcela (24x)</div>
@@ -1875,9 +1896,9 @@
                 if (temEl) temEl.value = it.temAparelho || temEl.value || 'Não';
                 if (tipoEl) tipoEl.value = it.tipoAparelho || tipoEl.value || 'Comodato';
                 if (modeloEl) modeloEl.value = it.modeloAparelho || modeloEl.value || '';
-                if (valorEl) valorEl.value = Number(it.valorAparelho || valorEl.value || 0);
-                const parcelaCalc = (String(tipoEl && tipoEl.value) === 'VF 24x' && Number(valorEl && valorEl.value || 0) > 0)
-                    ? (Number(valorEl && valorEl.value || 0) / 24)
+                if (valorEl) valorEl.value = currency(Number(it.valorAparelho || 0));
+                const parcelaCalc = (String(tipoEl && tipoEl.value) === 'VF 24x' && parseMoney(valorEl && valorEl.value || 0) > 0)
+                    ? (parseMoney(valorEl && valorEl.value || 0) / 24)
                     : Number(it.valorParcela || 0);
                 if (parcelaEl) parcelaEl.textContent = currency(parcelaCalc || 0);
                 if (apArea) apArea.style.display = ((temEl && temEl.value) === 'Sim') ? 'block' : 'none';
@@ -1900,13 +1921,32 @@
                     if (area) area.style.display = (e.target.value === 'Sim') ? 'block' : 'none';
                 });
             });
-            Array.from(container.querySelectorAll('select[id^="portTipo_"], input[id^="portValor_"]')).forEach(el => {
+            Array.from(container.querySelectorAll('input[id^="portValor_"]')).forEach(el => {
+                el.addEventListener('input', (e) => {
+                    let digits = String(e.target.value || '').replace(/\D/g, '');
+                    if (digits) {
+                        e.target.value = (parseInt(digits) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    } else {
+                        e.target.value = '';
+                    }
+                    const n = e.target.id.split('_')[1];
+                    const tipo = document.getElementById('portTipo_' + n).value;
+                    const out = document.getElementById('portParcela_' + n);
+                    const parsed = parseMoney(e.target.value);
+                    if (out) out.textContent = currency(tipo === 'VF 24x' ? (parsed / 24) : 0);
+                });
+                el.addEventListener('blur', (e) => {
+                    if (!String(e.target.value || '').trim()) e.target.value = currency(0);
+                });
+            });
+            Array.from(container.querySelectorAll('select[id^="portTipo_"]')).forEach(el => {
                 el.addEventListener('change', () => {
                     const n = el.id.split('_')[1];
                     const tipo = document.getElementById('portTipo_' + n).value;
-                    const val = Number(document.getElementById('portValor_' + n).value || 0);
+                    const valorEl = document.getElementById('portValor_' + n);
                     const out = document.getElementById('portParcela_' + n);
-                    if (out) out.textContent = currency(tipo === 'VF 24x' ? (val/24) : 0);
+                    const parsed = parseMoney(valorEl && valorEl.value || 0);
+                    if (out) out.textContent = currency(tipo === 'VF 24x' ? (parsed / 24) : 0);
                 });
             });
             Array.from(container.querySelectorAll('button[id^="portDel_"]')).forEach(btn => {
@@ -1943,7 +1983,7 @@
             
             if (isReneg) {
                 const pa = getValue('editPlanoAtual');
-                const pra = Number(getValue('editPrecoAtual') || 0);
+                const pra = parseMoney(getValue('editPrecoAtual'));
                 if (!pa || !pra) erros.push('Renegociações exigem Plano Atual e Preço Atual');
                 
                 const num = getValue('editNumero');
@@ -1963,7 +2003,7 @@
                     const cpf = getValue('portCpf_' + i);
                     const tem = getValue('portTem_' + i);
                     const tipoPi = getValue('portTipo_' + i);
-                    const valPi = Number(getValue('portValor_' + i) || 0);
+                    const valPi = parseMoney(getValue('portValor_' + i));
                     if (!opi) erros.push('Selecione a Operadora Doadora para Linha ' + i);
                     if (!num || num.replace(/\D/g,'').length < 8) erros.push('Informe o Número da linha a portar válido para Linha ' + i);
                     if (!nome) erros.push('Informe o Nome para Linha ' + i);
@@ -1975,7 +2015,7 @@
             const temAp = getValue('editTemAparelho');
             if (temAp === 'Sim') {
                 const mod = getValue('editModeloAparelho');
-                const valAp = Number(getValue('editValorAparelho') || 0);
+                const valAp = parseMoney(getValue('editValorAparelho'));
                 if (!mod) erros.push('Informe o modelo do aparelho');
                 if (valAp <= 0 && getValue('editTipoAparelho') !== 'Comodato') erros.push('Informe o valor do aparelho');
             }
@@ -1999,10 +2039,10 @@
 
             const selPlano = planos[planoVal];
             
-            const valorPlano = Number(document.getElementById('editValorPlano').value || 0);
+            const valorPlano = parseMoney(document.getElementById('editValorPlano').value);
             const pct = document.getElementById('editPct').value;
 
-            const valorAp = Number(getValue('editValorAparelho') || 0);
+            const valorAp = parseMoney(getValue('editValorAparelho'));
             const tipoAp = getValue('editTipoAparelho');
             let valorParcela = 0;
             if (tipoAp === 'VF 24x') valorParcela = valorAp / 24;
@@ -2017,7 +2057,7 @@
                     portarQtd = Math.max(pqInput, pqDom);
                     for (let i = 1; i <= portarQtd; i++) {
                         const tipoPi = getValue('portTipo_' + i);
-                        const valPi = Number(getValue('portValor_' + i) || 0);
+                        const valPi = parseMoney(getValue('portValor_' + i));
                         const parcelaPi = (tipoPi === 'VF 24x' && valPi > 0) ? (valPi / 24) : 0;
                         portarItens.push({
                             operadoraDoadora: getValue('portOperadora_' + i) || '',
@@ -2040,7 +2080,7 @@
                     tipoNegociacao: tipoVal,
                     numero: getValue('editNumero'),
                     planoAtualGB: getValue('editPlanoAtual'),
-                    precoAtual: Number(getValue('editPrecoAtual') || 0),
+                    precoAtual: parseMoney(getValue('editPrecoAtual')),
                     portabilidade: getValue('editPortabilidade'),
                     operadoraDoadora: (portarItens[0] && portarItens[0].operadoraDoadora) ? portarItens[0].operadoraDoadora : '',
                     numeroPortar: (portarItens[0] && portarItens[0].numeroPortar) ? portarItens[0].numeroPortar : '',

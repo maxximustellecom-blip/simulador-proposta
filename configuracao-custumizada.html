@@ -946,8 +946,8 @@
                 const val = getValue('editCategoria');
                 setValue('editPlano', '');
                 setValue('editPct', '');
-                setValue('editValorPlano', 0);
-                setValue('editValorNaoFid', 0);
+                setValue('editValorPlano', currency(0));
+                setValue('editValorNaoFid', currency(0));
             }
 
             if (fieldId === 'editDddNovo' || fieldId === 'editCategoria') {
@@ -1047,7 +1047,7 @@
                 if (tem !== 'Sim') {
                     setValue('editTipoAparelho', '');
                     setValue('editModeloAparelho', '');
-                    setValue('editValorAparelho', 0);
+                    setValue('editValorAparelho', currency(0));
                     setValue('editValorParcela', currency(0));
                 } else {
                      if (fieldId === 'editTemAparelho' && !tipo) {
@@ -1055,7 +1055,7 @@
                      }
                 }
                 if (getValue('editTipoAparelho') === 'Comodato') {
-                    setValue('editValorAparelho', 0);
+                    setValue('editValorAparelho', currency(0));
                     setValue('editValorParcela', currency(0));
                 }
                 updateCalculations();
@@ -1071,11 +1071,16 @@
             const items = [];
             const container = document.getElementById('portBlocksContainer');
             if (!container) return items;
+            const parseMoney = (v) => {
+                if (!v) return 0;
+                if (typeof v === 'number') return v;
+                return Number(String(v).replace(/\D/g, '')) / 100;
+            };
             const count = container.querySelectorAll('input[id^="portNum_"]').length;
             for (let i = 1; i <= count; i++) {
                 const get = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
                 const tipoPi = get('portTipo_' + i);
-                const valPi = Number(get('portValor_' + i) || 0);
+                const valPi = parseMoney(get('portValor_' + i));
                 const parcelaPi = (tipoPi === 'VF 24x' && valPi > 0) ? (valPi / 24) : 0;
                 items.push({
                     operadoraDoadora: get('portOperadora_' + i) || '',
@@ -1096,6 +1101,11 @@
             if (!container) return;
             const port = document.getElementById('editPortabilidade').value;
             if (port !== 'Sim') { container.innerHTML = ''; return; }
+            const parseMoney = (v) => {
+                if (!v) return 0;
+                if (typeof v === 'number') return v;
+                return Number(String(v).replace(/\D/g, '')) / 100;
+            };
             const savedItems = Array.isArray(currentLine.portarItens) ? currentLine.portarItens : [];
             let qtd = Number(document.getElementById('editPortQtd').value || 0) || Number(currentLine.portarQtd || 0);
             if (!qtd && savedItems.length) {
@@ -1177,7 +1187,7 @@
                         <div class="grid-2">
                             <div>
                                 <div class="label">Valor Aparelho</div>
-                                <input id="portValor_${n}" type="number" step="0.01" class="input" value="${Number(it.valorAparelho || 0)}">
+                                <input id="portValor_${n}" type="text" class="input" value="${currency(Number(it.valorAparelho || 0))}">
                             </div>
                             <div>
                                 <div class="label">Valor Parcela (24x)</div>
@@ -1208,9 +1218,9 @@
                 if (temEl) temEl.value = it.temAparelho || temEl.value || 'Não';
                 if (tipoEl) tipoEl.value = it.tipoAparelho || tipoEl.value || 'Comodato';
                 if (modeloEl) modeloEl.value = it.modeloAparelho || modeloEl.value || '';
-                if (valorEl) valorEl.value = Number(it.valorAparelho || valorEl.value || 0);
-                const parcelaCalc = (String(tipoEl && tipoEl.value) === 'VF 24x' && Number(valorEl && valorEl.value || 0) > 0)
-                    ? (Number(valorEl && valorEl.value || 0) / 24)
+                if (valorEl) valorEl.value = currency(Number(it.valorAparelho || 0));
+                const parcelaCalc = (String(tipoEl && tipoEl.value) === 'VF 24x' && parseMoney(valorEl && valorEl.value || 0) > 0)
+                    ? (parseMoney(valorEl && valorEl.value || 0) / 24)
                     : Number(it.valorParcela || 0);
                 if (parcelaEl) parcelaEl.value = currency(parcelaCalc || 0);
                 if (apArea) apArea.style.display = ((temEl && temEl.value) === 'Sim') ? 'block' : 'none';
@@ -1233,13 +1243,29 @@
                     if (area) area.style.display = (e.target.value === 'Sim') ? 'block' : 'none';
                 });
             });
-            Array.from(container.querySelectorAll('select[id^="portTipo_"], input[id^="portValor_"]')).forEach(el => {
+            Array.from(container.querySelectorAll('input[id^="portValor_"]')).forEach(el => {
+                el.addEventListener('input', (e) => {
+                    let val = e.target.value.replace(/\D/g, '');
+                    if (val) {
+                        e.target.value = (parseInt(val) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    } else {
+                        e.target.value = '';
+                    }
+                    const n = e.target.id.split('_')[1];
+                    const tipo = document.getElementById('portTipo_' + n).value;
+                    const out = document.getElementById('portParcela_' + n);
+                    const parsed = parseMoney(e.target.value);
+                    if (out) out.value = currency(tipo === 'VF 24x' ? (parsed / 24) : 0);
+                });
+            });
+            Array.from(container.querySelectorAll('select[id^="portTipo_"]')).forEach(el => {
                 el.addEventListener('change', () => {
                     const n = el.id.split('_')[1];
                     const tipo = document.getElementById('portTipo_' + n).value;
-                    const val = Number(document.getElementById('portValor_' + n).value || 0);
+                    const valorEl = document.getElementById('portValor_' + n);
                     const out = document.getElementById('portParcela_' + n);
-                    if (out) out.value = currency(tipo === 'VF 24x' ? (val/24) : 0);
+                    const parsed = parseMoney(valorEl && valorEl.value || 0);
+                    if (out) out.value = currency(tipo === 'VF 24x' ? (parsed / 24) : 0);
                 });
             });
             Array.from(container.querySelectorAll('button[id^="portDel_"]')).forEach(btn => {
@@ -1281,10 +1307,15 @@
             // Validation Logic
             const erros = [];
             const isReneg = normalizeTipoKey(tipoVal).toLowerCase().includes('reneg');
+            const parseMoney = (v) => {
+                if (!v) return 0;
+                if (typeof v === 'number') return v;
+                return Number(String(v).replace(/\D/g, '')) / 100;
+            };
             
             if (isReneg) {
                 const pa = getValue('editPlanoAtual');
-                const pra = Number(getValue('editPrecoAtual') || 0);
+                const pra = parseMoney(getValue('editPrecoAtual'));
                 if (!pa || !pra) erros.push('Renegociações exigem Plano Atual e Preço Atual');
                 
                 const num = getValue('editNumero');
@@ -1304,7 +1335,7 @@
                     const cpf = getValue('portCpf_' + i);
                     const tem = getValue('portTem_' + i);
                     const tipoPi = getValue('portTipo_' + i);
-                    const valPi = Number(getValue('portValor_' + i) || 0);
+                    const valPi = parseMoney(getValue('portValor_' + i));
                     if (!opi) erros.push('Selecione a Operadora Doadora para Linha ' + i);
                     if (!num || num.replace(/\D/g,'').length < 8) erros.push('Informe o Número da linha a portar válido para Linha ' + i);
                     if (!nome) erros.push('Informe o Nome para Linha ' + i);
@@ -1316,7 +1347,7 @@
             const temAp = getValue('editTemAparelho');
             if (temAp === 'Sim') {
                 const mod = getValue('editModeloAparelho');
-                const valAp = Number(getValue('editValorAparelho') || 0);
+                const valAp = parseMoney(getValue('editValorAparelho'));
                 if (!mod) erros.push('Informe o modelo do aparelho');
                 if (valAp <= 0 && getValue('editTipoAparelho') !== 'Comodato') erros.push('Informe o valor do aparelho');
             }
@@ -1328,12 +1359,6 @@
                 return false;
             }
             
-            const parseMoney = (v) => {
-                if (!v) return 0;
-                if (typeof v === 'number') return v;
-                return Number(v.replace(/\D/g, '')) / 100;
-            };
-
             const valorPlano = parseMoney(getValue('editValorPlano'));
             const valorNaoFid = parseMoney(getValue('editValorNaoFid'));
             const desconto = Number(getValue('editDesconto') || 0);
@@ -1354,7 +1379,7 @@
                     portarQtd = Math.max(pqInput, pqDom);
                     for (let i = 1; i <= portarQtd; i++) {
                         const tipoPi = getValue('portTipo_' + i);
-                        const valPi = Number(getValue('portValor_' + i) || 0);
+                        const valPi = parseMoney(getValue('portValor_' + i));
                         const parcelaPi = (tipoPi === 'VF 24x' && valPi > 0) ? (valPi / 24) : 0;
                         portarItens.push({
                             operadoraDoadora: getValue('portOperadora_' + i) || '',
@@ -2974,7 +2999,7 @@
                         </div>
                         <div>
                             <div class="label">Preço Atual (R$)</div>
-                            <input id="editPrecoAtual" type="number" step="0.01" class="input">
+                            <input id="editPrecoAtual" type="text" class="input">
                         </div>
                     </div>
                 </div>
@@ -3076,8 +3101,8 @@
                         </div>
                         <div class="grid-2">
                             <div>
-                                <div class="label">R$ Total Aparelho</div>
-                                <input id="editValorAparelho" type="number" step="0.01" class="input">
+                            <div class="label">R$ Total Aparelho</div>
+                            <input id="editValorAparelho" type="text" class="input">
                             </div>
                             <div>
                                 <div class="label">R$ da Parcela</div>
