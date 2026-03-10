@@ -2628,15 +2628,12 @@
                 y -= 8;
                 const headerY = y;
                 const tableX = marginLeft; // Tabela centralizada (mesmo X do texto)
-                const colQtdX = tableX + 5;
-                const colTipoX = tableX + 30;
-                const colPlanoX = tableX + 70;
-                const colOfertaX = tableX + 180;
-                const colAparelhoX = tableX + 380;
-                const colValorApX = tableX + 460;
+                const colQtdX = tableX + 8;
+                const colPlanoX = tableX + 60;
+                const colAparelhoX = tableX + 320;
                 const colValorX = tableX + 520;
                 
-                const rowHeight = 16;
+                const rowHeight = 30;
                 const headerSize = 8;
                 const maxRows = Math.max(Math.floor((headerY - 60) / rowHeight) - 2, 0);
                 const rowsToDraw = Math.min(__linhas.length, maxRows);
@@ -2669,63 +2666,68 @@
                 });
 
                 lastPage.drawText('Qtd', { x: colQtdX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
-                lastPage.drawText('Tipo', { x: colTipoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
                 lastPage.drawText('Plano', { x: colPlanoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
-                lastPage.drawText('Oferta', { x: colOfertaX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
                 lastPage.drawText('Aparelho', { x: colAparelhoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
-                lastPage.drawText('Valor ap.', { x: colValorApX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
                 lastPage.drawText('Valor', { x: colValorX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
 
-                let yLinha = headerY - rowHeight;
                 let totalSoma = 0;
                 
                 for (let i = 0; i < rowsToDraw; i++) {
                     const l = __linhas[i];
                     const qtd = String(l.quantidade || 1);
                     
-                    // Attempt to resolve correct type from product
-                    let displayTipo = l.tipoNegociacao || '-';
                     // Use description instead of name if available, otherwise use name
                     const currentCatObj = (__categorias || []).find(c => c.nome === l.categoria);
                     const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
                     const currentProd = currentProds.find(p => p.nome === l.plano);
                     
-                    if (currentProd && currentProd.tipos) {
-                        displayTipo = Array.isArray(currentProd.tipos) ? currentProd.tipos.join(',') : currentProd.tipos;
-                    }
-                    const tipo = String(displayTipo);
-
-                    const plano = String(l.categoria || '-');
-                    const oferta = currentProd ? (currentProd.descricao || currentProd.nome || '-') : String(l.plano || '-');
+                    const planoNome = String(l.categoria || '-');
+                    const ofertaNome = currentProd ? (currentProd.descricao || currentProd.nome || '-') : String(l.plano || '-');
+                    const ofertaPreco = currency(currentProd ? (currentProd.preco || currentProd.valor || currentProd.valorPlano || l.valorPlano || 0) : (l.valorPlano || 0));
 
                     const linhaVal = totalLinha(l);
                     const valorLinha = currency(linhaVal);
                     
-                    const aparelhoTipo = l.temAparelho === 'Sim' ? (l.modeloAparelho || '-') : '-';
-                    let valorParcelaCalc = l.valorParcela;
-                    const valAp = Number(l.valorAparelho || 0);
-                    if (l.temAparelho === 'Sim' && l.tipoAparelho === 'VF 24x' && valAp > 0) {
-                         valorParcelaCalc = valAp / 24;
+                    let aparelhoNome = '-';
+                    let aparelhoInfo = '-';
+                    let aparelhoValor = '-';
+                    if (l.temAparelho === 'Sim') {
+                        aparelhoNome = String(l.modeloAparelho || '-');
+                        const tipoAp = String(l.tipoAparelho || '').toLowerCase();
+                        const isVf = tipoAp.includes('vf');
+                        aparelhoInfo = isVf ? 'Venda Facilitada' : 'Comodato';
+                        aparelhoValor = isVf ? currency(Number(l.valorAparelho || 0)) : '-';
                     }
-                    const valorAparelho = currency(valorParcelaCalc || 0);
                     
                     totalSoma += linhaVal;
-                    
-                    let planoTexto = plano;
-                    let ofertaTexto = oferta;
-                    
-                    lastPage.drawText(qtd, { x: colQtdX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(tipo, { x: colTipoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(planoTexto, { x: colPlanoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(ofertaTexto, { x: colOfertaX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(aparelhoTipo, { x: colAparelhoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(valorAparelho, { x: colValorApX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(valorLinha, { x: colValorX, y: yLinha, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    
-                    yLinha -= rowHeight;
+
+                    const rowY = headerY - rowHeight - (i * rowHeight);
+                    const zebraColor = (i % 2 === 0) ? rgb(1, 1, 1) : rgb(0.93, 0.96, 1);
+                    lastPage.drawRectangle({
+                        x: tableX,
+                        y: rowY - 4,
+                        width: tableWidth,
+                        height: rowHeight + 4,
+                        color: zebraColor,
+                        borderWidth: 0
+                    });
+
+                    const lineGap = 9;
+                    const textY1 = rowY + rowHeight - 10;
+                    lastPage.drawText(qtd, { x: colQtdX, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+
+                    lastPage.drawText(planoNome, { x: colPlanoX, y: textY1, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(ofertaNome, { x: colPlanoX, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(ofertaPreco, { x: colPlanoX, y: textY1 - (2 * lineGap), size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+
+                    lastPage.drawText(aparelhoNome, { x: colAparelhoX, y: textY1, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(aparelhoInfo, { x: colAparelhoX, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(aparelhoValor, { x: colAparelhoX, y: textY1 - (2 * lineGap), size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+
+                    lastPage.drawText(valorLinha, { x: colValorX, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                 }
                 
-                const yTotal = yLinha - 4;
+                const yTotal = headerY - rowHeight - (rowsToDraw * rowHeight) - 10;
                 const totalLabel = 'Valor Total: ' + totalFormatado;
                 lastPage.drawText(totalLabel, { x: colValorX - 60, y: yTotal, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                 const pdfBytes = await pdfDoc.save();
@@ -2779,14 +2781,11 @@
                 y -= 8;
                 const headerY = y;
                 const tableX = marginLeft;
-                const colQtdX = tableX + 5;
-                const colTipoX = tableX + 30;
-                const colPlanoX = tableX + 70;
-                const colOfertaX = tableX + 180;
-                const colAparelhoX = tableX + 380;
-                const colValorApX = tableX + 460;
+                const colQtdX = tableX + 8;
+                const colPlanoX = tableX + 60;
+                const colAparelhoX = tableX + 320;
                 const colValorX = tableX + 520;
-                const rowHeight = 16;
+                const rowHeight = 30;
                 const headerSize = 8;
                 const maxRows = Math.max(Math.floor((headerY - 60) / rowHeight) - 2, 0);
                 const rowsToDraw = Math.min(__linhas.length, maxRows);
@@ -2797,52 +2796,63 @@
                 lastPage.drawRectangle({ x: tableX, y: tableBottomY, width: tableWidth, height: rectHeight, color: rgb(1,1,1), borderColor: rgb(0.85,0.85,0.85), borderWidth: 1 });
                 lastPage.drawRectangle({ x: tableX, y: headerY - 4, width: tableWidth, height: rowHeight + 4, color: rgb(0.95,0.95,0.95), borderColor: rgb(0.9,0.9,0.9), borderWidth: 0 });
                 lastPage.drawText('Qtd', { x: colQtdX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
-                lastPage.drawText('Tipo', { x: colTipoX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
                 lastPage.drawText('Plano', { x: colPlanoX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
-                lastPage.drawText('Oferta', { x: colOfertaX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
                 lastPage.drawText('Aparelho', { x: colAparelhoX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
-                lastPage.drawText('Valor ap.', { x: colValorApX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
                 lastPage.drawText('Valor', { x: colValorX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
-                let yLinha = headerY - rowHeight;
                 for (let i = 0; i < rowsToDraw; i++) {
                     const l = __linhas[i];
                     const qtd = String(l.quantidade || 1);
                     
-                    // Attempt to resolve correct type from product
-                    let displayTipo = l.tipoNegociacao || '-';
                     // Use description instead of name if available, otherwise use name
                     const currentCatObj = (__categorias || []).find(c => c.nome === l.categoria);
                     const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
                     const currentProd = currentProds.find(p => p.nome === l.plano);
                     
-                    if (currentProd && currentProd.tipos) {
-                        displayTipo = Array.isArray(currentProd.tipos) ? currentProd.tipos.join(',') : currentProd.tipos;
-                    }
-                    const tipo = String(displayTipo);
-
-                    const plano = String(l.categoria || '-');
-                    const oferta = currentProd ? (currentProd.descricao || currentProd.nome || '-') : String(l.plano || '-');
+                    const planoNome = String(l.categoria || '-');
+                    const ofertaNome = currentProd ? (currentProd.descricao || currentProd.nome || '-') : String(l.plano || '-');
+                    const ofertaPreco = currency(currentProd ? (currentProd.preco || currentProd.valor || currentProd.valorPlano || l.valorPlano || 0) : (l.valorPlano || 0));
 
                     const linhaVal = totalLinha(l);
                     const valorLinha = currency(linhaVal);
                     
-                    const aparelhoTipo = l.temAparelho === 'Sim' ? (l.modeloAparelho || '-') : '-';
-                    let valorParcelaCalc = l.valorParcela;
-                    const valAp = Number(l.valorAparelho || 0);
-                    if (l.temAparelho === 'Sim' && l.tipoAparelho === 'VF 24x' && valAp > 0) { valorParcelaCalc = valAp / 24; }
-                    const valorAparelho = currency(valorParcelaCalc || 0);
+                    let aparelhoNome = '-';
+                    let aparelhoInfo = '-';
+                    let aparelhoValor = '-';
+                    if (l.temAparelho === 'Sim') {
+                        aparelhoNome = String(l.modeloAparelho || '-');
+                        const tipoAp = String(l.tipoAparelho || '').toLowerCase();
+                        const isVf = tipoAp.includes('vf');
+                        aparelhoInfo = isVf ? 'Venda Facilitada' : 'Comodato';
+                        aparelhoValor = isVf ? currency(Number(l.valorAparelho || 0)) : '-';
+                    }
                     
-                    lastPage.drawText(qtd, { x: colQtdX, y: yLinha, size: fontSizeLinha, font, color: rgb(0,0,0) });
-                    lastPage.drawText(tipo, { x: colTipoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0,0,0) });
-                    lastPage.drawText(plano, { x: colPlanoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0,0,0) });
-                    lastPage.drawText(oferta, { x: colOfertaX, y: yLinha, size: fontSizeLinha, font, color: rgb(0,0,0) });
-                    lastPage.drawText(aparelhoTipo, { x: colAparelhoX, y: yLinha, size: fontSizeLinha, font, color: rgb(0,0,0) });
-                    lastPage.drawText(valorAparelho, { x: colValorApX, y: yLinha, size: fontSizeLinha, font, color: rgb(0,0,0) });
-                    lastPage.drawText(valorLinha, { x: colValorX, y: yLinha, size: fontSizeLinha, font, color: rgb(0,0,0) });
-                    yLinha -= rowHeight;
+                    const rowY = headerY - rowHeight - (i * rowHeight);
+                    const zebraColor = (i % 2 === 0) ? rgb(1, 1, 1) : rgb(0.93, 0.96, 1);
+                    lastPage.drawRectangle({
+                        x: tableX,
+                        y: rowY - 4,
+                        width: tableWidth,
+                        height: rowHeight + 4,
+                        color: zebraColor,
+                        borderWidth: 0
+                    });
+
+                    const lineGap = 9;
+                    const textY1 = rowY + rowHeight - 10;
+                    lastPage.drawText(qtd, { x: colQtdX, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
+
+                    lastPage.drawText(planoNome, { x: colPlanoX, y: textY1, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(ofertaNome, { x: colPlanoX, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(ofertaPreco, { x: colPlanoX, y: textY1 - (2 * lineGap), size: fontSizeLinha, font, color: rgb(0,0,0) });
+
+                    lastPage.drawText(aparelhoNome, { x: colAparelhoX, y: textY1, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(aparelhoInfo, { x: colAparelhoX, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(aparelhoValor, { x: colAparelhoX, y: textY1 - (2 * lineGap), size: fontSizeLinha, font, color: rgb(0,0,0) });
+
+                    lastPage.drawText(valorLinha, { x: colValorX, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
                 }
                 const totalLabel = 'Valor Total: ' + totalFormatado;
-                lastPage.drawText(totalLabel, { x: colValorX - 60, y: yLinha - 4, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                lastPage.drawText(totalLabel, { x: colValorX - 60, y: headerY - rowHeight - (rowsToDraw * rowHeight) - 10, size: fontSizeLinha, font, color: rgb(0,0,0) });
                 const newPdf = await PDFDocument.create();
                 const [copied] = await newPdf.copyPages(pdfDoc, [pages.length - 1]);
                 newPdf.addPage(copied);
@@ -2909,14 +2919,11 @@
                 // Reset fill style for table content
                 ctx.fillStyle = '#000000';
                 const tableX = marginLeftPt * scale;
-                const colQtdX = tableX + 5 * scale;
-                const colTipoX = tableX + 30 * scale;
-                const colPlanoX = tableX + 70 * scale;
-                const colOfertaX = tableX + 180 * scale;
-                const colAparelhoX = tableX + 380 * scale;
-                const colValorApX = tableX + 460 * scale;
+                const colQtdX = tableX + 8 * scale;
+                const colPlanoX = tableX + 60 * scale;
+                const colAparelhoX = tableX + 320 * scale;
                 const colValorX = tableX + 520 * scale;
-                const rowHeight = 16 * scale;
+                const rowHeight = 30 * scale;
                 const tableTopY = y + 8 * scale;
                 const availableHeightPx = Math.max((heightPt * scale) - tableTopY - 60 * scale, 0);
                 const maxRows = Math.max(Math.floor(availableHeightPx / rowHeight) - 2, 0);
@@ -2931,45 +2938,62 @@
                 ctx.fillRect(tableX, tableTopY, tableWidthPt * scale, rowHeight + 4 * scale);
                 ctx.fillStyle = '#000000';
                 ctx.font = `${fontLinha}px Arial`;
-                const headerTextY = tableTopY + rowHeight;
+                ctx.textBaseline = 'top';
+                const headerTextY = tableTopY + 4 * scale;
                 ctx.fillText('Qtd', colQtdX, headerTextY);
-                ctx.fillText('Tipo', colTipoX, headerTextY);
                 ctx.fillText('Plano', colPlanoX, headerTextY);
-                ctx.fillText('Oferta', colOfertaX, headerTextY);
                 ctx.fillText('Aparelho', colAparelhoX, headerTextY);
-                ctx.fillText('Valor ap.', colValorApX, headerTextY);
                 ctx.fillText('Valor', colValorX, headerTextY);
-                let yLinha = headerTextY + rowHeight;
+                const firstRowY = tableTopY + rowHeight + 4 * scale;
                 for (let i = 0; i < rowsToDraw; i++) {
                     const l = __linhas[i];
                     const qtd = String(l.quantidade || 1);
-                    const tipo = String(l.tipoNegociacao || '-');
-                    const plano = String(l.categoria || '-');
                     
                     // Use description instead of name if available, otherwise use name
                     const currentCatObj = (__categorias || []).find(c => c.nome === l.categoria);
                     const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
                     const currentProd = currentProds.find(p => p.nome === l.plano);
-                    const oferta = currentProd ? (currentProd.descricao || currentProd.nome || '-') : String(l.plano || '-');
+                    const planoNome = String(l.categoria || '-');
+                    const ofertaNome = currentProd ? (currentProd.descricao || currentProd.nome || '-') : String(l.plano || '-');
+                    const ofertaPreco = currency(currentProd ? (currentProd.preco || currentProd.valor || currentProd.valorPlano || l.valorPlano || 0) : (l.valorPlano || 0));
 
                     const linhaVal = totalLinha(l);
                     const valorLinha = currency(linhaVal);
-                    const aparelhoTipo = l.temAparelho === 'Sim' ? (l.modeloAparelho || '-') : '-';
-                    let valorParcelaCalc = l.valorParcela;
-                    const valAp = Number(l.valorAparelho || 0);
-                    if (l.temAparelho === 'Sim' && l.tipoAparelho === 'VF 24x' && valAp > 0) { valorParcelaCalc = valAp / 24; }
-                    const valorAparelho = currency(valorParcelaCalc || 0);
-                    ctx.fillText(qtd, colQtdX, yLinha);
-                    ctx.fillText(tipo, colTipoX, yLinha);
-                    ctx.fillText(plano, colPlanoX, yLinha);
-                    ctx.fillText(oferta, colOfertaX, yLinha);
-                    ctx.fillText(aparelhoTipo, colAparelhoX, yLinha);
-                    ctx.fillText(valorAparelho, colValorApX, yLinha);
-                    ctx.fillText(valorLinha, colValorX, yLinha);
-                    yLinha += rowHeight;
+
+                    let aparelhoNome = '-';
+                    let aparelhoInfo = '-';
+                    let aparelhoValor = '-';
+                    if (l.temAparelho === 'Sim') {
+                        aparelhoNome = String(l.modeloAparelho || '-');
+                        const tipoAp = String(l.tipoAparelho || '').toLowerCase();
+                        const isVf = tipoAp.includes('vf');
+                        aparelhoInfo = isVf ? 'Venda Facilitada' : 'Comodato';
+                        aparelhoValor = isVf ? currency(Number(l.valorAparelho || 0)) : '-';
+                    }
+
+                    const rowY = firstRowY + (i * rowHeight);
+                    ctx.fillStyle = (i % 2 === 0) ? '#ffffff' : '#eff6ff';
+                    ctx.fillRect(tableX, rowY, tableWidthPt * scale, rowHeight);
+                    ctx.fillStyle = '#000000';
+
+                    const lineGap = 9 * scale;
+                    const textY1 = rowY + 4 * scale;
+
+                    ctx.fillText(qtd, colQtdX, textY1 + lineGap);
+
+                    ctx.fillText(planoNome, colPlanoX, textY1);
+                    ctx.fillText(ofertaNome, colPlanoX, textY1 + lineGap);
+                    ctx.fillText(ofertaPreco, colPlanoX, textY1 + (2 * lineGap));
+
+                    ctx.fillText(aparelhoNome, colAparelhoX, textY1);
+                    ctx.fillText(aparelhoInfo, colAparelhoX, textY1 + lineGap);
+                    ctx.fillText(aparelhoValor, colAparelhoX, textY1 + (2 * lineGap));
+
+                    ctx.fillText(valorLinha, colValorX, textY1 + lineGap);
                 }
                 const totalLabel = 'Valor Total: ' + currency(totalGeral());
-                ctx.fillText(totalLabel, colValorX - 60 * scale, yLinha + 4 * scale);
+                ctx.fillStyle = '#000000';
+                ctx.fillText(totalLabel, colValorX - 60 * scale, firstRowY + (rowsToDraw * rowHeight) + 4 * scale);
                 const url = canvas.toDataURL('image/png');
                 const a = document.createElement('a');
                 a.href = url;
