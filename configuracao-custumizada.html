@@ -2254,9 +2254,9 @@
                     const currentProd = currentProds.find(p => (p.nome || p.name) === l.plano);
                     const planoNome = String(l.categoria || '-');
                     const ofertaNome = currentProd ? (currentProd.descricao || currentProd.description || currentProd.nome || currentProd.name || '-') : String(l.plano || '-');
-                    const ofertaPreco = currency(currentProd ? (currentProd.valor || currentProd.preco || l.valorPlano || 0) : (l.valorPlano || 0));
 
                     const precoFinalUnit = calcularPrecoFinal(l);
+                    const ofertaPreco = currency(precoFinalUnit);
                     const linhaVal = (Number(qtd)||0) * precoFinalUnit;
                     const totalLinhaValor = currency(linhaVal);
                     
@@ -2387,9 +2387,9 @@
                     const currentProd = currentProds.find(p => (p.nome || p.name) === l.plano);
                     const planoNome = String(l.categoria || '-');
                     const ofertaNome = currentProd ? (currentProd.descricao || currentProd.description || currentProd.nome || currentProd.name || '-') : String(l.plano || '-');
-                    const ofertaPreco = currency(currentProd ? (currentProd.valor || currentProd.preco || l.valorPlano || 0) : (l.valorPlano || 0));
 
                     const precoFinalUnit = calcularPrecoFinal(l);
+                    const ofertaPreco = currency(precoFinalUnit);
                     const linhaVal = (Number(qtd)||0) * precoFinalUnit;
                     const totalLinhaValor = currency(linhaVal);
 
@@ -2531,9 +2531,9 @@
                     const currentProd = currentProds.find(p => (p.nome || p.name) === l.plano);
                     const planoNome = String(l.categoria || '-');
                     const ofertaNome = currentProd ? (currentProd.descricao || currentProd.description || currentProd.nome || currentProd.name || '-') : String(l.plano || '-');
-                    const ofertaPreco = currency(currentProd ? (currentProd.valor || currentProd.preco || l.valorPlano || 0) : (l.valorPlano || 0));
 
                     const precoFinalUnit = calcularPrecoFinal(l);
+                    const ofertaPreco = currency(precoFinalUnit);
                     const linhaVal = (Number(qtd)||0) * precoFinalUnit;
                     const totalLinhaValor = currency(linhaVal);
 
