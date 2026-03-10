@@ -9,30 +9,55 @@ const ZAPI_TOKEN = 'Fa9be4d3c3cff47cb84b5d28e5ce3d58aS';
 export const startScheduler = () => {
   // Executa a cada 1 minuto
   cron.schedule('* * * * *', async () => {
-    console.log('[Scheduler] Verificando compromissos para amanhã...');
+    console.log('[Scheduler] Verificando compromissos para notificação...');
     try {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+      const pad2 = (n) => String(n).padStart(2, '0');
+      const toDateStrLocal = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+      const addDays = (dateStr, days) => {
+        const [y, m, dd] = String(dateStr).split('-').map(n => Number(n));
+        const dt = new Date(y, (m || 1) - 1, dd || 1);
+        dt.setDate(dt.getDate() + Number(days || 0));
+        return toDateStrLocal(dt);
+      };
+      const diffDays = (fromStr, toStr) => {
+        const [y1, m1, d1] = String(fromStr).split('-').map(n => Number(n));
+        const [y2, m2, d2] = String(toStr).split('-').map(n => Number(n));
+        const a = new Date(y1, (m1 || 1) - 1, d1 || 1);
+        const b = new Date(y2, (m2 || 1) - 1, d2 || 1);
+        const ms = b.getTime() - a.getTime();
+        return Math.round(ms / 86400000);
+      };
 
-      const appointments = await Appointment.findAll({
+      const now = new Date();
+      const todayStr = toDateStrLocal(now);
+      const nowHHMM = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+
+      const dueToday = await Appointment.findAll({
         where: {
-          date: tomorrowStr,
-          notified: false
+          date: todayStr,
+          notified_day: false
         },
         include: [{ model: User, as: 'user' }]
       });
 
-      console.log(`[Scheduler] Encontrados ${appointments.length} compromissos para notificar.`);
+      const beforeWindowEnd = addDays(todayStr, 60);
+      const dueBefore = await Appointment.findAll({
+        where: {
+          date: { [Op.between]: [todayStr, beforeWindowEnd] },
+          notified_before: false,
+          dias_antecedencia: { [Op.gt]: 0 }
+        },
+        include: [{ model: User, as: 'user' }]
+      });
 
-      for (const appt of appointments) {
+      const sendNotification = async ({ appt, kind, daysOut }) => {
         const userName = appt.user ? appt.user.name : 'Usuário';
         // User requested to use the user's phone, not admin's
         let targetPhone = appt.user ? appt.user.celular : null;
 
         if (!targetPhone) {
             console.log(`[Scheduler] Usuário sem celular para compromisso ${appt.id}.`);
-            continue;
+            return;
         }
 
         // Basic cleaning
@@ -42,7 +67,12 @@ export const startScheduler = () => {
             targetPhone = '55' + targetPhone;
         }
 
-        const message = `Olá ${userName}, lembrete de compromisso para amanhã (${tomorrowStr}) às ${appt.time}: ${appt.title}`;
+        const timeHHMM = String(appt.time || '').slice(0, 5);
+        const dateLabel = String(appt.date || '');
+        const whenLabel = kind === 'day'
+          ? `hoje (${dateLabel})`
+          : (daysOut === 1 ? `amanhã (${dateLabel})` : `daqui ${daysOut} dias (${dateLabel})`);
+        const message = `Olá ${userName}, lembrete de compromisso para ${whenLabel} às ${timeHHMM}: ${appt.title}`;
 
         try {
           await axios.post(ZAPI_URL, {
@@ -54,13 +84,30 @@ export const startScheduler = () => {
               'Content-Type': 'application/json'
             }
           });
-          
-          appt.notified = true;
+
+          if (kind === 'day') appt.notified_day = true;
+          if (kind === 'before') appt.notified_before = true;
+          if (appt.notified_before && appt.notified_day) appt.notified = true;
           await appt.save();
-          console.log(`[Scheduler] Notificação enviada para ${targetPhone} ref. compromisso ${appt.id}`);
+          console.log(`[Scheduler] Notificação (${kind}) enviada para ${targetPhone} ref. compromisso ${appt.id}`);
         } catch (err) {
           console.error(`[Scheduler] Erro ao enviar notificação para compromisso ${appt.id}:`, err.message);
         }
+      };
+
+      for (const appt of dueToday) {
+        const timeHHMM = String(appt.time || '').slice(0, 5);
+        if (timeHHMM !== nowHHMM) continue;
+        await sendNotification({ appt, kind: 'day', daysOut: 0 });
+      }
+
+      for (const appt of dueBefore) {
+        const timeHHMM = String(appt.time || '').slice(0, 5);
+        if (timeHHMM !== nowHHMM) continue;
+        const daysOut = diffDays(todayStr, String(appt.date || ''));
+        const dias = Math.max(0, parseInt(appt.dias_antecedencia ?? 1, 10) || 0);
+        if (daysOut !== dias) continue;
+        await sendNotification({ appt, kind: 'before', daysOut });
       }
     } catch (error) {
       console.error('[Scheduler] Erro no job de notificação:', error);

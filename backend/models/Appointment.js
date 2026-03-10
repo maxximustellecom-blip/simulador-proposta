@@ -8,6 +8,9 @@ const Appointment = sequelize.define('Appointment', {
   date: { type: DataTypes.DATEONLY, allowNull: false },
   time: { type: DataTypes.TIME, allowNull: false },
   user_id: { type: DataTypes.INTEGER, allowNull: false },
+  dias_antecedencia: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+  notified_before: { type: DataTypes.BOOLEAN, defaultValue: false },
+  notified_day: { type: DataTypes.BOOLEAN, defaultValue: false },
   notified: { type: DataTypes.BOOLEAN, defaultValue: false }
 }, {
   tableName: 'appointments',

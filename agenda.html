@@ -388,6 +388,10 @@
                         <label class="label" for="fDesc">Descrição (Opcional)</label>
                         <textarea id="fDesc" class="input" rows="4" placeholder="Adicione detalhes, pauta ou observações importantes..."></textarea>
                     </div>
+                    <div class="field">
+                        <label class="label" for="fDiasAntes">Avisar quantos dias antes?</label>
+                        <input type="number" id="fDiasAntes" class="input" min="0" step="1" value="1" required>
+                    </div>
                 </form>
             </div>
             <div class="modal-foot">
@@ -558,7 +562,7 @@
                             ${appt.description ? `<div class="appt-desc">${appt.description}</div>` : ''}
                         </div>
                         <div style="display:flex;gap:4px">
-                            <button class="delete-btn" onclick="openEditModal(${appt.id}, '${appt.title}', '${appt.date}', '${appt.time}', '${(appt.description || '').replace(/'/g, "\\'")}')" title="Editar Compromisso" style="color:var(--primary); background:rgba(37,99,235,0.1)">
+                            <button class="delete-btn" onclick="openEditModal(${appt.id}, '${appt.title}', '${appt.date}', '${appt.time}', '${(appt.description || '').replace(/'/g, "\\'")}', ${Number(appt.dias_antecedencia || 1)})" title="Editar Compromisso" style="color:var(--primary); background:rgba(37,99,235,0.1)">
                                 <i data-lucide="edit-2" style="width:18px;height:18px"></i>
                             </button>
                             <button class="delete-btn" onclick="deleteAppointment(${appt.id})" title="Excluir Compromisso">
@@ -591,12 +595,13 @@
             now.setHours(now.getHours() + 1);
             const timeStr = now.toTimeString().slice(0,5);
             document.getElementById('fTime').value = timeStr;
+            document.getElementById('fDiasAntes').value = 1;
 
             document.getElementById('addModal').classList.add('open');
             setTimeout(() => document.getElementById('fTitle').focus(), 100);
         }
 
-        function openEditModal(id, title, date, time, description) {
+        function openEditModal(id, title, date, time, description, diasAntecedencia) {
             closeModal('listModal');
             editingApptId = id;
             document.getElementById('addForm').reset();
@@ -606,6 +611,7 @@
             document.getElementById('fDate').value = date;
             document.getElementById('fTime').value = time;
             document.getElementById('fDesc').value = description || '';
+            document.getElementById('fDiasAntes').value = Number(diasAntecedencia ?? 1);
 
             document.getElementById('addModal').classList.add('open');
             setTimeout(() => document.getElementById('fTitle').focus(), 100);
@@ -625,6 +631,7 @@
             const date = document.getElementById('fDate').value;
             const time = document.getElementById('fTime').value;
             const description = document.getElementById('fDesc').value;
+            const dias_antecedencia = Math.max(0, parseInt(document.getElementById('fDiasAntes').value || '1', 10) || 0);
 
             if (!title || !date || !time) {
                 // Simples validação visual
@@ -647,12 +654,12 @@
                 if (editingApptId) {
                     await api(`/appointments/${editingApptId}`, {
                         method: 'PUT',
-                        body: JSON.stringify({ title, date, time, description })
+                        body: JSON.stringify({ title, date, time, description, dias_antecedencia })
                     });
                 } else {
                     await api('/appointments', {
                         method: 'POST',
-                        body: JSON.stringify({ title, date, time, description })
+                        body: JSON.stringify({ title, date, time, description, dias_antecedencia })
                     });
                 }
                 
