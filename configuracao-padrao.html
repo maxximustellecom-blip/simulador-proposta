@@ -2670,10 +2670,18 @@
                     borderWidth: 0 // Sem borda ou borda sutil
                 });
 
-                lastPage.drawText('Qtd', { x: colQtdX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
-                lastPage.drawText('Plano', { x: colPlanoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
-                lastPage.drawText('Aparelho', { x: colAparelhoX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
-                lastPage.drawText('Valor', { x: colValorX, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+                const wQtd = 50;
+                const wPlano = 260;
+                const wAparelho = 200;
+                const wValor = tableWidth - (wQtd + wPlano + wAparelho);
+                const drawHeaderCenter = (text, cellX, cellW) => {
+                    const tw = font.widthOfTextAtSize(text, headerSize);
+                    lastPage.drawText(text, { x: cellX + (cellW - tw) / 2, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+                };
+                drawHeaderCenter('Qtd', tableX, wQtd);
+                drawHeaderCenter('Plano', tableX + wQtd, wPlano);
+                drawHeaderCenter('Aparelho', tableX + wQtd + wPlano, wAparelho);
+                drawHeaderCenter('Valor', tableX + wQtd + wPlano + wAparelho, wValor);
 
                 let totalSoma = 0;
                 
@@ -2800,10 +2808,18 @@
                 const rectHeight = tableTopY - tableBottomY;
                 lastPage.drawRectangle({ x: tableX, y: tableBottomY, width: tableWidth, height: rectHeight, color: rgb(1,1,1), borderColor: rgb(0.85,0.85,0.85), borderWidth: 1 });
                 lastPage.drawRectangle({ x: tableX, y: headerY - 4, width: tableWidth, height: rowHeight + 4, color: rgb(0.95,0.95,0.95), borderColor: rgb(0.9,0.9,0.9), borderWidth: 0 });
-                lastPage.drawText('Qtd', { x: colQtdX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
-                lastPage.drawText('Plano', { x: colPlanoX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
-                lastPage.drawText('Aparelho', { x: colAparelhoX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
-                lastPage.drawText('Valor', { x: colValorX, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
+                const wQtd = 50;
+                const wPlano = 260;
+                const wAparelho = 200;
+                const wValor = tableWidth - (wQtd + wPlano + wAparelho);
+                const drawHeaderCenter = (text, cellX, cellW) => {
+                    const tw = font.widthOfTextAtSize(text, headerSize);
+                    lastPage.drawText(text, { x: cellX + (cellW - tw) / 2, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
+                };
+                drawHeaderCenter('Qtd', tableX, wQtd);
+                drawHeaderCenter('Plano', tableX + wQtd, wPlano);
+                drawHeaderCenter('Aparelho', tableX + wQtd + wPlano, wAparelho);
+                drawHeaderCenter('Valor', tableX + wQtd + wPlano + wAparelho, wValor);
                 for (let i = 0; i < rowsToDraw; i++) {
                     const l = __linhas[i];
                     const qtd = String(l.quantidade || 1);
@@ -2945,10 +2961,16 @@
                 ctx.font = `${fontLinha}px Arial`;
                 ctx.textBaseline = 'top';
                 const headerTextY = tableTopY + 4 * scale;
-                ctx.fillText('Qtd', colQtdX, headerTextY);
-                ctx.fillText('Plano', colPlanoX, headerTextY);
-                ctx.fillText('Aparelho', colAparelhoX, headerTextY);
-                ctx.fillText('Valor', colValorX, headerTextY);
+                const wQtd = 50 * scale;
+                const wPlano = 260 * scale;
+                const wAparelho = 200 * scale;
+                const wValor = (tableWidthPt * scale) - (wQtd + wPlano + wAparelho);
+                ctx.textAlign = 'center';
+                ctx.fillText('Qtd', tableX + (wQtd / 2), headerTextY);
+                ctx.fillText('Plano', tableX + wQtd + (wPlano / 2), headerTextY);
+                ctx.fillText('Aparelho', tableX + wQtd + wPlano + (wAparelho / 2), headerTextY);
+                ctx.fillText('Valor', tableX + wQtd + wPlano + wAparelho + (wValor / 2), headerTextY);
+                ctx.textAlign = 'left';
                 const firstRowY = tableTopY + rowHeight + 4 * scale;
                 for (let i = 0; i < rowsToDraw; i++) {
                     const l = __linhas[i];
