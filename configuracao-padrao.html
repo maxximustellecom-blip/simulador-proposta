@@ -2616,6 +2616,7 @@
                 const height = pageSize.height;
                 const fontSizeTitulo = 14;
                 const fontSizeLinha = 7;
+                const fontSizePlano = 6;
                 const tableWidth = 570; // Largura da tabela
                 const marginLeft = (pageSize.width - tableWidth) / 2; // Centralizado com a tabela
                 let y = height - 60;
@@ -2745,9 +2746,9 @@
                     lastPage.drawText(tipoProduto, { x: xTipo, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(acessoTxt, { x: xAcesso, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
 
-                    lastPage.drawText(planoNome, { x: xPlano, y: textY1, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(ofertaNome, { x: xPlano, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(ofertaPreco, { x: xPlano, y: textY1 - (2 * lineGap), size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(planoNome, { x: xPlano, y: textY1, size: fontSizePlano, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(ofertaNome, { x: xPlano, y: textY1 - lineGap, size: fontSizePlano, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(ofertaPreco, { x: xPlano, y: textY1 - (2 * lineGap), size: fontSizePlano, font, color: rgb(0, 0, 0) });
 
                     lastPage.drawText(aparelhoNome, { x: xAparelho, y: textY1, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(aparelhoInfo, { x: xAparelho, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
@@ -2757,7 +2758,8 @@
                     lastPage.drawText(valorLinha, { x: xRight - valorTw, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                 }
                 
-                const yTotal = headerY - rowHeight - (rowsToDraw * rowHeight) - 10;
+                const footerRowY = headerY - rowHeight - (rowsToDraw * rowHeight);
+                const yTotal = footerRowY + (rowHeight - fontSizeLinha) / 2 - 2;
                 const totalLabel = 'Valor Total: ' + totalFormatado;
                 const totalTw = font.widthOfTextAtSize(totalLabel, fontSizeLinha);
                 lastPage.drawText(totalLabel, { x: xRight - totalTw, y: yTotal, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
@@ -2800,6 +2802,7 @@
                 const tableWidth = 570;
                 const fontSizeTitulo = 14;
                 const fontSizeLinha = 7;
+                const fontSizePlano = 6;
                 const marginLeft = (pageSize.width - tableWidth) / 2;
                 let y = height - 60;
                 lastPage.drawText('Proposta Comercial', { x: marginLeft, y, size: fontSizeTitulo, font, color: rgb(1, 1, 1) });
@@ -2896,9 +2899,9 @@
                     lastPage.drawText(tipoProduto, { x: xTipo, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
                     lastPage.drawText(acessoTxt, { x: xAcesso, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
 
-                    lastPage.drawText(planoNome, { x: xPlano, y: textY1, size: fontSizeLinha, font, color: rgb(0,0,0) });
-                    lastPage.drawText(ofertaNome, { x: xPlano, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
-                    lastPage.drawText(ofertaPreco, { x: xPlano, y: textY1 - (2 * lineGap), size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(planoNome, { x: xPlano, y: textY1, size: fontSizePlano, font, color: rgb(0,0,0) });
+                    lastPage.drawText(ofertaNome, { x: xPlano, y: textY1 - lineGap, size: fontSizePlano, font, color: rgb(0,0,0) });
+                    lastPage.drawText(ofertaPreco, { x: xPlano, y: textY1 - (2 * lineGap), size: fontSizePlano, font, color: rgb(0,0,0) });
 
                     lastPage.drawText(aparelhoNome, { x: xAparelho, y: textY1, size: fontSizeLinha, font, color: rgb(0,0,0) });
                     lastPage.drawText(aparelhoInfo, { x: xAparelho, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
@@ -2909,7 +2912,9 @@
                 }
                 const totalLabel = 'Valor Total: ' + totalFormatado;
                 const totalTw = font.widthOfTextAtSize(totalLabel, fontSizeLinha);
-                lastPage.drawText(totalLabel, { x: xRight - totalTw, y: headerY - rowHeight - (rowsToDraw * rowHeight) - 10, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                const footerRowY = headerY - rowHeight - (rowsToDraw * rowHeight);
+                const yTotal = footerRowY + (rowHeight - fontSizeLinha) / 2 - 2;
+                lastPage.drawText(totalLabel, { x: xRight - totalTw, y: yTotal, size: fontSizeLinha, font, color: rgb(0,0,0) });
                 const newPdf = await PDFDocument.create();
                 const [copied] = await newPdf.copyPages(pdfDoc, [pages.length - 1]);
                 newPdf.addPage(copied);
@@ -3060,9 +3065,12 @@
                     ctx.fillText(tipoProduto, xTipo, textY1 + lineGap);
                     ctx.fillText(acessoTxt, xAcesso, textY1 + lineGap);
 
+                    const prevFont = ctx.font;
+                    ctx.font = `${(fontLinha * 0.9)}px Arial`;
                     ctx.fillText(planoNome, xPlano, textY1);
                     ctx.fillText(ofertaNome, xPlano, textY1 + lineGap);
                     ctx.fillText(ofertaPreco, xPlano, textY1 + (2 * lineGap));
+                    ctx.font = prevFont;
 
                     ctx.fillText(aparelhoNome, xAparelho, textY1);
                     ctx.fillText(aparelhoInfo, xAparelho, textY1 + lineGap);
@@ -3073,8 +3081,13 @@
                 }
                 const totalLabel = 'Valor Total: ' + currency(totalGeral());
                 ctx.fillStyle = '#000000';
+                const prevAlign = ctx.textAlign;
+                const prevBaseline2 = ctx.textBaseline;
                 ctx.textAlign = 'right';
-                ctx.fillText(totalLabel, xRight, firstRowY + (rowsToDraw * rowHeight) + 4 * scale);
+                ctx.textBaseline = 'middle';
+                ctx.fillText(totalLabel, xRight, firstRowY + (rowsToDraw * rowHeight) + (rowHeight / 2));
+                ctx.textAlign = prevAlign;
+                ctx.textBaseline = prevBaseline2;
                 const url = canvas.toDataURL('image/png');
                 const a = document.createElement('a');
                 a.href = url;
