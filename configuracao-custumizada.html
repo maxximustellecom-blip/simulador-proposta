@@ -2239,9 +2239,10 @@
                     borderWidth: 0
                 });
 
+                const headerTextY = headerY + (rowHeight - headerSize) / 2 - 2;
                 const drawHeaderCenter = (text, cellX, cellW) => {
                     const tw = font.widthOfTextAtSize(text, headerSize);
-                    lastPage.drawText(text, { x: cellX + (cellW - tw) / 2, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(text, { x: cellX + (cellW - tw) / 2, y: headerTextY, size: headerSize, font, color: rgb(0, 0, 0) });
                 };
                 drawHeaderCenter('Qtd', tableX, wQtd);
                 drawHeaderCenter('Tipo', tableX + wQtd, wTipo);
@@ -2391,9 +2392,10 @@
                 const rectHeight = tableTopY - tableBottomY;
                 lastPage.drawRectangle({ x: tableX, y: tableBottomY, width: tableWidth, height: rectHeight, color: rgb(1,1,1), borderColor: rgb(0.85,0.85,0.85), borderWidth: 1 });
                 lastPage.drawRectangle({ x: tableX, y: headerY - 4, width: tableWidth, height: rowHeight + 4, color: rgb(0.95,0.95,0.95), borderColor: rgb(0.9,0.9,0.9), borderWidth: 0 });
+                const headerTextY = headerY + (rowHeight - headerSize) / 2 - 2;
                 const drawHeaderCenter = (text, cellX, cellW) => {
                     const tw = font.widthOfTextAtSize(text, headerSize);
-                    lastPage.drawText(text, { x: cellX + (cellW - tw) / 2, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
+                    lastPage.drawText(text, { x: cellX + (cellW - tw) / 2, y: headerTextY, size: headerSize, font, color: rgb(0,0,0) });
                 };
                 drawHeaderCenter('Qtd', tableX, wQtd);
                 drawHeaderCenter('Tipo', tableX + wQtd, wTipo);
@@ -2552,8 +2554,9 @@
                 ctx.fillRect(tableX, tableTopY, tableWidthPt * scale, rowHeight + 4 * scale);
                 ctx.fillStyle = '#000000';
                 ctx.font = `${fontLinha}px Arial`;
-                ctx.textBaseline = 'top';
-                const headerTextY = tableTopY + 4 * scale;
+                const prevBaseline = ctx.textBaseline;
+                ctx.textBaseline = 'middle';
+                const headerTextY = tableTopY + ((rowHeight + 4 * scale) / 2);
                 ctx.textAlign = 'center';
                 ctx.fillText('Qtd', tableX + (wQtd / 2), headerTextY);
                 ctx.fillText('Tipo', tableX + wQtd + (wTipo / 2), headerTextY);
@@ -2561,6 +2564,7 @@
                 ctx.fillText('Plano', tableX + wQtd + wTipo + wAcesso + (wPlano / 2), headerTextY);
                 ctx.fillText('Aparelho', tableX + wQtd + wTipo + wAcesso + wPlano + (wAparelho / 2), headerTextY);
                 ctx.fillText('Valor', tableX + wQtd + wTipo + wAcesso + wPlano + wAparelho + (wValor / 2), headerTextY);
+                ctx.textBaseline = prevBaseline;
                 const firstRowY = tableTopY + rowHeight + 4 * scale;
                 for (let i = 0; i < rowsToDraw; i++) {
                     const l = linhas[i];
