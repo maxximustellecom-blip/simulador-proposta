@@ -2262,7 +2262,7 @@
                     const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
                     const currentProd = currentProds.find(p => (p.nome || p.name) === l.plano);
                     const planoNome = String(l.categoria || '-');
-                    const ofertaNome = currentProd ? (currentProd.nome || currentProd.name || '-') : String(l.plano || '-');
+                    const ofertaNome = currentProd ? (currentProd.descricao || currentProd.name || '-') : String(l.plano || '-');
 
                     const precoFinalUnit = calcularPrecoFinal(l);
                     const ofertaPreco = currency(precoFinalUnit);
@@ -2416,7 +2416,7 @@
                     const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
                     const currentProd = currentProds.find(p => (p.nome || p.name) === l.plano);
                     const planoNome = String(l.categoria || '-');
-                    const ofertaNome = currentProd ? (currentProd.nome || currentProd.name || '-') : String(l.plano || '-');
+                    const ofertaNome = currentProd ? (currentProd.descricao || currentProd.name || '-') : String(l.plano || '-');
 
                     const precoFinalUnit = calcularPrecoFinal(l);
                     const ofertaPreco = currency(precoFinalUnit);
@@ -2581,7 +2581,7 @@
                     const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
                     const currentProd = currentProds.find(p => (p.nome || p.name) === l.plano);
                     const planoNome = String(l.categoria || '-');
-                    const ofertaNome = currentProd ? (currentProd.nome || currentProd.name || '-') : String(l.plano || '-');
+                    const ofertaNome = currentProd ? (currentProd.descricao || currentProd.name || '-') : String(l.plano || '-');
 
                     const precoFinalUnit = calcularPrecoFinal(l);
                     const ofertaPreco = currency(precoFinalUnit);
