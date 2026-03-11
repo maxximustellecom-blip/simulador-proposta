@@ -158,6 +158,13 @@
     <script>
         const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
         async function api(path, options = {}) {
+            window.__apiInflight = window.__apiInflight || new Map();
+            const method = String(options.method || 'GET').toUpperCase();
+            const bodyKey = typeof options.body === 'string' ? options.body : (options.body ? JSON.stringify(options.body) : '');
+            const inflightKey = method + ' ' + String(path || '') + ' ' + bodyKey;
+            if (method !== 'GET' && window.__apiInflight.has(inflightKey)) {
+                return window.__apiInflight.get(inflightKey);
+            }
             const authRaw = localStorage.getItem('authUser');
             let headers = { 'Content-Type': 'application/json' };
             try {
@@ -166,12 +173,20 @@
                 if (u && u.role) headers['x-user-role'] = String(u.role);
                 if (u && u.name) headers['x-user-name'] = String(u.name);
             } catch {}
-            const res = await fetch(API_BASE + path, { headers, ...options });
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.error || ('HTTP ' + res.status));
+            const run = (async () => {
+                const res = await fetch(API_BASE + path, { headers, ...options });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || ('HTTP ' + res.status));
+                }
+                return res.json();
+            })();
+            if (method !== 'GET') window.__apiInflight.set(inflightKey, run);
+            try {
+                return await run;
+            } finally {
+                if (method !== 'GET') window.__apiInflight.delete(inflightKey);
             }
-            return res.json();
         }
         function toast(msg, type) {
             const el = document.getElementById('toast');
@@ -651,14 +666,49 @@
                 
                 try {
                     if (__editingNegId) {
-                        await api('/negotiations/' + __editingNegId, { method: 'PUT', body: JSON.stringify(body) });
+                        const updated = await api('/negotiations/' + __editingNegId, { method: 'PUT', body: JSON.stringify(body) });
                         toast('Proposta atualizada com sucesso', 'success');
+                        const idx = (__negociacoes || []).findIndex(x => Number(x.id) === Number(__editingNegId));
+                        if (idx >= 0) {
+                            const prev = __negociacoes[idx] || {};
+                            __negociacoes[idx] = { ...prev, ...(updated || {}) };
+                            renderNegociacoesTable(__negociacoes);
+                        }
                     } else {
-                        await api('/negotiations', { method: 'POST', body: JSON.stringify(body) });
+                        const created = await api('/negotiations', { method: 'POST', body: JSON.stringify(body) });
                         toast('Proposta criada com sucesso', 'success');
+                        const createdId = created && created.id ? Number(created.id) : null;
+                        if (createdId) {
+                            let creatorObj = null;
+                            try {
+                                const auth = JSON.parse(localStorage.getItem('authUser') || '{}');
+                                const selCriador = document.getElementById('mCriadoPor');
+                                const optTxt = selCriador ? (selCriador.options[selCriador.selectedIndex]?.textContent || '') : '';
+                                const creatorId = body.creator_id ? Number(body.creator_id) : Number(auth && auth.id ? auth.id : 0);
+                                const creatorName = body.creator_id ? (optTxt || (auth && auth.name ? auth.name : '-')) : (auth && auth.name ? auth.name : '-');
+                                if (creatorId) creatorObj = { id: creatorId, name: creatorName };
+                            } catch {}
+                            
+                            const novoItem = {
+                                id: createdId,
+                                cnpj: created.cnpj || body.cnpj,
+                                tipo: created.tipo || body.tipo,
+                                proposta: created.proposta || body.proposta,
+                                valor: (created.valor !== undefined ? created.valor : null),
+                                status: created.status || body.status,
+                                data: created.data || '-',
+                                created_by: creatorObj ? creatorObj.id : null,
+                                creator: creatorObj,
+                                razaoSocial: body.razaoSocial || '',
+                                totalAcessos: 0
+                            };
+                            const existsIdx = (__negociacoes || []).findIndex(x => Number(x.id) === createdId);
+                            if (existsIdx >= 0) __negociacoes[existsIdx] = { ...__negociacoes[existsIdx], ...novoItem };
+                            else __negociacoes = [novoItem].concat(__negociacoes || []);
+                            renderNegociacoesTable(__negociacoes);
+                        }
                     }
                     closeModal();
-                    buscar();
                 } catch (e) {
                     toast('Erro ao salvar: ' + e.message, 'error');
                 } finally {

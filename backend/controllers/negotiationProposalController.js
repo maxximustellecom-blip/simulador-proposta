@@ -1,4 +1,4 @@
-import { Negotiation, NegociacaoProposta } from '../models/index.js';
+import { sequelize, Negotiation, NegociacaoProposta } from '../models/index.js';
 
 function canAccess(actor, negotiation) {
   if (!actor) return false;
@@ -35,9 +35,6 @@ export async function saveProposalForNegotiation(req, res) {
   try {
     const id = Number(req.params.id || 0);
     if (!id) return res.status(400).json({ error: 'id inválido' });
-    const negotiation = await Negotiation.findByPk(id);
-    if (!negotiation) return res.status(404).json({ error: 'negociação não encontrada' });
-    if (!canAccess(req.user, negotiation)) return res.status(403).json({ error: 'forbidden' });
     const { linhas, anotacoes } = req.body || {};
     if (!Array.isArray(linhas) || linhas.length === 0) return res.status(400).json({ error: 'linhas inválidas' });
     const total_acessos = linhas.reduce((acc, l) => acc + toNumber(l.quantidade, 0), 0);
@@ -47,25 +44,36 @@ export async function saveProposalForNegotiation(req, res) {
       const vAparelho = String(l.temAparelho) === 'Sim' ? toNumber(l.valorAparelho, 0) : 0;
       return acc + (q * vPlano) + (q * vAparelho);
     }, 0);
-    let prop = await NegociacaoProposta.findOne({ where: { negotiation_id: id } });
-    if (!prop) {
-      prop = await NegociacaoProposta.create({
-        negotiation_id: id,
-        linhas,
-        total_valor,
-        total_acessos,
-        anotacoes: anotacoes || null,
-        created_by: req.user ? req.user.id : null
-      });
-    } else {
-      prop.linhas = linhas;
-      prop.total_valor = total_valor;
-      prop.total_acessos = total_acessos;
-      if (anotacoes !== undefined) prop.anotacoes = anotacoes;
-      await prop.save();
-    }
-    negotiation.valor = total_valor;
-    await negotiation.save();
+    const result = await sequelize.transaction(async (t) => {
+      const negotiation = await Negotiation.findByPk(id, { transaction: t, lock: t.LOCK.UPDATE });
+      if (!negotiation) return { errorStatus: 404, errorBody: { error: 'negociação não encontrada' } };
+      if (!canAccess(req.user, negotiation)) return { errorStatus: 403, errorBody: { error: 'forbidden' } };
+
+      let prop = await NegociacaoProposta.findOne({ where: { negotiation_id: id }, transaction: t, lock: t.LOCK.UPDATE });
+      if (!prop) {
+        prop = await NegociacaoProposta.create({
+          negotiation_id: id,
+          linhas,
+          total_valor,
+          total_acessos,
+          anotacoes: anotacoes || null,
+          created_by: req.user ? req.user.id : null
+        }, { transaction: t });
+      } else {
+        prop.linhas = linhas;
+        prop.total_valor = total_valor;
+        prop.total_acessos = total_acessos;
+        if (anotacoes !== undefined) prop.anotacoes = anotacoes;
+        await prop.save({ transaction: t });
+      }
+
+      negotiation.valor = total_valor;
+      await negotiation.save({ transaction: t });
+      return { prop };
+    });
+
+    if (result && result.errorStatus) return res.status(result.errorStatus).json(result.errorBody);
+    const prop = result.prop;
     return res.status(200).json({
       negotiation_id: prop.negotiation_id,
       linhas: prop.linhas,
