@@ -2704,7 +2704,7 @@
                     const currentProd = currentProds.find(p => p.nome === l.plano);
                     
                     const planoNome = String(l.categoria || '-');
-                    const ofertaNome = currentProd ? (currentProd.descricao || currentProd.nome || '-') : String(l.plano || '-');
+                    const ofertaNome = currentProd ? (currentProd.nome || '-') : String(l.plano || '-');
                     const ofertaPreco = currency(currentProd ? (currentProd.preco || currentProd.valor || currentProd.valorPlano || l.valorPlano || 0) : (l.valorPlano || 0));
 
                     const linhaVal = totalLinha(l);
@@ -2859,7 +2859,7 @@
                     const currentProd = currentProds.find(p => p.nome === l.plano);
                     
                     const planoNome = String(l.categoria || '-');
-                    const ofertaNome = currentProd ? (currentProd.descricao || currentProd.nome || '-') : String(l.plano || '-');
+                    const ofertaNome = currentProd ? (currentProd.nome || '-') : String(l.plano || '-');
                     const ofertaPreco = currency(currentProd ? (currentProd.preco || currentProd.valor || currentProd.valorPlano || l.valorPlano || 0) : (l.valorPlano || 0));
 
                     const linhaVal = totalLinha(l);
@@ -3030,7 +3030,7 @@
                     const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
                     const currentProd = currentProds.find(p => p.nome === l.plano);
                     const planoNome = String(l.categoria || '-');
-                    const ofertaNome = currentProd ? (currentProd.descricao || currentProd.nome || '-') : String(l.plano || '-');
+                    const ofertaNome = currentProd ? (currentProd.nome || '-') : String(l.plano || '-');
                     const ofertaPreco = currency(currentProd ? (currentProd.preco || currentProd.valor || currentProd.valorPlano || l.valorPlano || 0) : (l.valorPlano || 0));
 
                     const linhaVal = totalLinha(l);
