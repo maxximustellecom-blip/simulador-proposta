@@ -209,6 +209,7 @@
         let __clients = [];
         let __negociacoes = [];
         let __editingNegId = null;
+        let __savingNegociacao = false;
         let __userRole = '';
         function statusClass(s) {
             const k = String(s || '').toLowerCase();
@@ -592,6 +593,7 @@
                 }
             } catch {}
             document.getElementById('novaNegociacaoBtn').addEventListener('click', () => {
+                __editingNegId = null;
                 setClienteSelected('');
                 // Default mTipo is handled by browser/load (first option) unless we force reset to first option explicitly
                 const mTipo = document.getElementById('mTipo');
@@ -620,13 +622,22 @@
                 buscar();
             });
             document.getElementById('mSalvar').addEventListener('click', async () => {
+                if (__savingNegociacao) return;
+                __savingNegociacao = true;
+                const btnSalvar = document.getElementById('mSalvar');
+                if (btnSalvar) btnSalvar.disabled = true;
                 const cliente = document.getElementById('mCliente').value;
                 const tipo = document.getElementById('mTipo').value;
                 const proposta = document.getElementById('mProposta').value;
                 const status = document.getElementById('mStatus').value;
                 const criadoPor = document.getElementById('mCriadoPor').value;
                 
-                if (!cliente) { toast('Selecione um cliente', 'error'); return; }
+                if (!cliente) {
+                    toast('Selecione um cliente', 'error');
+                    if (btnSalvar) btnSalvar.disabled = false;
+                    __savingNegociacao = false;
+                    return;
+                }
                 
                 const c = findClientByCnpj(cliente);
                 const body = {
@@ -650,6 +661,9 @@
                     buscar();
                 } catch (e) {
                     toast('Erro ao salvar: ' + e.message, 'error');
+                } finally {
+                    if (btnSalvar) btnSalvar.disabled = false;
+                    __savingNegociacao = false;
                 }
             });
             document.getElementById('mFechar').addEventListener('click', closeModal);
