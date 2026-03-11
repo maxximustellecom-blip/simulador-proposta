@@ -2701,10 +2701,23 @@
                     // Use description instead of name if available, otherwise use name
                     const currentCatObj = (__categorias || []).find(c => c.nome === l.categoria);
                     const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
-                    const currentProd = currentProds.find(p => p.nome === l.plano);
+                    let filteredProds = currentProds;
+                    const dddVal = String(l.ddd || '').trim();
+                    if (typeof filterPlansByDdd === 'function') {
+                        const tmp = filterPlansByDdd(currentProds, dddVal);
+                        if (Array.isArray(tmp) && tmp.length) filteredProds = tmp;
+                    }
+                    let currentProd = null;
+                    const planoRef = l.plano;
+                    const planoIdx = Number(planoRef);
+                    if (String(planoRef || '').trim() !== '' && Number.isInteger(planoIdx) && filteredProds[planoIdx]) {
+                        currentProd = filteredProds[planoIdx];
+                    }
+                    if (!currentProd) currentProd = filteredProds.find(p => p.nome === planoRef);
+                    if (!currentProd) currentProd = currentProds.find(p => p.nome === planoRef);
                     
                     const planoNome = String(l.categoria || '-');
-                    const ofertaNome = currentProd ? (currentProd.descricao || '-') : String(l.plano || '-');
+                    const ofertaNome = currentProd ? (currentProd.nome || '-') : String(planoRef || '-');
                     const ofertaPreco = currency(currentProd ? (currentProd.preco || currentProd.valor || currentProd.valorPlano || l.valorPlano || 0) : (l.valorPlano || 0));
 
                     const linhaVal = totalLinha(l);
@@ -2856,10 +2869,23 @@
                     // Use description instead of name if available, otherwise use name
                     const currentCatObj = (__categorias || []).find(c => c.nome === l.categoria);
                     const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
-                    const currentProd = currentProds.find(p => p.nome === l.plano);
+                    let filteredProds = currentProds;
+                    const dddVal = String(l.ddd || '').trim();
+                    if (typeof filterPlansByDdd === 'function') {
+                        const tmp = filterPlansByDdd(currentProds, dddVal);
+                        if (Array.isArray(tmp) && tmp.length) filteredProds = tmp;
+                    }
+                    let currentProd = null;
+                    const planoRef = l.plano;
+                    const planoIdx = Number(planoRef);
+                    if (String(planoRef || '').trim() !== '' && Number.isInteger(planoIdx) && filteredProds[planoIdx]) {
+                        currentProd = filteredProds[planoIdx];
+                    }
+                    if (!currentProd) currentProd = filteredProds.find(p => p.nome === planoRef);
+                    if (!currentProd) currentProd = currentProds.find(p => p.nome === planoRef);
                     
                     const planoNome = String(l.categoria || '-');
-                    const ofertaNome = currentProd ? (currentProd.descricao || '-') : String(l.plano || '-');
+                    const ofertaNome = currentProd ? (currentProd.nome || '-') : String(planoRef || '-');
                     const ofertaPreco = currency(currentProd ? (currentProd.preco || currentProd.valor || currentProd.valorPlano || l.valorPlano || 0) : (l.valorPlano || 0));
 
                     const linhaVal = totalLinha(l);
@@ -3028,9 +3054,22 @@
                     // Use description instead of name if available, otherwise use name
                     const currentCatObj = (__categorias || []).find(c => c.nome === l.categoria);
                     const currentProds = currentCatObj ? (__map[currentCatObj.id] || []) : [];
-                    const currentProd = currentProds.find(p => p.nome === l.plano);
+                    let filteredProds = currentProds;
+                    const dddVal = String(l.ddd || '').trim();
+                    if (typeof filterPlansByDdd === 'function') {
+                        const tmp = filterPlansByDdd(currentProds, dddVal);
+                        if (Array.isArray(tmp) && tmp.length) filteredProds = tmp;
+                    }
+                    let currentProd = null;
+                    const planoRef = l.plano;
+                    const planoIdx = Number(planoRef);
+                    if (String(planoRef || '').trim() !== '' && Number.isInteger(planoIdx) && filteredProds[planoIdx]) {
+                        currentProd = filteredProds[planoIdx];
+                    }
+                    if (!currentProd) currentProd = filteredProds.find(p => p.nome === planoRef);
+                    if (!currentProd) currentProd = currentProds.find(p => p.nome === planoRef);
                     const planoNome = String(l.categoria || '-');
-                    const ofertaNome = currentProd ? (currentProd.descricao || '-') : String(l.plano || '-');
+                    const ofertaNome = currentProd ? (currentProd.nome || '-') : String(planoRef || '-');
                     const ofertaPreco = currency(currentProd ? (currentProd.preco || currentProd.valor || currentProd.valorPlano || l.valorPlano || 0) : (l.valorPlano || 0));
 
                     const linhaVal = totalLinha(l);
