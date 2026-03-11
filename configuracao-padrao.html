@@ -2633,10 +2633,19 @@
                 y -= 8;
                 const headerY = y;
                 const tableX = marginLeft; // Tabela centralizada (mesmo X do texto)
-                const colQtdX = tableX + 8;
-                const colPlanoX = tableX + 60;
-                const colAparelhoX = tableX + 320;
-                const colValorX = tableX + 520;
+                const wQtd = 40;
+                const wTipo = 70;
+                const wAcesso = 110;
+                const wPlano = 180;
+                const wAparelho = 120;
+                const wValor = tableWidth - (wQtd + wTipo + wAcesso + wPlano + wAparelho);
+                const padX = 8;
+                const xQtd = tableX + padX;
+                const xTipo = tableX + wQtd + padX;
+                const xAcesso = tableX + wQtd + wTipo + padX;
+                const xPlano = tableX + wQtd + wTipo + wAcesso + padX;
+                const xAparelho = tableX + wQtd + wTipo + wAcesso + wPlano + padX;
+                const xRight = tableX + tableWidth - padX;
                 
                 const rowHeight = 30;
                 const headerSize = 8;
@@ -2670,18 +2679,16 @@
                     borderWidth: 0 // Sem borda ou borda sutil
                 });
 
-                const wQtd = 50;
-                const wPlano = 260;
-                const wAparelho = 200;
-                const wValor = tableWidth - (wQtd + wPlano + wAparelho);
                 const drawHeaderCenter = (text, cellX, cellW) => {
                     const tw = font.widthOfTextAtSize(text, headerSize);
                     lastPage.drawText(text, { x: cellX + (cellW - tw) / 2, y: headerY, size: headerSize, font, color: rgb(0, 0, 0) });
                 };
                 drawHeaderCenter('Qtd', tableX, wQtd);
-                drawHeaderCenter('Plano', tableX + wQtd, wPlano);
-                drawHeaderCenter('Aparelho', tableX + wQtd + wPlano, wAparelho);
-                drawHeaderCenter('Valor', tableX + wQtd + wPlano + wAparelho, wValor);
+                drawHeaderCenter('Tipo', tableX + wQtd, wTipo);
+                drawHeaderCenter('DDD/Núm/Op', tableX + wQtd + wTipo, wAcesso);
+                drawHeaderCenter('Plano', tableX + wQtd + wTipo + wAcesso, wPlano);
+                drawHeaderCenter('Aparelho', tableX + wQtd + wTipo + wAcesso + wPlano, wAparelho);
+                drawHeaderCenter('Valor', tableX + wQtd + wTipo + wAcesso + wPlano + wAparelho, wValor);
 
                 let totalSoma = 0;
                 
@@ -2700,6 +2707,12 @@
 
                     const linhaVal = totalLinha(l);
                     const valorLinha = currency(linhaVal);
+                    const tipoProduto = (currentProd && currentProd.tipos) ? currentProd.tipos : 'A DEFINIR';
+                    const ddd = String(l.ddd || '').trim();
+                    const numero = String(l.numero || '').trim();
+                    const op = String(l.operadoraDoadora || '').trim();
+                    const acesso = [ddd, numero].filter(Boolean).join(' ') + (op ? (' - ' + op) : '');
+                    const acessoTxt = acesso || '-';
                     
                     let aparelhoNome = '-';
                     let aparelhoInfo = '-';
@@ -2727,22 +2740,26 @@
 
                     const lineGap = 9;
                     const textY1 = rowY + rowHeight - 10;
-                    lastPage.drawText(qtd, { x: colQtdX, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(qtd, { x: xQtd, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(tipoProduto, { x: xTipo, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(acessoTxt, { x: xAcesso, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
 
-                    lastPage.drawText(planoNome, { x: colPlanoX, y: textY1, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(ofertaNome, { x: colPlanoX, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(ofertaPreco, { x: colPlanoX, y: textY1 - (2 * lineGap), size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(planoNome, { x: xPlano, y: textY1, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(ofertaNome, { x: xPlano, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(ofertaPreco, { x: xPlano, y: textY1 - (2 * lineGap), size: fontSizeLinha, font, color: rgb(0, 0, 0) });
 
-                    lastPage.drawText(aparelhoNome, { x: colAparelhoX, y: textY1, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(aparelhoInfo, { x: colAparelhoX, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(aparelhoValor, { x: colAparelhoX, y: textY1 - (2 * lineGap), size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(aparelhoNome, { x: xAparelho, y: textY1, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(aparelhoInfo, { x: xAparelho, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(aparelhoValor, { x: xAparelho, y: textY1 - (2 * lineGap), size: fontSizeLinha, font, color: rgb(0, 0, 0) });
 
-                    lastPage.drawText(valorLinha, { x: colValorX, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    const valorTw = font.widthOfTextAtSize(valorLinha, fontSizeLinha);
+                    lastPage.drawText(valorLinha, { x: xRight - valorTw, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                 }
                 
                 const yTotal = headerY - rowHeight - (rowsToDraw * rowHeight) - 10;
                 const totalLabel = 'Valor Total: ' + totalFormatado;
-                lastPage.drawText(totalLabel, { x: colValorX - 60, y: yTotal, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                const totalTw = font.widthOfTextAtSize(totalLabel, fontSizeLinha);
+                lastPage.drawText(totalLabel, { x: xRight - totalTw, y: yTotal, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
@@ -2794,10 +2811,19 @@
                 y -= 8;
                 const headerY = y;
                 const tableX = marginLeft;
-                const colQtdX = tableX + 8;
-                const colPlanoX = tableX + 60;
-                const colAparelhoX = tableX + 320;
-                const colValorX = tableX + 520;
+                const wQtd = 40;
+                const wTipo = 70;
+                const wAcesso = 110;
+                const wPlano = 180;
+                const wAparelho = 120;
+                const wValor = tableWidth - (wQtd + wTipo + wAcesso + wPlano + wAparelho);
+                const padX = 8;
+                const xQtd = tableX + padX;
+                const xTipo = tableX + wQtd + padX;
+                const xAcesso = tableX + wQtd + wTipo + padX;
+                const xPlano = tableX + wQtd + wTipo + wAcesso + padX;
+                const xAparelho = tableX + wQtd + wTipo + wAcesso + wPlano + padX;
+                const xRight = tableX + tableWidth - padX;
                 const rowHeight = 30;
                 const headerSize = 8;
                 const maxRows = Math.max(Math.floor((headerY - 60) / rowHeight) - 2, 0);
@@ -2808,18 +2834,16 @@
                 const rectHeight = tableTopY - tableBottomY;
                 lastPage.drawRectangle({ x: tableX, y: tableBottomY, width: tableWidth, height: rectHeight, color: rgb(1,1,1), borderColor: rgb(0.85,0.85,0.85), borderWidth: 1 });
                 lastPage.drawRectangle({ x: tableX, y: headerY - 4, width: tableWidth, height: rowHeight + 4, color: rgb(0.95,0.95,0.95), borderColor: rgb(0.9,0.9,0.9), borderWidth: 0 });
-                const wQtd = 50;
-                const wPlano = 260;
-                const wAparelho = 200;
-                const wValor = tableWidth - (wQtd + wPlano + wAparelho);
                 const drawHeaderCenter = (text, cellX, cellW) => {
                     const tw = font.widthOfTextAtSize(text, headerSize);
                     lastPage.drawText(text, { x: cellX + (cellW - tw) / 2, y: headerY, size: headerSize, font, color: rgb(0,0,0) });
                 };
                 drawHeaderCenter('Qtd', tableX, wQtd);
-                drawHeaderCenter('Plano', tableX + wQtd, wPlano);
-                drawHeaderCenter('Aparelho', tableX + wQtd + wPlano, wAparelho);
-                drawHeaderCenter('Valor', tableX + wQtd + wPlano + wAparelho, wValor);
+                drawHeaderCenter('Tipo', tableX + wQtd, wTipo);
+                drawHeaderCenter('DDD/Núm/Op', tableX + wQtd + wTipo, wAcesso);
+                drawHeaderCenter('Plano', tableX + wQtd + wTipo + wAcesso, wPlano);
+                drawHeaderCenter('Aparelho', tableX + wQtd + wTipo + wAcesso + wPlano, wAparelho);
+                drawHeaderCenter('Valor', tableX + wQtd + wTipo + wAcesso + wPlano + wAparelho, wValor);
                 for (let i = 0; i < rowsToDraw; i++) {
                     const l = __linhas[i];
                     const qtd = String(l.quantidade || 1);
@@ -2835,6 +2859,12 @@
 
                     const linhaVal = totalLinha(l);
                     const valorLinha = currency(linhaVal);
+                    const tipoProduto = (currentProd && currentProd.tipos) ? currentProd.tipos : 'A DEFINIR';
+                    const ddd = String(l.ddd || '').trim();
+                    const numero = String(l.numero || '').trim();
+                    const op = String(l.operadoraDoadora || '').trim();
+                    const acesso = [ddd, numero].filter(Boolean).join(' ') + (op ? (' - ' + op) : '');
+                    const acessoTxt = acesso || '-';
                     
                     let aparelhoNome = '-';
                     let aparelhoInfo = '-';
@@ -2860,20 +2890,24 @@
 
                     const lineGap = 9;
                     const textY1 = rowY + rowHeight - 10;
-                    lastPage.drawText(qtd, { x: colQtdX, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(qtd, { x: xQtd, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(tipoProduto, { x: xTipo, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(acessoTxt, { x: xAcesso, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
 
-                    lastPage.drawText(planoNome, { x: colPlanoX, y: textY1, size: fontSizeLinha, font, color: rgb(0,0,0) });
-                    lastPage.drawText(ofertaNome, { x: colPlanoX, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
-                    lastPage.drawText(ofertaPreco, { x: colPlanoX, y: textY1 - (2 * lineGap), size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(planoNome, { x: xPlano, y: textY1, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(ofertaNome, { x: xPlano, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(ofertaPreco, { x: xPlano, y: textY1 - (2 * lineGap), size: fontSizeLinha, font, color: rgb(0,0,0) });
 
-                    lastPage.drawText(aparelhoNome, { x: colAparelhoX, y: textY1, size: fontSizeLinha, font, color: rgb(0,0,0) });
-                    lastPage.drawText(aparelhoInfo, { x: colAparelhoX, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
-                    lastPage.drawText(aparelhoValor, { x: colAparelhoX, y: textY1 - (2 * lineGap), size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(aparelhoNome, { x: xAparelho, y: textY1, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(aparelhoInfo, { x: xAparelho, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(aparelhoValor, { x: xAparelho, y: textY1 - (2 * lineGap), size: fontSizeLinha, font, color: rgb(0,0,0) });
 
-                    lastPage.drawText(valorLinha, { x: colValorX, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    const valorTw = font.widthOfTextAtSize(valorLinha, fontSizeLinha);
+                    lastPage.drawText(valorLinha, { x: xRight - valorTw, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
                 }
                 const totalLabel = 'Valor Total: ' + totalFormatado;
-                lastPage.drawText(totalLabel, { x: colValorX - 60, y: headerY - rowHeight - (rowsToDraw * rowHeight) - 10, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                const totalTw = font.widthOfTextAtSize(totalLabel, fontSizeLinha);
+                lastPage.drawText(totalLabel, { x: xRight - totalTw, y: headerY - rowHeight - (rowsToDraw * rowHeight) - 10, size: fontSizeLinha, font, color: rgb(0,0,0) });
                 const newPdf = await PDFDocument.create();
                 const [copied] = await newPdf.copyPages(pdfDoc, [pages.length - 1]);
                 newPdf.addPage(copied);
@@ -2940,10 +2974,19 @@
                 // Reset fill style for table content
                 ctx.fillStyle = '#000000';
                 const tableX = marginLeftPt * scale;
-                const colQtdX = tableX + 8 * scale;
-                const colPlanoX = tableX + 60 * scale;
-                const colAparelhoX = tableX + 320 * scale;
-                const colValorX = tableX + 520 * scale;
+                const wQtd = 40 * scale;
+                const wTipo = 70 * scale;
+                const wAcesso = 110 * scale;
+                const wPlano = 180 * scale;
+                const wAparelho = 120 * scale;
+                const wValor = (tableWidthPt * scale) - (wQtd + wTipo + wAcesso + wPlano + wAparelho);
+                const padX = 8 * scale;
+                const xQtd = tableX + padX;
+                const xTipo = tableX + wQtd + padX;
+                const xAcesso = tableX + wQtd + wTipo + padX;
+                const xPlano = tableX + wQtd + wTipo + wAcesso + padX;
+                const xAparelho = tableX + wQtd + wTipo + wAcesso + wPlano + padX;
+                const xRight = tableX + (tableWidthPt * scale) - padX;
                 const rowHeight = 30 * scale;
                 const tableTopY = y + 8 * scale;
                 const availableHeightPx = Math.max((heightPt * scale) - tableTopY - 60 * scale, 0);
@@ -2961,16 +3004,13 @@
                 ctx.font = `${fontLinha}px Arial`;
                 ctx.textBaseline = 'top';
                 const headerTextY = tableTopY + 4 * scale;
-                const wQtd = 50 * scale;
-                const wPlano = 260 * scale;
-                const wAparelho = 200 * scale;
-                const wValor = (tableWidthPt * scale) - (wQtd + wPlano + wAparelho);
                 ctx.textAlign = 'center';
                 ctx.fillText('Qtd', tableX + (wQtd / 2), headerTextY);
-                ctx.fillText('Plano', tableX + wQtd + (wPlano / 2), headerTextY);
-                ctx.fillText('Aparelho', tableX + wQtd + wPlano + (wAparelho / 2), headerTextY);
-                ctx.fillText('Valor', tableX + wQtd + wPlano + wAparelho + (wValor / 2), headerTextY);
-                ctx.textAlign = 'left';
+                ctx.fillText('Tipo', tableX + wQtd + (wTipo / 2), headerTextY);
+                ctx.fillText('DDD/Núm/Op', tableX + wQtd + wTipo + (wAcesso / 2), headerTextY);
+                ctx.fillText('Plano', tableX + wQtd + wTipo + wAcesso + (wPlano / 2), headerTextY);
+                ctx.fillText('Aparelho', tableX + wQtd + wTipo + wAcesso + wPlano + (wAparelho / 2), headerTextY);
+                ctx.fillText('Valor', tableX + wQtd + wTipo + wAcesso + wPlano + wAparelho + (wValor / 2), headerTextY);
                 const firstRowY = tableTopY + rowHeight + 4 * scale;
                 for (let i = 0; i < rowsToDraw; i++) {
                     const l = __linhas[i];
@@ -2986,6 +3026,12 @@
 
                     const linhaVal = totalLinha(l);
                     const valorLinha = currency(linhaVal);
+                    const tipoProduto = (currentProd && currentProd.tipos) ? currentProd.tipos : 'A DEFINIR';
+                    const ddd = String(l.ddd || '').trim();
+                    const numero = String(l.numero || '').trim();
+                    const op = String(l.operadoraDoadora || '').trim();
+                    const acesso = [ddd, numero].filter(Boolean).join(' ') + (op ? (' - ' + op) : '');
+                    const acessoTxt = acesso || '-';
 
                     let aparelhoNome = '-';
                     let aparelhoInfo = '-';
@@ -3005,22 +3051,26 @@
 
                     const lineGap = 9 * scale;
                     const textY1 = rowY + 4 * scale;
+                    ctx.textAlign = 'left';
+                    ctx.fillText(qtd, xQtd, textY1 + lineGap);
+                    ctx.fillText(tipoProduto, xTipo, textY1 + lineGap);
+                    ctx.fillText(acessoTxt, xAcesso, textY1 + lineGap);
 
-                    ctx.fillText(qtd, colQtdX, textY1 + lineGap);
+                    ctx.fillText(planoNome, xPlano, textY1);
+                    ctx.fillText(ofertaNome, xPlano, textY1 + lineGap);
+                    ctx.fillText(ofertaPreco, xPlano, textY1 + (2 * lineGap));
 
-                    ctx.fillText(planoNome, colPlanoX, textY1);
-                    ctx.fillText(ofertaNome, colPlanoX, textY1 + lineGap);
-                    ctx.fillText(ofertaPreco, colPlanoX, textY1 + (2 * lineGap));
+                    ctx.fillText(aparelhoNome, xAparelho, textY1);
+                    ctx.fillText(aparelhoInfo, xAparelho, textY1 + lineGap);
+                    ctx.fillText(aparelhoValor, xAparelho, textY1 + (2 * lineGap));
 
-                    ctx.fillText(aparelhoNome, colAparelhoX, textY1);
-                    ctx.fillText(aparelhoInfo, colAparelhoX, textY1 + lineGap);
-                    ctx.fillText(aparelhoValor, colAparelhoX, textY1 + (2 * lineGap));
-
-                    ctx.fillText(valorLinha, colValorX, textY1 + lineGap);
+                    ctx.textAlign = 'right';
+                    ctx.fillText(valorLinha, xRight, textY1 + lineGap);
                 }
                 const totalLabel = 'Valor Total: ' + currency(totalGeral());
                 ctx.fillStyle = '#000000';
-                ctx.fillText(totalLabel, colValorX - 60 * scale, firstRowY + (rowsToDraw * rowHeight) + 4 * scale);
+                ctx.textAlign = 'right';
+                ctx.fillText(totalLabel, xRight, firstRowY + (rowsToDraw * rowHeight) + 4 * scale);
                 const url = canvas.toDataURL('image/png');
                 const a = document.createElement('a');
                 a.href = url;
