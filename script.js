@@ -29,6 +29,7 @@
       '</div>' +
       '<div style="display:flex; align-items:center; gap:0.75rem;">' +
         '<button id="themeToggle" class="theme-toggle" type="button" title="Alternar tema"><i class="icon-sun" data-lucide="sun"></i><i class="icon-moon" data-lucide="moon"></i></button>' +
+        '<button id="notificationDisableBtn" class="btn btn-ghost" type="button" title="Desativar alerta" style="display:none; border-color: rgba(239,68,68,0.35); color:#FCA5A5;"><i data-lucide="bell-off"></i><span>Desativar alerta</span></button>' +
         '<div class="notification-container">' +
           '<button id="notificationBtn" class="notification-btn" type="button" title="Notificações"><i data-lucide="bell"></i></button>' +
           '<div id="notificationMenu" class="notification-menu">' +
@@ -271,12 +272,19 @@
   var notifMenu = document.getElementById('notificationMenu');
   var notifList = document.getElementById('notificationList');
   var notifSoundBtn = document.getElementById('notificationSoundBtn');
+  var notifDisableBtn = document.getElementById('notificationDisableBtn');
   var notifSound = null;
   var activeAlertKey = null;
   var activeAlertAtMs = null;
   var dismissedAlertKeys = {};
   var soundNeedsGesture = false;
   var soundUnlockBound = false;
+
+  function setDisableButtonVisible(isVisible) {
+    if (!notifDisableBtn) return;
+    notifDisableBtn.style.display = isVisible ? 'inline-flex' : 'none';
+    if (isVisible && window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+  }
 
   function setSoundButton(mode) {
     if (!notifSoundBtn) return;
@@ -337,6 +345,7 @@
     if (activeAlertKey === candidate.key && notifSound && !notifSound.paused) return;
     activeAlertKey = candidate.key;
     activeAlertAtMs = candidate.atMs;
+    setDisableButtonVisible(true);
 
     if (!notifSound) {
       notifSound = new Audio('som.mp3');
@@ -377,6 +386,7 @@
     activeAlertAtMs = null;
     soundNeedsGesture = false;
     setSoundButton('hidden');
+    setDisableButtonVisible(false);
   }
 
   function tickAlert(data) {
@@ -429,6 +439,13 @@
     try {
       setInterval(loadNotifications, 30000);
     } catch {}
+
+    if (notifDisableBtn) {
+      notifDisableBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        stopSound({ manual: true });
+      });
+    }
 
     if (notifSoundBtn) {
       notifSoundBtn.addEventListener('click', function (e) {
