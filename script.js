@@ -34,6 +34,7 @@
           '<div id="notificationMenu" class="notification-menu">' +
             '<div class="notification-header">' +
               '<span>Notificações</span>' +
+              '<button id="notificationSoundBtn" class="btn btn-ghost btn-icon" type="button" title="Parar som" style="display:none; padding:0.35rem; border-radius:10px;"><i data-lucide="volume-x"></i></button>' +
             '</div>' +
             '<div id="notificationList" class="notification-list">' +
               '<div style="padding:1rem;text-align:center;color:var(--muted)">Carregando...</div>' +
@@ -269,6 +270,125 @@
   var notifBtn = document.getElementById('notificationBtn');
   var notifMenu = document.getElementById('notificationMenu');
   var notifList = document.getElementById('notificationList');
+  var notifSoundBtn = document.getElementById('notificationSoundBtn');
+  var notifSound = null;
+  var activeAlertKey = null;
+  var activeAlertAtMs = null;
+  var dismissedAlertKeys = {};
+  var soundNeedsGesture = false;
+  var soundUnlockBound = false;
+
+  function setSoundButton(mode) {
+    if (!notifSoundBtn) return;
+    if (mode === 'hidden') {
+      notifSoundBtn.style.display = 'none';
+      return;
+    }
+    notifSoundBtn.style.display = 'inline-flex';
+    if (mode === 'enable') {
+      notifSoundBtn.title = 'Ativar som';
+      notifSoundBtn.innerHTML = '<i data-lucide="volume-2"></i>';
+    } else {
+      notifSoundBtn.title = 'Parar som';
+      notifSoundBtn.innerHTML = '<i data-lucide="volume-x"></i>';
+    }
+    if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+  }
+
+  function getApptMs(item) {
+    try {
+      var d = String(item && item.date ? item.date : '');
+      var tRaw = String(item && item.time ? item.time : '');
+      if (!d) return null;
+      var t = tRaw ? tRaw.slice(0, 8) : '';
+      if (!t) return null;
+      if (/^\d{2}:\d{2}$/.test(t)) t = t + ':00';
+      var ms = new Date(d + 'T' + t).getTime();
+      return isFinite(ms) ? ms : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function getAlertCandidate(data) {
+    var now = Date.now();
+    var best = null;
+    var bestDiff = null;
+    for (var i = 0; i < (data || []).length; i++) {
+      var item = data[i];
+      if (item && item.finalizado) continue;
+      var ms = getApptMs(item);
+      if (!ms) continue;
+      var diffMs = ms - now;
+      if (diffMs <= 0) continue;
+      if (diffMs > 180000) continue;
+      var key = String(item.id || (String(item.date || '') + '_' + String(item.time || '') + '_' + String(item.title || '')));
+      if (dismissedAlertKeys[key]) continue;
+      if (bestDiff === null || diffMs < bestDiff) {
+        best = { item: item, key: key, atMs: ms, diffMs: diffMs };
+        bestDiff = diffMs;
+      }
+    }
+    return best;
+  }
+
+  async function startSoundFor(candidate) {
+    if (!candidate) return;
+    if (activeAlertKey === candidate.key && notifSound && !notifSound.paused) return;
+    activeAlertKey = candidate.key;
+    activeAlertAtMs = candidate.atMs;
+
+    if (!notifSound) {
+      notifSound = new Audio('som.mp3');
+      notifSound.loop = true;
+    }
+    soundNeedsGesture = false;
+    setSoundButton('stop');
+
+    try {
+      notifSound.currentTime = 0;
+      await notifSound.play();
+      setSoundButton('stop');
+    } catch (e) {
+      soundNeedsGesture = true;
+      setSoundButton('enable');
+      if (!soundUnlockBound) {
+        soundUnlockBound = true;
+        var unlock = function () {
+          soundUnlockBound = false;
+          if (soundNeedsGesture && activeAlertKey && activeAlertAtMs) {
+            startSoundFor({ key: activeAlertKey, atMs: activeAlertAtMs });
+          }
+        };
+        try { document.addEventListener('click', unlock, { once: true, capture: true }); } catch {}
+        try { document.addEventListener('keydown', unlock, { once: true, capture: true }); } catch {}
+      }
+    }
+  }
+
+  function stopSound(opts) {
+    var isManual = opts && opts.manual;
+    if (isManual && activeAlertKey) dismissedAlertKeys[activeAlertKey] = true;
+    if (notifSound) {
+      try { notifSound.pause(); } catch {}
+      try { notifSound.currentTime = 0; } catch {}
+    }
+    activeAlertKey = null;
+    activeAlertAtMs = null;
+    soundNeedsGesture = false;
+    setSoundButton('hidden');
+  }
+
+  function tickAlert(data) {
+    var now = Date.now();
+    if (activeAlertAtMs && now >= activeAlertAtMs) {
+      stopSound({ manual: false });
+      return;
+    }
+    var candidate = getAlertCandidate(data || []);
+    if (!candidate) return;
+    startSoundFor(candidate);
+  }
 
   async function loadNotifications() {
     if (!notifList) return;
@@ -277,6 +397,7 @@
       var response = await fetch('https://others-maxximus-backend.pvuzyy.easypanel.host/appointments?from=' + today + '&to=' + today);
       if (!response.ok) throw new Error('Erro ao buscar');
       var data = await response.json();
+      tickAlert(data || []);
       
       if (data.length === 0) {
         notifList.innerHTML = '<div class="notification-empty">Nenhum compromisso para hoje.</div>';
@@ -305,6 +426,23 @@
   if (notifBtn && notifMenu) {
     // Load on init
     loadNotifications();
+    try {
+      setInterval(loadNotifications, 30000);
+    } catch {}
+
+    if (notifSoundBtn) {
+      notifSoundBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (soundNeedsGesture) {
+          if (activeAlertKey && activeAlertAtMs) {
+            startSoundFor({ key: activeAlertKey, atMs: activeAlertAtMs });
+          }
+          return;
+        }
+        stopSound({ manual: true });
+      });
+    }
 
     notifBtn.addEventListener('click', function(e) {
       e.stopPropagation();
