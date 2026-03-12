@@ -38,6 +38,8 @@ export const startScheduler = () => {
 
       const { todayStr, nowHHMM, prevHHMM } = getNowStrings();
 
+      console.log(`[Scheduler] Verificando compromissos para ${todayStr} às ${nowHHMM} (antes de ${prevHHMM})`);
+
       const dueToday = await Appointment.findAll({
         where: {
           date: todayStr,
