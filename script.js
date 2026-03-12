@@ -50,7 +50,14 @@
   var sidebarHtml =
     '<nav class="sidebar">' +
       '<div class="sidebar-inner">' +
-        '<div class="brand-mini"><i data-lucide="zap"></i><span>Maxximus</span></div>' +
+        '<div class="sidebar-logo">' +
+          '<img class="telecom-logo telecom-logo--light" src="TELECOM%20PRETA.png" alt="TELECOM">' +
+          '<img class="telecom-logo telecom-logo--dark" src="TELECOM%20BRANCA.png" alt="TELECOM">' +
+          '<div class="sidebar-logo-text">' +
+            '<div class="sidebar-logo-title">MAXXIMUS</div>' +
+            '<div class="sidebar-logo-subtitle">TELECOM</div>' +
+          '</div>' +
+        '</div>' +
         '<div class="nav-title" style="display: none;">Principal</div>' +
         '<div class="nav-group">' +
           '<a href="quadro-vendas.html" class="nav-link' + (isActive('quadro-vendas') ? ' active' : '') + '"><i data-lucide="layout-dashboard"></i><span>Quadro de Vendas</span></a>' +
