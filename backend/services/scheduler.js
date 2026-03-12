@@ -3,9 +3,11 @@ import axios from 'axios';
 import { Appointment, User } from '../models/index.js';
 import { Op } from 'sequelize';
 
-const ZAPI_URL = 'https://api.z-api.io/instances/3CE4B754983A50C28047EEE17BD0D626/token/292527328B6AC28FA057BFE5/send-text';
-const ZAPI_TOKEN = 'Fa9be4d3c3cff47cb84b5d28e5ce3d58aS';
-const SCHEDULER_TZ = 'America/Sao_Paulo';
+const ZAPI_URL =
+  process.env.ZAPI_URL ||
+  'https://api.z-api.io/instances/3CE4B754983A50C28047EEE17BD0D626/token/292527328B6AC28FA057BFE5/send-text';
+const ZAPI_TOKEN = process.env.ZAPI_TOKEN || 'Fa9be4d3c3cff47cb84b5d28e5ce3d58aS';
+const SCHEDULER_TZ = process.env.SCHEDULER_TZ || 'America/Sao_Paulo';
 
 export const startScheduler = () => {
   // Executa a cada 1 minuto
@@ -40,48 +42,68 @@ export const startScheduler = () => {
 
       console.log(`[Scheduler] Verificando compromissos para ${todayStr} às ${nowHHMM} (antes de ${prevHHMM})`);
 
-      const dueToday = await Appointment.findAll({
-        where: {
-          date: todayStr,
-          [Op.or]: [{ notified_day: false }, { notified_day: { [Op.is]: null } }]
-        },
-        include: [{ model: User, as: 'user' }]
-      });
+      const windowEnd = addDays(todayStr, 366);
 
-      const beforeWindowEnd = addDays(todayStr, 366);
-      const dueBefore = await Appointment.findAll({
-        where: {
-          date: { [Op.between]: [todayStr, beforeWindowEnd] },
-          [Op.and]: [
-            { [Op.or]: [{ notified_before: false }, { notified_before: { [Op.is]: null } }] },
-            { [Op.or]: [{ dias_antecedencia: { [Op.gt]: 0 } }, { dias_antecedencia: { [Op.is]: null } }] }
-          ]
-        },
-        include: [{ model: User, as: 'user' }]
-      });
+      const whereBase = {
+        date: { [Op.between]: [todayStr, windowEnd] },
+        [Op.and]: [
+          {
+            [Op.or]: [
+              { notified_day: false },
+              { notified_before: false },
+              { notified_day: { [Op.is]: null } },
+              { notified_before: { [Op.is]: null } }
+            ]
+          }
+        ]
+      };
 
-      const sendNotification = async ({ appt, kind, daysOut }) => {
+      let candidates;
+      try {
+        candidates = await Appointment.findAll({
+          where: {
+            ...whereBase,
+            [Op.and]: [
+              ...(Array.isArray(whereBase[Op.and]) ? whereBase[Op.and] : []),
+              { [Op.or]: [{ finalizado: false }, { finalizado: { [Op.is]: null } }] }
+            ]
+          },
+          include: [{ model: User, as: 'user' }]
+        });
+      } catch (e) {
+        const code = e?.original?.code || e?.parent?.code || e?.code;
+        const msg = String(e?.original?.sqlMessage || e?.message || '');
+        const isMissingFinalizadoColumn = code === 'ER_BAD_FIELD_ERROR' && msg.toLowerCase().includes('finalizado');
+        if (!isMissingFinalizadoColumn) throw e;
+
+        candidates = await Appointment.findAll({
+          where: whereBase,
+          include: [{ model: User, as: 'user' }]
+        });
+      }
+
+      const sendNotification = async ({ appt, daysOut, markDay, markBefore }) => {
         const userName = appt.user ? appt.user.name : 'Usuário';
-        // User requested to use the user's phone, not admin's
         let targetPhone = appt.user ? appt.user.celular : null;
 
         if (!targetPhone) {
-            console.log(`[Scheduler] Usuário sem celular para compromisso ${appt.id}.`);
-            return;
+          console.log(`[Scheduler] Usuário sem celular para compromisso ${appt.id}.`);
+          return;
         }
 
-        // Basic cleaning
         targetPhone = targetPhone.replace(/\D/g, '');
-        // Add DDI 55 if missing (assuming BR numbers 10-11 digits)
         if (targetPhone.length >= 10 && targetPhone.length <= 11) {
-            targetPhone = '55' + targetPhone;
+          targetPhone = '55' + targetPhone;
         }
 
         const timeHHMM = normalizeTimeHHMM(appt.time);
         const dateLabel = String(appt.date || '');
-        const whenLabel = kind === 'day'
-          ? `hoje (${dateLabel})`
-          : (daysOut === 1 ? `amanhã (${dateLabel})` : `daqui ${daysOut} dias (${dateLabel})`);
+        const whenLabel =
+          daysOut === 0
+            ? `hoje (${dateLabel})`
+            : daysOut === 1
+              ? `amanhã (${dateLabel})`
+              : `daqui ${daysOut} dias (${dateLabel})`;
         const message = `Olá ${userName}, lembrete de compromisso para ${whenLabel} às ${timeHHMM}: ${appt.title}`;
 
         try {
@@ -95,34 +117,37 @@ export const startScheduler = () => {
             }
           });
 
-          if (kind === 'day') appt.notified_day = true;
-          if (kind === 'before') appt.notified_before = true;
+          if (markDay) appt.notified_day = true;
+          if (markBefore) appt.notified_before = true;
           if (appt.notified_before && appt.notified_day) appt.notified = true;
           await appt.save();
-          console.log(`[Scheduler] Notificação (${kind}) enviada para ${targetPhone} ref. compromisso ${appt.id}`);
+          const kinds = [markBefore ? 'before' : null, markDay ? 'day' : null].filter(Boolean).join('+');
+          console.log(`[Scheduler] Notificação (${kinds}) enviada para ${targetPhone} ref. compromisso ${appt.id}`);
         } catch (err) {
           console.error(`[Scheduler] Erro ao enviar notificação para compromisso ${appt.id}:`, err.message);
         }
       };
 
-      for (const appt of dueToday) {
+      for (const appt of candidates) {
         const timeHHMM = normalizeTimeHHMM(appt.time);
         if (!timeHHMM) continue;
         if (timeHHMM !== nowHHMM && timeHHMM !== prevHHMM) continue;
-        await sendNotification({ appt, kind: 'day', daysOut: 0 });
-      }
 
-      for (const appt of dueBefore) {
-        const timeHHMM = normalizeTimeHHMM(appt.time);
-        if (!timeHHMM) continue;
-        if (timeHHMM !== nowHHMM && timeHHMM !== prevHHMM) continue;
-        const dias = Math.max(0, parseInt(appt.dias_antecedencia ?? 1, 10) || 0);
-        if (!dias) continue;
         const apptDate = String(appt.date || '');
-        const triggerDate = addDays(apptDate, -dias);
-        if (triggerDate !== todayStr) continue;
         const daysOut = diffDays(todayStr, apptDate);
-        await sendNotification({ appt, kind: 'before', daysOut });
+        const markDay = apptDate === todayStr && !appt.notified_day;
+
+        const dias = Math.max(0, parseInt(appt.dias_antecedencia ?? 1, 10) || 0);
+        const canNotifyBefore = dias > 0 && !appt.notified_before;
+        const triggerDate = canNotifyBefore ? addDays(apptDate, -dias) : null;
+
+        const markBefore =
+          canNotifyBefore &&
+          ((triggerDate === todayStr && apptDate !== todayStr) || (apptDate === todayStr && triggerDate <= todayStr));
+
+        if (!markDay && !markBefore) continue;
+
+        await sendNotification({ appt, daysOut: Math.max(0, daysOut), markDay, markBefore });
       }
     } catch (error) {
       console.log(error);

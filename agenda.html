@@ -122,6 +122,16 @@
             text-overflow: ellipsis;
             font-weight: 500;
         }
+        .day-badge.finalizado {
+            background: rgba(34, 197, 94, 0.14);
+            color: #22C55E;
+            border-left-color: #22C55E;
+        }
+        .day-badge.atrasado {
+            background: rgba(239, 68, 68, 0.14);
+            color: var(--danger);
+            border-left-color: var(--danger);
+        }
         
         /* Modal Styles aligned with System */
         .modal-overlay {
@@ -207,6 +217,14 @@
         .appt-item:hover {
             border-color: var(--muted);
         }
+        .appt-item.finalizado {
+            background: rgba(34, 197, 94, 0.10);
+            border-color: rgba(34, 197, 94, 0.35);
+        }
+        .appt-item.atrasado {
+            background: rgba(239, 68, 68, 0.10);
+            border-color: rgba(239, 68, 68, 0.35);
+        }
         .appt-time {
             font-weight: 700;
             color: var(--primary);
@@ -242,6 +260,23 @@
         }
         .delete-btn:hover {
             background: var(--danger);
+            color: white;
+        }
+        .finalize-btn {
+            color: #22C55E;
+            background: rgba(34, 197, 94, 0.10);
+            border: 1px solid transparent;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .finalize-btn:hover {
+            background: #22C55E;
             color: white;
         }
 
@@ -392,6 +427,10 @@
                         <label class="label" for="fDiasAntes">Avisar quantos dias antes?</label>
                         <input type="number" id="fDiasAntes" class="input" min="0" step="1" value="1" required>
                     </div>
+                    <div class="field" style="display:flex; align-items:center; gap:0.6rem;">
+                        <input type="checkbox" id="fFinalizado" style="width:18px; height:18px;">
+                        <label class="label" for="fFinalizado" style="margin:0;">Finalizado</label>
+                    </div>
                 </form>
             </div>
             <div class="modal-foot">
@@ -408,6 +447,23 @@
         let currentDate = new Date();
         let appointments = [];
         let selectedDate = null;
+        const getApptDateTimeMs = (appt) => {
+            const date = String(appt?.date || '');
+            const time = String(appt?.time || '').slice(0, 8) || '00:00:00';
+            const ms = new Date(`${date}T${time}`).getTime();
+            return Number.isFinite(ms) ? ms : null;
+        };
+        const isApptOverdue = (appt) => {
+            if (appt?.finalizado) return false;
+            const ms = getApptDateTimeMs(appt);
+            if (!ms) return false;
+            return ms < Date.now();
+        };
+        const getApptStatusClass = (appt) => {
+            if (appt?.finalizado) return 'finalizado';
+            if (isApptOverdue(appt)) return 'atrasado';
+            return '';
+        };
 
         async function api(path, options = {}) {
             const authRaw = localStorage.getItem('authUser');
@@ -510,7 +566,8 @@
             let badgesHtml = '';
             // Mostrar até 3 badges
             dayAppts.slice(0, 3).forEach(a => {
-                badgesHtml += `<div class="day-badge" title="${a.time.slice(0,5)} - ${a.title}">${a.time.slice(0,5)} ${a.title}</div>`;
+                const cls = getApptStatusClass(a);
+                badgesHtml += `<div class="day-badge ${cls}" title="${a.time.slice(0,5)} - ${a.title}">${a.time.slice(0,5)} ${a.title}</div>`;
             });
             if (dayAppts.length > 3) {
                 badgesHtml += `<div class="day-badge" style="background:var(--surface-strong); color:var(--text); border:none; text-align:center;">+${dayAppts.length - 3} mais</div>`;
@@ -554,7 +611,9 @@
                 noApptsEl.style.display = 'none';
                 dayAppts.forEach(appt => {
                     const item = document.createElement('div');
-                    item.className = 'appt-item';
+                    item.className = `appt-item ${getApptStatusClass(appt)}`.trim();
+                    const finalizeTitle = appt.finalizado ? 'Desmarcar Finalizado' : 'Marcar Finalizado';
+                    const finalizeIcon = appt.finalizado ? 'rotate-ccw' : 'check';
                     item.innerHTML = `
                         <div style="flex:1">
                             <div class="appt-time"><i data-lucide="clock" style="width:14px;height:14px"></i> ${appt.time.slice(0,5)}</div>
@@ -562,15 +621,31 @@
                             ${appt.description ? `<div class="appt-desc">${appt.description}</div>` : ''}
                         </div>
                         <div style="display:flex;gap:4px">
-                            <button class="delete-btn" onclick="openEditModal(${appt.id}, '${appt.title}', '${appt.date}', '${appt.time}', '${(appt.description || '').replace(/'/g, "\\'")}', ${Number(appt.dias_antecedencia || 1)})" title="Editar Compromisso" style="color:var(--primary); background:rgba(37,99,235,0.1)">
+                            <button class="finalize-btn" data-action="finalize" title="${finalizeTitle}">
+                                <i data-lucide="${finalizeIcon}" style="width:18px;height:18px"></i>
+                            </button>
+                            <button class="delete-btn" data-action="edit" title="Editar Compromisso" style="color:var(--primary); background:rgba(37,99,235,0.1)">
                                 <i data-lucide="edit-2" style="width:18px;height:18px"></i>
                             </button>
-                            <button class="delete-btn" onclick="deleteAppointment(${appt.id})" title="Excluir Compromisso">
+                            <button class="delete-btn" data-action="delete" title="Excluir Compromisso">
                                 <i data-lucide="trash-2" style="width:18px;height:18px"></i>
                             </button>
                         </div>
                     `;
                     listEl.appendChild(item);
+
+                    item.querySelector('[data-action="finalize"]').onclick = async (e) => {
+                        e.stopPropagation();
+                        await toggleFinalizado(appt.id, !appt.finalizado);
+                    };
+                    item.querySelector('[data-action="edit"]').onclick = (e) => {
+                        e.stopPropagation();
+                        openEditModal(appt);
+                    };
+                    item.querySelector('[data-action="delete"]').onclick = (e) => {
+                        e.stopPropagation();
+                        deleteAppointment(appt.id);
+                    };
                 });
                 lucide.createIcons();
             }
@@ -596,22 +671,24 @@
             const timeStr = now.toTimeString().slice(0,5);
             document.getElementById('fTime').value = timeStr;
             document.getElementById('fDiasAntes').value = 1;
+            document.getElementById('fFinalizado').checked = false;
 
             document.getElementById('addModal').classList.add('open');
             setTimeout(() => document.getElementById('fTitle').focus(), 100);
         }
 
-        function openEditModal(id, title, date, time, description, diasAntecedencia) {
+        function openEditModal(appt) {
             closeModal('listModal');
-            editingApptId = id;
+            editingApptId = appt.id;
             document.getElementById('addForm').reset();
             document.getElementById('modalTitle').textContent = 'Editar Compromisso';
             
-            document.getElementById('fTitle').value = title;
-            document.getElementById('fDate').value = date;
-            document.getElementById('fTime').value = time;
-            document.getElementById('fDesc').value = description || '';
-            document.getElementById('fDiasAntes').value = Number(diasAntecedencia ?? 1);
+            document.getElementById('fTitle').value = appt.title || '';
+            document.getElementById('fDate').value = appt.date;
+            document.getElementById('fTime').value = String(appt.time || '').slice(0, 5);
+            document.getElementById('fDesc').value = appt.description || '';
+            document.getElementById('fDiasAntes').value = Number(appt.dias_antecedencia ?? 1);
+            document.getElementById('fFinalizado').checked = Boolean(appt.finalizado);
 
             document.getElementById('addModal').classList.add('open');
             setTimeout(() => document.getElementById('fTitle').focus(), 100);
@@ -632,6 +709,7 @@
             const time = document.getElementById('fTime').value;
             const description = document.getElementById('fDesc').value;
             const dias_antecedencia = Math.max(0, parseInt(document.getElementById('fDiasAntes').value || '1', 10) || 0);
+            const finalizado = document.getElementById('fFinalizado').checked;
 
             if (!title || !date || !time) {
                 // Simples validação visual
@@ -654,12 +732,12 @@
                 if (editingApptId) {
                     await api(`/appointments/${editingApptId}`, {
                         method: 'PUT',
-                        body: JSON.stringify({ title, date, time, description, dias_antecedencia })
+                        body: JSON.stringify({ title, date, time, description, dias_antecedencia, finalizado })
                     });
                 } else {
                     await api('/appointments', {
                         method: 'POST',
-                        body: JSON.stringify({ title, date, time, description, dias_antecedencia })
+                        body: JSON.stringify({ title, date, time, description, dias_antecedencia, finalizado })
                     });
                 }
                 
@@ -678,16 +756,34 @@
             }
         }
 
+        async function toggleFinalizado(id, value) {
+            try {
+                await api(`/appointments/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ finalizado: Boolean(value) })
+                });
+                await loadAppointments();
+                if (document.getElementById('listModal').classList.contains('open') && selectedDate) {
+                    const dateStr = selectedDate.toISOString().split('T')[0];
+                    const dayAppts = appointments.filter(a => a.date === dateStr);
+                    dayAppts.sort((a, b) => a.time.localeCompare(b.time));
+                    openListModal(selectedDate, dayAppts);
+                }
+            } catch (error) {
+                alert('Erro ao atualizar finalizado: ' + error.message);
+            }
+        }
+
         async function deleteAppointment(id) {
             if (!confirm('Tem certeza que deseja excluir este compromisso?')) return;
             try {
                 await api(`/appointments/${id}`, { method: 'DELETE' });
-                // Refresh list if modal is open
+                await loadAppointments();
                 if (document.getElementById('listModal').classList.contains('open') && selectedDate) {
-                    closeModal('listModal'); 
-                    loadAppointments();
-                } else {
-                    loadAppointments();
+                    const dateStr = selectedDate.toISOString().split('T')[0];
+                    const dayAppts = appointments.filter(a => a.date === dateStr);
+                    dayAppts.sort((a, b) => a.time.localeCompare(b.time));
+                    openListModal(selectedDate, dayAppts);
                 }
             } catch (error) {
                 alert('Erro ao excluir: ' + error.message);
