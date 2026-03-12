@@ -5,6 +5,7 @@ import { Op } from 'sequelize';
 
 const ZAPI_URL = 'https://api.z-api.io/instances/3CE4B754983A50C28047EEE17BD0D626/token/292527328B6AC28FA057BFE5/send-text';
 const ZAPI_TOKEN = 'Fa9be4d3c3cff47cb84b5d28e5ce3d58aS';
+const SCHEDULER_TZ = 'America/Sao_Paulo';
 
 export const startScheduler = () => {
   // Executa a cada 1 minuto
@@ -12,40 +13,47 @@ export const startScheduler = () => {
     console.log('[Scheduler] Verificando compromissos para notificação...');
     try {
       const pad2 = (n) => String(n).padStart(2, '0');
-      const toDateStrLocal = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-      const addDays = (dateStr, days) => {
-        const [y, m, dd] = String(dateStr).split('-').map(n => Number(n));
-        const dt = new Date(y, (m || 1) - 1, dd || 1);
-        dt.setDate(dt.getDate() + Number(days || 0));
-        return toDateStrLocal(dt);
+      const toUtcMsFromDateStr = (dateStr) => {
+        const [y, m, d] = String(dateStr || '').split('-').map((n) => Number(n));
+        return Date.UTC(y || 1970, (m || 1) - 1, d || 1);
       };
-      const diffDays = (fromStr, toStr) => {
-        const [y1, m1, d1] = String(fromStr).split('-').map(n => Number(n));
-        const [y2, m2, d2] = String(toStr).split('-').map(n => Number(n));
-        const a = new Date(y1, (m1 || 1) - 1, d1 || 1);
-        const b = new Date(y2, (m2 || 1) - 1, d2 || 1);
-        const ms = b.getTime() - a.getTime();
-        return Math.round(ms / 86400000);
+      const toDateStrFromUtcMs = (ms) => {
+        const dt = new Date(ms);
+        return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(dt.getUTCDate())}`;
+      };
+      const addDays = (dateStr, days) => toDateStrFromUtcMs(toUtcMsFromDateStr(dateStr) + (Number(days || 0) * 86400000));
+      const diffDays = (fromStr, toStr) => Math.round((toUtcMsFromDateStr(toStr) - toUtcMsFromDateStr(fromStr)) / 86400000);
+      const normalizeTimeHHMM = (timeStr) => {
+        const m = String(timeStr || '').match(/(\d{1,2}):(\d{2})/);
+        if (!m) return '';
+        return `${pad2(m[1])}:${m[2]}`;
+      };
+      const getNowStrings = () => {
+        const now = new Date();
+        const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone: SCHEDULER_TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+        const hhmm = new Intl.DateTimeFormat('en-GB', { timeZone: SCHEDULER_TZ, hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
+        const hhmmPrev = new Intl.DateTimeFormat('en-GB', { timeZone: SCHEDULER_TZ, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(now.getTime() - 60000));
+        return { todayStr: dateStr, nowHHMM: hhmm, prevHHMM: hhmmPrev };
       };
 
-      const now = new Date();
-      const todayStr = toDateStrLocal(now);
-      const nowHHMM = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+      const { todayStr, nowHHMM, prevHHMM } = getNowStrings();
 
       const dueToday = await Appointment.findAll({
         where: {
           date: todayStr,
-          notified_day: false
+          [Op.or]: [{ notified_day: false }, { notified_day: { [Op.is]: null } }]
         },
         include: [{ model: User, as: 'user' }]
       });
 
-      const beforeWindowEnd = addDays(todayStr, 60);
+      const beforeWindowEnd = addDays(todayStr, 366);
       const dueBefore = await Appointment.findAll({
         where: {
           date: { [Op.between]: [todayStr, beforeWindowEnd] },
-          notified_before: false,
-          dias_antecedencia: { [Op.gt]: 0 }
+          [Op.and]: [
+            { [Op.or]: [{ notified_before: false }, { notified_before: { [Op.is]: null } }] },
+            { [Op.or]: [{ dias_antecedencia: { [Op.gt]: 0 } }, { dias_antecedencia: { [Op.is]: null } }] }
+          ]
         },
         include: [{ model: User, as: 'user' }]
       });
@@ -67,7 +75,7 @@ export const startScheduler = () => {
             targetPhone = '55' + targetPhone;
         }
 
-        const timeHHMM = String(appt.time || '').slice(0, 5);
+        const timeHHMM = normalizeTimeHHMM(appt.time);
         const dateLabel = String(appt.date || '');
         const whenLabel = kind === 'day'
           ? `hoje (${dateLabel})`
@@ -96,22 +104,27 @@ export const startScheduler = () => {
       };
 
       for (const appt of dueToday) {
-        const timeHHMM = String(appt.time || '').slice(0, 5);
-        if (timeHHMM !== nowHHMM) continue;
+        const timeHHMM = normalizeTimeHHMM(appt.time);
+        if (!timeHHMM) continue;
+        if (timeHHMM !== nowHHMM && timeHHMM !== prevHHMM) continue;
         await sendNotification({ appt, kind: 'day', daysOut: 0 });
       }
 
       for (const appt of dueBefore) {
-        const timeHHMM = String(appt.time || '').slice(0, 5);
-        if (timeHHMM !== nowHHMM) continue;
-        const daysOut = diffDays(todayStr, String(appt.date || ''));
+        const timeHHMM = normalizeTimeHHMM(appt.time);
+        if (!timeHHMM) continue;
+        if (timeHHMM !== nowHHMM && timeHHMM !== prevHHMM) continue;
         const dias = Math.max(0, parseInt(appt.dias_antecedencia ?? 1, 10) || 0);
-        if (daysOut !== dias) continue;
+        if (!dias) continue;
+        const apptDate = String(appt.date || '');
+        const triggerDate = addDays(apptDate, -dias);
+        if (triggerDate !== todayStr) continue;
+        const daysOut = diffDays(todayStr, apptDate);
         await sendNotification({ appt, kind: 'before', daysOut });
       }
     } catch (error) {
       console.log(error);
       console.error('[Scheduler] Erro no job de notificação:', error);
     }
-  });
+  }, { timezone: SCHEDULER_TZ });
 };

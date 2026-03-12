@@ -88,6 +88,20 @@
         }
         .mascara-label { color: var(--muted); }
         .mascara-val { font-weight: 500; text-align: right; display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.5rem; }
+        .resumo-accordion { padding: 0 !important; overflow: hidden; }
+        .resumo-accordion > summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            user-select: none;
+        }
+        .resumo-accordion > summary::-webkit-details-marker { display: none; }
+        .resumo-accordion[open] > summary { border-bottom: 1px solid var(--border); }
+        .resumo-accordion-body { padding: 0 0.75rem 0.75rem; }
     </style>
 </head>
 <body>
@@ -152,18 +166,15 @@
                 </section>
                 <section class="section" style="margin-top:1rem;">
                     <div class="label">Resumo</div>
-                    <div class="grid-2" style="margin-top:0.5rem;">
-                        <div class="card" style="padding:0.75rem; border:1px solid #e5e7eb;">
-                            <div class="muted" style="font-weight:600;">Plano Atual</div>
-                            <div id="resumoAtualList" class="muted" style="margin-top:0.5rem;"></div>
-                            <div id="resumoAtualTotal" class="muted" style="margin-top:0.6rem; padding:0.5rem; background:#DBEAFE; color:#1D4ED8; font-weight:700; border-radius:6px;">Total: R$ 0,00</div>
-                        </div>
-                        <div class="card" style="padding:0.75rem; border:1px solid #86efac;">
+                    <details id="resumoPropostaAccordion" class="card resumo-accordion" style="margin-top:0.5rem; border:1px solid #86efac;">
+                        <summary>
                             <div class="muted" style="font-weight:600; color:#15803d;">Nova Proposta</div>
-                            <div id="resumoPropostaList" class="muted" style="margin-top:0.5rem;"></div>
-                            <div id="resumoPropostaTotal" class="muted" style="margin-top:0.6rem; padding:0.5rem; background:#DCFCE7; color:#166534; font-weight:700; border-radius:6px;">Total: R$ 0,00</div>
+                            <div id="resumoPropostaTotal" class="muted" style="padding:0.5rem; background:#DCFCE7; color:#166534; font-weight:700; border-radius:6px;">Total: R$ 0,00</div>
+                        </summary>
+                        <div class="resumo-accordion-body">
+                            <div id="resumoPropostaList" class="muted"></div>
                         </div>
-                    </div>
+                    </details>
                     <div class="grid-2" style="margin-top:0.5rem;">
                         <div class="card" style="padding:0.75rem;">
                             <div class="muted">Total de Acessos</div>
@@ -588,16 +599,8 @@
             document.getElementById('totalEconomia').textContent = currency(economia);
             document.getElementById('percentualEconomia').textContent = String(perc) + '%';
             document.getElementById('linhasAparelho').textContent = String(withDevice);
-            const atualListEl = document.getElementById('resumoAtualList');
             const propostaListEl = document.getElementById('resumoPropostaList');
-            const atualTotalEl = document.getElementById('resumoAtualTotal');
             const propostaTotalEl = document.getElementById('resumoPropostaTotal');
-            const atualItens = linhas.map((l, idx) => {
-                const ac = (l.dddAtual || l.ddd) ? `DDD ${l.dddAtual || l.ddd}` : 'N/A';
-                const plano = l.planoAtualGB || 'N/A';
-                const val = currency(l.precoAtual || 0);
-                return `<div style="background:#F3F4F6; padding:8px; border-radius:6px; margin-bottom:6px;">Linha ${idx + 1}: ${ac}<br>Plano: ${plano}<br>Valor: ${val}</div>`;
-            }).join('') || '<div class="muted">-</div>';
             const propostaItens = linhas.map((l, idx) => {
                 const ac = l.ddd ? `DDD ${l.ddd}` : 'N/A';
                 const tipo = l.tipoNegociacao || '-';
@@ -606,9 +609,7 @@
                 const final = currency(calcularPrecoFinal(l));
                 return `<div style=\"background:#ECFDF5; padding:8px; border-radius:6px; margin-bottom:6px;\">Linha ${idx + 1}: ${ac}<br>Tipo: ${tipo}<br>Plano: ${plano}<br>Pct: ${pct}<br>Final: ${final}</div>`;
             }).join('') || '<div class="muted">-</div>';
-            if (atualListEl) atualListEl.innerHTML = atualItens;
             if (propostaListEl) propostaListEl.innerHTML = propostaItens;
-            if (atualTotalEl) atualTotalEl.textContent = 'Total: ' + currency(totais.totalAtual);
             if (propostaTotalEl) propostaTotalEl.textContent = 'Total: ' + currency(totais.totalProposto);
         }
         function getFilteredCategorias(tipoNegociacao) {

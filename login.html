@@ -23,28 +23,30 @@
                 <div class="auth-title">Entrar</div>
                 <div class="auth-subtitle">Acesse sua conta</div>
                 <div id="errorBox" class="error"></div>
-                <div class="form-group">
-                    <div class="label">Email ou Matrícula</div>
-                    <input class="input" type="text" id="email" placeholder="Email ou Matrícula">
-                </div>
-                <div class="form-group">
-                    <div class="label">Senha</div>
-                    <div class="password-wrapper" style="position: relative;">
-                        <input class="input" type="password" id="password" placeholder="Digite sua senha" style="padding-right: 70px;">
-                        <button class="toggle" type="button" id="togglePassword">Mostrar</button>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <div class="label">Email ou Matrícula</div>
+                        <input class="input" type="text" id="email" placeholder="Email ou Matrícula" autocomplete="username">
                     </div>
-                </div>
-                <div class="auth-actions">
-                    <label class="checkbox"><input type="checkbox" id="remember"> Lembrar</label>
-                    <a class="link" href="register.html">Criar conta</a>
-                </div>
-                <div class="auth-actions-bottom">
-                    <button class="btn btn-primary btn-sm btn-tall" id="loginBtn">Entrar</button>
-                </div>
-                <div class="auth-links">
-                    <span class="muted">Esqueceu a senha?</span>
-                    <a class="link" href="register.html">Registre-se</a>
-                </div>
+                    <div class="form-group">
+                        <div class="label">Senha</div>
+                        <div class="password-wrapper" style="position: relative;">
+                            <input class="input" type="password" id="password" placeholder="Digite sua senha" style="padding-right: 70px;" autocomplete="current-password">
+                            <button class="toggle" type="button" id="togglePassword">Mostrar</button>
+                        </div>
+                    </div>
+                    <div class="auth-actions">
+                        <label class="checkbox"><input type="checkbox" id="remember"> Lembrar</label>
+                        <a class="link" href="register.html">Criar conta</a>
+                    </div>
+                    <div class="auth-actions-bottom">
+                        <button class="btn btn-primary btn-sm btn-tall" id="loginBtn" type="submit">Entrar</button>
+                    </div>
+                    <div class="auth-links">
+                        <span class="muted">Esqueceu a senha?</span>
+                        <a class="link" href="register.html">Registre-se</a>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -65,12 +67,25 @@
             inp.type = isText ? 'password' : 'text';
             this.textContent = isText ? 'Mostrar' : 'Ocultar';
         });
-        document.getElementById('loginBtn').addEventListener('click', async function() {
+        function loadRememberedLogin() {
+            try {
+                const rememberedEmail = localStorage.getItem('rememberedLoginEmail') || '';
+                if (rememberedEmail) {
+                    document.getElementById('email').value = rememberedEmail;
+                    document.getElementById('remember').checked = true;
+                    document.getElementById('password').focus();
+                } else {
+                    document.getElementById('email').focus();
+                }
+            } catch {
+                document.getElementById('email').focus();
+            }
+        }
+        async function doLogin() {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
             const remember = document.getElementById('remember').checked;
             if (!email || !password) { showError('Preencha email/matrícula e senha'); return; }
-            // if (!isValidEmail(email)) { showError('Email inválido'); return; }
             try {
                 const res = await fetch(`${API}/auth/login`, {
                     method: 'POST',
@@ -79,12 +94,39 @@
                 });
                 if (!res.ok) { showError('Credenciais inválidas'); return; }
                 const user = await res.json();
-                const payload = { ...user, remember, at: new Date().toISOString() };
+                const payload = { ...user, remember: !!remember, at: new Date().toISOString() };
                 localStorage.setItem('authUser', JSON.stringify(payload));
+                if (remember) {
+                    sessionStorage.removeItem('authUserSessionOnly');
+                    localStorage.setItem('rememberedLoginEmail', email);
+                } else {
+                    sessionStorage.setItem('authUserSessionOnly', '1');
+                    localStorage.removeItem('rememberedLoginEmail');
+                }
                 window.location.href = 'quadro-vendas.html';
             } catch {
                 showError('Falha de conexão');
             }
+        }
+        function cleanupSessionOnlyAuth() {
+            try {
+                const raw = localStorage.getItem('authUser');
+                if (!raw) return;
+                const u = JSON.parse(raw);
+                const isSessionOnly = (u && u.remember === false);
+                const sessionFlag = sessionStorage.getItem('authUserSessionOnly');
+                if (isSessionOnly && !sessionFlag) {
+                    localStorage.removeItem('authUser');
+                }
+            } catch {}
+        }
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await doLogin();
+        });
+        document.addEventListener('DOMContentLoaded', () => {
+            cleanupSessionOnlyAuth();
+            loadRememberedLogin();
         });
     </script>
 </body>

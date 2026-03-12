@@ -5,6 +5,13 @@
   var authRaw = localStorage.getItem('authUser');
   var auth = {};
   try { auth = JSON.parse(authRaw || '{}'); } catch {}
+  try {
+    if (auth && auth.remember === false && !sessionStorage.getItem('authUserSessionOnly')) {
+      localStorage.removeItem('authUser');
+      auth = {};
+      authRaw = null;
+    }
+  } catch {}
   var isAdmin = String((auth && auth.role) || '').toLowerCase() === 'admin';
   var userName = (auth && auth.name) ? String(auth.name) : 'Usuário';
   var topbar = document.querySelector('.topbar');
@@ -203,6 +210,7 @@
     logoutConfirm.addEventListener('click', function () {
       logoutModal.classList.remove('show');
       localStorage.removeItem('authUser');
+      try { sessionStorage.removeItem('authUserSessionOnly'); } catch {}
       window.location.href = 'login.html';
     });
   }
