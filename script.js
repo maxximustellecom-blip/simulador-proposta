@@ -46,7 +46,7 @@
     '</div>' +
   '</header>';
   var simOpen = isActive('simular') || isActive('historico-simulacoes');
-  var adminOpen = isActive('usuarios') || isActive('perfis-acesso') || isActive('pedido-vendas') || isActive('leads') || isActive('regioes') || isActive('categorias') || isActive('produtos') || isActive('categoria-customizada') || isActive('produto-customizado');
+  var adminOpen = isActive('usuarios') || isActive('perfis-acesso') || isActive('regioes') || isActive('categorias') || isActive('produtos') || isActive('categoria-customizada') || isActive('produto-customizado');
   var sidebarHtml =
     '<nav class="sidebar">' +
       '<div class="sidebar-inner">' +
@@ -55,7 +55,9 @@
         '<div class="nav-group">' +
           '<a href="quadro-vendas.html" class="nav-link' + (isActive('quadro-vendas') ? ' active' : '') + '"><i data-lucide="layout-dashboard"></i><span>Quadro de Vendas</span></a>' +
           '<a href="agenda.html" class="nav-link' + (isActive('agenda') ? ' active' : '') + '"><i data-lucide="calendar"></i><span>Agenda</span></a>' +
-          '<a href="meus-leads.html" class="nav-link' + (isActive('meus-leads') ? ' active' : '') + '"><i data-lucide="file-text"></i><span>Meus Leads</span></a>' +
+          '<a href="meus-leads.html" class="nav-link' + (isActive('meus-leads') ? ' active' : '') + '" style="display:' + (isAdmin ? 'none' : 'flex') + '"><i data-lucide="file-text"></i><span>Meus Leads</span></a>' +
+          '<a href="pedido-vendas.html" class="nav-link' + (isActive('pedido-vendas') ? ' active' : '') + '" style="display:' + (isAdmin ? 'flex' : 'none') + '"><i data-lucide="shopping-cart"></i><span>Vendas</span></a>' +
+          '<a href="leads.html" class="nav-link' + (isActive('leads') ? ' active' : '') + '" style="display:' + (isAdmin ? 'flex' : 'none') + '"><i data-lucide="file-spreadsheet"></i><span>Leads</span></a>' +
           '<a href="clientes.html" class="nav-link' + (isActive('clientes') ? ' active' : '') + '"><i data-lucide="building-2"></i><span>Clientes</span></a>' +
           '<a href="negociar.html" class="nav-link' + (isActive('negociar') ? ' active' : '') + '"><i data-lucide="handshake"></i><span>Propostas</span></a>' +
           '<a href="top-sellers.html" style="display: none;" class="nav-link' + (isActive('top-sellers') ? ' active' : '') + '"><i data-lucide="star"></i><span>Top Sellers</span></a>' +
@@ -63,7 +65,7 @@
           '<a href="agenda.html" style="display: none;" class="nav-link' + (isActive('agenda') ? ' active' : '') + '"><i data-lucide="calendar"></i><span>Agenda</span></a>' +
         '</div>' +
         '<div class="nav-title" style="display: none;">Simulação</div>' +
-        '<button id="simulacaoToggle" class="nav-dropdown' + (simOpen ? ' open' : '') + '" type="button">' +
+        '<button id="simulacaoToggle" class="nav-dropdown' + (simOpen ? ' open' : '') + '" type="button" style="display: none;">' +
           '<div class="left"><i data-lucide="layers"></i><span>Simulação</span></div>' +
           '<div class="chev"><i data-lucide="chevron-down"></i></div>' +
         '</button>' +
@@ -73,7 +75,7 @@
         '</div>' +
         '<div class="nav-title" id="adminTitle" style="display:' + (isAdmin ? 'none' : 'none') + '">Admin</div>' +
         '<button id="adminToggle" class="nav-dropdown' + (adminOpen ? ' open' : '') + '" type="button" style="display:' + (isAdmin ? 'flex' : 'none') + ';">' +
-          '<div class="left"><i data-lucide="shield-check"></i><span>Gestão</span></div>' +
+          '<div class="left"><i data-lucide="shield-check"></i><span>Configurações</span></div>' +
           '<div class="chev"><i data-lucide="chevron-down"></i></div>' +
         '</button>' +
         '<div id="adminMenu" class="nav-subgroup" style="display:' + ((isAdmin && adminOpen) ? 'flex' : 'none') + ';">' +
@@ -82,9 +84,7 @@
           '<a href="produtos.html" class="nav-sublink' + (isActive('produtos') ? ' active' : '') + '"><i data-lucide="shopping-bag"></i><span>Padrão • Ofertas</span></a>' +
           '<a href="categoria-customizada.html" class="nav-sublink' + (isActive('categoria-customizada') ? ' active' : '') + '"><i data-lucide="tag"></i><span>Customizada • Planos</span></a>' +
           '<a href="produto-customizado.html" class="nav-sublink' + (isActive('produto-customizado') ? ' active' : '') + '"><i data-lucide="shopping-cart"></i><span>Customizada • Ofertas</span></a>' +
-          '<a href="pedido-vendas.html" class="nav-sublink' + (isActive('pedido-vendas') ? ' active' : '') + '"><i data-lucide="shopping-cart"></i><span>Vendas</span></a>' +
           '<a href="usuarios.html" class="nav-sublink' + (isActive('usuarios') ? ' active' : '') + '"><i data-lucide="users"></i><span>Usuários</span></a>' +
-          '<a href="leads.html" class="nav-sublink' + (isActive('leads') ? ' active' : '') + '"><i data-lucide="file-spreadsheet"></i><span>Leads</span></a>' +
           '<a href="perfis-acesso.html" class="nav-sublink' + (isActive('perfis-acesso') ? ' active' : '') + '"><i data-lucide="shield"></i><span>Perfis de Acesso</span></a>' +
         '</div>' +
       '</div>' +
@@ -92,7 +92,7 @@
   var bottomHtml =
     '<nav class="bottomnav">' +
       '<a href="quadro-vendas.html" class="' + (isActive('quadro-vendas') ? 'active' : '') + '"><i data-lucide="layout-dashboard"></i><span class="label">Dashboard</span></a>' +
-      '<a href="meus-leads.html" class="' + (isActive('meus-leads') ? 'active' : '') + '"><i data-lucide="file-text"></i><span class="label">Leads</span></a>' +
+      '<a href="meus-leads.html" style="display:' + (isAdmin ? 'none' : 'inline-flex') + ';" class="' + (isActive('meus-leads') ? 'active' : '') + '"><i data-lucide="file-text"></i><span class="label">Leads</span></a>' +
       '<a href="historico-simulacoes.html" class="' + (isActive('historico-simulacoes') ? 'active' : '') + '"><i data-lucide="list"></i><span class="label">Histórico</span></a>' +
       '<a href="simular.html" class="' + (isActive('simular') ? 'active' : '') + '"><i data-lucide="calculator"></i><span class="label">Simular</span></a>' +
       '<a href="clientes.html" class="' + (isActive('clientes') ? 'active' : '') + '"><i data-lucide="building-2"></i><span class="label">Clientes</span></a>' +
