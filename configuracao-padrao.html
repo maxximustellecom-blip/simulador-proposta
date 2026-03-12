@@ -2617,6 +2617,7 @@
                 const fontSizeTitulo = 14;
                 const fontSizeLinha = 7;
                 const fontSizePlano = 6;
+                const fontSizeAparelho = 6;
                 const tableWidth = 570; // Largura da tabela
                 const marginLeft = (pageSize.width - tableWidth) / 2; // Centralizado com a tabela
                 let y = height - 60;
@@ -2763,9 +2764,9 @@
                     lastPage.drawText(ofertaNome, { x: xPlano, y: textY1 - lineGap, size: fontSizePlano, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(ofertaPreco, { x: xPlano, y: textY1 - (2 * lineGap), size: fontSizePlano, font, color: rgb(0, 0, 0) });
 
-                    lastPage.drawText(aparelhoNome, { x: xAparelho, y: textY1, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(aparelhoInfo, { x: xAparelho, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(aparelhoValor, { x: xAparelho, y: textY1 - (2 * lineGap), size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(aparelhoNome, { x: xAparelho, y: textY1, size: fontSizeAparelho, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(aparelhoInfo, { x: xAparelho, y: textY1 - lineGap, size: fontSizeAparelho, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(aparelhoValor, { x: xAparelho, y: textY1 - (2 * lineGap), size: fontSizeAparelho, font, color: rgb(0, 0, 0) });
 
                     const valorTw = font.widthOfTextAtSize(valorLinha, fontSizeLinha);
                     lastPage.drawText(valorLinha, { x: xRight - valorTw, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
@@ -2816,6 +2817,7 @@
                 const fontSizeTitulo = 14;
                 const fontSizeLinha = 7;
                 const fontSizePlano = 6;
+                const fontSizeAparelho = 6;
                 const marginLeft = (pageSize.width - tableWidth) / 2;
                 let y = height - 60;
                 lastPage.drawText('Proposta Comercial', { x: marginLeft, y, size: fontSizeTitulo, font, color: rgb(1, 1, 1) });
@@ -2929,9 +2931,9 @@
                     lastPage.drawText(ofertaNome, { x: xPlano, y: textY1 - lineGap, size: fontSizePlano, font, color: rgb(0,0,0) });
                     lastPage.drawText(ofertaPreco, { x: xPlano, y: textY1 - (2 * lineGap), size: fontSizePlano, font, color: rgb(0,0,0) });
 
-                    lastPage.drawText(aparelhoNome, { x: xAparelho, y: textY1, size: fontSizeLinha, font, color: rgb(0,0,0) });
-                    lastPage.drawText(aparelhoInfo, { x: xAparelho, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
-                    lastPage.drawText(aparelhoValor, { x: xAparelho, y: textY1 - (2 * lineGap), size: fontSizeLinha, font, color: rgb(0,0,0) });
+                    lastPage.drawText(aparelhoNome, { x: xAparelho, y: textY1, size: fontSizeAparelho, font, color: rgb(0,0,0) });
+                    lastPage.drawText(aparelhoInfo, { x: xAparelho, y: textY1 - lineGap, size: fontSizeAparelho, font, color: rgb(0,0,0) });
+                    lastPage.drawText(aparelhoValor, { x: xAparelho, y: textY1 - (2 * lineGap), size: fontSizeAparelho, font, color: rgb(0,0,0) });
 
                     const valorTw = font.widthOfTextAtSize(valorLinha, fontSizeLinha);
                     lastPage.drawText(valorLinha, { x: xRight - valorTw, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
@@ -3111,9 +3113,12 @@
                     ctx.fillText(ofertaPreco, xPlano, textY1 + (2 * lineGap));
                     ctx.font = prevFont;
 
+                    const prevFontAp = ctx.font;
+                    ctx.font = `${(fontLinha * 0.8)}px Arial`;
                     ctx.fillText(aparelhoNome, xAparelho, textY1);
                     ctx.fillText(aparelhoInfo, xAparelho, textY1 + lineGap);
                     ctx.fillText(aparelhoValor, xAparelho, textY1 + (2 * lineGap));
+                    ctx.font = prevFontAp;
 
                     ctx.textAlign = 'right';
                     ctx.fillText(valorLinha, xRight, textY1 + lineGap);
