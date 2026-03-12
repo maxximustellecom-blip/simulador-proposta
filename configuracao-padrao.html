@@ -1344,13 +1344,13 @@
         }
         function totalLinha(l) {
             const q = Number(l.quantidade || 1);
-            const vCents = Math.round(Number(l.valorPlano || 0) * 100);
-            const baseCents = Math.round(q * vCents);
-            return baseCents / 100;
+            const v = Number(l.valorPlano || 0);
+            const base = q * v;
+            // O valor do aparelho não deve somar no total da linha (solicitação do usuário)
+            return base;
         }
         function totalGeral() {
-            const totalCents = __linhas.reduce((acc, l) => acc + Math.round(totalLinha(l) * 100), 0);
-            return totalCents / 100;
+            return __linhas.reduce((acc, l) => acc + totalLinha(l), 0);
         }
         function formatNumeroPortar(valor) {
             const digs = String(valor || '').replace(/\D/g, '').slice(0, 9);
@@ -1696,9 +1696,9 @@
                         valorNaoFid = valorPlano;
                     }
 
-                    setValue('editValorNaoFid', currencyNoRound(valorNaoFid));
+                    setValue('editValorNaoFid', currency(valorNaoFid));
                     setValue('editPct', pctVal.toFixed(2));
-                    setValue('editValorPlano', currencyNoRound(valorPlano));
+                    setValue('editValorPlano', currency(valorPlano));
                     
                     // NEW: Update type based on product
                     const prodTipo = (sel.tipos && sel.tipos.length) ? (Array.isArray(sel.tipos) ? sel.tipos.join(',') : sel.tipos) : 'Novo';
@@ -1725,7 +1725,7 @@
                 const pct = Number(getValue('editPct') || 0);
                 if (vnf > 0) {
                     const newVp = vnf * (1 - (pct / 100));
-                    setValue('editValorPlano', currencyNoRound(newVp));
+                    setValue('editValorPlano', currency(newVp));
                 }
             }
 
