@@ -46,9 +46,7 @@
     '</div>' +
   '</header>';
   var simOpen = isActive('simular') || isActive('historico-simulacoes');
-  var ofertaOpen = isActive('categorias') || isActive('produtos');
-  var customOpen = isActive('categoria-customizada') || isActive('produto-customizado');
-  var adminOpen = isActive('usuarios') || isActive('perfis-acesso') || isActive('pedido-vendas') || isActive('leads');
+  var adminOpen = isActive('usuarios') || isActive('perfis-acesso') || isActive('pedido-vendas') || isActive('leads') || isActive('regioes') || isActive('categorias') || isActive('produtos') || isActive('categoria-customizada') || isActive('produto-customizado');
   var sidebarHtml =
     '<nav class="sidebar">' +
       '<div class="sidebar-inner">' +
@@ -73,31 +71,17 @@
           '<a href="simular.html" class="nav-sublink' + (isActive('simular') ? ' active' : '') + '"><i data-lucide="calculator"></i><span>Simular</span></a>' +
           '<a href="historico-simulacoes.html" class="nav-sublink' + (isActive('historico-simulacoes') ? ' active' : '') + '"><i data-lucide="list"></i><span>Histórico</span></a>' +
         '</div>' +
-        '<div class="nav-title" style="display:' + (isAdmin ? 'none' : 'none') + '">Ofertas</div>' +
-        '<a href="tipo.html" class="nav-link' + (isActive('tipo') ? ' active' : '') + '" style="display: none"><i data-lucide="tag"></i><span>Tipos</span></a>' +
-        '<a href="regioes.html" class="nav-link' + (isActive('regioes') ? ' active' : '') + '" style="display:' + (isAdmin ? 'flex' : 'none') + '"><i data-lucide="map"></i><span>Regiões</span></a>' +
-        '<button id="ofertaToggle" class="nav-dropdown' + (ofertaOpen ? ' open' : '') + '" type="button" style="display:' + (isAdmin ? 'flex' : 'none') + ';">' +
-          '<div class="left"><i data-lucide="package"></i><span>Padrão</span></div>' +
-          '<div class="chev"><i data-lucide="chevron-down"></i></div>' +
-        '</button>' +
-        '<div id="ofertaMenu" class="nav-subgroup" style="display:' + ((isAdmin && ofertaOpen) ? 'flex' : 'none') + ';">' +
-          '<a href="categorias.html" class="nav-sublink' + (isActive('categorias') ? ' active' : '') + '"><i data-lucide="tags"></i><span>Planos</span></a>' +
-          '<a href="produtos.html" class="nav-sublink' + (isActive('produtos') ? ' active' : '') + '"><i data-lucide="shopping-bag"></i><span>Ofertas</span></a>' +
-        '</div>' +
-        '<button id="customOfertaToggle" class="nav-dropdown' + (customOpen ? ' open' : '') + '" type="button" style="display:' + (isAdmin ? 'flex' : 'none') + ';">' +
-          '<div class="left"><i data-lucide="settings"></i><span>Customizada</span></div>' +
-          '<div class="chev"><i data-lucide="chevron-down"></i></div>' +
-        '</button>' +
-        '<div id="customOfertaMenu" class="nav-subgroup" style="display:' + ((isAdmin && customOpen) ? 'flex' : 'none') + ';">' +
-          '<a href="categoria-customizada.html" class="nav-sublink' + (isActive('categoria-customizada') ? ' active' : '') + '"><i data-lucide="tag"></i><span>Planos</span></a>' +
-          '<a href="produto-customizado.html" class="nav-sublink' + (isActive('produto-customizado') ? ' active' : '') + '"><i data-lucide="shopping-cart"></i><span>Ofertas</span></a>' +
-        '</div>' +
         '<div class="nav-title" id="adminTitle" style="display:' + (isAdmin ? 'none' : 'none') + '">Admin</div>' +
         '<button id="adminToggle" class="nav-dropdown' + (adminOpen ? ' open' : '') + '" type="button" style="display:' + (isAdmin ? 'flex' : 'none') + ';">' +
           '<div class="left"><i data-lucide="shield-check"></i><span>Gestão</span></div>' +
           '<div class="chev"><i data-lucide="chevron-down"></i></div>' +
         '</button>' +
         '<div id="adminMenu" class="nav-subgroup" style="display:' + ((isAdmin && adminOpen) ? 'flex' : 'none') + ';">' +
+          '<a href="regioes.html" class="nav-sublink' + (isActive('regioes') ? ' active' : '') + '"><i data-lucide="map"></i><span>Regiões</span></a>' +
+          '<a href="categorias.html" class="nav-sublink' + (isActive('categorias') ? ' active' : '') + '"><i data-lucide="tags"></i><span>Padrão • Planos</span></a>' +
+          '<a href="produtos.html" class="nav-sublink' + (isActive('produtos') ? ' active' : '') + '"><i data-lucide="shopping-bag"></i><span>Padrão • Ofertas</span></a>' +
+          '<a href="categoria-customizada.html" class="nav-sublink' + (isActive('categoria-customizada') ? ' active' : '') + '"><i data-lucide="tag"></i><span>Customizada • Planos</span></a>' +
+          '<a href="produto-customizado.html" class="nav-sublink' + (isActive('produto-customizado') ? ' active' : '') + '"><i data-lucide="shopping-cart"></i><span>Customizada • Ofertas</span></a>' +
           '<a href="pedido-vendas.html" class="nav-sublink' + (isActive('pedido-vendas') ? ' active' : '') + '"><i data-lucide="shopping-cart"></i><span>Vendas</span></a>' +
           '<a href="usuarios.html" class="nav-sublink' + (isActive('usuarios') ? ' active' : '') + '"><i data-lucide="users"></i><span>Usuários</span></a>' +
           '<a href="leads.html" class="nav-sublink' + (isActive('leads') ? ' active' : '') + '"><i data-lucide="file-spreadsheet"></i><span>Leads</span></a>' +
@@ -220,8 +204,6 @@
   }
   var simBtn = document.getElementById('simulacaoToggle');
   var simMenu = document.getElementById('simulacaoMenu');
-  var ofertaBtn = document.getElementById('ofertaToggle');
-  var ofertaMenu = document.getElementById('ofertaMenu');
   if (simBtn && simMenu) {
     simBtn.addEventListener('click', function () {
       var isOpen = simBtn.classList.contains('open');
@@ -231,34 +213,6 @@
       } else {
         simBtn.classList.add('open');
         simMenu.style.display = 'flex';
-      }
-      if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-    });
-  }
-  if (ofertaBtn && ofertaMenu) {
-    ofertaBtn.addEventListener('click', function () {
-      var isOpen = ofertaBtn.classList.contains('open');
-      if (isOpen) {
-        ofertaBtn.classList.remove('open');
-        ofertaMenu.style.display = 'none';
-      } else {
-        ofertaBtn.classList.add('open');
-        ofertaMenu.style.display = 'flex';
-      }
-      if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-    });
-  }
-  var customBtn = document.getElementById('customOfertaToggle');
-  var customMenu = document.getElementById('customOfertaMenu');
-  if (customBtn && customMenu) {
-    customBtn.addEventListener('click', function () {
-      var isOpen = customBtn.classList.contains('open');
-      if (isOpen) {
-        customBtn.classList.remove('open');
-        customMenu.style.display = 'none';
-      } else {
-        customBtn.classList.add('open');
-        customMenu.style.display = 'flex';
       }
       if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
     });
