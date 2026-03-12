@@ -110,6 +110,7 @@ export const startScheduler = () => {
         await sendNotification({ appt, kind: 'before', daysOut });
       }
     } catch (error) {
+      console.log(error);
       console.error('[Scheduler] Erro no job de notificação:', error);
     }
   });
