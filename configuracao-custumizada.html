@@ -301,6 +301,18 @@
             const t = n < 0 ? -Math.trunc(Math.abs(n) * 100) / 100 : Math.trunc(n * 100) / 100;
             return currency(t);
         }
+        function moneyTrunc2(v) {
+            const n = Number(v || 0);
+            return n < 0 ? -Math.trunc(Math.abs(n) * 100) / 100 : Math.trunc(n * 100) / 100;
+        }
+        function toCents(v) {
+            const n = Number(v || 0);
+            return n < 0 ? -Math.round(Math.abs(n) * 100) : Math.round(n * 100);
+        }
+        function fromCents(c) {
+            const n = Number(c || 0);
+            return n / 100;
+        }
         function formatCnpj(s) {
             const d = onlyDigits(s);
             const len = d.length;
@@ -492,24 +504,31 @@
             __map = map;
         }
         function calcularPrecoFinal(linha) {
-            const v = parseFloat(linha.valorNaoFidelizado) || 0;
-            const d = parseFloat(linha.desconto) || 0;
-            return v * (1 - d / 100);
+            const vCents = toCents(linha.valorNaoFidelizado);
+            const descBp = Math.round((Number(linha.desconto) || 0) * 100);
+            const fatorBp = 10000 - descBp;
+            const finalCents = Math.round((vCents * fatorBp) / 10000);
+            return fromCents(finalCents);
         }
         function calcularEconomia(linha) {
-            const precoAtual = parseFloat(linha.precoAtual) || 0;
+            const precoAtual = Number(linha.precoAtual) || 0;
             const precoFinal = calcularPrecoFinal(linha);
-            return precoAtual - precoFinal;
+            return fromCents(toCents(precoAtual) - toCents(precoFinal));
         }
         function calcularTotais() {
-            const totalAtual = linhas.reduce((sum, l) => sum + ((parseFloat(l.precoAtual) || 0) * (Number(l.quantidade) || 1)), 0);
-            const totalProposto = linhas.reduce((sum, l) => {
+            const totalAtualCents = linhas.reduce((sum, l) => {
                 const qtd = Number(l.quantidade) || 1;
-                const preco = calcularPrecoFinal(l);
-                // const parc = Number(l.valorParcela) || 0; // Ajuste: Total não inclui parcelas de aparelhos
-                return sum + (qtd * preco);
+                const vCents = toCents(l.precoAtual);
+                return sum + (Math.round(qtd * vCents));
             }, 0);
-            const totalEconomia = totalAtual - totalProposto;
+            const totalPropostoCents = linhas.reduce((sum, l) => {
+                const qtd = Number(l.quantidade) || 1;
+                const vCents = toCents(calcularPrecoFinal(l));
+                return sum + (Math.round(qtd * vCents));
+            }, 0);
+            const totalAtual = fromCents(totalAtualCents);
+            const totalProposto = fromCents(totalPropostoCents);
+            const totalEconomia = fromCents(totalAtualCents - totalPropostoCents);
             return { totalAtual, totalProposto, totalEconomia };
         }
         function validarProposta() {
@@ -585,7 +604,7 @@
             const lblCount = document.getElementById('countLinhasLabel');
             if (lblCount) lblCount.textContent = acessos + ' ' + (acessos === 1 ? 'item' : 'itens');
             document.getElementById('totalAcessos').textContent = String(acessos);
-            document.getElementById('totalEconomia').textContent = currency(economia);
+            document.getElementById('totalEconomia').textContent = currencyNoRound(economia);
             document.getElementById('percentualEconomia').textContent = String(perc) + '%';
             document.getElementById('linhasAparelho').textContent = String(withDevice);
             const atualListEl = document.getElementById('resumoAtualList');
@@ -603,13 +622,13 @@
                 const tipo = l.tipoNegociacao || '-';
                 const plano = l.plano || '-';
                 const pct = l.pct || '-';
-                const final = currency(calcularPrecoFinal(l));
+                const final = currencyNoRound(calcularPrecoFinal(l));
                 return `<div style=\"background:#ECFDF5; padding:8px; border-radius:6px; margin-bottom:6px;\">Linha ${idx + 1}: ${ac}<br>Tipo: ${tipo}<br>Plano: ${plano}<br>Pct: ${pct}<br>Final: ${final}</div>`;
             }).join('') || '<div class="muted">-</div>';
             if (atualListEl) atualListEl.innerHTML = atualItens;
             if (propostaListEl) propostaListEl.innerHTML = propostaItens;
-            if (atualTotalEl) atualTotalEl.textContent = 'Total: ' + currency(totais.totalAtual);
-            if (propostaTotalEl) propostaTotalEl.textContent = 'Total: ' + currency(totais.totalProposto);
+            if (atualTotalEl) atualTotalEl.textContent = 'Total: ' + currencyNoRound(totais.totalAtual);
+            if (propostaTotalEl) propostaTotalEl.textContent = 'Total: ' + currencyNoRound(totais.totalProposto);
         }
         function getFilteredCategorias(tipoNegociacao) {
             const t = normalizeTipoKey(tipoNegociacao);
@@ -930,10 +949,10 @@
 
             const updateCalculations = () => {
                  const final = parseMoney(getValue('editValorPlano'));
-                 setValue('editValorFinal', currency(final));
+                 setValue('editValorFinal', currencyNoRound(final));
                  
                  const pAtual = parseMoney(getValue('editPrecoAtual'));
-                 setValue('editEconomia', currency(pAtual - final));
+                 setValue('editEconomia', currencyNoRound(pAtual - final));
 
                  const valAp = parseMoney(getValue('editValorAparelho'));
                  const tipoAp = getValue('editTipoAparelho');
@@ -951,7 +970,7 @@
                 const val = getValue('editCategoria');
                 setValue('editPlano', '');
                 setValue('editPct', '');
-                setValue('editValorPlano', currency(0));
+                setValue('editValorPlano', currencyNoRound(0));
                 setValue('editValorNaoFid', currency(0));
             }
 
@@ -994,7 +1013,7 @@
                     
                     const valor = Number(sel.valor || 0);
                     setValue('editValorNaoFid', currency(valor));
-                    setValue('editValorPlano', currency(valor));
+                    setValue('editValorPlano', currencyNoRound(valor));
                     setValue('editDesconto', 0);
                     
                     // NEW: Update type based on product (custom products might not have 'tipos' array, check structure)
@@ -1037,7 +1056,7 @@
                 const desc = Number(getValue('editDesconto') || 0);
                 if (vnf > 0) {
                     const newVp = vnf * (1 - desc/100);
-                    setValue('editValorPlano', currency(newVp));
+                    setValue('editValorPlano', currencyNoRound(newVp));
                 }
                 updateCalculations();
             }
@@ -1824,8 +1843,9 @@
                     const atual = `${l.planoAtualGB || '-'} ${currency(l.precoAtual || 0)}`;
                     const proposto = `${l.plano || '-'} ${l.pct || '-'}`;
                     
-                    const unitario = currency(calcularPrecoFinal(l));
-                    const totalLinha = currency(calcularPrecoFinal(l) * (Number(l.quantidade) || 1));
+                    const unitario = currencyNoRound(calcularPrecoFinal(l));
+                    const totalLinhaCents = Math.round((Number(l.quantidade) || 1) * Math.round(calcularPrecoFinal(l) * 100));
+                    const totalLinha = currencyNoRound(totalLinhaCents / 100);
                     const desc = Number(l.desconto || 0) + '%';
                     
                     let extras = '';
@@ -1881,8 +1901,9 @@
                     const atual = `${l.planoAtualGB || '-'} ${currency(l.precoAtual || 0)}`;
                     const proposto = `${l.plano || '-'} ${l.pct || '-'}`;
                     
-                    const unitario = currency(calcularPrecoFinal(l));
-                    const totalLinha = currency(calcularPrecoFinal(l) * (Number(l.quantidade) || 1));
+                    const unitario = currencyNoRound(calcularPrecoFinal(l));
+                    const totalLinhaCents = Math.round((Number(l.quantidade) || 1) * Math.round(calcularPrecoFinal(l) * 100));
+                    const totalLinha = currencyNoRound(totalLinhaCents / 100);
                     const desc = Number(l.desconto || 0) + '%';
                     
                     let extrasHtml = '';
@@ -2278,9 +2299,10 @@
                     const ofertaNome = currentProd ? (currentProd.nome || currentProd.name || '-') : String(planoRef || '-');
 
                     const precoFinalUnit = calcularPrecoFinal(l);
-                    const ofertaPreco = currency(precoFinalUnit);
-                    const linhaVal = (Number(qtd)||0) * precoFinalUnit;
-                    const totalLinhaValor = currency(linhaVal);
+                    const ofertaPreco = currencyNoRound(precoFinalUnit);
+                    const linhaValCents = Math.round((Number(qtd) || 0) * Math.round(precoFinalUnit * 100));
+                    const linhaVal = linhaValCents / 100;
+                    const totalLinhaValor = currencyNoRound(linhaVal);
                     const tipoProduto = (currentProd && currentProd.tipos) ? currentProd.tipos : 'A DEFINIR';
                     const ddd = String(l.ddd || l.dddAtual || '').trim();
                     const numero = String(l.numero || '').trim();
@@ -2445,9 +2467,10 @@
                     const ofertaNome = currentProd ? (currentProd.nome || currentProd.name || '-') : String(planoRef || '-');
 
                     const precoFinalUnit = calcularPrecoFinal(l);
-                    const ofertaPreco = currency(precoFinalUnit);
-                    const linhaVal = (Number(qtd)||0) * precoFinalUnit;
-                    const totalLinhaValor = currency(linhaVal);
+                    const ofertaPreco = currencyNoRound(precoFinalUnit);
+                    const linhaValCents = Math.round((Number(qtd) || 0) * Math.round(precoFinalUnit * 100));
+                    const linhaVal = linhaValCents / 100;
+                    const totalLinhaValor = currencyNoRound(linhaVal);
                     const tipoProduto = (currentProd && currentProd.tipos) ? currentProd.tipos : 'A DEFINIR';
                     const ddd = String(l.ddd || l.dddAtual || '').trim();
                     const numero = String(l.numero || '').trim();
@@ -2623,9 +2646,10 @@
                     const ofertaNome = currentProd ? (currentProd.nome || currentProd.name || '-') : String(planoRef || '-');
 
                     const precoFinalUnit = calcularPrecoFinal(l);
-                    const ofertaPreco = currency(precoFinalUnit);
-                    const linhaVal = (Number(qtd)||0) * precoFinalUnit;
-                    const totalLinhaValor = currency(linhaVal);
+                    const ofertaPreco = currencyNoRound(precoFinalUnit);
+                    const linhaValCents = Math.round((Number(qtd) || 0) * Math.round(precoFinalUnit * 100));
+                    const linhaVal = linhaValCents / 100;
+                    const totalLinhaValor = currencyNoRound(linhaVal);
                     const tipoProduto = (currentProd && currentProd.tipos) ? currentProd.tipos : 'A DEFINIR';
                     const ddd = String(l.ddd || l.dddAtual || '').trim();
                     const numero = String(l.numero || '').trim();
