@@ -46,10 +46,11 @@ export const startScheduler = () => {
 
         }
 
-        if (diffDays > 0) {
+        if (diffDays > 0 && !appt.notified_before) {
 
           message = `Olá ${appt.user.name}, lembrete: seu compromisso será em ${diffDays} dia(s) às ${appt.time}: ${appt.title}`;
           shouldSend = true;
+          appt.notified_before = true;
 
         }
 
@@ -70,6 +71,7 @@ export const startScheduler = () => {
           }
         });
 
+        appt.notified = true;
         await appt.save();
 
         console.log(`[Scheduler] Notificação enviada para ${phone}`);
