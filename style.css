@@ -941,6 +941,11 @@ select option[disabled], .select option[disabled] {
   animation: modalEnter 0.15s ease-out;
 }
 
+#propostaDropdownWrap #propostaDropdownMenu {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
 .search-select-dropdown.show {
   display: block;
 }
