@@ -2764,9 +2764,10 @@
                     lastPage.drawText(ofertaNome, { x: xPlano, y: textY1 - lineGap, size: fontSizePlano, font, color: rgb(0, 0, 0) });
                     lastPage.drawText(ofertaPreco, { x: xPlano, y: textY1 - (2 * lineGap), size: fontSizePlano, font, color: rgb(0, 0, 0) });
 
-                    lastPage.drawText(aparelhoNome, { x: xAparelho, y: textY1, size: fontSizeAparelho, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(aparelhoInfo, { x: xAparelho, y: textY1 - lineGap, size: fontSizeAparelho, font, color: rgb(0, 0, 0) });
-                    lastPage.drawText(aparelhoValor, { x: xAparelho, y: textY1 - (2 * lineGap), size: fontSizeAparelho, font, color: rgb(0, 0, 0) });
+                    const yAparelhoCenter = rowY + (rowHeight / 2);
+                    lastPage.drawText(aparelhoNome, { x: xAparelho, y: yAparelhoCenter + lineGap, size: fontSizeAparelho, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(aparelhoInfo, { x: xAparelho, y: yAparelhoCenter, size: fontSizeAparelho, font, color: rgb(0, 0, 0) });
+                    lastPage.drawText(aparelhoValor, { x: xAparelho, y: yAparelhoCenter - lineGap, size: fontSizeAparelho, font, color: rgb(0, 0, 0) });
 
                     const valorTw = font.widthOfTextAtSize(valorLinha, fontSizeLinha);
                     lastPage.drawText(valorLinha, { x: xRight - valorTw, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
@@ -2931,9 +2932,10 @@
                     lastPage.drawText(ofertaNome, { x: xPlano, y: textY1 - lineGap, size: fontSizePlano, font, color: rgb(0,0,0) });
                     lastPage.drawText(ofertaPreco, { x: xPlano, y: textY1 - (2 * lineGap), size: fontSizePlano, font, color: rgb(0,0,0) });
 
-                    lastPage.drawText(aparelhoNome, { x: xAparelho, y: textY1, size: fontSizeAparelho, font, color: rgb(0,0,0) });
-                    lastPage.drawText(aparelhoInfo, { x: xAparelho, y: textY1 - lineGap, size: fontSizeAparelho, font, color: rgb(0,0,0) });
-                    lastPage.drawText(aparelhoValor, { x: xAparelho, y: textY1 - (2 * lineGap), size: fontSizeAparelho, font, color: rgb(0,0,0) });
+                    const yAparelhoCenter = rowY + (rowHeight / 2);
+                    lastPage.drawText(aparelhoNome, { x: xAparelho, y: yAparelhoCenter + lineGap, size: fontSizeAparelho, font, color: rgb(0,0,0) });
+                    lastPage.drawText(aparelhoInfo, { x: xAparelho, y: yAparelhoCenter, size: fontSizeAparelho, font, color: rgb(0,0,0) });
+                    lastPage.drawText(aparelhoValor, { x: xAparelho, y: yAparelhoCenter - lineGap, size: fontSizeAparelho, font, color: rgb(0,0,0) });
 
                     const valorTw = font.widthOfTextAtSize(valorLinha, fontSizeLinha);
                     lastPage.drawText(valorLinha, { x: xRight - valorTw, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
@@ -3114,10 +3116,14 @@
                     ctx.font = prevFont;
 
                     const prevFontAp = ctx.font;
+                    const prevBaselineAp = ctx.textBaseline;
                     ctx.font = `${(fontLinha * 0.8)}px Arial`;
-                    ctx.fillText(aparelhoNome, xAparelho, textY1);
-                    ctx.fillText(aparelhoInfo, xAparelho, textY1 + lineGap);
-                    ctx.fillText(aparelhoValor, xAparelho, textY1 + (2 * lineGap));
+                    ctx.textBaseline = 'middle';
+                    const yAparelhoCenter = rowY + (rowHeight / 2);
+                    ctx.fillText(aparelhoNome, xAparelho, yAparelhoCenter - lineGap);
+                    ctx.fillText(aparelhoInfo, xAparelho, yAparelhoCenter);
+                    ctx.fillText(aparelhoValor, xAparelho, yAparelhoCenter + lineGap);
+                    ctx.textBaseline = prevBaselineAp;
                     ctx.font = prevFontAp;
 
                     ctx.textAlign = 'right';
