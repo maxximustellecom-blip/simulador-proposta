@@ -2738,7 +2738,7 @@
                         const tipoAp = String(l.tipoAparelho || '').toLowerCase();
                         const isVf = tipoAp.includes('vf');
                         aparelhoInfo = isVf ? 'Venda Facilitada' : 'Comodato';
-                        aparelhoValor = isVf ? currency(Number(l.valorAparelho || 0)) : '-';
+                        aparelhoValor = isVf ? currency((Number(l.valorAparelho || 0) || 0) / 24) : '-';
                     }
                     
                     totalSoma += linhaVal;
@@ -2908,7 +2908,7 @@
                         const tipoAp = String(l.tipoAparelho || '').toLowerCase();
                         const isVf = tipoAp.includes('vf');
                         aparelhoInfo = isVf ? 'Venda Facilitada' : 'Comodato';
-                        aparelhoValor = isVf ? currency(Number(l.valorAparelho || 0)) : '-';
+                        aparelhoValor = isVf ? currency((Number(l.valorAparelho || 0) || 0) / 24) : '-';
                     }
                     
                     const rowY = headerY - rowHeight - (i * rowHeight);
@@ -3093,7 +3093,7 @@
                         const tipoAp = String(l.tipoAparelho || '').toLowerCase();
                         const isVf = tipoAp.includes('vf');
                         aparelhoInfo = isVf ? 'Venda Facilitada' : 'Comodato';
-                        aparelhoValor = isVf ? currency(Number(l.valorAparelho || 0)) : '-';
+                        aparelhoValor = isVf ? currency((Number(l.valorAparelho || 0) || 0) / 24) : '-';
                     }
 
                     const rowY = firstRowY + (i * rowHeight);
