@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import axios from 'axios';
 import { Appointment, User } from '../models/index.js';
 import { Op } from 'sequelize';
+import moment from 'moment-timezone';
 
 const ZAPI_URL =
   process.env.ZAPI_URL ||
@@ -17,8 +18,14 @@ export const startScheduler = () => {
 
     try {
 
-      const today = new Date();
-      const todayStr = today.toISOString().split("T")[0];
+      const now = moment.tz(SCHEDULER_TZ).seconds(0).milliseconds(0);
+      const todayStr = now.format("YYYY-MM-DD");
+
+      const isDueWithinMinutes = (targetMoment, windowMinutes = 2) => {
+        if (!targetMoment?.isValid?.()) return false;
+        const diffMinutes = now.diff(targetMoment, "minutes");
+        return diffMinutes >= 0 && diffMinutes < windowMinutes;
+      };
 
       const appointments = await Appointment.findAll({
         where: {
@@ -31,14 +38,24 @@ export const startScheduler = () => {
 
       for (const appt of appointments) {
 
-        const apptDate = new Date(appt.date);
-        const diffTime = apptDate.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const apptDateTime = moment.tz(
+          `${appt.date} ${appt.time}`,
+          ["YYYY-MM-DD HH:mm:ss", "YYYY-MM-DD HH:mm"],
+          SCHEDULER_TZ
+        );
+
+        if (!apptDateTime.isValid()) {
+          console.warn("[Scheduler] Compromisso com data/hora inválida:", appt?.id, appt?.date, appt?.time);
+          continue;
+        }
+
+        const diasAntecedencia = Math.max(0, Number(appt.dias_antecedencia ?? 1) || 0);
+        const remindBeforeAt = apptDateTime.clone().subtract(diasAntecedencia, "days");
 
         let message = "";
         let shouldSend = false;
 
-        if (diffDays === 0 && !appt.notified_day) {
+        if (!appt.notified_day && isDueWithinMinutes(apptDateTime)) {
 
           message = `Olá ${appt.user.name}, seu compromisso é HOJE às ${appt.time}: ${appt.title}`;
           shouldSend = true;
@@ -46,9 +63,9 @@ export const startScheduler = () => {
 
         }
 
-        if (diffDays > 0 && !appt.notified_before) {
+        if (!shouldSend && !appt.notified_before && diasAntecedencia > 0 && isDueWithinMinutes(remindBeforeAt) && now.isBefore(apptDateTime)) {
 
-          message = `Olá ${appt.user.name}, lembrete: seu compromisso será em ${diffDays} dia(s) às ${appt.time}: ${appt.title}`;
+          message = `Olá ${appt.user.name}, lembrete: seu compromisso será em ${diasAntecedencia} dia(s) às ${appt.time}: ${appt.title}`;
           shouldSend = true;
           appt.notified_before = true;
 
