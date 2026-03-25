@@ -306,12 +306,14 @@
             window.__toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2500);
         }
         function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
-        function currency(v) { try { return (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })).format(Number(v || 0)); } catch { return 'R$ 0,00'; } }
-        function currencyNoRound(v) {
-            const n = Number(v || 0);
-            const t = n < 0 ? -Math.trunc(Math.abs(n) * 100) / 100 : Math.trunc(n * 100) / 100;
-            return currency(t);
+        function currency(v) {
+            try {
+                const n = Number(v || 0);
+                const t = Math.round(n * 100) / 100;
+                return (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })).format(t);
+            } catch { return 'R$ 0,00'; }
         }
+        function currencyNoRound(v) { return currency(v); }
         function formatCnpj(s) {
             const d = onlyDigits(s);
             const len = d.length;
@@ -503,9 +505,7 @@
             __map = map;
         }
         function calcularPrecoFinal(linha) {
-            const v = parseFloat(linha.valorNaoFidelizado) || 0;
-            const d = parseFloat(linha.desconto) || 0;
-            return v * (1 - d / 100);
+            return Number(linha.valorPlano || 0);
         }
         function calcularEconomia(linha) {
             const precoAtual = parseFloat(linha.precoAtual) || 0;
