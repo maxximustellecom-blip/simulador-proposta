@@ -267,12 +267,12 @@
                             </button>
                             <div id="action-menu-${n.id}" class="action-menu">
                                 <button type="button" class="action-item" onclick="configurarNegociacao(${n.id})">
-                                    <i data-lucide="settings"></i> Configurar
+                                    <i data-lucide="edit-3"></i> Editar
                                 </button>
                                 <button type="button" class="action-item" onclick="enviarBko(${n.id})" ${isDisabled}>
                                     <i data-lucide="send"></i> Enviar BKO
                                 </button>
-                                <button type="button" class="action-item" onclick="editarNegociacao(${n.id})" ${isDisabled}>
+                                <button style="display:none;" type="button" class="action-item" onclick="editarNegociacao(${n.id})" ${isDisabled}>
                                     <i data-lucide="edit-3"></i> Editar
                                 </button>
                                 <button type="button" class="action-item text-danger" onclick="excluirNegociacao(${n.id})" ${isDisabled}>
