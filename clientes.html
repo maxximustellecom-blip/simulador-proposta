@@ -153,10 +153,10 @@
                     </div>
                     <div class="grid-2">
                         <div class="field"><span class="label-inline">CNPJ</span><input id="mCnpj" class="input" type="text" placeholder="00.000.000/0000-00"></div>
-                        <div class="field"><span class="label-inline">Data de Abertura</span><input id="mAbertura" class="input" type="text" placeholder="DD/MM/AAAA" maxlength="10"></div>
+                        <div class="field"><span class="label-inline">Data de Abertura</span><input id="mAbertura" class="input" type="text" placeholder="00/00/0000" maxlength="10"></div>
                     </div>
                     <div class="grid-2" style="margin-top: 1rem;">
-                        <div class="field"><span class="label-inline">Data de Vencimento</span><input id="mVencimento" class="input" type="text" placeholder="DD/MM/AAAA" maxlength="10"></div>
+                        <div class="field"><span class="label-inline">Data de Vencimento</span><input id="mVencimento" class="input" type="text" placeholder="00/00/0000" maxlength="10"></div>
                         <div></div>
                     </div>
                     <div class="grid-2" style="margin-top: 1rem;">
@@ -594,6 +594,12 @@
                 if (p.length >= 10) return `(${p.slice(0,2)}) ${p.slice(2,6)}-${p.slice(6,10)}`;
                 return p;
             }
+            function formatDate(s) {
+                const d = onlyDigits(s).slice(0, 8);
+                if (d.length <= 2) return d;
+                if (d.length <= 4) return `${d.slice(0,2)}/${d.slice(2)}`;
+                return `${d.slice(0,2)}/${d.slice(2,4)}/${d.slice(4)}`;
+            }
             async function buscarCnpjAuto() {
                 try {
                     const cnpj = onlyDigits(document.getElementById('mCnpj').value);
@@ -703,7 +709,14 @@
                 document.getElementById('mTipoEmpresa').value = c.tipo_empresa || '';
                 document.getElementById('mEmail').value = c.email || '';
                 document.getElementById('mPhone').value = formatPhone(c.phone || '');
-                document.getElementById('mAbertura').value = c.opening_date || '';
+                const abrirDateRaw = String(c.opening_date || '');
+                document.getElementById('mAbertura').value = (abrirDateRaw && abrirDateRaw.includes('-'))
+                    ? (() => { const p = abrirDateRaw.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : abrirDateRaw; })()
+                    : abrirDateRaw;
+                const vencDateRaw = String(c.due_date || '');
+                document.getElementById('mVencimento').value = (vencDateRaw && vencDateRaw.includes('-'))
+                    ? (() => { const p = vencDateRaw.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : vencDateRaw; })()
+                    : vencDateRaw;
                 document.getElementById('mVencimento').value = c.due_date || '';
                 document.getElementById('mCep').value = formatCep(c.cep || '');
                 document.getElementById('mUf').value = c.state || '';
@@ -931,6 +944,11 @@
                 if (dateInput) {
                     dateInput.addEventListener('input', () => { dateInput.value = formatDate(dateInput.value); });
                     dateInput.addEventListener('blur', () => { dateInput.value = formatDate(dateInput.value); });
+                }
+                const dueInput = document.getElementById('mVencimento');
+                if (dueInput) {
+                    dueInput.addEventListener('input', () => { dueInput.value = formatDate(dueInput.value); });
+                    dueInput.addEventListener('blur', () => { dueInput.value = formatDate(dueInput.value); });
                 }
                 const fCnpj = document.getElementById('fCnpj');
                 if (fCnpj) {
