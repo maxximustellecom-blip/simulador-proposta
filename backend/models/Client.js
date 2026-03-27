@@ -19,6 +19,7 @@ const Client = sequelize.define('Client', {
   complement: { type: DataTypes.STRING(160), allowNull: true },
   reference_point: { type: DataTypes.STRING(160), allowNull: true },
   opening_date: { type: DataTypes.STRING(20), allowNull: true },
+  due_date: { type: DataTypes.STRING(20), allowNull: true },
   rep_nome: { type: DataTypes.STRING(160), allowNull: true },
   rep_cpf: { type: DataTypes.STRING(20), allowNull: true },
   rep_rg: { type: DataTypes.STRING(20), allowNull: true },

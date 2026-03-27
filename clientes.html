@@ -86,6 +86,24 @@
                                 <option value="">Todos</option>
                             </select>
                         </div>
+                        <div style="flex: 1; min-width: 200px;">
+                            <div class="label">Email</div>
+                            <input id="fEmail" class="input" type="text" placeholder="email@empresa.com" autocomplete="off">
+                        </div>
+                        <div style="flex: 1; min-width: 200px;">
+                            <div class="label">Telefone</div>
+                            <input id="fPhone" class="input" type="text" placeholder="(00) 0000-0000" autocomplete="off">
+                        </div>
+                        <div style="display:flex; gap:0.5rem; align-items:flex-end;">
+                            <div>
+                                <div class="label">Cadastro de</div>
+                                <input id="fCadDe" class="input" type="date">
+                            </div>
+                            <div>
+                                <div class="label">Até</div>
+                                <input id="fCadAte" class="input" type="date">
+                            </div>
+                        </div>
                         <div style="display:flex; align-items:flex-end; margin-left: auto; gap:0.5rem;">
                             <button id="buscarBtn" class="btn btn-primary" type="button" title="Buscar"><i data-lucide="search"></i><span>Buscar</span></button>
                             <button id="limparBtn" class="btn btn-ghost" type="button" title="Limpar"><i data-lucide="rotate-ccw"></i><span>Limpar</span></button>
@@ -103,11 +121,12 @@
                                 <tr>
                                     <th>Nome</th>
                                     <th>CNPJ</th>
+                                    <th>Informações</th>
                                     <th class="col-actions" style="min-width:140px;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="clientsTbody">
-                                <tr><td colspan="3">
+                                <tr><td colspan="4">
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
@@ -135,6 +154,10 @@
                     <div class="grid-2">
                         <div class="field"><span class="label-inline">CNPJ</span><input id="mCnpj" class="input" type="text" placeholder="00.000.000/0000-00"></div>
                         <div class="field"><span class="label-inline">Data de Abertura</span><input id="mAbertura" class="input" type="text" placeholder="DD/MM/AAAA" maxlength="10"></div>
+                    </div>
+                    <div class="grid-2" style="margin-top: 1rem;">
+                        <div class="field"><span class="label-inline">Data de Vencimento</span><input id="mVencimento" class="input" type="text" placeholder="DD/MM/AAAA" maxlength="10"></div>
+                        <div></div>
                     </div>
                     <div class="grid-2" style="margin-top: 1rem;">
                         <div class="field"><span class="label-inline">Razão Social</span><input id="mNome" class="input" type="text" placeholder="Razão Social"></div>
@@ -361,6 +384,12 @@
             const countLabel = document.getElementById('countLabel');
             const suffix = window.__isAdmin ? '' : ' • seus clientes';
             countLabel.textContent = arr.length + ' ' + (arr.length === 1 ? 'item' : 'itens') + suffix;
+            const fmtPhone = (s) => {
+                const p = String(s || '').replace(/\D/g, '');
+                if (p.length >= 11) return `(${p.slice(0,2)}) ${p.slice(2,7)}-${p.slice(7,11)}`;
+                if (p.length >= 10) return `(${p.slice(0,2)}) ${p.slice(2,6)}-${p.slice(6,10)}`;
+                return p;
+            };
             const sorted = arr.slice().sort((a, b) => {
                 const aRaw = (a && (a.created_at || a.createdAt)) || null;
                 const bRaw = (b && (b.created_at || b.createdAt)) || null;
@@ -378,6 +407,14 @@
                         </div>
                     </td>
                     <td>${c.cnpj}</td>
+                    <td>
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <div class="muted">Criação: ${((c && (c.created_at || c.createdAt)) ? new Date(c.created_at || c.createdAt).toLocaleDateString('pt-BR') : '-')}</div>
+                            <div class="muted">Vencimento: ${((c && c.due_date) ? new Date(c.due_date).toLocaleDateString('pt-BR') : '-')}</div>
+                            <div class="muted">Telefone: ${fmtPhone(c.phone || '') || '-'}</div>
+                            <div class="muted">Email: ${c.email || '-'}</div>
+                        </div>
+                    </td>
                     <td class="col-actions">
                         <div class="table-actions">
                             <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditar(${c.id})"><i data-lucide="edit-3"></i></button>
@@ -386,7 +423,7 @@
                         </div>
                     </td>
                 </tr>
-            `).join('') || '<tr><td colspan="3" class="muted">Sem resultados</td></tr>';
+            `).join('') || '<tr><td colspan="4" class="muted">Sem resultados</td></tr>';
         }
         async function buscar() {
             try {
@@ -405,6 +442,29 @@
                 if (nome) {
                     const needle = nome.toUpperCase();
                     arr = arr.filter(c => String(c.name || '').toUpperCase().includes(needle));
+                }
+                const email = String(document.getElementById('fEmail').value || '').trim();
+                if (email) {
+                    const en = email.toUpperCase();
+                    arr = arr.filter(c => String(c.email || '').toUpperCase().includes(en));
+                }
+                const phone = String(document.getElementById('fPhone').value || '').trim();
+                if (phone) {
+                    const nd = String(phone).replace(/\D/g, '');
+                    arr = arr.filter(c => String(c.phone || '').replace(/\D/g, '').includes(nd));
+                }
+                const de = document.getElementById('fCadDe').value;
+                const ate = document.getElementById('fCadAte').value;
+                if (de || ate) {
+                    const dDe = de ? new Date(de + 'T00:00:00').getTime() : null;
+                    const dAte = ate ? new Date(ate + 'T23:59:59').getTime() : null;
+                    arr = arr.filter(c => {
+                        const raw = (c && (c.created_at || c.createdAt)) || null;
+                        const dc = raw ? new Date(raw).getTime() : 0;
+                        if (dDe && dc < dDe) return false;
+                        if (dAte && dc > dAte) return false;
+                        return true;
+                    });
                 }
                 renderClientsTable(arr);
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
@@ -586,6 +646,15 @@
                             }
                             return v;
                         })(),
+                        due_date: (() => {
+                            const v = String(document.getElementById('mVencimento').value || '').trim();
+                            if (!v) return null;
+                            if (v.includes('/')) {
+                                const parts = v.split('/');
+                                if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                            }
+                            return v;
+                        })(),
                         
                         rep_nome: String(document.getElementById('mRepNome').value || '').trim() || null,
                         rep_cpf: String(document.getElementById('mRepCpf').value || '').trim() || null,
@@ -635,6 +704,7 @@
                 document.getElementById('mEmail').value = c.email || '';
                 document.getElementById('mPhone').value = formatPhone(c.phone || '');
                 document.getElementById('mAbertura').value = c.opening_date || '';
+                document.getElementById('mVencimento').value = c.due_date || '';
                 document.getElementById('mCep').value = formatCep(c.cep || '');
                 document.getElementById('mUf').value = c.state || '';
                 document.getElementById('mCidade').value = c.city || '';
@@ -679,6 +749,7 @@
             function limparCampos() {
                 preencherCampos({ 
                     cnpj: '', name: '', fantasy_name: '', tipo_empresa: '', email: '', phone: '', opening_date: '', 
+                    due_date: '',
                     cep: '', state: '', city: '', neighborhood: '', street: '', number: '', complement: '', reference_point: '',
                     rep_nome: '', rep_cpf: '', rep_rg: '', rep_tel1: '', rep_email: '',
                     gestor_nome: '', gestor_cpf: '', gestor_rg: '', gestor_tel1: '', gestor_email: '',
@@ -866,11 +937,24 @@
                     fCnpj.addEventListener('input', () => { fCnpj.value = formatCnpj(fCnpj.value); });
                     fCnpj.addEventListener('blur', () => { fCnpj.value = formatCnpj(fCnpj.value); });
                 }
+                const fPhone = document.getElementById('fPhone');
+                if (fPhone) {
+                    fPhone.addEventListener('input', () => { fPhone.value = formatPhone(fPhone.value); });
+                    fPhone.addEventListener('blur', () => { fPhone.value = formatPhone(fPhone.value); });
+                }
             }
             document.getElementById('buscarBtn').addEventListener('click', buscar);
             document.getElementById('limparBtn').addEventListener('click', () => {
                 document.getElementById('fNome').value = '';
                 document.getElementById('fCnpj').value = '';
+                const fEmailEl = document.getElementById('fEmail');
+                if (fEmailEl) fEmailEl.value = '';
+                const fPhoneEl = document.getElementById('fPhone');
+                if (fPhoneEl) fPhoneEl.value = '';
+                const fCadDeEl = document.getElementById('fCadDe');
+                if (fCadDeEl) fCadDeEl.value = '';
+                const fCadAteEl = document.getElementById('fCadAte');
+                if (fCadAteEl) fCadAteEl.value = '';
                 buscar();
             });
             await buscar();

@@ -8,6 +8,7 @@ export async function upsertClient(req, res) {
       fantasy_name, tipo_empresa, email, phone,
       cep, state, city, neighborhood, street, number, complement, reference_point,
       opening_date,
+      due_date,
       rep_nome, rep_cpf, rep_rg, rep_tel1, rep_tel2, rep_email,
       gestor_nome, gestor_cpf, gestor_rg, gestor_tel1, gestor_tel2, gestor_email,
       auth1_nome, auth1_cpf, auth1_rg, auth1_contato,
@@ -39,6 +40,7 @@ export async function upsertClient(req, res) {
         complement: complement || null,
         reference_point: reference_point || null,
         opening_date: opening_date || null,
+        due_date: due_date || null,
         rep_nome: rep_nome || null,
         rep_cpf: rep_cpf || null,
         rep_rg: rep_rg || null,
@@ -90,6 +92,7 @@ export async function upsertClient(req, res) {
     if (client.complement !== (complement || null)) { client.complement = complement || null; changed = true; }
     if (client.reference_point !== (reference_point || null)) { client.reference_point = reference_point || null; changed = true; }
     if (client.opening_date !== (opening_date || null)) { client.opening_date = opening_date || null; changed = true; }
+    if (client.due_date !== (due_date || null)) { client.due_date = due_date || null; changed = true; }
     if (client.rep_nome !== (rep_nome || null)) { client.rep_nome = rep_nome || null; changed = true; }
     if (client.rep_cpf !== (rep_cpf || null)) { client.rep_cpf = rep_cpf || null; changed = true; }
     if (client.rep_rg !== (rep_rg || null)) { client.rep_rg = rep_rg || null; changed = true; }
