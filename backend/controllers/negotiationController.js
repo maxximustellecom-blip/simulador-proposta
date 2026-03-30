@@ -1,6 +1,33 @@
 import { Negotiation, User, Client, PedidoDeVenda, NegociacaoProposta, NegociacaoPropostaCustomizada } from '../models/index.js';
 
 function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
+function toAcc(n) {
+  if (!n) return 0;
+  if (n.customProposal && n.customProposal.total_acessos !== undefined && n.customProposal.total_acessos !== null) return Number(n.customProposal.total_acessos) || 0;
+  if (n.proposal && n.proposal.total_acessos !== undefined && n.proposal.total_acessos !== null) return Number(n.proposal.total_acessos) || 0;
+  return 0;
+}
+function dedupeById(list) {
+  const map = new Map();
+  for (const item of (Array.isArray(list) ? list : [])) {
+    const id = Number(item && item.id ? item.id : 0);
+    if (!id) continue;
+    const prev = map.get(id);
+    if (!prev) { map.set(id, item); continue; }
+    const prevScore = (prev.client ? 2 : 0) + (prev.creator ? 1 : 0) + ((prev.proposal || prev.customProposal) ? 1 : 0);
+    const nextScore = (item.client ? 2 : 0) + (item.creator ? 1 : 0) + ((item.proposal || item.customProposal) ? 1 : 0);
+    if (nextScore > prevScore) { map.set(id, item); continue; }
+    if (nextScore === prevScore) {
+      const pAcc = toAcc(prev);
+      const nAcc = toAcc(item);
+      if (nAcc > pAcc) { map.set(id, item); continue; }
+      const pCid = Number(prev.client && prev.client.id ? prev.client.id : 0);
+      const nCid = Number(item.client && item.client.id ? item.client.id : 0);
+      if (nCid > pCid) { map.set(id, item); }
+    }
+  }
+  return Array.from(map.values());
+}
 
 export async function listNegotiations(req, res) {
   try {
@@ -18,8 +45,10 @@ export async function listNegotiations(req, res) {
         { model: NegociacaoProposta, as: 'proposal', attributes: ['total_acessos'] },
         { model: NegociacaoPropostaCustomizada, as: 'customProposal', attributes: ['total_acessos'] }
       ],
-      order: [['created_at', 'DESC']]
+      order: [['created_at', 'DESC']],
+      distinct: true
     });
+    list = dedupeById(list);
     const role = String(req.user && req.user.role ? req.user.role : '').toLowerCase();
     if (req.user && role === 'user' && req.user.id) {
       list = list.filter(n => Number(n.created_by || 0) === Number(req.user.id));
@@ -96,8 +125,10 @@ export async function listFunnelNegotiations(req, res) {
         { model: NegociacaoProposta, as: 'proposal', attributes: ['total_acessos'] },
         { model: NegociacaoPropostaCustomizada, as: 'customProposal', attributes: ['total_acessos'] }
       ],
-      order: [['created_at', 'DESC']]
+      order: [['created_at', 'DESC']],
+      distinct: true
     });
+    list = dedupeById(list);
     const role = String(req.user && req.user.role ? req.user.role : '').toLowerCase();
     if (req.user && role === 'user' && req.user.id) {
       list = list.filter(n => Number(n.created_by || 0) === Number(req.user.id));
