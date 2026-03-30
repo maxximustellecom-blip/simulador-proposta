@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Funil • Maxximus Telecom</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        .kanban {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(260px, 1fr));
+            gap: 0.75rem;
+            overflow-x: auto;
+            padding-bottom: 0.25rem;
+        }
+        .kanban-col {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            min-height: 520px;
+            display: flex;
+            flex-direction: column;
+        }
+        .kanban-head {
+            padding: 0.75rem 0.75rem 0.5rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+        .kanban-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+        }
+        .kanban-badge {
+            font-size: 0.8rem;
+            color: var(--muted);
+            font-weight: 600;
+        }
+        .kanban-drop {
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            flex: 1;
+        }
+        .kanban-drop.dragover {
+            outline: 2px dashed rgba(59,130,246,0.55);
+            outline-offset: -6px;
+            border-radius: 12px;
+            background: rgba(59,130,246,0.06);
+        }
+        .deal {
+            border: 1px solid var(--border);
+            border-left: 6px solid transparent;
+            background: var(--surface-strong);
+            border-radius: 12px;
+            padding: 0.65rem 0.7rem;
+            cursor: grab;
+            user-select: none;
+        }
+        .deal:active { cursor: grabbing; }
+        .deal-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+        .deal-title {
+            font-weight: 700;
+            line-height: 1.15;
+        }
+        .deal-sub {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+            line-height: 1.2;
+        }
+        .deal-meta {
+            margin-top: 0.55rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.35rem 0.6rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        .deal-meta strong { color: var(--text); font-weight: 700; }
+        .deal-actions {
+            display:flex;
+            gap:0.35rem;
+            align-items:center;
+        }
+        .stage-1 { border-left-color: #3B82F6; }
+        .stage-2 { border-left-color: #A855F7; }
+        .stage-3 { border-left-color: #F59E0B; }
+        .stage-4 { border-left-color: #10B981; }
+        .stage-5 { border-left-color: #EF4444; }
+        .col-1 .kanban-head { background: rgba(59,130,246,0.10); }
+        .col-2 .kanban-head { background: rgba(168,85,247,0.10); }
+        .col-3 .kanban-head { background: rgba(245,158,11,0.12); }
+        .col-4 .kanban-head { background: rgba(16,185,129,0.10); }
+        .col-5 .kanban-head { background: rgba(239,68,68,0.10); }
+        @media (max-width: 900px) {
+            .kanban { grid-template-columns: repeat(5, minmax(240px, 1fr)); }
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <div class="card">
+            <div class="card-head">
+                <div class="card-title">
+                    <span>Funil</span>&nbsp;
+                    <span class="chip">Propostas</span>
+                </div>
+                <div class="muted" style="display:flex; gap:0.5rem; align-items:center;">
+                    <button id="refreshBtn" class="btn btn-ghost" type="button"><i data-lucide="refresh-cw"></i><span>Atualizar</span></button>
+                </div>
+            </div>
+            <div class="card-body">
+                <section class="section" style="margin-top: 20px;">
+                    <div class="kanban" id="kanban">
+                        <div class="kanban-col col-1">
+                            <div class="kanban-head">
+                                <div class="kanban-title"><i data-lucide="search"></i><span>Prospecção</span></div>
+                                <div class="kanban-badge" id="count-1">0</div>
+                            </div>
+                            <div class="kanban-drop" data-stage="1" id="drop-1"></div>
+                        </div>
+                        <div class="kanban-col col-2">
+                            <div class="kanban-head">
+                                <div class="kanban-title"><i data-lucide="handshake"></i><span>Negociação</span></div>
+                                <div class="kanban-badge" id="count-2">0</div>
+                            </div>
+                            <div class="kanban-drop" data-stage="2" id="drop-2"></div>
+                        </div>
+                        <div class="kanban-col col-3">
+                            <div class="kanban-head">
+                                <div class="kanban-title"><i data-lucide="shopping-cart"></i><span>Venda</span></div>
+                                <div class="kanban-badge" id="count-3">0</div>
+                            </div>
+                            <div class="kanban-drop" data-stage="3" id="drop-3"></div>
+                        </div>
+                        <div class="kanban-col col-4">
+                            <div class="kanban-head">
+                                <div class="kanban-title"><i data-lucide="check-circle-2"></i><span>Finalizado</span></div>
+                                <div class="kanban-badge" id="count-4">0</div>
+                            </div>
+                            <div class="kanban-drop" data-stage="4" id="drop-4"></div>
+                        </div>
+                        <div class="kanban-col col-5">
+                            <div class="kanban-head">
+                                <div class="kanban-title"><i data-lucide="x-circle"></i><span>Perdido</span></div>
+                                <div class="kanban-badge" id="count-5">0</div>
+                            </div>
+                            <div class="kanban-drop" data-stage="5" id="drop-5"></div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+    <div id="toast" class="toast"></div>
+    <script src="script.js"></script>
+    <script>
+        const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
+        async function api(path, options = {}) {
+            const authRaw = localStorage.getItem('authUser');
+            let headers = { 'Content-Type': 'application/json' };
+            try {
+                const u = JSON.parse(authRaw || '{}');
+                if (u && u.id) headers['x-user-id'] = String(u.id);
+                if (u && u.role) headers['x-user-role'] = String(u.role);
+                if (u && u.name) headers['x-user-name'] = String(u.name);
+            } catch {}
+            const res = await fetch(API_BASE + path, { headers, ...options });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || ('HTTP ' + res.status));
+            }
+            return res.json();
+        }
+        function toast(msg, type) {
+            const el = document.getElementById('toast');
+            if (!el) return;
+            el.textContent = msg;
+            el.style.borderColor = type === 'error' ? 'rgba(239,68,68,0.35)' : 'rgba(16,185,129,0.35)';
+            el.style.display = 'block';
+            clearTimeout(window.__toastTimer);
+            window.__toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2500);
+        }
+        function fmtMoney(v) {
+            try { return (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })).format(Number(v || 0)); } catch { return 'R$ 0,00'; }
+        }
+        function fmtDateBR(raw) {
+            if (!raw) return '-';
+            const s = String(raw);
+            if (s.includes('/')) return s;
+            if (s.includes('-') && s.length >= 10) {
+                const p = s.slice(0, 10).split('-');
+                if (p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+            }
+            try { return new Date(raw).toLocaleDateString('pt-BR'); } catch { return s; }
+        }
+        function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
+        function fmtPhone(s) {
+            const p = onlyDigits(s);
+            if (p.length >= 11) return `(${p.slice(0,2)}) ${p.slice(2,7)}-${p.slice(7,11)}`;
+            if (p.length >= 10) return `(${p.slice(0,2)}) ${p.slice(2,6)}-${p.slice(6,10)}`;
+            return p;
+        }
+
+        let __deals = [];
+        let __dragId = null;
+
+        function dealHtml(d) {
+            const c = d.client || {};
+            const title = (c.fantasy_name || c.name || d.cnpj || '').trim() || '-';
+            const sub = [d.tipo, d.proposta].filter(Boolean).join(' • ') || '-';
+            const valor = (d.valor !== null && d.valor !== undefined) ? fmtMoney(d.valor) : '-';
+            const due = c.due_date ? fmtDateBR(c.due_date) : '-';
+            const created = d.created_at ? fmtDateBR(d.created_at) : '-';
+            const phone = c.phone ? fmtPhone(c.phone) : '-';
+            const totalAcessos = (d.totalAcessos !== null && d.totalAcessos !== undefined) ? String(d.totalAcessos) : '-';
+            return `
+                <div class="deal stage-${d.funil_stage}" draggable="true" data-id="${d.id}">
+                    <div class="deal-top">
+                        <div>
+                            <div class="deal-title">${title}</div>
+                            <div class="deal-sub">${sub}</div>
+                        </div>
+                        <div class="deal-actions">
+                            <button type="button" class="btn btn-ghost btn-icon" title="Abrir" onclick="window.openNegotiation(${d.id})"><i data-lucide="arrow-right"></i></button>
+                        </div>
+                    </div>
+                    <div class="deal-meta">
+                        <div><span>Valor:</span> <strong>${valor}</strong></div>
+                        <div><span>Acessos:</span> <strong>${totalAcessos}</strong></div>
+                        <div><span>Criação:</span> <strong>${created}</strong></div>
+                        <div><span>Venc.:</span> <strong>${due}</strong></div>
+                        <div style="grid-column: 1 / -1;"><span>CNPJ:</span> <strong>${d.cnpj || '-'}</strong></div>
+                        <div style="grid-column: 1 / -1;"><span>Tel:</span> <strong>${phone || '-'}</strong></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function render() {
+            const byStage = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+            (__deals || []).forEach(d => {
+                const s = Number(d.funil_stage || 1);
+                const k = (s >= 1 && s <= 5) ? s : 1;
+                byStage[k].push(d);
+            });
+            for (let s = 1; s <= 5; s++) {
+                const drop = document.getElementById('drop-' + s);
+                const cnt = document.getElementById('count-' + s);
+                if (cnt) cnt.textContent = String(byStage[s].length);
+                if (drop) drop.innerHTML = byStage[s].map(dealHtml).join('') || '<div class="muted">Sem propostas</div>';
+            }
+            bindDrag();
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        }
+
+        function bindDrag() {
+            document.querySelectorAll('.deal[draggable="true"]').forEach(el => {
+                el.addEventListener('dragstart', (e) => {
+                    __dragId = Number(el.getAttribute('data-id') || 0) || null;
+                    try { e.dataTransfer.setData('text/plain', String(__dragId || '')); } catch {}
+                    try { e.dataTransfer.effectAllowed = 'move'; } catch {}
+                });
+                el.addEventListener('dragend', () => { __dragId = null; });
+            });
+            document.querySelectorAll('.kanban-drop').forEach(drop => {
+                drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('dragover'); });
+                drop.addEventListener('dragleave', () => { drop.classList.remove('dragover'); });
+                drop.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    drop.classList.remove('dragover');
+                    const stage = Number(drop.getAttribute('data-stage') || 0);
+                    const idFromDT = (() => { try { return Number(e.dataTransfer.getData('text/plain') || 0); } catch { return 0; } })();
+                    const id = __dragId || idFromDT;
+                    if (!id || !stage) return;
+                    const deal = (__deals || []).find(x => Number(x.id) === Number(id));
+                    if (!deal) return;
+                    const prev = Number(deal.funil_stage || 1);
+                    if (prev === stage) return;
+                    deal.funil_stage = stage;
+                    render();
+                    try {
+                        await api('/negotiations/' + id + '/funnel-stage', { method: 'PUT', body: JSON.stringify({ funil_stage: stage }) });
+                    } catch (err) {
+                        deal.funil_stage = prev;
+                        render();
+                        toast(err && err.message ? err.message : 'Erro ao atualizar funil', 'error');
+                    }
+                });
+            });
+        }
+
+        async function load() {
+            try {
+                __deals = await api('/negotiations/funnel', { method: 'GET' });
+                render();
+            } catch (err) {
+                __deals = [];
+                render();
+                toast(err && err.message ? err.message : 'Erro ao carregar funil', 'error');
+            }
+        }
+
+        window.openNegotiation = function(id) {
+            try { window.location.href = 'negociar.html?id=' + String(id); } catch {}
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const auth = localStorage.getItem('authUser');
+            if (!auth) { window.location.href = 'login.html'; return; }
+            const btn = document.getElementById('refreshBtn');
+            if (btn) btn.addEventListener('click', load);
+            await load();
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

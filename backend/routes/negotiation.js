@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { listNegotiations, createNegotiation, updateNegotiation, deleteNegotiation } from '../controllers/negotiationController.js';
+import { listNegotiations, listFunnelNegotiations, updateFunnelStage, createNegotiation, updateNegotiation, deleteNegotiation } from '../controllers/negotiationController.js';
 import { getProposalForNegotiation, saveProposalForNegotiation } from '../controllers/negotiationProposalController.js';
 import { getCustomProposalForNegotiation, saveCustomProposalForNegotiation } from '../controllers/negotiationCustomProposalController.js';
 import { 
@@ -15,9 +15,11 @@ const upload = multer({
 
 const router = express.Router();
 
+router.get('/funnel', listFunnelNegotiations);
 router.get('/', listNegotiations);
 router.post('/', createNegotiation);
 router.put('/:id', updateNegotiation);
+router.put('/:id/funnel-stage', updateFunnelStage);
 router.delete('/:id', deleteNegotiation);
 
 router.get('/:id/proposal', getProposalForNegotiation);

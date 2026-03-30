@@ -72,6 +72,7 @@ export async function listNegotiations(req, res) {
         proposta: n.proposta,
         valor: n.valor !== null && n.valor !== undefined ? Number(n.valor) : null,
         status: n.status,
+        funil_stage: Number(n.funil_stage || 1),
         data: n.data,
         created_by: n.created_by !== null && n.created_by !== undefined ? Number(n.created_by) : null,
         creator: n.creator ? { id: n.creator.id, name: n.creator.name } : null,
@@ -81,6 +82,50 @@ export async function listNegotiations(req, res) {
     }));
   } catch (err) {
     return res.status(500).json({ error: 'erro ao listar negociações', details: String(err && err.message ? err.message : err) });
+  }
+}
+
+export async function listFunnelNegotiations(req, res) {
+  try {
+    let list = await Negotiation.findAll({
+      include: [
+        { model: User, as: 'creator', attributes: ['id', 'name', 'role'] },
+        { model: Client, as: 'client' },
+        { model: NegociacaoProposta, as: 'proposal', attributes: ['total_acessos'] },
+        { model: NegociacaoPropostaCustomizada, as: 'customProposal', attributes: ['total_acessos'] }
+      ],
+      order: [['created_at', 'DESC']]
+    });
+    if (req.user && req.user.role === 'user' && req.user.id) {
+      list = list.filter(n => Number(n.created_by || 0) === Number(req.user.id));
+    }
+    return res.json(list.map(n => {
+      const totalAcessos = n.customProposal ? n.customProposal.total_acessos : (n.proposal ? n.proposal.total_acessos : 0);
+      return {
+        id: n.id,
+        funil_stage: Number(n.funil_stage || 1),
+        cnpj: n.cnpj,
+        tipo: n.tipo,
+        proposta: n.proposta,
+        valor: n.valor !== null && n.valor !== undefined ? Number(n.valor) : null,
+        status: n.status,
+        data: n.data,
+        created_at: n.created_at,
+        created_by: n.created_by !== null && n.created_by !== undefined ? Number(n.created_by) : null,
+        creator: n.creator ? { id: n.creator.id, name: n.creator.name } : null,
+        client: n.client ? {
+          id: n.client.id,
+          name: n.client.name || '',
+          fantasy_name: n.client.fantasy_name || '',
+          email: n.client.email || '',
+          phone: n.client.phone || '',
+          due_date: n.client.due_date || null
+        } : null,
+        totalAcessos
+      };
+    }));
+  } catch (err) {
+    return res.status(500).json({ error: 'erro ao listar funil', details: String(err && err.message ? err.message : err) });
   }
 }
 
@@ -107,6 +152,7 @@ export async function createNegotiation(req, res) {
       proposta,
       valor: valor !== undefined ? Number(valor || 0) : null,
       status: status || 'Em andamento',
+      funil_stage: 1,
       data: data ? String(data).split('-').reverse().join('/') : new Date().toLocaleDateString('pt-BR'),
       created_by: creatorId
     });
@@ -140,12 +186,19 @@ export async function updateNegotiation(req, res) {
     if (!actor || (actor.role !== 'admin' && Number(negotiation.created_by || 0) !== Number(actor.id))) {
       return res.status(403).json({ error: 'forbidden' });
     }
-    const { cnpj, tipo, proposta, valor, status, data } = req.body || {};
+    const { cnpj, tipo, proposta, valor, status, data, funil_stage } = req.body || {};
     if (cnpj !== undefined) negotiation.cnpj = onlyDigits(cnpj);
     if (tipo) negotiation.tipo = tipo;
     if (proposta) negotiation.proposta = proposta;
     if (valor !== undefined) negotiation.valor = Number(valor || 0);
     if (status) negotiation.status = status;
+    if (funil_stage !== undefined) {
+      const s = Number(funil_stage);
+      if (isFinite(s)) {
+        const bounded = Math.max(1, Math.min(5, Math.trunc(s)));
+        negotiation.funil_stage = bounded;
+      }
+    }
     if (data) negotiation.data = String(data).includes('-') ? String(data).split('-').reverse().join('/') : String(data);
     
     // Allow admin to update creator
@@ -201,5 +254,26 @@ export async function deleteNegotiation(req, res) {
     return res.json({ ok: true });
   } catch (err) {
     return res.status(500).json({ error: 'erro ao excluir negociação', details: String(err && err.message ? err.message : err) });
+  }
+}
+
+export async function updateFunnelStage(req, res) {
+  try {
+    const id = Number(req.params.id || 0);
+    if (!id) return res.status(400).json({ error: 'id inválido' });
+    const negotiation = await Negotiation.findByPk(id);
+    if (!negotiation) return res.status(404).json({ error: 'negociação não encontrada' });
+    const actor = req.user;
+    if (!actor || (actor.role !== 'admin' && Number(negotiation.created_by || 0) !== Number(actor.id))) {
+      return res.status(403).json({ error: 'forbidden' });
+    }
+    const stage = Number((req.body || {}).funil_stage);
+    if (!isFinite(stage)) return res.status(400).json({ error: 'funil_stage inválido' });
+    const bounded = Math.max(1, Math.min(5, Math.trunc(stage)));
+    negotiation.funil_stage = bounded;
+    await negotiation.save();
+    return res.json({ id: negotiation.id, funil_stage: Number(negotiation.funil_stage || 1) });
+  } catch (err) {
+    return res.status(500).json({ error: 'erro ao atualizar funil', details: String(err && err.message ? err.message : err) });
   }
 }

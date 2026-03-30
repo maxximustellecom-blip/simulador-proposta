@@ -10,6 +10,7 @@ const Negotiation = sequelize.define('Negotiation', {
   proposta: { type: DataTypes.STRING(40), allowNull: false },
   valor: { type: DataTypes.DECIMAL(12, 2), allowNull: true },
   status: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'Em andamento' },
+  funil_stage: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
   data: { type: DataTypes.STRING(40), allowNull: false },
   created_by: { type: DataTypes.INTEGER, allowNull: true }
 }, {
@@ -25,4 +26,3 @@ User.hasMany(Negotiation, { foreignKey: 'created_by', as: 'createdNegotiations' 
 Negotiation.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 
 export default Negotiation;
-
