@@ -20,7 +20,8 @@ export async function listNegotiations(req, res) {
       ],
       order: [['created_at', 'DESC']]
     });
-    if (req.user && req.user.role === 'user' && req.user.id) {
+    const role = String(req.user && req.user.role ? req.user.role : '').toLowerCase();
+    if (req.user && role === 'user' && req.user.id) {
       list = list.filter(n => Number(n.created_by || 0) === Number(req.user.id));
     } else if (creator_id) {
       // If admin and creator_id filter provided
@@ -96,7 +97,8 @@ export async function listFunnelNegotiations(req, res) {
       ],
       order: [['created_at', 'DESC']]
     });
-    if (req.user && req.user.role === 'user' && req.user.id) {
+    const role = String(req.user && req.user.role ? req.user.role : '').toLowerCase();
+    if (req.user && role === 'user' && req.user.id) {
       list = list.filter(n => Number(n.created_by || 0) === Number(req.user.id));
     }
     return res.json(list.map(n => {

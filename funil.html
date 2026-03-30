@@ -15,6 +15,15 @@
             overflow-x: auto;
             padding-bottom: 0.25rem;
         }
+        .filters {
+            display: grid;
+            grid-template-columns: 1.2fr 1.2fr 1fr 1fr 0.9fr;
+            gap: 0.75rem;
+            align-items: end;
+        }
+        @media (max-width: 1100px) {
+            .filters { grid-template-columns: 1fr 1fr; }
+        }
         .kanban-col {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -120,10 +129,40 @@
                 </div>
                 <div class="muted" style="display:flex; gap:0.5rem; align-items:center;">
                     <button id="refreshBtn" class="btn btn-ghost" type="button"><i data-lucide="refresh-cw"></i><span>Atualizar</span></button>
+                    <button id="exportBtn" class="btn btn-ghost" type="button"><i data-lucide="download"></i><span>Exportar</span></button>
                 </div>
             </div>
             <div class="card-body">
                 <section class="section" style="margin-top: 20px;">
+                    <div class="filters" style="margin-bottom: 0.75rem;">
+                        <div>
+                            <div class="label">Razão social</div>
+                            <input id="fRazao" class="input" type="text" placeholder="Razão social / fantasia" autocomplete="off">
+                        </div>
+                        <div>
+                            <div class="label">CNPJ</div>
+                            <input id="fCnpj" class="input" type="text" placeholder="00.000.000/0000-00" autocomplete="off">
+                        </div>
+                        <div>
+                            <div class="label">Data da proposta (de)</div>
+                            <input id="fDataDe" class="input" type="date">
+                        </div>
+                        <div>
+                            <div class="label">Até</div>
+                            <input id="fDataAte" class="input" type="date">
+                        </div>
+                        <div>
+                            <div class="label">Status do funil</div>
+                            <select id="fStage" class="input">
+                                <option value="">Todos</option>
+                                <option value="1">Prospecção</option>
+                                <option value="2">Negociação</option>
+                                <option value="3">Venda</option>
+                                <option value="4">Finalizado</option>
+                                <option value="5">Perdido</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="kanban" id="kanban">
                         <div class="kanban-col col-1">
                             <div class="kanban-head">
@@ -207,6 +246,24 @@
             }
             try { return new Date(raw).toLocaleDateString('pt-BR'); } catch { return s; }
         }
+        function parseBRDateToTime(s) {
+            const v = String(s || '').trim();
+            const m = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+            if (!m) return null;
+            const day = Number(m[1]);
+            const mon = Number(m[2]);
+            const yr = Number(m[3]);
+            const dt = new Date(yr, mon - 1, day, 12, 0, 0);
+            const t = dt.getTime();
+            return isFinite(t) ? t : null;
+        }
+        function parseISODateToTime(s, endOfDay) {
+            const v = String(s || '').trim();
+            if (!v) return null;
+            const dt = new Date(v + (endOfDay ? 'T23:59:59' : 'T00:00:00'));
+            const t = dt.getTime();
+            return isFinite(t) ? t : null;
+        }
         function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
         function fmtPhone(s) {
             const p = onlyDigits(s);
@@ -215,6 +272,7 @@
             return p;
         }
 
+        let __dealsAll = [];
         let __deals = [];
         let __dragId = null;
 
@@ -232,6 +290,8 @@
                     <div class="deal-top">
                         <div>
                             <div class="deal-title">${title}</div>
+                            <div style="grid-column: 1 / -1; font-size: 8pt !important;"><span style='font-size: 8pt !important;'>CNPJ:</span> <strong>${d.cnpj || '-'}</strong></div>
+                            <div style="grid-column: 1 / -1; font-size: 8pt !important;"><span style='font-size: 8pt !important;'>Tel:</span> <strong>${phone || '-'}</strong></div>
                             <div class="deal-sub">${sub}</div>
                         </div>
                         <div class="deal-actions">
@@ -243,8 +303,6 @@
                         <div><span>Acessos:</span> <strong>${totalAcessos}</strong></div>
                         <div><span>Criação:</span> <strong>${created}</strong></div>
                         <div><span>Venc.:</span> <strong>${due}</strong></div>
-                        <div style="grid-column: 1 / -1;"><span>CNPJ:</span> <strong>${d.cnpj || '-'}</strong></div>
-                        <div style="grid-column: 1 / -1;"><span>Tel:</span> <strong>${phone || '-'}</strong></div>
                     </div>
                 </div>
             `;
@@ -265,6 +323,97 @@
             }
             bindDrag();
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        }
+
+        function normalizeText(s) {
+            return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+        }
+
+        function applyFilters() {
+            const razao = normalizeText(document.getElementById('fRazao') ? document.getElementById('fRazao').value : '').trim();
+            const cnpjNeedle = onlyDigits(document.getElementById('fCnpj') ? document.getElementById('fCnpj').value : '').trim();
+            const stageVal = String(document.getElementById('fStage') ? document.getElementById('fStage').value : '').trim();
+            const deIso = document.getElementById('fDataDe') ? document.getElementById('fDataDe').value : '';
+            const ateIso = document.getElementById('fDataAte') ? document.getElementById('fDataAte').value : '';
+            const tDe = parseISODateToTime(deIso, false);
+            const tAte = parseISODateToTime(ateIso, true);
+
+            __deals = (__dealsAll || []).filter(d => {
+                const c = d.client || {};
+                if (stageVal) {
+                    if (Number(d.funil_stage || 1) !== Number(stageVal)) return false;
+                }
+                if (cnpjNeedle) {
+                    if (!onlyDigits(d.cnpj || '').includes(cnpjNeedle)) return false;
+                }
+                if (razao) {
+                    const n1 = normalizeText(c.name);
+                    const n2 = normalizeText(c.fantasy_name);
+                    if (!n1.includes(razao) && !n2.includes(razao)) return false;
+                }
+                if (tDe || tAte) {
+                    const base = parseBRDateToTime(d.data) || (d.created_at ? new Date(d.created_at).getTime() : null);
+                    const bt = (base !== null && base !== undefined) ? Number(base) : null;
+                    if (!bt || !isFinite(bt)) return false;
+                    if (tDe && bt < tDe) return false;
+                    if (tAte && bt > tAte) return false;
+                }
+                return true;
+            });
+            render();
+        }
+
+        function stageName(n) {
+            const s = Number(n || 1);
+            if (s === 1) return 'Prospecção';
+            if (s === 2) return 'Negociação';
+            if (s === 3) return 'Venda';
+            if (s === 4) return 'Finalizado';
+            if (s === 5) return 'Perdido';
+            return 'Prospecção';
+        }
+
+        function exportCsv() {
+            const rows = (__deals || []).map(d => {
+                const c = d.client || {};
+                const v = (x) => String(x === null || x === undefined ? '' : x);
+                return {
+                    id: v(d.id),
+                    funil_stage: v(d.funil_stage),
+                    funil_status: v(stageName(d.funil_stage)),
+                    data_proposta: v(d.data || ''),
+                    status_negociacao: v(d.status || ''),
+                    valor: v(d.valor !== null && d.valor !== undefined ? d.valor : ''),
+                    total_acessos: v(d.totalAcessos !== null && d.totalAcessos !== undefined ? d.totalAcessos : ''),
+                    cnpj: v(d.cnpj || ''),
+                    razao_social: v(c.name || ''),
+                    nome_fantasia: v(c.fantasy_name || ''),
+                    email: v(c.email || ''),
+                    telefone: v(c.phone || ''),
+                    vencimento_cliente: v(c.due_date || ''),
+                    criador: v((d.creator && d.creator.name) ? d.creator.name : '')
+                };
+            });
+            const headers = rows.length ? Object.keys(rows[0]) : [
+                'id','funil_stage','funil_status','data_proposta','status_negociacao','valor','total_acessos','cnpj','razao_social','nome_fantasia','email','telefone','vencimento_cliente','criador'
+            ];
+            const esc = (s) => {
+                const str = String(s || '');
+                if (/[",\n]/.test(str)) return '"' + str.replace(/"/g, '""') + '"';
+                return str;
+            };
+            const csv = [headers.join(',')]
+                .concat(rows.map(r => headers.map(h => esc(r[h])).join(',')))
+                .join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'funil.csv';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => { try { URL.revokeObjectURL(url); } catch {} }, 0);
         }
 
         function bindDrag() {
@@ -305,9 +454,10 @@
 
         async function load() {
             try {
-                __deals = await api('/negotiations/funnel', { method: 'GET' });
-                render();
+                __dealsAll = await api('/negotiations/funnel', { method: 'GET' });
+                applyFilters();
             } catch (err) {
+                __dealsAll = [];
                 __deals = [];
                 render();
                 toast(err && err.message ? err.message : 'Erro ao carregar funil', 'error');
@@ -323,6 +473,15 @@
             if (!auth) { window.location.href = 'login.html'; return; }
             const btn = document.getElementById('refreshBtn');
             if (btn) btn.addEventListener('click', load);
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportBtn) exportBtn.addEventListener('click', exportCsv);
+            const fIds = ['fRazao','fCnpj','fDataDe','fDataAte','fStage'];
+            fIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('input', applyFilters);
+                el.addEventListener('change', applyFilters);
+            });
             await load();
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         });
