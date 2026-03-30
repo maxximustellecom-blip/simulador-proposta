@@ -106,14 +106,14 @@
         }
         .stage-1 { border-left-color: #3B82F6; }
         .stage-2 { border-left-color: #A855F7; }
-        .stage-3 { border-left-color: #F59E0B; }
-        .stage-4 { border-left-color: #10B981; }
-        .stage-5 { border-left-color: #EF4444; }
+        .stage-3 { border-left-color: #06B6D4; }
+        .stage-4 { border-left-color: #F59E0B; }
+        .stage-5 { border-left-color: #10B981; }
         .col-1 .kanban-head { background: rgba(59,130,246,0.10); }
         .col-2 .kanban-head { background: rgba(168,85,247,0.10); }
-        .col-3 .kanban-head { background: rgba(245,158,11,0.12); }
-        .col-4 .kanban-head { background: rgba(16,185,129,0.10); }
-        .col-5 .kanban-head { background: rgba(239,68,68,0.10); }
+        .col-3 .kanban-head { background: rgba(6,182,212,0.10); }
+        .col-4 .kanban-head { background: rgba(245,158,11,0.12); }
+        .col-5 .kanban-head { background: rgba(16,185,129,0.10); }
         @media (max-width: 900px) {
             .kanban { grid-template-columns: repeat(5, minmax(240px, 1fr)); }
         }
@@ -144,10 +144,14 @@
                             <input id="fCnpj" class="input" type="text" placeholder="00.000.000/0000-00" autocomplete="off">
                         </div>
                         <div>
+                            <div class="label">Vendedor</div>
+                            <input id="fVendedor" class="input" type="text" placeholder="Nome do vendedor" autocomplete="off">
+                        </div>
+                        <div>
                             <div class="label">Data da proposta (de)</div>
                             <input id="fDataDe" class="input" type="date">
                         </div>
-                        <div>
+                        <div style="display: none;">
                             <div class="label">Até</div>
                             <input id="fDataAte" class="input" type="date">
                         </div>
@@ -157,9 +161,9 @@
                                 <option value="">Todos</option>
                                 <option value="1">Prospecção</option>
                                 <option value="2">Negociação</option>
-                                <option value="3">Venda</option>
-                                <option value="4">Finalizado</option>
-                                <option value="5">Perdido</option>
+                                <option value="3">Cadastro</option>
+                                <option value="4">Análise</option>
+                                <option value="5">Finalizado</option>
                             </select>
                         </div>
                     </div>
@@ -180,21 +184,21 @@
                         </div>
                         <div class="kanban-col col-3">
                             <div class="kanban-head">
-                                <div class="kanban-title"><i data-lucide="shopping-cart"></i><span>Venda</span></div>
+                                <div class="kanban-title"><i data-lucide="file-text"></i><span>Cadastro</span></div>
                                 <div class="kanban-badge" id="count-3">0</div>
                             </div>
                             <div class="kanban-drop" data-stage="3" id="drop-3"></div>
                         </div>
                         <div class="kanban-col col-4">
                             <div class="kanban-head">
-                                <div class="kanban-title"><i data-lucide="check-circle-2"></i><span>Finalizado</span></div>
+                                <div class="kanban-title"><i data-lucide="search-check"></i><span>Análise</span></div>
                                 <div class="kanban-badge" id="count-4">0</div>
                             </div>
                             <div class="kanban-drop" data-stage="4" id="drop-4"></div>
                         </div>
                         <div class="kanban-col col-5">
                             <div class="kanban-head">
-                                <div class="kanban-title"><i data-lucide="x-circle"></i><span>Perdido</span></div>
+                                <div class="kanban-title"><i data-lucide="check-circle-2"></i><span>Finalizado</span></div>
                                 <div class="kanban-badge" id="count-5">0</div>
                             </div>
                             <div class="kanban-drop" data-stage="5" id="drop-5"></div>
@@ -279,11 +283,12 @@
         function dealHtml(d) {
             const c = d.client || {};
             const title = (c.fantasy_name || c.name || d.cnpj || '').trim() || '-';
-            const sub = [d.tipo, d.proposta].filter(Boolean).join(' • ') || '-';
+            const sub = [d.proposta].filter(Boolean).join(' • ') || '-';
             const valor = (d.valor !== null && d.valor !== undefined) ? fmtMoney(d.valor) : '-';
             const due = c.due_date ? fmtDateBR(c.due_date) : '-';
             const created = d.created_at ? fmtDateBR(d.created_at) : '-';
             const phone = c.phone ? fmtPhone(c.phone) : '-';
+            const vendedor = (d.creator && d.creator.name) ? d.creator.name : '-';
             const totalAcessos = (d.totalAcessos !== null && d.totalAcessos !== undefined) ? String(d.totalAcessos) : '-';
             return `
                 <div class="deal stage-${d.funil_stage}" draggable="true" data-id="${d.id}">
@@ -292,6 +297,7 @@
                             <div class="deal-title">${title}</div>
                             <div style="grid-column: 1 / -1; font-size: 8pt !important;"><span style='font-size: 8pt !important;'>CNPJ:</span> <strong>${d.cnpj || '-'}</strong></div>
                             <div style="grid-column: 1 / -1; font-size: 8pt !important;"><span style='font-size: 8pt !important;'>Tel:</span> <strong>${phone || '-'}</strong></div>
+                            <div style="grid-column: 1 / -1; font-size: 8pt !important;"><span style='font-size: 8pt !important;'>Vendedor:</span> <strong>${vendedor}</strong></div>
                             <div class="deal-sub">${sub}</div>
                         </div>
                         <div class="deal-actions">
@@ -302,7 +308,6 @@
                         <div><span>Valor:</span> <strong>${valor}</strong></div>
                         <div><span>Acessos:</span> <strong>${totalAcessos}</strong></div>
                         <div><span>Criação:</span> <strong>${created}</strong></div>
-                        <div><span>Venc.:</span> <strong>${due}</strong></div>
                     </div>
                 </div>
             `;
@@ -332,6 +337,7 @@
         function applyFilters() {
             const razao = normalizeText(document.getElementById('fRazao') ? document.getElementById('fRazao').value : '').trim();
             const cnpjNeedle = onlyDigits(document.getElementById('fCnpj') ? document.getElementById('fCnpj').value : '').trim();
+            const vendedorNeedle = normalizeText(document.getElementById('fVendedor') ? document.getElementById('fVendedor').value : '').trim();
             const stageVal = String(document.getElementById('fStage') ? document.getElementById('fStage').value : '').trim();
             const deIso = document.getElementById('fDataDe') ? document.getElementById('fDataDe').value : '';
             const ateIso = document.getElementById('fDataAte') ? document.getElementById('fDataAte').value : '';
@@ -351,6 +357,10 @@
                     const n2 = normalizeText(c.fantasy_name);
                     if (!n1.includes(razao) && !n2.includes(razao)) return false;
                 }
+                if (vendedorNeedle) {
+                    const v = normalizeText(d.creator && d.creator.name ? d.creator.name : '');
+                    if (!v.includes(vendedorNeedle)) return false;
+                }
                 if (tDe || tAte) {
                     const base = parseBRDateToTime(d.data) || (d.created_at ? new Date(d.created_at).getTime() : null);
                     const bt = (base !== null && base !== undefined) ? Number(base) : null;
@@ -367,9 +377,9 @@
             const s = Number(n || 1);
             if (s === 1) return 'Prospecção';
             if (s === 2) return 'Negociação';
-            if (s === 3) return 'Venda';
-            if (s === 4) return 'Finalizado';
-            if (s === 5) return 'Perdido';
+            if (s === 3) return 'Cadastro';
+            if (s === 4) return 'Análise';
+            if (s === 5) return 'Finalizado';
             return 'Prospecção';
         }
 
@@ -475,7 +485,7 @@
             if (btn) btn.addEventListener('click', load);
             const exportBtn = document.getElementById('exportBtn');
             if (exportBtn) exportBtn.addEventListener('click', exportCsv);
-            const fIds = ['fRazao','fCnpj','fDataDe','fDataAte','fStage'];
+            const fIds = ['fRazao','fCnpj','fVendedor','fDataDe','fDataAte','fStage'];
             fIds.forEach(id => {
                 const el = document.getElementById(id);
                 if (!el) return;
