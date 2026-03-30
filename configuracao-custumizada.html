@@ -1739,9 +1739,14 @@
                 let consultorNome = '-';
                 let consultorEmail = '';
                 try {
-                    const u = JSON.parse(localStorage.getItem('authUser') || '{}');
-                    if (u && u.name) consultorNome = u.name;
-                    if (u && u.email) consultorEmail = u.email;
+                    const n = __negociacaoInfo || {};
+                    if (n.creator && n.creator.name) consultorNome = n.creator.name;
+                    if (n.creator && n.creator.email) consultorEmail = n.creator.email;
+                    if (consultorNome === '-' || !consultorNome) {
+                        const u = JSON.parse(localStorage.getItem('authUser') || '{}');
+                        if (u && u.name) consultorNome = u.name;
+                        if (!consultorEmail && u && u.email) consultorEmail = u.email;
+                    }
                 } catch {}
                 const consultorLinha = consultorEmail ? ('Consultor: ' + consultorNome) : ('Consultor: ' + consultorNome);
 
@@ -2073,10 +2078,9 @@
                 doc.setFontSize(9);
                 doc.text('Gerado em ' + new Date().toLocaleString('pt-BR'), 40, 56);
                 try {
-                    const u = JSON.parse(localStorage.getItem('authUser') || '{}');
-                    if (u && u.name) {
-                        doc.text('Consultor: ' + u.name, 40, 68);
-                    }
+                    const nInfo = __negociacaoInfo || {};
+                    const nomeCons = (nInfo.creator && nInfo.creator.name) ? nInfo.creator.name : '';
+                    if (nomeCons) doc.text('Consultor: ' + nomeCons, 40, 68);
                 } catch {}
                 doc.setFontSize(10);
                 doc.text('Total Proposto: ' + currency(totais.totalProposto), 450, 40, { align: 'right' });
