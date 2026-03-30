@@ -316,6 +316,7 @@
                 </div>
             </div>
             <div class="modal-actions">
+                <button id="mMascara" class="btn btn-ghost" type="button"><i data-lucide="copy"></i><span>Máscara</span></button>
                 <button id="mSalvar" class="btn btn-primary" type="button"><i data-lucide="save"></i><span>Salvar</span></button>
             </div>
         </div>
@@ -594,6 +595,16 @@
                 if (p.length >= 10) return `(${p.slice(0,2)}) ${p.slice(2,6)}-${p.slice(6,10)}`;
                 return p;
             }
+            function fmtDateBRForMask(s) {
+                const v = String(s || '').trim();
+                if (!v) return '-';
+                if (v.includes('/')) return v;
+                if (v.includes('-')) {
+                    const p = v.split('-');
+                    if (p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+                }
+                return v;
+            }
             function formatDate(s) {
                 const d = onlyDigits(s).slice(0, 8);
                 if (d.length <= 2) return d;
@@ -817,6 +828,113 @@
             });
             if (closeBtn) closeBtn.addEventListener('click', closeModal);
             if (salvarBtn) salvarBtn.addEventListener('click', salvarClienteModal);
+            const mascaraBtn = document.getElementById('mMascara');
+            if (mascaraBtn) {
+                mascaraBtn.addEventListener('click', async () => {
+                    const v = (id) => (document.getElementById(id) && document.getElementById(id).value) || '';
+                    const cnpj = formatCnpj(v('mCnpj'));
+                    const nome = v('mNome') || '-';
+                    const fantasia = v('mFantasia') || '-';
+                    const tipoEmp = v('mTipoEmpresa') || '-';
+                    const email = v('mEmail') || '-';
+                    const phone = formatPhone(v('mPhone')) || '-';
+                    const abertura = fmtDateBRForMask(v('mAbertura'));
+                    const venc = fmtDateBRForMask(v('mVencimento'));
+                    const cep = formatCep(v('mCep')) || '-';
+                    const uf = v('mUf') || '-';
+                    const cidade = v('mCidade') || '-';
+                    const bairro = v('mBairro') || '-';
+                    const logradouro = v('mLogradouro') || '-';
+                    const numero = v('mNumero') || '-';
+                    const complemento = v('mComplemento') || '-';
+                    const ref = v('mPontoReferencia') || '-';
+                    const repNome = v('mRepNome') || '-';
+                    const repCpf = formatCpf(v('mRepCpf')) || '-';
+                    const repRg = v('mRepRg') || '-';
+                    const repTel1 = formatPhone(v('mRepTel1')) || '-';
+                    const repEmail = v('mRepEmail') || '-';
+                    const gestorNome = v('mGestorNome') || '-';
+                    const gestorCpf = formatCpf(v('mGestorCpf')) || '-';
+                    const gestorRg = v('mGestorRg') || '-';
+                    const gestorTel1 = formatPhone(v('mGestorTel1')) || '-';
+                    const gestorEmail = v('mGestorEmail') || '-';
+                    const a1Nome = v('mAuth1Nome') || '-';
+                    const a1Cpf = formatCpf(v('mAuth1Cpf')) || '-';
+                    const a1Rg = v('mAuth1Rg') || '-';
+                    const a1Contato = formatPhone(v('mAuth1Contato')) || '-';
+                    const a2Nome = v('mAuth2Nome') || '-';
+                    const a2Cpf = formatCpf(v('mAuth2Cpf')) || '-';
+                    const a2Contato = formatPhone(v('mAuth2Contato')) || '-';
+                    const s1Nome = v('mSoc1Nome') || '-';
+                    const s1Cpf = formatCpf(v('mSoc1Cpf')) || '-';
+                    const s1Contato = formatPhone(v('mSoc1Contato')) || '-';
+                    const s2Nome = v('mSoc2Nome') || '-';
+                    const s2Cpf = formatCpf(v('mSoc2Cpf')) || '-';
+                    const s2Contato = formatPhone(v('mSoc2Contato')) || '-';
+                    const obs = v('mObservacoes') || '-';
+                    const lines = [
+                        '=== DADOS DA EMPRESA ===',
+                        `Razão Social: ${nome}`,
+                        `Nome Fantasia: ${fantasia}`,
+                        `CNPJ: ${cnpj}`,
+                        `Tipo de Empresa: ${tipoEmp}`,
+                        `Abertura: ${abertura}`,
+                        `Vencimento: ${venc}`,
+                        '',
+                        '=== CONTATO E ENDEREÇO ===',
+                        `Email: ${email}`,
+                        `Telefone: ${phone}`,
+                        `CEP: ${cep}`,
+                        `UF: ${uf}`,
+                        `Cidade: ${cidade}`,
+                        `Bairro: ${bairro}`,
+                        `Logradouro: ${logradouro}`,
+                        `Número: ${numero}`,
+                        `Complemento: ${complemento}`,
+                        `Ponto de Referência: ${ref}`,
+                        '',
+                        '=== REPRESENTANTE LEGAL ===',
+                        `Nome: ${repNome}`,
+                        `CPF: ${repCpf}`,
+                        `RG: ${repRg}`,
+                        `Contato: ${repTel1}`,
+                        `Email: ${repEmail}`,
+                        '',
+                        '=== ADMINISTRADOR DE CONTRATO ===',
+                        `Nome: ${gestorNome}`,
+                        `CPF: ${gestorCpf}`,
+                        `RG: ${gestorRg}`,
+                        `Contato: ${gestorTel1}`,
+                        `Email: ${gestorEmail}`,
+                        '',
+                        '=== PESSOAS AUTORIZADAS ===',
+                        `1º Autorizado: ${a1Nome} • CPF: ${a1Cpf} • RG: ${a1Rg} • Contato: ${a1Contato}`,
+                        `2º Autorizado: ${a2Nome} • CPF: ${a2Cpf} • Contato: ${a2Contato}`,
+                        '',
+                        '=== SÓCIOS ===',
+                        `Sócio 1: ${s1Nome} • CPF: ${s1Cpf} • Contato: ${s1Contato}`,
+                        `Sócio 2: ${s2Nome} • CPF: ${s2Cpf} • Contato: ${s2Contato}`,
+                        '',
+                        '=== OBSERVAÇÕES ===',
+                        `${obs}`
+                    ].join('\n');
+                    try {
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            await navigator.clipboard.writeText(lines);
+                        } else {
+                            const ta = document.createElement('textarea');
+                            ta.value = lines;
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(ta);
+                        }
+                        toast('Máscara copiada', 'success');
+                    } catch {
+                        toast('Não foi possível copiar', 'error');
+                    }
+                });
+            }
             
             if (confirmClose) confirmClose.addEventListener('click', closeConfirm);
             if (confirmCancel) confirmCancel.addEventListener('click', closeConfirm);
