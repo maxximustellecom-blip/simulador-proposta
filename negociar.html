@@ -221,6 +221,17 @@
             if (p.length >= 2) return `${p[0]}${p[1]}`;
             return p[0] || '';
         }
+        function formatDate(s) {
+            const d = String(s || '').replace(/\D/g, '').slice(0, 8);
+            if (d.length <= 2) return d;
+            if (d.length <= 4) return `${d.slice(0,2)}/${d.slice(2)}`;
+            return `${d.slice(0,2)}/${d.slice(2,4)}/${d.slice(4)}`;
+        }
+        function normalizeDateBr(s) {
+            const d = String(s || '').replace(/\D/g, '').slice(0, 8);
+            if (d.length !== 8) return null;
+            return `${d.slice(0,2)}/${d.slice(2,4)}/${d.slice(4)}`;
+        }
         let __clients = [];
         let __negociacoes = [];
         let __editingNegId = null;
@@ -363,6 +374,7 @@
             const mTipo = document.getElementById('mTipo');
             const mProposta = document.getElementById('mProposta');
             const mStatus = document.getElementById('mStatus');
+            const mFaturaVenc = document.getElementById('mFaturaVenc');
             const mCriadoPor = document.getElementById('mCriadoPor');
             const headTitleEl = document.querySelector('#negociarModal .modal-head div');
             if (mClienteHidden) mClienteHidden.value = '';
@@ -372,6 +384,7 @@
             // if (mTipo) mTipo.value = '1º VENDA'; // Removed hardcoded default
             if (mProposta) mProposta.value = 'PROPOSTA PADRÃO';
             if (mStatus) mStatus.value = 'Em andamento';
+            if (mFaturaVenc) mFaturaVenc.value = '';
             if (mCriadoPor) mCriadoPor.value = '';
             __editingNegId = null;
             if (headTitleEl) headTitleEl.textContent = 'Nova proposta';
@@ -411,6 +424,16 @@
             
             document.getElementById('mProposta').value = n?.proposta || 'PROPOSTA PADRÃO';
             document.getElementById('mStatus').value = n?.status || 'Em andamento';
+            const vencEl = document.getElementById('mFaturaVenc');
+            if (vencEl) {
+                const raw = String(n && (n.fatura_due_date || n.faturaDueDate) ? (n.fatura_due_date || n.faturaDueDate) : '');
+                if (raw && raw.includes('-')) {
+                    const p = raw.split('-');
+                    vencEl.value = p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : raw;
+                } else {
+                    vencEl.value = raw || '';
+                }
+            }
             
             const selCriadoPor = document.getElementById('mCriadoPor');
             if (selCriadoPor) {
@@ -483,7 +506,8 @@
                 const proposta = document.getElementById('mProposta').value;
                 const status = document.getElementById('mStatus').value;
                 if (!cnpj || !tipo || !proposta) return;
-                const payload = { cnpj, tipo, proposta, status };
+                const faturaVenc = normalizeDateBr(document.getElementById('mFaturaVenc') ? document.getElementById('mFaturaVenc').value : '');
+                const payload = { cnpj, tipo, proposta, status, fatura_due_date: faturaVenc || null };
                 
                 // Add creator_id if available (admin feature)
                 const mCriadoPor = document.getElementById('mCriadoPor');
@@ -615,6 +639,8 @@
                 if (mTipo && mTipo.options.length > 0) mTipo.selectedIndex = 0;
                 
                 document.getElementById('mProposta').value = 'PROPOSTA PADRÃO';
+                const vencEl = document.getElementById('mFaturaVenc');
+                if (vencEl) vencEl.value = '';
                 
                 // Set default creator to current user
                 try {
@@ -646,6 +672,7 @@
                 const proposta = document.getElementById('mProposta').value;
                 const status = document.getElementById('mStatus').value;
                 const criadoPor = document.getElementById('mCriadoPor').value;
+                const faturaVenc = normalizeDateBr(document.getElementById('mFaturaVenc') ? document.getElementById('mFaturaVenc').value : '');
                 
                 if (!cliente) {
                     toast('Selecione um cliente', 'error');
@@ -661,6 +688,7 @@
                     tipo: tipo || '1º VENDA', // Fallback
                     proposta: proposta,
                     status: status,
+                    fatura_due_date: faturaVenc || null,
                     creator_id: criadoPor || undefined // If admin wants to set creator
                 };
                 
@@ -697,6 +725,7 @@
                                 valor: (created.valor !== undefined ? created.valor : null),
                                 status: created.status || body.status,
                                 data: created.data || '-',
+                                fatura_due_date: (created.fatura_due_date !== undefined ? created.fatura_due_date : (body.fatura_due_date || null)),
                                 created_by: creatorObj ? creatorObj.id : null,
                                 creator: creatorObj,
                                 razaoSocial: body.razaoSocial || '',
@@ -718,6 +747,11 @@
             });
             document.getElementById('mFechar').addEventListener('click', closeModal);
             document.getElementById('fCnpj').addEventListener('input', (e) => { e.target.value = formatCnpj(e.target.value); });
+            const faturaVencEl = document.getElementById('mFaturaVenc');
+            if (faturaVencEl) {
+                faturaVencEl.addEventListener('input', () => { faturaVencEl.value = formatDate(faturaVencEl.value); });
+                faturaVencEl.addEventListener('blur', () => { faturaVencEl.value = formatDate(faturaVencEl.value); });
+            }
             {
                 const modal = document.getElementById('confirmNegociacaoModal');
                 const btnClose = document.getElementById('confirmNegociacaoClose');
@@ -838,6 +872,10 @@
                             <option value="PROPOSTA COSTUMIZADA">PROPOSTA COSTUMIZADA</option>
                         </select>
                     </div>
+                    <div>
+                        <div class="label">Data vencimento fatura</div>
+                        <input id="mFaturaVenc" class="input" type="text" placeholder="00/00/0000" maxlength="10">
+                    </div>
                     <div style="display: none;">
                         <div class="label">Status</div>
                         <select id="mStatus" class="select">
@@ -847,7 +885,7 @@
                         </select>
                     </div>
                     <div id="divCriadoPor" style="display: none;">
-                        <div class="label">Criado por</div>
+                        <div class="label">Vendedor</div>
                         <select id="mCriadoPor" class="select">
                             <option value="">Carregando...</option>
                         </select>

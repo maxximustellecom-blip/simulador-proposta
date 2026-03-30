@@ -74,6 +74,7 @@ export async function listNegotiations(req, res) {
         valor: n.valor !== null && n.valor !== undefined ? Number(n.valor) : null,
         status: n.status,
         funil_stage: Number(n.funil_stage || 1),
+        fatura_due_date: n.fatura_due_date || null,
         data: n.data,
         created_by: n.created_by !== null && n.created_by !== undefined ? Number(n.created_by) : null,
         creator: n.creator ? { id: n.creator.id, name: n.creator.name } : null,
@@ -111,6 +112,7 @@ export async function listFunnelNegotiations(req, res) {
         proposta: n.proposta,
         valor: n.valor !== null && n.valor !== undefined ? Number(n.valor) : null,
         status: n.status,
+        fatura_due_date: n.fatura_due_date || null,
         data: n.data,
         created_at: n.created_at,
         created_by: n.created_by !== null && n.created_by !== undefined ? Number(n.created_by) : null,
@@ -136,7 +138,7 @@ export async function createNegotiation(req, res) {
     if (!req.user || !req.user.id) {
       return res.status(401).json({ error: 'unauthorized: usuário não autenticado' });
     }
-    const { cnpj, tipo, proposta, valor, status, data } = req.body || {};
+    const { cnpj, tipo, proposta, valor, status, data, fatura_due_date } = req.body || {};
     const cleanCnpj = onlyDigits(cnpj);
     if (!cleanCnpj || !tipo || !proposta) {
       return res.status(400).json({ error: 'cnpj, tipo e proposta são obrigatórios' });
@@ -155,6 +157,7 @@ export async function createNegotiation(req, res) {
       valor: valor !== undefined ? Number(valor || 0) : null,
       status: status || 'Em andamento',
       funil_stage: 1,
+      fatura_due_date: fatura_due_date ? (String(fatura_due_date).includes('-') ? String(fatura_due_date).split('-').reverse().join('/') : String(fatura_due_date)) : null,
       data: data ? String(data).split('-').reverse().join('/') : new Date().toLocaleDateString('pt-BR'),
       created_by: creatorId
     });
@@ -171,6 +174,7 @@ export async function createNegotiation(req, res) {
       proposta: negotiation.proposta,
       valor: negotiation.valor !== null && negotiation.valor !== undefined ? Number(negotiation.valor) : null,
       status: negotiation.status,
+      fatura_due_date: negotiation.fatura_due_date || null,
       data: negotiation.data
     });
   } catch (err) {
@@ -188,12 +192,16 @@ export async function updateNegotiation(req, res) {
     if (!actor || (actor.role !== 'admin' && Number(negotiation.created_by || 0) !== Number(actor.id))) {
       return res.status(403).json({ error: 'forbidden' });
     }
-    const { cnpj, tipo, proposta, valor, status, data, funil_stage } = req.body || {};
+    const { cnpj, tipo, proposta, valor, status, data, funil_stage, fatura_due_date } = req.body || {};
     if (cnpj !== undefined) negotiation.cnpj = onlyDigits(cnpj);
     if (tipo) negotiation.tipo = tipo;
     if (proposta) negotiation.proposta = proposta;
     if (valor !== undefined) negotiation.valor = Number(valor || 0);
     if (status) negotiation.status = status;
+    if (fatura_due_date !== undefined) {
+      const v = String(fatura_due_date || '').trim();
+      negotiation.fatura_due_date = v ? (v.includes('-') ? v.split('-').reverse().join('/') : v) : null;
+    }
     if (funil_stage !== undefined) {
       const s = Number(funil_stage);
       if (isFinite(s)) {
@@ -234,6 +242,7 @@ export async function updateNegotiation(req, res) {
       proposta: negotiation.proposta,
       valor: negotiation.valor !== null && negotiation.valor !== undefined ? Number(negotiation.valor) : null,
       status: negotiation.status,
+      fatura_due_date: negotiation.fatura_due_date || null,
       data: negotiation.data
     });
   } catch (err) {
