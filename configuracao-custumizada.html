@@ -531,7 +531,7 @@
             if (numAcessos < 10 && totais.totalProposto < 350) {
                 erros.push('Com menos de 10 acessos, o contrato deve atingir mínimo de R$ 350,00');
             }
-            if (numAcessos < 20) {
+            /*if (numAcessos < 20) {
                 const temAparelho = linhas.some(l => {
                     if (l.temAparelho === 'Sim') return true;
                     if (l.portabilidade === 'Sim' && Array.isArray(l.portarItens)) {
@@ -542,7 +542,7 @@
                 if (!temAparelho) {
                     erros.push('Negociações com menos de 20 acessos devem incluir pelo menos um aparelho');
                 }
-            }
+            }*/
             linhas.forEach((linha, idx) => {
                 if (!linha.plano) {
                     erros.push(`Linha ${idx + 1}: Selecione um plano`);
