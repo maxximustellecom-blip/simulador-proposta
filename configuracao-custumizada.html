@@ -2075,9 +2075,16 @@
                 const acessos = linhas.length;
                 const totalAparelhoMensal = linhas.reduce((acc, l) => {
                     const qtd = Number(l.quantidade || 1);
-                    const parcela = Number(l.valorParcela || 0);
-                    if (!parcela || parcela <= 0) return acc;
                     if (String(l.temAparelho || '').toLowerCase() !== 'sim') return acc;
+                    const parcelaRaw = Number(l.valorParcela || 0);
+                    let parcela = parcelaRaw;
+                    if (!(parcela > 0)) {
+                        const tipoAp = String(l.tipoAparelho || '').toLowerCase();
+                        if (tipoAp.includes('vf')) {
+                            parcela = (Number(l.valorAparelho || 0) || 0) / 24;
+                        }
+                    }
+                    if (!(parcela > 0)) return acc;
                     return acc + (qtd * parcela);
                 }, 0);
                 doc.setFontSize(14);
@@ -2349,9 +2356,16 @@
                 }
                 const totalAparelhoMensal = linhas.reduce((acc, l) => {
                     const qtd = Number(l.quantidade || 1);
-                    const parcela = Number(l.valorParcela || 0);
-                    if (!parcela || parcela <= 0) return acc;
                     if (String(l.temAparelho || '').toLowerCase() !== 'sim') return acc;
+                    const parcelaRaw = Number(l.valorParcela || 0);
+                    let parcela = parcelaRaw;
+                    if (!(parcela > 0)) {
+                        const tipoAp = String(l.tipoAparelho || '').toLowerCase();
+                        if (tipoAp.includes('vf')) {
+                            parcela = (Number(l.valorAparelho || 0) || 0) / 24;
+                        }
+                    }
+                    if (!(parcela > 0)) return acc;
                     return acc + (qtd * parcela);
                 }, 0);
                 const totalLabel = 'Valor Total: ' + totalProposto;
@@ -2522,9 +2536,16 @@
                 }
                 const totalAparelhoMensal = linhas.reduce((acc, l) => {
                     const qtd = Number(l.quantidade || 1);
-                    const parcela = Number(l.valorParcela || 0);
-                    if (!parcela || parcela <= 0) return acc;
                     if (String(l.temAparelho || '').toLowerCase() !== 'sim') return acc;
+                    const parcelaRaw = Number(l.valorParcela || 0);
+                    let parcela = parcelaRaw;
+                    if (!(parcela > 0)) {
+                        const tipoAp = String(l.tipoAparelho || '').toLowerCase();
+                        if (tipoAp.includes('vf')) {
+                            parcela = (Number(l.valorAparelho || 0) || 0) / 24;
+                        }
+                    }
+                    if (!(parcela > 0)) return acc;
                     return acc + (qtd * parcela);
                 }, 0);
                 const totalLabel = 'Valor Total: ' + currency(totais.totalProposto);
@@ -2725,9 +2746,16 @@
                 const totais = calcularTotais();
                 const totalAparelhoMensal = linhas.reduce((acc, l) => {
                     const qtd = Number(l.quantidade || 1);
-                    const parcela = Number(l.valorParcela || 0);
-                    if (!parcela || parcela <= 0) return acc;
                     if (String(l.temAparelho || '').toLowerCase() !== 'sim') return acc;
+                    const parcelaRaw = Number(l.valorParcela || 0);
+                    let parcela = parcelaRaw;
+                    if (!(parcela > 0)) {
+                        const tipoAp = String(l.tipoAparelho || '').toLowerCase();
+                        if (tipoAp.includes('vf')) {
+                            parcela = (Number(l.valorAparelho || 0) || 0) / 24;
+                        }
+                    }
+                    if (!(parcela > 0)) return acc;
                     return acc + (qtd * parcela);
                 }, 0);
                 const totalBase = Number(totais.totalProposto) || 0;

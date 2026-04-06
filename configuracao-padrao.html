@@ -2442,9 +2442,16 @@
                 const totalBase = totalGeral();
                 const totalAparelhoMensal = __linhas.reduce((acc, l) => {
                     const qtd = Number(l.quantidade || 1);
-                    const parcela = Number(l.valorParcela || 0);
-                    if (!parcela || parcela <= 0) return acc;
                     if (String(l.temAparelho || '').toLowerCase() !== 'sim') return acc;
+                    const parcelaRaw = Number(l.valorParcela || 0);
+                    let parcela = parcelaRaw;
+                    if (!(parcela > 0)) {
+                        const tipoAp = String(l.tipoAparelho || '').toLowerCase();
+                        if (tipoAp.includes('vf')) {
+                            parcela = (Number(l.valorAparelho || 0) || 0) / 24;
+                        }
+                    }
+                    if (!(parcela > 0)) return acc;
                     return acc + (qtd * parcela);
                 }, 0);
                 const total = currency(totalBase + totalAparelhoMensal);
@@ -2790,9 +2797,16 @@
                 
                 const totalAparelhoMensal = __linhas.reduce((acc, l) => {
                     const qtd = Number(l.quantidade || 1);
-                    const parcela = Number(l.valorParcela || 0);
-                    if (!parcela || parcela <= 0) return acc;
                     if (String(l.temAparelho || '').toLowerCase() !== 'sim') return acc;
+                    const parcelaRaw = Number(l.valorParcela || 0);
+                    let parcela = parcelaRaw;
+                    if (!(parcela > 0)) {
+                        const tipoAp = String(l.tipoAparelho || '').toLowerCase();
+                        if (tipoAp.includes('vf')) {
+                            parcela = (Number(l.valorAparelho || 0) || 0) / 24;
+                        }
+                    }
+                    if (!(parcela > 0)) return acc;
                     return acc + (qtd * parcela);
                 }, 0);
                 const footerRowY = headerY - rowHeight - (rowsToDraw * rowHeight);
@@ -2971,9 +2985,16 @@
                 const totalBase = totalGeral();
                 const totalAparelhoMensal = __linhas.reduce((acc, l) => {
                     const qtd = Number(l.quantidade || 1);
-                    const parcela = Number(l.valorParcela || 0);
-                    if (!parcela || parcela <= 0) return acc;
                     if (String(l.temAparelho || '').toLowerCase() !== 'sim') return acc;
+                    const parcelaRaw = Number(l.valorParcela || 0);
+                    let parcela = parcelaRaw;
+                    if (!(parcela > 0)) {
+                        const tipoAp = String(l.tipoAparelho || '').toLowerCase();
+                        if (tipoAp.includes('vf')) {
+                            parcela = (Number(l.valorAparelho || 0) || 0) / 24;
+                        }
+                    }
+                    if (!(parcela > 0)) return acc;
                     return acc + (qtd * parcela);
                 }, 0);
                 const totalLabel = 'Valor Total: ' + totalFormatado;
@@ -3172,9 +3193,16 @@
                 }
                 const totalAparelhoMensal = __linhas.reduce((acc, l) => {
                     const qtd = Number(l.quantidade || 1);
-                    const parcela = Number(l.valorParcela || 0);
-                    if (!parcela || parcela <= 0) return acc;
                     if (String(l.temAparelho || '').toLowerCase() !== 'sim') return acc;
+                    const parcelaRaw = Number(l.valorParcela || 0);
+                    let parcela = parcelaRaw;
+                    if (!(parcela > 0)) {
+                        const tipoAp = String(l.tipoAparelho || '').toLowerCase();
+                        if (tipoAp.includes('vf')) {
+                            parcela = (Number(l.valorAparelho || 0) || 0) / 24;
+                        }
+                    }
+                    if (!(parcela > 0)) return acc;
                     return acc + (qtd * parcela);
                 }, 0);
                 const totalBase = totalGeral();
