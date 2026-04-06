@@ -55,6 +55,40 @@
                 grid-template-columns: 1fr;
             }
         }
+        .action-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            z-index: 50;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            min-width: 160px;
+            padding: 0.5rem;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .action-menu.show {
+            display: flex;
+        }
+        .action-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.7rem;
+            border-radius: 6px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+            font-size: 0.9rem;
+            transition: background 0.15s;
+        }
+        .action-item:hover { background: var(--surface-strong); }
     </style>
 </head>
 <body>
@@ -115,7 +149,7 @@
                         <div class="label">Lista de clientes</div>
                         <div class="muted" id="countLabel">0 itens</div>
                     </div>
-                    <div class="table-container">
+                    <div class="table-container" style="overflow-x: auto; overflow-y: visible;">
                         <table>
                             <thead>
                                 <tr>
@@ -423,11 +457,11 @@
                     <td class="col-actions">
                         <div class="table-actions">
                             <div class="dropdown" style="position: relative;">
-                                <button type="button" class="btn btn-ghost btn-icon" title="Ações" onclick="toggleRowMenu(${c.id})"><i data-lucide="more-vertical"></i></button>
-                                <div id="rowMenu-${c.id}" class="dropdown-menu" style="position: absolute; right: 0; top: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; min-width: 160px; padding: 6px; display: none; z-index: 12;">
-                                    <button type="button" class="btn btn-ghost" onclick="abrirEditar(${c.id})"><i data-lucide="edit-3"></i><span>Editar</span></button>
-                                    ${window.__isAdmin ? `<button type="button" class="btn btn-ghost" onclick="excluirCliente(${c.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i><span>Excluir</span></button>` : ``}
-                                    <button type="button" class="btn btn-ghost" onclick="irNegociar(${c.id})" style="border-color: rgba(59,130,246,0.35); color: #93C5FD;"><i data-lucide="arrow-right"></i><span>Negociar</span></button>
+                                <button type="button" class="btn btn-ghost btn-icon" title="Ações" onclick="toggleRowMenu(event, ${c.id})"><i data-lucide="more-vertical"></i></button>
+                                <div id="rowMenu-${c.id}" class="action-menu" onclick="event.stopPropagation()">
+                                    <button type="button" class="action-item" onclick="abrirEditar(${c.id})"><i data-lucide="edit-3"></i><span>Editar</span></button>
+                                    ${window.__isAdmin ? `<button type="button" class="action-item text-danger" onclick="excluirCliente(${c.id})"><i data-lucide="trash-2"></i><span>Excluir</span></button>` : ``}
+                                    <button type="button" class="action-item" onclick="irNegociar(${c.id})"><i data-lucide="arrow-right"></i><span>Negociar</span></button>
                                 </div>
                             </div>
                         </div>
@@ -1113,8 +1147,10 @@
                 buscar();
             });
             document.addEventListener('click', (e) => {
-                if (!e.target.closest('.dropdown')) {
-                    Array.from(document.querySelectorAll('.dropdown-menu')).forEach(el => { el.style.display = 'none'; });
+                const t = e && e.target;
+                const inside = (t && typeof t.closest === 'function') ? t.closest('.dropdown') : null;
+                if (!inside) {
+                    Array.from(document.querySelectorAll('.action-menu')).forEach(el => { el.classList.remove('show'); });
                 }
             });
             await buscar();
@@ -1125,12 +1161,15 @@
                 window.lucide.createIcons();
             }
         });
-        function toggleRowMenu(id) {
+        function toggleRowMenu(evt, id) {
+            try {
+                if (evt) { evt.preventDefault(); evt.stopPropagation(); }
+            } catch {}
             const el = document.getElementById('rowMenu-' + id);
             if (!el) return;
-            const open = el.style.display === 'block';
-            Array.from(document.querySelectorAll('.dropdown-menu')).forEach(x => { x.style.display = 'none'; });
-            el.style.display = open ? 'none' : 'block';
+            const open = el.classList.contains('show');
+            Array.from(document.querySelectorAll('.action-menu')).forEach(x => { x.classList.remove('show'); });
+            if (!open) el.classList.add('show'); else el.classList.remove('show');
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         }
     </script>
