@@ -2780,14 +2780,24 @@
                     lastPage.drawText(valorLinha, { x: xRight - valorTw, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                 }
                 
+                const totalAparelhoMensal = __linhas.reduce((acc, l) => {
+                    const qtd = Number(l.quantidade || 1);
+                    const parcela = Number(l.valorParcela || 0);
+                    if (!parcela || parcela <= 0) return acc;
+                    if (String(l.temAparelho || '').toLowerCase() !== 'sim') return acc;
+                    return acc + (qtd * parcela);
+                }, 0);
                 const footerRowY = headerY - rowHeight - (rowsToDraw * rowHeight);
                 const yTotal = footerRowY + (rowHeight - fontSizeLinha) / 2 - 2;
                 const totalLabel = 'Valor Total: ' + totalFormatado;
                 const mensalLabel = 'Total Mensal: ' + totalFormatado;
+                const mensalAparelhoLabel = totalAparelhoMensal > 0 ? ('Total Mensal + Aparelho: ' + currency(total + totalAparelhoMensal)) : '';
                 const totalTw = font.widthOfTextAtSize(totalLabel, fontSizeLinha);
                 const mensalTw = font.widthOfTextAtSize(mensalLabel, fontSizeLinha);
+                const mensalAparelhoTw = mensalAparelhoLabel ? font.widthOfTextAtSize(mensalAparelhoLabel, fontSizeLinha) : 0;
                 lastPage.drawText(totalLabel, { x: xRight - totalTw, y: yTotal + 6, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                 lastPage.drawText(mensalLabel, { x: xRight - mensalTw, y: yTotal - 10, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                if (mensalAparelhoLabel) lastPage.drawText(mensalAparelhoLabel, { x: xRight - mensalAparelhoTw, y: yTotal - 24, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
@@ -2953,14 +2963,24 @@
                     const valorTw = font.widthOfTextAtSize(valorLinha, fontSizeLinha);
                     lastPage.drawText(valorLinha, { x: xRight - valorTw, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
                 }
+                const totalAparelhoMensal = __linhas.reduce((acc, l) => {
+                    const qtd = Number(l.quantidade || 1);
+                    const parcela = Number(l.valorParcela || 0);
+                    if (!parcela || parcela <= 0) return acc;
+                    if (String(l.temAparelho || '').toLowerCase() !== 'sim') return acc;
+                    return acc + (qtd * parcela);
+                }, 0);
                 const totalLabel = 'Valor Total: ' + totalFormatado;
                 const mensalLabel = 'Total Mensal: ' + totalFormatado;
+                const mensalAparelhoLabel = totalAparelhoMensal > 0 ? ('Total Mensal + Aparelho: ' + currency(totalGeral() + totalAparelhoMensal)) : '';
                 const totalTw = font.widthOfTextAtSize(totalLabel, fontSizeLinha);
                 const mensalTw = font.widthOfTextAtSize(mensalLabel, fontSizeLinha);
+                const mensalAparelhoTw = mensalAparelhoLabel ? font.widthOfTextAtSize(mensalAparelhoLabel, fontSizeLinha) : 0;
                 const footerRowY = headerY - rowHeight - (rowsToDraw * rowHeight);
                 const yTotal = footerRowY + (rowHeight - fontSizeLinha) / 2 - 2;
                 lastPage.drawText(totalLabel, { x: xRight - totalTw, y: yTotal + 6, size: fontSizeLinha, font, color: rgb(0,0,0) });
                 lastPage.drawText(mensalLabel, { x: xRight - mensalTw, y: yTotal - 10, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                if (mensalAparelhoLabel) lastPage.drawText(mensalAparelhoLabel, { x: xRight - mensalAparelhoTw, y: yTotal - 24, size: fontSizeLinha, font, color: rgb(0,0,0) });
                 const newPdf = await PDFDocument.create();
                 const [copied] = await newPdf.copyPages(pdfDoc, [pages.length - 1]);
                 newPdf.addPage(copied);
@@ -3147,8 +3167,17 @@
                     ctx.textAlign = 'right';
                     ctx.fillText(valorLinha, xRight, textY1 + lineGap);
                 }
-                const totalLabel = 'Valor Total: ' + currency(totalGeral());
-                const mensalLabel = 'Total Mensal: ' + currency(totalGeral());
+                const totalAparelhoMensal = __linhas.reduce((acc, l) => {
+                    const qtd = Number(l.quantidade || 1);
+                    const parcela = Number(l.valorParcela || 0);
+                    if (!parcela || parcela <= 0) return acc;
+                    if (String(l.temAparelho || '').toLowerCase() !== 'sim') return acc;
+                    return acc + (qtd * parcela);
+                }, 0);
+                const totalBase = totalGeral();
+                const totalLabel = 'Valor Total: ' + currency(totalBase);
+                const mensalLabel = 'Total Mensal: ' + currency(totalBase);
+                const mensalAparelhoLabel = totalAparelhoMensal > 0 ? ('Total Mensal + Aparelho: ' + currency(totalBase + totalAparelhoMensal)) : '';
                 ctx.fillStyle = '#000000';
                 const prevAlign = ctx.textAlign;
                 const prevBaseline2 = ctx.textBaseline;
@@ -3157,6 +3186,7 @@
                 const yTotal = firstRowY + (rowsToDraw * rowHeight) + (rowHeight / 2);
                 ctx.fillText(totalLabel, xRight, yTotal - 6);
                 ctx.fillText(mensalLabel, xRight, yTotal + 14);
+                if (mensalAparelhoLabel) ctx.fillText(mensalAparelhoLabel, xRight, yTotal + 32);
                 ctx.textAlign = prevAlign;
                 ctx.textBaseline = prevBaseline2;
                 const url = canvas.toDataURL('image/png');
