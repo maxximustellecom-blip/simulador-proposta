@@ -2780,8 +2780,11 @@
                 const footerRowY = headerY - rowHeight - (rowsToDraw * rowHeight);
                 const yTotal = footerRowY + (rowHeight - fontSizeLinha) / 2 - 2;
                 const totalLabel = 'Valor Total: ' + totalFormatado;
+                const mensalLabel = 'Total Mensal: ' + totalFormatado;
                 const totalTw = font.widthOfTextAtSize(totalLabel, fontSizeLinha);
-                lastPage.drawText(totalLabel, { x: xRight - totalTw, y: yTotal, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                const mensalTw = font.widthOfTextAtSize(mensalLabel, fontSizeLinha);
+                lastPage.drawText(totalLabel, { x: xRight - totalTw, y: yTotal + 6, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                lastPage.drawText(mensalLabel, { x: xRight - mensalTw, y: yTotal - 6, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
@@ -2945,10 +2948,13 @@
                     lastPage.drawText(valorLinha, { x: xRight - valorTw, y: textY1 - lineGap, size: fontSizeLinha, font, color: rgb(0,0,0) });
                 }
                 const totalLabel = 'Valor Total: ' + totalFormatado;
+                const mensalLabel = 'Total Mensal: ' + totalFormatado;
                 const totalTw = font.widthOfTextAtSize(totalLabel, fontSizeLinha);
+                const mensalTw = font.widthOfTextAtSize(mensalLabel, fontSizeLinha);
                 const footerRowY = headerY - rowHeight - (rowsToDraw * rowHeight);
                 const yTotal = footerRowY + (rowHeight - fontSizeLinha) / 2 - 2;
-                lastPage.drawText(totalLabel, { x: xRight - totalTw, y: yTotal, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                lastPage.drawText(totalLabel, { x: xRight - totalTw, y: yTotal + 6, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                lastPage.drawText(mensalLabel, { x: xRight - mensalTw, y: yTotal - 6, size: fontSizeLinha, font, color: rgb(0,0,0) });
                 const newPdf = await PDFDocument.create();
                 const [copied] = await newPdf.copyPages(pdfDoc, [pages.length - 1]);
                 newPdf.addPage(copied);
@@ -3134,12 +3140,15 @@
                     ctx.fillText(valorLinha, xRight, textY1 + lineGap);
                 }
                 const totalLabel = 'Valor Total: ' + currency(totalGeral());
+                const mensalLabel = 'Total Mensal: ' + currency(totalGeral());
                 ctx.fillStyle = '#000000';
                 const prevAlign = ctx.textAlign;
                 const prevBaseline2 = ctx.textBaseline;
                 ctx.textAlign = 'right';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(totalLabel, xRight, firstRowY + (rowsToDraw * rowHeight) + (rowHeight / 2));
+                const yTotal = firstRowY + (rowsToDraw * rowHeight) + (rowHeight / 2);
+                ctx.fillText(totalLabel, xRight, yTotal - 6);
+                ctx.fillText(mensalLabel, xRight, yTotal + 6);
                 ctx.textAlign = prevAlign;
                 ctx.textBaseline = prevBaseline2;
                 const url = canvas.toDataURL('image/png');
