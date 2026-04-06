@@ -1084,6 +1084,16 @@
                 }
             }
             document.getElementById('buscarBtn').addEventListener('click', buscar);
+            ['fNome','fCnpj','fUser','fEmail','fPhone','fCadDe','fCadAte'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        buscar();
+                    }
+                });
+            });
             document.getElementById('limparBtn').addEventListener('click', () => {
                 document.getElementById('fNome').value = '';
                 document.getElementById('fCnpj').value = '';

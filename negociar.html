@@ -654,6 +654,16 @@
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             });
             document.getElementById('buscarBtn').addEventListener('click', buscar);
+            ['fCnpj','fRazao','fVendedor','fTipoProposta','fData'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        buscar();
+                    }
+                });
+            });
             document.getElementById('limparBtn').addEventListener('click', () => {
                 document.getElementById('fCnpj').value = '';
                 document.getElementById('fData').value = '';

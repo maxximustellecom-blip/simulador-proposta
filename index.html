@@ -1403,6 +1403,15 @@
             if (filtroData) {
                 filtroData.addEventListener('change', atualizarSimulacoesSalvas);
             }
+            [filtroVendedor, filtroRazao, filtroCnpj, filtroData].forEach(el => {
+                if (!el) return;
+                el.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        atualizarSimulacoesSalvas();
+                    }
+                });
+            });
             const btnLimparFiltros = document.getElementById('btnLimparFiltros');
             if (btnLimparFiltros) {
                 btnLimparFiltros.addEventListener('click', function() {

@@ -278,6 +278,16 @@
             const buscarBtn = document.getElementById('catBuscarBtn');
             const limparBtn = document.getElementById('catLimparBtn');
             if (buscarBtn) buscarBtn.addEventListener('click', aplicarFiltroCategorias);
+            ['fCatNome','fCatDesc','fCatTipo'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        aplicarFiltroCategorias();
+                    }
+                });
+            });
             if (limparBtn) limparBtn.addEventListener('click', () => {
                 document.getElementById('fCatNome').value = '';
                 document.getElementById('fCatDesc').value = '';

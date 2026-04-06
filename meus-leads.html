@@ -545,6 +545,15 @@
 
             filterText.addEventListener('input', () => loadLeads());
             filterStatus.addEventListener('change', () => loadLeads());
+            [filterText, filterStatus, document.getElementById('fVendedor')].forEach(el => {
+                if (!el) return;
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        loadLeads();
+                    }
+                });
+            });
             
             btnClear.addEventListener('click', () => {
                 filterText.value = '';

@@ -741,6 +741,15 @@
             
             renderTable();
             lucide.createIcons();
+            const filtroBusca = document.getElementById('filtroBusca');
+            if (filtroBusca) {
+                filtroBusca.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        filtrarBackend();
+                    }
+                });
+            }
         }
 
         function salvarVendas() {

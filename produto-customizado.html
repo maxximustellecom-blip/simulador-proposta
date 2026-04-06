@@ -458,6 +458,16 @@
             const buscarBtn = document.getElementById('prodBuscarBtn');
             const limparBtn = document.getElementById('prodLimparBtn');
             if (buscarBtn) buscarBtn.addEventListener('click', aplicarFiltroProdutos);
+            ['fProdCategoria','fProdNome','fProdTipo'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        aplicarFiltroProdutos();
+                    }
+                });
+            });
             if (limparBtn) limparBtn.addEventListener('click', () => {
                 document.getElementById('fProdCategoria').value = '';
                 document.getElementById('fProdNome').value = '';

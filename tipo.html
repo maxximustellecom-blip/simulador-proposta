@@ -202,6 +202,16 @@
             const buscarBtn = document.getElementById('tipoBuscarBtn');
             const limparBtn = document.getElementById('tipoLimparBtn');
             if (buscarBtn) buscarBtn.addEventListener('click', aplicarFiltroTipos);
+            ['fTipoNome','fTipoDesc'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        aplicarFiltroTipos();
+                    }
+                });
+            });
             if (limparBtn) limparBtn.addEventListener('click', () => {
                 document.getElementById('fTipoNome').value = '';
                 document.getElementById('fTipoDesc').value = '';

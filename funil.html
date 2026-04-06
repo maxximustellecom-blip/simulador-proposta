@@ -491,6 +491,12 @@
                 if (!el) return;
                 el.addEventListener('input', applyFilters);
                 el.addEventListener('change', applyFilters);
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        applyFilters();
+                    }
+                });
             });
             await load();
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
