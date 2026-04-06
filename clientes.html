@@ -73,7 +73,7 @@
                 <section class="section" style="margin-top: 20px;">
                     <div id="filtersClientes" style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;">
                         <div style="flex: 1; min-width: 200px;">
-                            <div class="label">Nome</div>
+                            <div class="label">Razão Social</div>
                             <input id="fNome" class="input" type="text" placeholder="Razão social" autocomplete="off">
                         </div>
                         <div style="flex: 1; min-width: 200px;">
@@ -119,7 +119,7 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Nome</th>
+                                    <th>Razão Social</th>
                                     <th>Contato</th>
                                     <th>Informações</th>
                                     <th class="col-actions" style="min-width:140px;">Ações</th>
@@ -422,9 +422,14 @@
                     </td>
                     <td class="col-actions">
                         <div class="table-actions">
-                            <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditar(${c.id})"><i data-lucide="edit-3"></i></button>
-                            ${window.__isAdmin ? `<button type="button" class="btn btn-ghost btn-icon" title="Excluir" onclick="excluirCliente(${c.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i></button>` : ``}
-                            <button type="button" class="btn btn-ghost" title="Negociar" onclick="irNegociar(${c.id})" style="border-color: rgba(59,130,246,0.35); color: #93C5FD;"><i data-lucide="arrow-right"></i><span>Negociar</span></button>
+                            <div class="dropdown" style="position: relative;">
+                                <button type="button" class="btn btn-ghost btn-icon" title="Ações" onclick="toggleRowMenu(${c.id})"><i data-lucide="more-vertical"></i></button>
+                                <div id="rowMenu-${c.id}" class="dropdown-menu" style="position: absolute; right: 0; top: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; min-width: 160px; padding: 6px; display: none; z-index: 12;">
+                                    <button type="button" class="btn btn-ghost" onclick="abrirEditar(${c.id})"><i data-lucide="edit-3"></i><span>Editar</span></button>
+                                    ${window.__isAdmin ? `<button type="button" class="btn btn-ghost" onclick="excluirCliente(${c.id})" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i><span>Excluir</span></button>` : ``}
+                                    <button type="button" class="btn btn-ghost" onclick="irNegociar(${c.id})" style="border-color: rgba(59,130,246,0.35); color: #93C5FD;"><i data-lucide="arrow-right"></i><span>Negociar</span></button>
+                                </div>
+                            </div>
                         </div>
                     </td>
                 </tr>
@@ -1107,6 +1112,11 @@
                 if (fCadAteEl) fCadAteEl.value = '';
                 buscar();
             });
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.dropdown')) {
+                    Array.from(document.querySelectorAll('.dropdown-menu')).forEach(el => { el.style.display = 'none'; });
+                }
+            });
             await buscar();
             if (!isAdmin) {
                 toast('Mostrando apenas seus clientes', 'success');
@@ -1115,6 +1125,14 @@
                 window.lucide.createIcons();
             }
         });
+        function toggleRowMenu(id) {
+            const el = document.getElementById('rowMenu-' + id);
+            if (!el) return;
+            const open = el.style.display === 'block';
+            Array.from(document.querySelectorAll('.dropdown-menu')).forEach(x => { x.style.display = 'none'; });
+            el.style.display = open ? 'none' : 'block';
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        }
     </script>
     <div id="toast" class="toast"></div>
     <script src="script.js"></script>
