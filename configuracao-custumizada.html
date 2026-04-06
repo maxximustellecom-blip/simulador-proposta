@@ -2343,7 +2343,7 @@
                 const footerRowY = headerY - rowHeight - (rowsToDraw * rowHeight);
                 const yTotal = footerRowY + (rowHeight - fontSizeLinha) / 2 - 2;
                 lastPage.drawText(totalLabel, { x: xRight - totalTw, y: yTotal + 6, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
-                lastPage.drawText(mensalLabel, { x: xRight - mensalTw, y: yTotal - 6, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
+                lastPage.drawText(mensalLabel, { x: xRight - mensalTw, y: yTotal - 10, size: fontSizeLinha, font, color: rgb(0, 0, 0) });
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
@@ -2506,7 +2506,7 @@
                 const footerRowY = headerY - rowHeight - (rowsToDraw * rowHeight);
                 const yTotal = footerRowY + (rowHeight - fontSizeLinha) / 2 - 2;
                 lastPage.drawText(totalLabel, { x: xRight - totalTw, y: yTotal + 6, size: fontSizeLinha, font, color: rgb(0,0,0) });
-                lastPage.drawText(mensalLabel, { x: xRight - mensalTw, y: yTotal - 6, size: fontSizeLinha, font, color: rgb(0,0,0) });
+                lastPage.drawText(mensalLabel, { x: xRight - mensalTw, y: yTotal - 10, size: fontSizeLinha, font, color: rgb(0,0,0) });
                 const newPdf = await PDFDocument.create();
                 const [copied] = await newPdf.copyPages(pdfDoc, [pages.length - 1]);
                 newPdf.addPage(copied);
@@ -2702,7 +2702,7 @@
                 ctx.textBaseline = 'middle';
                 const yTotal = firstRowY + (rowsToDraw * rowHeight) + (rowHeight / 2);
                 ctx.fillText(totalLabel, xRight, yTotal - 6);
-                ctx.fillText(mensalLabel, xRight, yTotal + 6);
+                ctx.fillText(mensalLabel, xRight, yTotal + 10);
                 ctx.textAlign = prevAlign;
                 ctx.textBaseline = prevBaseline2;
                 const url = canvas.toDataURL('image/png');
