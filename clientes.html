@@ -120,7 +120,7 @@
                             <thead>
                                 <tr>
                                     <th>Nome</th>
-                                    <th>CNPJ</th>
+                                    <th>Contato</th>
                                     <th>Informações</th>
                                     <th class="col-actions" style="min-width:140px;">Ações</th>
                                 </tr>
@@ -403,16 +403,21 @@
                 <tr>
                     <td>
                         <div style="display:flex; align-items:center; gap:0.5rem;">
-                            <span>${c.name}</span>
+                            <span>${c.name || '-'}</span>
                             ${c.notes ? `<button class="btn btn-ghost btn-icon" style="color: #10B981; padding: 2px; height: auto;" title="Ver observações" onclick="verObservacao(${c.id})"><i data-lucide="message-square" style="width:16px; height:16px;"></i></button>` : ''}
                         </div>
+                        <div class="muted">${c.cnpj || '-'}</div>
                     </td>
-                    <td>${c.cnpj}</td>
+                    <td>
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <div class="muted">Nome: ${(c.gestor_nome || c.fantasy_name || '-')}</div>
+                            <div class="muted">Telefone: ${fmtPhone(c.gestor_tel1 || c.phone || '') || '-'}</div>
+                            <div class="muted">Email: ${(c.gestor_email || c.email || '-')}</div>
+                        </div>
+                    </td>
                     <td>
                         <div style="display:flex; flex-direction:column; gap:4px;">
                             <div class="muted">Criação: ${((c && (c.created_at || c.createdAt)) ? new Date(c.created_at || c.createdAt).toLocaleDateString('pt-BR') : '-')}</div>
-                            <div class="muted">Telefone: ${fmtPhone(c.phone || '') || '-'}</div>
-                            <div class="muted">Email: ${c.email || '-'}</div>
                         </div>
                     </td>
                     <td class="col-actions">
