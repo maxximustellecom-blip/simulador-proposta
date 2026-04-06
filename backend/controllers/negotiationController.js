@@ -37,7 +37,7 @@ export async function listNegotiations(req, res) {
         { 
           model: User, 
           as: 'creator', 
-          attributes: ['id', 'name', 'email', 'role'],
+          attributes: ['id', 'name', 'email', 'celular', 'role'],
           where: (req.query.only_users === 'true') ? { role: 'user' } : undefined,
           required: (req.query.only_users === 'true')
         },
@@ -106,7 +106,7 @@ export async function listNegotiations(req, res) {
         fatura_due_date: n.fatura_due_date || null,
         data: n.data,
         created_by: n.created_by !== null && n.created_by !== undefined ? Number(n.created_by) : null,
-        creator: n.creator ? { id: n.creator.id, name: n.creator.name, email: n.creator.email || null } : null,
+        creator: n.creator ? { id: n.creator.id, name: n.creator.name, email: n.creator.email || null, celular: n.creator.celular || null } : null,
         razaoSocial: n.client ? (n.client.name || '') : '',
         totalAcessos
       };
@@ -120,7 +120,7 @@ export async function listFunnelNegotiations(req, res) {
   try {
     let list = await Negotiation.findAll({
       include: [
-        { model: User, as: 'creator', attributes: ['id', 'name', 'email', 'role'] },
+        { model: User, as: 'creator', attributes: ['id', 'name', 'email', 'celular', 'role'] },
         { model: Client, as: 'client' },
         { model: NegociacaoProposta, as: 'proposal', attributes: ['total_acessos'] },
         { model: NegociacaoPropostaCustomizada, as: 'customProposal', attributes: ['total_acessos'] }
@@ -147,7 +147,7 @@ export async function listFunnelNegotiations(req, res) {
         data: n.data,
         created_at: n.created_at,
         created_by: n.created_by !== null && n.created_by !== undefined ? Number(n.created_by) : null,
-        creator: n.creator ? { id: n.creator.id, name: n.creator.name, email: n.creator.email || null } : null,
+        creator: n.creator ? { id: n.creator.id, name: n.creator.name, email: n.creator.email || null, celular: n.creator.celular || null } : null,
         client: n.client ? {
           id: n.client.id,
           name: n.client.name || '',

@@ -2189,9 +2189,12 @@
                 let y = height - 60;
                 lastPage.drawText('Proposta Comercial Customizada', { x: marginLeft, y, size: fontSizeTitulo, font, color: rgb(1, 1, 1) });
                 y -= 22;
+                const consultorTel = (n.creator && n.creator.celular) ? formatPhone(n.creator.celular) : '-';
+                const consultorNome = (n.creator && n.creator.name) ? n.creator.name : '-';
                 const clienteLines = [
                     'Cliente: ' + (c.name || '-'),
-                    'CNPJ: ' + formatCnpj(n.cnpj || c.cnpj || '')
+                    'CNPJ: ' + formatCnpj(n.cnpj || c.cnpj || ''),
+                    'Consultor: ' + consultorNome + ' • Tel: ' + consultorTel
                 ];
                 clienteLines.forEach(line => {
                     if (y < 80) return;
@@ -2389,7 +2392,10 @@
                 let y = height - 60;
                 lastPage.drawText('Proposta Comercial Customizada', { x: marginLeft, y, size: fontSizeTitulo, font, color: rgb(1, 1, 1) });
                 y -= 22;
-                ['Cliente: ' + (__clienteInfo?.name || '-'), 'CNPJ: ' + formatCnpj(__negociacaoInfo?.cnpj || __clienteInfo?.cnpj || '')].forEach(line => {
+                const n2 = __negociacaoInfo || {};
+                const consultorNome2 = (n2.creator && n2.creator.name) ? n2.creator.name : '-';
+                const consultorTel2 = (n2.creator && n2.creator.celular) ? formatPhone(n2.creator.celular) : '-';
+                ['Cliente: ' + (__clienteInfo?.name || '-'), 'CNPJ: ' + formatCnpj(__negociacaoInfo?.cnpj || __clienteInfo?.cnpj || ''), 'Consultor: ' + consultorNome2 + ' • Tel: ' + consultorTel2].forEach(line => {
                     if (y < 80) return;
                     lastPage.drawText(line, { x: marginLeft, y, size: fontSizeLinha, font, color: rgb(1,1,1) });
                     y -= 16;
@@ -2562,7 +2568,9 @@
                 ctx.font = `${fontLinha}px Arial`;
                 const c = __clienteInfo || {};
                 const n = __negociacaoInfo || {};
-                const lines = ['Cliente: ' + (c.name || '-'), 'CNPJ: ' + formatCnpj(n.cnpj || c.cnpj || '')];
+                const consultorNome3 = (n.creator && n.creator.name) ? n.creator.name : '-';
+                const consultorTel3 = (n.creator && n.creator.celular) ? formatPhone(n.creator.celular) : '-';
+                const lines = ['Cliente: ' + (c.name || '-'), 'CNPJ: ' + formatCnpj(n.cnpj || c.cnpj || ''), 'Consultor: ' + consultorNome3 + ' • Tel: ' + consultorTel3];
                 lines.forEach(line => {
                     if (y > (heightPt - 80) * scale) return;
                     ctx.fillText(line, marginLeftPt * scale, y);
