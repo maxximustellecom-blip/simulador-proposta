@@ -2073,6 +2073,13 @@
                 const c = __clienteInfo || {};
                 const totais = calcularTotais();
                 const acessos = linhas.length;
+                const totalAparelhoMensal = linhas.reduce((acc, l) => {
+                    const qtd = Number(l.quantidade || 1);
+                    const parcela = Number(l.valorParcela || 0);
+                    if (!parcela || parcela <= 0) return acc;
+                    if (String(l.temAparelho || '').toLowerCase() !== 'sim') return acc;
+                    return acc + (qtd * parcela);
+                }, 0);
                 doc.setFontSize(14);
                 doc.text('Relatório da Proposta Customizada', 40, 40);
                 doc.setFontSize(9);
@@ -2084,6 +2091,7 @@
                 } catch {}
                 doc.setFontSize(10);
                 doc.text('Total Proposto: ' + currency(totais.totalProposto), 450, 40, { align: 'right' });
+                doc.text('Total Mensal' + (totalAparelhoMensal > 0 ? ' + Aparelho' : '') + ': ' + currency((Number(totais.totalProposto) || 0) + totalAparelhoMensal), 450, 54, { align: 'right' });
                 doc.autoTable({
                     startY: 80,
                     head: [['Campo', 'Valor']],

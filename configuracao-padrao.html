@@ -2439,7 +2439,15 @@
                 const n = __negociacaoInfo || {};
                 const c = __clienteInfo || {};
                 const acessos = __linhas.reduce((acc, l) => acc + Number(l.quantidade || 0), 0);
-                const total = currency(totalGeral());
+                const totalBase = totalGeral();
+                const totalAparelhoMensal = __linhas.reduce((acc, l) => {
+                    const qtd = Number(l.quantidade || 1);
+                    const parcela = Number(l.valorParcela || 0);
+                    if (!parcela || parcela <= 0) return acc;
+                    if (String(l.temAparelho || '').toLowerCase() !== 'sim') return acc;
+                    return acc + (qtd * parcela);
+                }, 0);
+                const total = currency(totalBase + totalAparelhoMensal);
                 doc.setFontSize(14);
                 doc.text('Relatório da Proposta', 40, 40);
                 doc.setFontSize(9);
@@ -2450,7 +2458,7 @@
                     if (nomeCons) doc.text('Consultor: ' + nomeCons, 40, 68);
                 } catch {}
                 doc.setFontSize(10);
-                doc.text('Total mensal: ' + total, 450, 40, { align: 'right' });
+                doc.text('Total mensal' + (totalAparelhoMensal > 0 ? ' + Aparelho' : '') + ': ' + total, 450, 40, { align: 'right' });
                 doc.autoTable({
                     startY: 80,
                     head: [['Campo', 'Valor']],
