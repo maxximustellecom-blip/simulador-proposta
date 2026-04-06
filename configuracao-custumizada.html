@@ -2157,7 +2157,7 @@
                 });
                 const y = doc.lastAutoTable.finalY + 16;
                 doc.setFontSize(9);
-                doc.text('Total de acessos: ' + String(acessos) + ' • Receita Atual: ' + currency(totais.totalAtual) + ' • Receita Proposta: ' + currency(totais.totalProposto) + ' • Economia: ' + currency(totais.totalEconomia), 40, y);
+                doc.text('Total de acessos: ' + String(acessos) + ' • Receita Atual: ' + currency(totais.totalAtual) + ' • Receita Proposta' + (totalAparelhoMensal > 0 ? ' + Aparelho' : '') + ': ' + currency((Number(totais.totalProposto) || 0) + totalAparelhoMensal) + ' • Economia: ' + currency(totais.totalEconomia), 40, y);
                 doc.save('relatorio_proposta_customizada.pdf');
             } catch { toast('Erro ao gerar relatório', 'error'); }
         }
