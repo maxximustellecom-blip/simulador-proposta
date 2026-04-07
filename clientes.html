@@ -434,7 +434,7 @@
             });
             window.__clientsCache = sorted.slice();
             tbody.innerHTML = sorted.map(c => `
-                <tr>
+                <tr data-id="${c.id}">
                     <td>
                         <div style="display:flex; align-items:center; gap:0.5rem;">
                             <span>${c.name || '-'}</span>
@@ -468,6 +468,19 @@
                     </td>
                 </tr>
             `).join('') || '<tr><td colspan="4" class="muted">Sem resultados</td></tr>';
+            Array.from(tbody.querySelectorAll('tr[data-id]')).forEach(tr => {
+                tr.addEventListener('dblclick', (e) => {
+                    const t = e && e.target;
+                    if (t && typeof t.closest === 'function') {
+                        if (t.closest('button')) return;
+                        if (t.closest('.col-actions')) return;
+                        if (t.closest('.action-menu')) return;
+                    }
+                    const id = Number(tr.getAttribute('data-id') || 0);
+                    if (!id) return;
+                    abrirEditar(id);
+                });
+            });
         }
         async function buscar() {
             try {
