@@ -1165,6 +1165,10 @@
                     Array.from(document.querySelectorAll('.action-menu')).forEach(el => { el.classList.remove('show'); });
                 }
             });
+            // Fechar menus ao rolar a página ou a tabela para evitar que o menu fixed fique órfão
+            window.addEventListener('scroll', () => {
+                Array.from(document.querySelectorAll('.action-menu')).forEach(el => { el.classList.remove('show'); });
+            }, true);
             await buscar();
             if (!isAdmin) {
                 toast('Mostrando apenas seus clientes', 'success');
