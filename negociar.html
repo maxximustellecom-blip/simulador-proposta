@@ -24,10 +24,8 @@
         }
         .action-menu {
             display: none;
-            position: absolute;
-            right: 0;
-            top: 100%;
-            z-index: 50;
+            position: fixed; /* Alterado para fixed para ignorar overflow de elementos pais */
+            z-index: 9999;
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 10px;
@@ -36,6 +34,7 @@
             padding: 0.5rem;
             flex-direction: column;
             gap: 0.2rem;
+            pointer-events: auto;
         }
         .action-menu.show {
             display: flex;
@@ -318,7 +317,21 @@
                 if (el.id !== 'action-menu-' + id) el.classList.remove('show');
             });
             const menu = document.getElementById('action-menu-' + id);
-            if (menu) menu.classList.toggle('show');
+            if (menu) {
+                const isOpen = menu.classList.contains('show');
+                if (!isOpen) {
+                    menu.classList.add('show');
+                    // Posicionamento dinâmico para evitar corte por overflow: hidden
+                    const btn = e.currentTarget;
+                    const rect = btn.getBoundingClientRect();
+                    const menuWidth = 160;
+                    
+                    menu.style.top = (rect.bottom + 5) + 'px';
+                    menu.style.left = (rect.right - menuWidth) + 'px';
+                } else {
+                    menu.classList.remove('show');
+                }
+            }
         };
 
         // Close menus on click outside

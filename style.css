@@ -481,7 +481,7 @@ html, body {
   border: 1px solid var(--border) !important;
   border-radius: 14px;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible; /* Alterado de hidden para permitir menus flutuantes */
   position: relative;
   -webkit-overflow-scrolling: touch;
   max-width: 100%;
@@ -1167,4 +1167,20 @@ select option[disabled], .select option[disabled] {
 
 @media (min-width: 920px) {
   .auth-hero { display: block; }
+}
+
+
+.action-menu {
+  display: none;
+  position: fixed; /* Alterado para fixed para ignorar overflow de elementos pais */
+  z-index: 9999;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  min-width: 160px;
+  padding: 0.5rem;
+  flex-direction: column;
+  gap: 0.2rem;
+  pointer-events: auto;
 }
