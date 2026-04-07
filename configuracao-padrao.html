@@ -276,7 +276,7 @@
                 </div>
 
                 <!-- 2. Plano Atual (Condicional) -->
-                <div class="section-block" id="secPlanoAtual">
+                <div class="section-block" style="display: none;">
                     <div class="section-header">
                         <i data-lucide="file-text" class="section-icon"></i>
                         <div>
@@ -343,6 +343,15 @@
                          <div style="display:none;">
                             <div class="label">Desconto (%)</div>
                             <input id="editPct" type="number" step="0.01" class="input">
+                        </div>
+                    </div>
+
+                     <div style="margin-top: 1rem; border-top: 1px solid #e5e7eb; padding-top: 1rem;" id="secPlanoAtual">
+                        <div class="grid-1">
+                            <div>
+                                <div class="label">Número</div>
+                                <input id="editNumero" type="text" class="input" placeholder="00000-0000" maxlength="10">
+                            </div>
                         </div>
                     </div>
                     
@@ -1535,7 +1544,7 @@
             // Show/Hide Plano Atual card based on Renegociação
             const secPlanoAtual = document.getElementById('secPlanoAtual');
             if (secPlanoAtual) {
-                secPlanoAtual.style.display = isReneg ? 'none' : 'none';
+                secPlanoAtual.style.display = isReneg ? 'block' : 'none';
             }
 
             const numEl = document.getElementById('editNumero');

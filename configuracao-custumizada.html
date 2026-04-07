@@ -528,9 +528,9 @@
             const erros = [];
             const avisos = [];
             const numAcessos = linhas.reduce((acc, l) => acc + (Number(l.quantidade) || 1), 0);
-            if (numAcessos < 10 && totais.totalProposto < 350) {
+            /*if (numAcessos < 10 && totais.totalProposto < 350) {
                 erros.push('Com menos de 10 acessos, o contrato deve atingir mínimo de R$ 350,00');
-            }
+            }*/
             /*if (numAcessos < 20) {
                 const temAparelho = linhas.some(l => {
                     if (l.temAparelho === 'Sim') return true;
@@ -544,25 +544,25 @@
                 }
             }*/
             linhas.forEach((linha, idx) => {
-                if (!linha.plano) {
+                /*if (!linha.plano) {
                     erros.push(`Linha ${idx + 1}: Selecione um plano`);
                 }
                 const qtd = Number(linha.quantidade) || 1;
                 if (qtd < 1) {
                     erros.push(`Linha ${idx + 1}: Quantidade deve ser pelo menos 1`);
-                }
+                }*/
 
                 const tipo = String(linha.tipoNegociacao || '');
                 const isReneg = normalizeTipoKey(tipo).toLowerCase().includes('reneg');
                 if (isReneg) {
-                    if (!linha.planoAtualGB || !linha.precoAtual) {
+                    /*if (!linha.planoAtualGB || !linha.precoAtual) {
                         erros.push(`Linha ${idx + 1}: Para Renegociação, Plano Atual e Preço Atual são obrigatórios`);
-                    }
+                    }*/
                     const pctAtual = linha.planoAtualGB ? parseFloat(String(linha.planoAtualGB).replace(/\D/g, '')) : 0;
                     const pctNovo = linha.pct ? parseFloat(String(linha.pct).replace(/\D/g, '')) : 0;
-                    if (pctNovo > 0 && pctAtual > 0 && pctNovo < pctAtual) {
+                    /*if (pctNovo > 0 && pctAtual > 0 && pctNovo < pctAtual) {
                         erros.push(`Linha ${idx + 1}: Não é permitido downgrade de pacote de dados (${linha.planoAtualGB} → ${linha.pct})`);
-                    }
+                    }*/
                 }
                 if (!linha.ddd) {
                     avisos.push(`Linha ${idx + 1}: Recomendamos preencher o DDD`);
@@ -826,7 +826,7 @@
             // Show/Hide Plano Atual card based on Renegociação
             const secPlanoAtual = document.getElementById('secPlanoAtual');
             if (secPlanoAtual) {
-                secPlanoAtual.style.display = isReneg ? 'none' : 'none';
+                secPlanoAtual.style.display = isReneg ? 'block' : 'none';
             }
 
             const numEl = document.getElementById('editNumero');
@@ -1319,14 +1319,14 @@
                 return Number(String(v).replace(/\D/g, '')) / 100;
             };
             
-            if (isReneg) {
+            /*if (isReneg) {
                 const pa = getValue('editPlanoAtual');
                 const pra = parseMoney(getValue('editPrecoAtual'));
                 if (!pa || !pra) erros.push('Renegociações exigem Plano Atual e Preço Atual');
                 
                 const num = getValue('editNumero');
                 if (!num || num.length < 8) erros.push('Renegociações exigem o número da linha');
-            }
+            }*/
             
             const port = getValue('editPortabilidade');
             if (port === 'Sim') {
@@ -3232,7 +3232,7 @@
                 </div>
 
                 <!-- 2. Plano Atual -->
-                <div class="section-block" id="secPlanoAtual">
+                <div class="section-block" style="display: none;">
                     <div class="section-header">
                         <i data-lucide="file-text" class="section-icon"></i>
                         <div>
@@ -3317,6 +3317,15 @@
                         </div>
                     </div>
                     
+                    <div style="margin-top: 1rem; border-top: 1px solid #e5e7eb; padding-top: 1rem;" id="secPlanoAtual">
+                        <div class="grid-1">
+                            <div>
+                                <div class="label">Número</div>
+                                <input id="editNumero" type="text" class="input" placeholder="00000-0000" maxlength="10">
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Portabilidade -->
                     <div style="margin-top: 1rem; border-top: 1px solid #e5e7eb; padding-top: 1rem;">
                         <div class="label">Deseja realizar portabilidade?</div>
