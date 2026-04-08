@@ -1995,15 +1995,6 @@
             const erros = [];
             const isReneg = normalizeTipo(tipoVal).toLowerCase().includes('reneg');
             
-            if (isReneg) {
-                const pa = getValue('editPlanoAtual');
-                const pra = parseMoney(getValue('editPrecoAtual'));
-                if (!pa || !pra) erros.push('Renegociações exigem Plano Atual e Preço Atual');
-                
-                const num = getValue('editNumero');
-                if (!num || num.length < 8) erros.push('Renegociações exigem o número da linha');
-            }
-            
             const port = getValue('editPortabilidade');
             if (port === 'Sim') {
                 const pqInput = Number(getValue('editPortQtd') || 0);
