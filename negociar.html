@@ -838,6 +838,15 @@
                             if (existsIdx >= 0) __negociacoes[existsIdx] = { ...__negociacoes[existsIdx], ...novoItem };
                             else __negociacoes = [novoItem].concat(__negociacoes || []);
                             renderNegociacoesTable(__negociacoes);
+                            const propStr = String((created && created.proposta) || body.proposta || '').toUpperCase();
+                            const isCustom =
+                                propStr.includes('CUSTOMIZADA') ||
+                                propStr.includes('COSTUMIZADA') ||
+                                propStr === 'PROPOSTA CUSTOMIZADA' ||
+                                propStr === 'PROPOSTA COSTUMIZADA';
+                            const target = isCustom ? 'configuracao-custumizada.html' : 'configuracao-padrao.html';
+                            window.location.href = target + '?id=' + String(createdId);
+                            return;
                         }
                     }
                     closeModal();
@@ -964,11 +973,11 @@
                         <div class="label">Modo de cadastro</div>
                         <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
                             <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
-                                <input type="radio" style="height: auto !important;" id="mCadastroModeDefinido" name="mCadastroMode" value="definido" checked>
+                                <input type="radio" style="height: auto !important;" id="mCadastroModeDefinido" name="mCadastroMode" value="definido">
                                 <span>Cliente&nbsp;definido</span>
                             </label>
                             <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
-                                <input type="radio" style="height: auto !important;" id="mCadastroModeNaoDefinido" name="mCadastroMode" value="nao_definido">
+                                <input type="radio" style="height: auto !important;" id="mCadastroModeNaoDefinido" name="mCadastroMode" value="nao_definido" checked>
                                 <span>Cliente&nbsp;não&nbsp;definido</span>
                             </label>
                         </div>
