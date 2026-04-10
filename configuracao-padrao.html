@@ -1076,6 +1076,12 @@
             if (!key) return (__categorias || []).slice();
             return (__categorias || []).filter(c => normalizeTipo(c.tipo) === key);
         }
+        function numeroPropostaLinha(linha) {
+            const tipoLinha = normalizeTipo((linha && linha.tipoNegociacao) || '').toLowerCase();
+            const numeroAtual = String((linha && (linha.numero || linha.numeroAtual)) || '').trim();
+            if (tipoLinha.includes('reneg') || tipoLinha.includes('renov')) return numeroAtual;
+            return String((linha && linha.numero) || '').trim();
+        }
         function setLoading(active) {
             const el = document.getElementById('loadingDots');
             if (active) {
@@ -2747,7 +2753,7 @@
                     const valorLinha = currency(linhaVal);
                     const tipoProduto = (currentProd && currentProd.tipos) ? currentProd.tipos : 'A DEFINIR';
                     const ddd = String(l.ddd || '').trim();
-                    const numero = String(l.numero || '').trim();
+                    const numero = numeroPropostaLinha(l);
                     const op = String(l.operadoraDoadora || '').trim();
                     const acesso = [ddd, numero].filter(Boolean).join(' ') + (op ? (' - ' + op) : '');
                     const acessoTxt = acesso || '-';
@@ -2937,7 +2943,7 @@
                     const valorLinha = currency(linhaVal);
                     const tipoProduto = (currentProd && currentProd.tipos) ? currentProd.tipos : 'A DEFINIR';
                     const ddd = String(l.ddd || '').trim();
-                    const numero = String(l.numero || '').trim();
+                    const numero = numeroPropostaLinha(l);
                     const op = String(l.operadoraDoadora || '').trim();
                     const acesso = [ddd, numero].filter(Boolean).join(' ') + (op ? (' - ' + op) : '');
                     const acessoTxt = acesso || '-';
@@ -3142,7 +3148,7 @@
                     const valorLinha = currency(linhaVal);
                     const tipoProduto = (currentProd && currentProd.tipos) ? currentProd.tipos : 'A DEFINIR';
                     const ddd = String(l.ddd || '').trim();
-                    const numero = String(l.numero || '').trim();
+                    const numero = numeroPropostaLinha(l);
                     const op = String(l.operadoraDoadora || '').trim();
                     const acesso = [ddd, numero].filter(Boolean).join(' ') + (op ? (' - ' + op) : '');
                     const acessoTxt = acesso || '-';
