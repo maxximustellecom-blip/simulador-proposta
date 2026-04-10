@@ -250,6 +250,50 @@
             const d = onlyDigits(cnpjDigits || '');
             return (__clients || []).find(c => onlyDigits(c.cnpj) === d);
         }
+        function getCadastroMode() {
+            const el = document.querySelector('input[name="mCadastroMode"]:checked');
+            return el ? String(el.value || 'definido') : 'definido';
+        }
+        function updateCadastroModeUI() {
+            const mode = getCadastroMode();
+            const wrapDef = document.getElementById('mClienteDefinidoWrap');
+            const wrapNaoDef = document.getElementById('mClienteNaoDefinidoWrap');
+            if (wrapDef) wrapDef.style.display = mode === 'definido' ? 'block' : 'none';
+            if (wrapNaoDef) wrapNaoDef.style.display = mode === 'nao_definido' ? 'block' : 'none';
+        }
+        async function obterDadosCnpj(cnpjDigits) {
+            try {
+                const cnpj = onlyDigits(cnpjDigits || '');
+                if (!cnpj || cnpj.length !== 14) return null;
+                const res = await fetch('https://brasilapi.com.br/api/cnpj/v1/' + cnpj);
+                if (!res.ok) return null;
+                return await res.json();
+            } catch { return null; }
+        }
+        async function garantirClientePorCnpj(cnpjDigits) {
+            const cnpj = onlyDigits(cnpjDigits || '');
+            if (!cnpj || cnpj.length !== 14) throw new Error('CNPJ inválido');
+            const existing = findClientByCnpj(cnpj);
+            if (existing) return existing;
+            const cnpjData = await obterDadosCnpj(cnpj);
+            const payload = {
+                cnpj,
+                name: (cnpjData && cnpjData.razao_social) ? String(cnpjData.razao_social).trim() : ('Cliente ' + formatCnpj(cnpj)),
+                fantasy_name: (cnpjData && cnpjData.nome_fantasia) ? String(cnpjData.nome_fantasia).trim() : null,
+                email: (cnpjData && cnpjData.email) ? String(cnpjData.email).trim() : null,
+                phone: (cnpjData && (cnpjData.telefone || cnpjData.telefone1)) ? String(cnpjData.telefone || cnpjData.telefone1).trim() : null,
+                cep: (cnpjData && cnpjData.cep) ? String(cnpjData.cep).trim() : null,
+                state: (cnpjData && cnpjData.uf) ? String(cnpjData.uf).trim() : null,
+                city: (cnpjData && cnpjData.municipio) ? String(cnpjData.municipio).trim() : null,
+                neighborhood: (cnpjData && cnpjData.bairro) ? String(cnpjData.bairro).trim() : null,
+                street: (cnpjData && cnpjData.logradouro) ? String(cnpjData.logradouro).trim() : null,
+                number: (cnpjData && cnpjData.numero) ? String(cnpjData.numero).trim() : null,
+                complement: (cnpjData && cnpjData.complemento) ? String(cnpjData.complemento).trim() : null
+            };
+            const created = await api('/clients', { method: 'POST', body: JSON.stringify(payload) });
+            await carregarClientes();
+            return created || findClientByCnpj(cnpj) || { cnpj, name: payload.name };
+        }
         function renderNegociacoesTable(list) {
             const tbody = document.getElementById('negocTbody');
             const arr = Array.isArray(list) ? list : [];
@@ -407,7 +451,9 @@
             const mStatus = document.getElementById('mStatus');
             const mFaturaVenc = document.getElementById('mFaturaVenc');
             const mCriadoPor = document.getElementById('mCriadoPor');
+            const mCnpjNovo = document.getElementById('mCnpjNovo');
             const headTitleEl = document.querySelector('#negociarModal .modal-head div');
+            const modeDef = document.getElementById('mCadastroModeDefinido');
             if (mClienteHidden) mClienteHidden.value = '';
             if (mClienteSearch) mClienteSearch.value = '';
             if (mClienteDropdown) { mClienteDropdown.innerHTML = ''; mClienteDropdown.classList.remove('show', 'limited'); }
@@ -417,6 +463,9 @@
             if (mStatus) mStatus.value = 'Em andamento';
             if (mFaturaVenc) mFaturaVenc.value = '';
             if (mCriadoPor) mCriadoPor.value = '';
+            if (mCnpjNovo) mCnpjNovo.value = '';
+            if (modeDef) modeDef.checked = true;
+            updateCadastroModeUI();
             __editingNegId = null;
             if (headTitleEl) headTitleEl.textContent = 'Nova proposta';
         }
@@ -708,24 +757,37 @@
                 __savingNegociacao = true;
                 const btnSalvar = document.getElementById('mSalvar');
                 if (btnSalvar) btnSalvar.disabled = true;
+                const modoCadastro = getCadastroMode();
                 const cliente = document.getElementById('mCliente').value;
+                const cnpjNovo = onlyDigits(document.getElementById('mCnpjNovo') ? document.getElementById('mCnpjNovo').value : '');
                 const tipo = document.getElementById('mTipo').value;
                 const proposta = document.getElementById('mProposta').value;
                 const status = document.getElementById('mStatus').value;
                 const criadoPor = document.getElementById('mCriadoPor').value;
                 const faturaVenc = normalizeDateBr(document.getElementById('mFaturaVenc') ? document.getElementById('mFaturaVenc').value : '');
                 
-                if (!cliente) {
+                if (modoCadastro === 'definido' && !cliente) {
                     toast('Selecione um cliente', 'error');
                     if (btnSalvar) btnSalvar.disabled = false;
                     __savingNegociacao = false;
                     return;
                 }
-                
-                const c = findClientByCnpj(cliente);
+                if (modoCadastro === 'nao_definido' && (!cnpjNovo || cnpjNovo.length !== 14)) {
+                    toast('Informe um CNPJ válido', 'error');
+                    if (btnSalvar) btnSalvar.disabled = false;
+                    __savingNegociacao = false;
+                    return;
+                }
+                let cnpjFinal = cliente;
+                let c = findClientByCnpj(cliente);
+                if (modoCadastro === 'nao_definido') {
+                    c = await garantirClientePorCnpj(cnpjNovo);
+                    cnpjFinal = onlyDigits((c && c.cnpj) || cnpjNovo);
+                    setClienteSelected(cnpjFinal);
+                }
                 const body = {
                     razaoSocial: c ? c.name : 'Cliente',
-                    cnpj: cliente,
+                    cnpj: cnpjFinal,
                     tipo: tipo || '1º VENDA', // Fallback
                     proposta: proposta,
                     status: status,
@@ -793,6 +855,12 @@
                 faturaVencEl.addEventListener('input', () => { faturaVencEl.value = formatDate(faturaVencEl.value); });
                 faturaVencEl.addEventListener('blur', () => { faturaVencEl.value = formatDate(faturaVencEl.value); });
             }
+            const cnpjNovoEl = document.getElementById('mCnpjNovo');
+            if (cnpjNovoEl) cnpjNovoEl.addEventListener('input', () => { cnpjNovoEl.value = formatCnpj(cnpjNovoEl.value); });
+            Array.from(document.querySelectorAll('input[name="mCadastroMode"]')).forEach(el => {
+                el.addEventListener('change', updateCadastroModeUI);
+            });
+            updateCadastroModeUI();
             {
                 const modal = document.getElementById('confirmNegociacaoModal');
                 const btnClose = document.getElementById('confirmNegociacaoClose');
@@ -892,13 +960,30 @@
             <div class="modal-head"><div>Nova proposta</div><button id="mFechar" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
             <div class="modal-body">
                 <div class="grid-2">
-                    <div>
+                    <div style="grid-column: 1 / -1;">
+                        <div class="label">Modo de cadastro</div>
+                        <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+                            <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                                <input type="radio" style="height: auto !important;" id="mCadastroModeDefinido" name="mCadastroMode" value="definido" checked>
+                                <span>Cliente&nbsp;definido</span>
+                            </label>
+                            <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                                <input type="radio" style="height: auto !important;" id="mCadastroModeNaoDefinido" name="mCadastroMode" value="nao_definido">
+                                <span>Cliente&nbsp;não&nbsp;definido</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="mClienteDefinidoWrap">
                         <div class="label">Cliente</div>
                         <div id="mClienteWrap" class="search-select">
                             <input id="mClienteSearch" class="input" type="text" placeholder="Pesquisar cliente por nome/CNPJ">
                             <input id="mCliente" type="hidden" value="">
                             <div id="mClienteDropdown" class="search-select-dropdown"></div>
                         </div>
+                    </div>
+                    <div id="mClienteNaoDefinidoWrap" style="display:none;">
+                        <div class="label">CNPJ</div>
+                        <input id="mCnpjNovo" class="input" type="text" placeholder="00.000.000/0000-00" maxlength="18">
                     </div>
                     <div style="display: none;">
                         <div class="label">Tipo</div>
@@ -913,7 +998,7 @@
                             <option value="PROPOSTA COSTUMIZADA">PROPOSTA COSTUMIZADA</option>
                         </select>
                     </div>
-                    <div>
+                    <div style="display: none;">
                         <div class="label">Data vencimento fatura</div>
                         <input id="mFaturaVenc" class="input" type="text" placeholder="00/00/0000" maxlength="10">
                     </div>
