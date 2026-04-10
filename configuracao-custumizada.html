@@ -102,6 +102,38 @@
         .resumo-accordion > summary::-webkit-details-marker { display: none; }
         .resumo-accordion[open] > summary { border-bottom: 1px solid var(--border); }
         .resumo-accordion-body { padding: 0 0.75rem 0.75rem; }
+        #clienteDataModal .modal-card { max-width: 900px; width: 95%; }
+        .modal-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+        }
+        .modal-section:last-child { margin-bottom: 0; }
+        .modal-section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        .modal-section-title i { width: 18px; height: 18px; color: var(--primary); }
+        .grid-3-modal {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        @media (max-width: 768px) {
+            .grid-3-modal { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -152,6 +184,17 @@
                                 </td></tr>
                             </tbody>
                         </table>
+                    </div>
+                </section>
+                <section class="section" style="margin-top: 1rem;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;">
+                        <div>
+                            <div class="label">Dados complementares do cliente</div>
+                            <div class="muted">Preencha informações cadastrais para proposta e contrato.</div>
+                        </div>
+                        <button id="openClienteDataBtn" class="btn btn-ghost" type="button">
+                            <i data-lucide="user-round-pen"></i><span>Completar dados de cliente</span>
+                        </button>
                     </div>
                 </section>
                 <section class="section" style="margin-top:1rem; display: none;">
@@ -328,6 +371,24 @@
             if (p.length >= 11) return `(${p.slice(0,2)}) ${p.slice(2,7)}-${p.slice(7,11)}`;
             if (p.length >= 10) return `(${p.slice(0,2)}) ${p.slice(2,6)}-${p.slice(6,10)}`;
             return p;
+        }
+        function formatCpf(s) {
+            const d = onlyDigits(s).slice(0, 11);
+            if (d.length <= 3) return d;
+            if (d.length <= 6) return `${d.slice(0,3)}.${d.slice(3)}`;
+            if (d.length <= 9) return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`;
+            return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9,11)}`;
+        }
+        function formatCep(s) {
+            const d = onlyDigits(s).slice(0, 8);
+            if (d.length <= 5) return d;
+            return `${d.slice(0,5)}-${d.slice(5,8)}`;
+        }
+        function formatDate(s) {
+            const d = onlyDigits(s).slice(0, 8);
+            if (d.length <= 2) return d;
+            if (d.length <= 4) return `${d.slice(0,2)}/${d.slice(2)}`;
+            return `${d.slice(0,2)}/${d.slice(2,4)}/${d.slice(4)}`;
         }
         let __negociacaoId = null;
         let __negociacaoInfo = null;
@@ -1616,6 +1677,153 @@
             if (cnpjEl) cnpjEl.textContent = formatCnpj(n.cnpj || c.cnpj || '');
             if (tipoEl) tipoEl.textContent = n.tipo || '-';
             if (statusEl) statusEl.textContent = n.status || 'Em andamento';
+        }
+        function preencherCamposClienteModal(c) {
+            document.getElementById('mCnpj').value = formatCnpj(c.cnpj || '');
+            document.getElementById('mNome').value = c.name || '';
+            document.getElementById('mFantasia').value = c.fantasy_name || '';
+            document.getElementById('mTipoEmpresa').value = c.tipo_empresa || '';
+            document.getElementById('mEmail').value = c.email || '';
+            document.getElementById('mPhone').value = formatPhone(c.phone || '');
+            const abrirDateRaw = String(c.opening_date || '');
+            document.getElementById('mAbertura').value = (abrirDateRaw && abrirDateRaw.includes('-'))
+                ? (() => { const p = abrirDateRaw.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : abrirDateRaw; })()
+                : abrirDateRaw;
+            const vencDateRaw = String(c.due_date || '');
+            document.getElementById('mVencimento').value = (vencDateRaw && vencDateRaw.includes('-'))
+                ? (() => { const p = vencDateRaw.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : vencDateRaw; })()
+                : vencDateRaw;
+            document.getElementById('mCep').value = formatCep(c.cep || '');
+            document.getElementById('mUf').value = c.state || '';
+            document.getElementById('mCidade').value = c.city || '';
+            document.getElementById('mBairro').value = c.neighborhood || '';
+            document.getElementById('mLogradouro').value = c.street || '';
+            document.getElementById('mNumero').value = c.number || '';
+            document.getElementById('mComplemento').value = c.complement || '';
+            document.getElementById('mPontoReferencia').value = c.reference_point || '';
+            document.getElementById('mRepNome').value = c.rep_nome || '';
+            document.getElementById('mRepCpf').value = c.rep_cpf || '';
+            document.getElementById('mRepRg').value = c.rep_rg || '';
+            document.getElementById('mRepTel1').value = c.rep_tel1 || '';
+            document.getElementById('mRepEmail').value = c.rep_email || '';
+            document.getElementById('mGestorNome').value = c.gestor_nome || '';
+            document.getElementById('mGestorCpf').value = c.gestor_cpf || '';
+            document.getElementById('mGestorRg').value = c.gestor_rg || '';
+            document.getElementById('mGestorTel1').value = c.gestor_tel1 || '';
+            document.getElementById('mGestorEmail').value = c.gestor_email || '';
+            document.getElementById('mAuth1Nome').value = c.auth1_nome || '';
+            document.getElementById('mAuth1Cpf').value = c.auth1_cpf || '';
+            document.getElementById('mAuth1Rg').value = c.auth1_rg || '';
+            document.getElementById('mAuth1Contato').value = c.auth1_contato || '';
+            document.getElementById('mAuth2Nome').value = c.auth2_nome || '';
+            document.getElementById('mAuth2Cpf').value = c.auth2_cpf || '';
+            document.getElementById('mAuth2Contato').value = c.auth2_contato || '';
+            document.getElementById('mSoc1Nome').value = c.socio1_nome || '';
+            document.getElementById('mSoc1Cpf').value = c.socio1_cpf || '';
+            document.getElementById('mSoc1Contato').value = c.socio1_contato || '';
+            document.getElementById('mSoc2Nome').value = c.socio2_nome || '';
+            document.getElementById('mSoc2Cpf').value = c.socio2_cpf || '';
+            document.getElementById('mSoc2Contato').value = c.socio2_contato || '';
+            document.getElementById('mObservacoes').value = c.notes || '';
+        }
+        function bindClienteDataModalEvents() {
+            const modal = document.getElementById('clienteDataModal');
+            const openBtn = document.getElementById('openClienteDataBtn');
+            const closeBtn = document.getElementById('closeClienteDataModalBtn');
+            const cancelBtn = document.getElementById('cancelClienteDataBtn');
+            const saveBtn = document.getElementById('saveClienteDataBtn');
+            if (!modal || !openBtn || !saveBtn) return;
+            const close = () => modal.classList.remove('show');
+            const open = () => {
+                preencherCamposClienteModal(__clienteInfo || {});
+                modal.classList.add('show');
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+            };
+            openBtn.addEventListener('click', open);
+            if (closeBtn) closeBtn.addEventListener('click', close);
+            if (cancelBtn) cancelBtn.addEventListener('click', close);
+            const bindMask = (id, fn) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('input', () => { el.value = fn(el.value); });
+            };
+            bindMask('mCnpj', formatCnpj);
+            bindMask('mAbertura', formatDate);
+            bindMask('mVencimento', formatDate);
+            bindMask('mCep', formatCep);
+            ['mPhone','mRepTel1','mGestorTel1','mAuth1Contato','mAuth2Contato','mSoc1Contato','mSoc2Contato'].forEach(id => bindMask(id, formatPhone));
+            ['mRepCpf','mGestorCpf','mAuth1Cpf','mAuth2Cpf','mSoc1Cpf','mSoc2Cpf'].forEach(id => bindMask(id, formatCpf));
+            const copy = (from, to) => {
+                const src = document.getElementById(from);
+                const dst = document.getElementById(to);
+                if (src && dst) dst.value = src.value || '';
+            };
+            const bindCopy = (btnId, pairs) => {
+                const btn = document.getElementById(btnId);
+                if (!btn) return;
+                btn.addEventListener('click', () => pairs.forEach(([f, t]) => copy(f, t)));
+            };
+            bindCopy('btnCopyGestorToRep', [['mGestorNome','mRepNome'],['mGestorCpf','mRepCpf'],['mGestorRg','mRepRg'],['mGestorTel1','mRepTel1'],['mGestorEmail','mRepEmail']]);
+            bindCopy('btnCopyRepToAuth1', [['mRepNome','mAuth1Nome'],['mRepCpf','mAuth1Cpf'],['mRepRg','mAuth1Rg'],['mRepTel1','mAuth1Contato']]);
+            bindCopy('btnCopyGestorToSocio1', [['mGestorNome','mSoc1Nome'],['mGestorCpf','mSoc1Cpf'],['mGestorTel1','mSoc1Contato']]);
+            saveBtn.addEventListener('click', async () => {
+                try {
+                    const payload = {
+                        name: String(document.getElementById('mNome').value || '').trim(),
+                        cnpj: onlyDigits(document.getElementById('mCnpj').value || ''),
+                        fantasy_name: String(document.getElementById('mFantasia').value || '').trim() || null,
+                        tipo_empresa: String(document.getElementById('mTipoEmpresa').value || '').trim() || null,
+                        email: String(document.getElementById('mEmail').value || '').trim() || null,
+                        phone: String(document.getElementById('mPhone').value || '').trim() || null,
+                        cep: String(document.getElementById('mCep').value || '').trim() || null,
+                        state: String(document.getElementById('mUf').value || '').trim() || null,
+                        city: String(document.getElementById('mCidade').value || '').trim() || null,
+                        neighborhood: String(document.getElementById('mBairro').value || '').trim() || null,
+                        street: String(document.getElementById('mLogradouro').value || '').trim() || null,
+                        number: String(document.getElementById('mNumero').value || '').trim() || null,
+                        complement: String(document.getElementById('mComplemento').value || '').trim() || null,
+                        reference_point: String(document.getElementById('mPontoReferencia').value || '').trim() || null,
+                        opening_date: (() => { const v = String(document.getElementById('mAbertura').value || '').trim(); if (!v) return null; if (v.includes('/')) { const p = v.split('/'); if (p.length === 3) return `${p[2]}-${p[1]}-${p[0]}`; } return v; })(),
+                        due_date: (() => { const v = String(document.getElementById('mVencimento').value || '').trim(); if (!v) return null; if (v.includes('/')) { const p = v.split('/'); if (p.length === 3) return `${p[2]}-${p[1]}-${p[0]}`; } return v; })(),
+                        rep_nome: String(document.getElementById('mRepNome').value || '').trim() || null,
+                        rep_cpf: String(document.getElementById('mRepCpf').value || '').trim() || null,
+                        rep_rg: String(document.getElementById('mRepRg').value || '').trim() || null,
+                        rep_tel1: String(document.getElementById('mRepTel1').value || '').trim() || null,
+                        rep_email: String(document.getElementById('mRepEmail').value || '').trim() || null,
+                        gestor_nome: String(document.getElementById('mGestorNome').value || '').trim() || null,
+                        gestor_cpf: String(document.getElementById('mGestorCpf').value || '').trim() || null,
+                        gestor_rg: String(document.getElementById('mGestorRg').value || '').trim() || null,
+                        gestor_tel1: String(document.getElementById('mGestorTel1').value || '').trim() || null,
+                        gestor_email: String(document.getElementById('mGestorEmail').value || '').trim() || null,
+                        auth1_nome: String(document.getElementById('mAuth1Nome').value || '').trim() || null,
+                        auth1_cpf: String(document.getElementById('mAuth1Cpf').value || '').trim() || null,
+                        auth1_rg: String(document.getElementById('mAuth1Rg').value || '').trim() || null,
+                        auth1_contato: String(document.getElementById('mAuth1Contato').value || '').trim() || null,
+                        auth2_nome: String(document.getElementById('mAuth2Nome').value || '').trim() || null,
+                        auth2_cpf: String(document.getElementById('mAuth2Cpf').value || '').trim() || null,
+                        auth2_contato: String(document.getElementById('mAuth2Contato').value || '').trim() || null,
+                        socio1_nome: String(document.getElementById('mSoc1Nome').value || '').trim() || null,
+                        socio1_cpf: String(document.getElementById('mSoc1Cpf').value || '').trim() || null,
+                        socio1_contato: String(document.getElementById('mSoc1Contato').value || '').trim() || null,
+                        socio2_nome: String(document.getElementById('mSoc2Nome').value || '').trim() || null,
+                        socio2_cpf: String(document.getElementById('mSoc2Cpf').value || '').trim() || null,
+                        socio2_contato: String(document.getElementById('mSoc2Contato').value || '').trim() || null,
+                        notes: String(document.getElementById('mObservacoes').value || '').trim() || null
+                    };
+                    if (!payload.cnpj) { toast('CNPJ é obrigatório', 'error'); return; }
+                    if (__clienteInfo && __clienteInfo.id) {
+                        await api('/clients/' + __clienteInfo.id, { method: 'PUT', body: JSON.stringify(payload) });
+                    } else {
+                        await api('/clients', { method: 'POST', body: JSON.stringify(payload) });
+                    }
+                    await carregarClienteBasico();
+                    renderClienteBasico();
+                    toast('Cliente salvo', 'success');
+                    close();
+                } catch {
+                    toast('Erro ao salvar cliente', 'error');
+                }
+            });
         }
         async function carregarPropostaSalva() {
             try {
@@ -3134,6 +3342,7 @@
                 if (fileInput) fileInput.addEventListener('change', handleFileUpload);
 
                 bindEditModalEvents();
+                bindClienteDataModalEvents();
                 const addLinhaBtn = document.getElementById('addLinhaBtn');
                 const salvarBtn = document.getElementById('salvarBtn');
                 const copiarBtn = document.getElementById('copiarBtn');
@@ -3212,6 +3421,144 @@
         });
     </script>
     <div id="toast" class="toast"></div>
+    <div id="clienteDataModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Completar dados do cliente</div><button id="closeClienteDataModalBtn" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="modal-section">
+                    <div class="modal-section-title"><i data-lucide="building-2"></i><span>Dados da Empresa</span></div>
+                    <div class="grid-2">
+                        <div class="field"><span class="label-inline">CNPJ</span><input id="mCnpj" class="input" type="text" placeholder="00.000.000/0000-00"></div>
+                        <div class="field"><span class="label-inline">Data de Abertura</span><input id="mAbertura" class="input" type="text" placeholder="00/00/0000" maxlength="10"></div>
+                    </div>
+                    <div class="grid-2" style="margin-top: 1rem;">
+                        <div class="field"><span class="label-inline">Razão Social</span><input id="mNome" class="input" type="text" placeholder="Razão Social"></div>
+                        <div class="field"><span class="label-inline">Nome Fantasia</span><input id="mFantasia" class="input" type="text" placeholder="Nome Fantasia"></div>
+                    </div>
+                    <div class="grid-2" style="margin-top: 1rem;">
+                        <div class="field"><span class="label-inline">Tipo da Empresa</span>
+                            <select id="mTipoEmpresa" class="input">
+                                <option value="">Selecione...</option>
+                                <option value="Sociedade Anônima (S/A)">Sociedade Anônima (S/A)</option>
+                                <option value="Sociedade Limitada (LTDA)">Sociedade Limitada (LTDA)</option>
+                                <option value="Sociedade em Conta de Participação">Sociedade em Conta de Participação</option>
+                                <option value="Empresário Individual">Empresário Individual</option>
+                                <option value="MEI">MEI</option>
+                                <option value="EIRELI">EIRELI</option>
+                                <option value="Condomínios">Condomínios</option>
+                                <option value="Igrejas / Organizações Religiosas">Igrejas / Organizações Religiosas</option>
+                            </select>
+                        </div>
+                        <div class="field"><span class="label-inline">Data de Vencimento</span><input id="mVencimento" class="input" type="text" placeholder="00/00/0000" maxlength="10"></div>
+                    </div>
+                </div>
+                <div class="modal-section">
+                    <div class="modal-section-title"><i data-lucide="map-pin"></i><span>Contato e Endereço</span></div>
+                    <div class="grid-2">
+                        <div class="field"><span class="label-inline">Email Corporativo</span><input id="mEmail" class="input" type="email" placeholder="email@empresa.com"></div>
+                        <div class="field"><span class="label-inline">Telefone Principal</span><input id="mPhone" class="input" type="text" placeholder="(00) 0000-0000"></div>
+                    </div>
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed #e5e7eb;"></div>
+                    <div class="grid-3-modal">
+                        <div class="field"><span class="label-inline">CEP</span><input id="mCep" class="input" type="text" placeholder="00000-000"></div>
+                        <div class="field"><span class="label-inline">UF</span><input id="mUf" class="input" type="text" placeholder="SP"></div>
+                        <div class="field"><span class="label-inline">Cidade</span><input id="mCidade" class="input" type="text" placeholder="Cidade"></div>
+                    </div>
+                    <div class="grid-2" style="margin-top: 1rem;">
+                        <div class="field"><span class="label-inline">Logradouro</span><input id="mLogradouro" class="input" type="text" placeholder="Rua, Av."></div>
+                        <div class="field"><span class="label-inline">Bairro</span><input id="mBairro" class="input" type="text" placeholder="Bairro"></div>
+                    </div>
+                    <div class="grid-3-modal" style="margin-top: 1rem;">
+                        <div class="field"><span class="label-inline">Número</span><input id="mNumero" class="input" type="text" placeholder="Número"></div>
+                        <div class="field" style="grid-column: span 2;"><span class="label-inline">Complemento</span><input id="mComplemento" class="input" type="text" placeholder="Complemento (Opcional)"></div>
+                    </div>
+                    <div class="grid-1" style="margin-top: 1rem;">
+                        <div class="field"><span class="label-inline">Ponto de Referência</span><input id="mPontoReferencia" class="input" type="text" placeholder="Ponto de referência (Opcional)"></div>
+                    </div>
+                </div>
+                <div class="modal-section">
+                    <div class="modal-section-title"><i data-lucide="briefcase"></i><span>Administrador de Contrato</span></div>
+                    <div class="grid-2">
+                        <div class="field"><span class="label-inline">Nome Completo</span><input id="mGestorNome" class="input" type="text"></div>
+                        <div class="field"><span class="label-inline">CPF</span><input id="mGestorCpf" class="input" type="text"></div>
+                    </div>
+                    <div class="grid-3-modal" style="margin-top: 1rem;">
+                        <div class="field"><span class="label-inline">RG</span><input id="mGestorRg" class="input" type="text"></div>
+                        <div class="field"><span class="label-inline">Tel. Contato (1)</span><input id="mGestorTel1" class="input" type="text"></div>
+                        <div class="field"><span class="label-inline">Email</span><input id="mGestorEmail" class="input" type="email"></div>
+                    </div>
+                </div>
+                <div class="modal-section">
+                    <div class="modal-section-title"><i data-lucide="user-check"></i><span>Representante Legal</span></div>
+                    <div style="display:flex; justify-content:flex-end; margin-top:0.25rem;">
+                        <button type="button" id="btnCopyGestorToRep" class="btn btn-ghost" style="font-size:0.75rem; padding:0.15rem 0.5rem;">Copiar do Administrador de Contrato</button>
+                    </div>
+                    <div class="grid-2">
+                        <div class="field"><span class="label-inline">Nome Completo</span><input id="mRepNome" class="input" type="text"></div>
+                        <div class="field"><span class="label-inline">CPF</span><input id="mRepCpf" class="input" type="text"></div>
+                    </div>
+                    <div class="grid-3-modal" style="margin-top: 1rem;">
+                        <div class="field"><span class="label-inline">RG</span><input id="mRepRg" class="input" type="text"></div>
+                        <div class="field"><span class="label-inline">Tel. Contato (1)</span><input id="mRepTel1" class="input" type="text"></div>
+                        <div class="field"><span class="label-inline">Email</span><input id="mRepEmail" class="input" type="email"></div>
+                    </div>
+                </div>
+                <div class="modal-section">
+                    <div class="modal-section-title"><i data-lucide="users"></i><span>Pessoas Autorizadas</span></div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+                        <div style="font-size: 0.85rem; font-weight: 600; color: #4b5563;">1º Autorizado</div>
+                        <button type="button" id="btnCopyRepToAuth1" class="btn btn-ghost" style="font-size:0.75rem; padding:0.15rem 0.5rem;">Copiar do Representante Legal</button>
+                    </div>
+                    <div class="grid-2">
+                        <div class="field"><span class="label-inline">Nome</span><input id="mAuth1Nome" class="input" type="text"></div>
+                        <div class="field"><span class="label-inline">CPF</span><input id="mAuth1Cpf" class="input" type="text"></div>
+                    </div>
+                    <div class="grid-2" style="margin-top: 0.5rem;">
+                        <div class="field"><span class="label-inline">RG</span><input id="mAuth1Rg" class="input" type="text"></div>
+                        <div class="field"><span class="label-inline">Contato</span><input id="mAuth1Contato" class="input" type="text"></div>
+                    </div>
+                    <div style="margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600; color: #4b5563;">2º Autorizado (Opcional)</div>
+                    <div class="grid-2">
+                        <div class="field"><span class="label-inline">Nome</span><input id="mAuth2Nome" class="input" type="text"></div>
+                        <div class="field"><span class="label-inline">CPF</span><input id="mAuth2Cpf" class="input" type="text"></div>
+                    </div>
+                    <div class="grid-2" style="margin-top: 0.5rem;">
+                        <div class="field"><span class="label-inline">Contato</span><input id="mAuth2Contato" class="input" type="text"></div>
+                    </div>
+                </div>
+                <div class="modal-section">
+                    <div class="modal-section-title"><i data-lucide="briefcase"></i><span>Sócios</span></div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem; margin-top:0.5rem;">
+                        <div style="font-size: 0.85rem; font-weight: 600; color: #4b5563;">Sócio 1</div>
+                        <button type="button" id="btnCopyGestorToSocio1" class="btn btn-ghost" style="font-size:0.75rem; padding:0.15rem 0.5rem;">Copiar do Administrador de Contrato</button>
+                    </div>
+                    <div class="grid-2">
+                        <div class="field"><span class="label-inline">Nome</span><input id="mSoc1Nome" class="input" type="text"></div>
+                        <div class="field"><span class="label-inline">CPF</span><input id="mSoc1Cpf" class="input" type="text"></div>
+                    </div>
+                    <div class="grid-2" style="margin-top: 0.5rem;">
+                        <div class="field"><span class="label-inline">Contato</span><input id="mSoc1Contato" class="input" type="text"></div>
+                    </div>
+                    <div style="margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600; color: #4b5563;">Sócio 2 (Opcional)</div>
+                    <div class="grid-2">
+                        <div class="field"><span class="label-inline">Nome</span><input id="mSoc2Nome" class="input" type="text"></div>
+                        <div class="field"><span class="label-inline">CPF</span><input id="mSoc2Cpf" class="input" type="text"></div>
+                    </div>
+                    <div class="grid-2" style="margin-top: 0.5rem;">
+                        <div class="field"><span class="label-inline">Contato</span><input id="mSoc2Contato" class="input" type="text"></div>
+                    </div>
+                </div>
+                <div class="modal-section">
+                    <div class="modal-section-title"><i data-lucide="message-square"></i><span>Observações</span></div>
+                    <div class="field"><textarea id="mObservacoes" class="input" style="min-height: 100px; resize: vertical;"></textarea></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="cancelClienteDataBtn" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
+                <button id="saveClienteDataBtn" class="btn btn-primary" type="button"><i data-lucide="save"></i><span>Salvar</span></button>
+            </div>
+        </div>
+    </div>
     <div id="editLineModal" class="modal">
         <div class="modal-card" style="max-width: 900px; width: 95%;">
             <div class="modal-head">
