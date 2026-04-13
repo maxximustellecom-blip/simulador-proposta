@@ -9,6 +9,8 @@ const User = sequelize.define('User', {
   celular: { type: DataTypes.STRING(20), allowNull: true },
   password: { type: DataTypes.STRING(200), allowNull: false },
   role: { type: DataTypes.ENUM('admin', 'user'), allowNull: false, defaultValue: 'user' },
+  tipo: { type: DataTypes.ENUM('interno', 'externo'), allowNull: false, defaultValue: 'interno' },
+  comissao: { type: DataTypes.DECIMAL(12, 2), allowNull: true, defaultValue: 0 },
   profile_id: { type: DataTypes.INTEGER, allowNull: true }
 }, {
   tableName: 'users',

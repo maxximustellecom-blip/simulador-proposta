@@ -4,7 +4,7 @@ import { Op } from 'sequelize';
 
 export async function register(req, res) {
   try {
-    const { name, email, password, role, matricula, celular, profile_id } = req.body;
+    const { name, email, password, role, matricula, celular, profile_id, tipo, comissao } = req.body;
     if (!name || !email || !password) return res.status(400).json({ error: 'missing' });
     const validRole = role === 'admin' ? 'admin' : 'user';
     const exists = await User.findOne({ where: { email } });
@@ -14,8 +14,28 @@ export async function register(req, res) {
       if (existsMat) return res.status(409).json({ error: 'matricula_exists' });
     }
     const hash = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hash, role: validRole, matricula, celular, profile_id: profile_id || null });
-    return res.status(201).json({ id: user.id, name: user.name, email: user.email, role: user.role, matricula: user.matricula, celular: user.celular, profile_id: user.profile_id });
+    const user = await User.create({ 
+      name, 
+      email, 
+      password: hash, 
+      role: validRole, 
+      matricula, 
+      celular, 
+      profile_id: profile_id || null,
+      tipo: tipo || 'interno',
+      comissao: comissao !== undefined ? Number(comissao) : 0
+    });
+    return res.status(201).json({ 
+      id: user.id, 
+      name: user.name, 
+      email: user.email, 
+      role: user.role, 
+      matricula: user.matricula, 
+      celular: user.celular, 
+      profile_id: user.profile_id,
+      tipo: user.tipo,
+      comissao: Number(user.comissao || 0)
+    });
   } catch (e) {
     return res.status(500).json({ error: e });
   }
@@ -52,6 +72,8 @@ export async function listUsers(req, res) {
       role: u.role, 
       matricula: u.matricula,
       celular: u.celular,
+      tipo: u.tipo || 'interno',
+      comissao: Number(u.comissao || 0),
       profile: u.profile ? { id: u.profile.id, name: u.profile.name } : null
     })));
   } catch (e) {
@@ -67,7 +89,7 @@ export async function updateUser(req, res) {
     if (!id) return res.status(400).json({ error: 'missing_id' });
     const user = await User.findByPk(id);
     if (!user) return res.status(404).json({ error: 'not_found' });
-    const { name, email, role, password, matricula, celular, profile_id } = req.body || {};
+    const { name, email, role, password, matricula, celular, profile_id, tipo, comissao } = req.body || {};
     if (email && email !== user.email) {
       const exists = await User.findOne({ where: { email } });
       if (exists) return res.status(409).json({ error: 'email_exists' });
@@ -82,6 +104,8 @@ export async function updateUser(req, res) {
     if (celular !== undefined) user.celular = celular;
     if (role) user.role = role === 'admin' ? 'admin' : 'user';
     if (profile_id !== undefined) user.profile_id = profile_id || null;
+    if (tipo) user.tipo = tipo;
+    if (comissao !== undefined) user.comissao = Number(comissao);
     if (password) {
       const hash = await bcrypt.hash(password, 10);
       user.password = hash;
@@ -95,6 +119,8 @@ export async function updateUser(req, res) {
       role: updatedUser.role, 
       matricula: updatedUser.matricula,
       celular: updatedUser.celular,
+      tipo: updatedUser.tipo,
+      comissao: Number(updatedUser.comissao || 0),
       profile: updatedUser.profile ? { id: updatedUser.profile.id, name: updatedUser.profile.name } : null
     });
   } catch (e) {
