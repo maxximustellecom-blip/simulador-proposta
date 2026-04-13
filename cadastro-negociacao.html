@@ -326,6 +326,9 @@
                                 <button type="button" class="action-item" onclick="removerBko(${n.id})" ${isDisabled}>
                                     <i data-lucide="rotate-ccw"></i> Remover Cadastro
                                 </button>
+                                <button type="button" class="action-item" onclick="enviarBko(${n.id})" ${isDisabled}>
+                                    <i data-lucide="send"></i> Enviar P/ Vendas
+                                </button>
                                 <button style="display:none;" type="button" class="action-item" onclick="editarNegociacao(${n.id})" ${isDisabled}>
                                     <i data-lucide="edit-3"></i> Editar
                                 </button>
@@ -478,6 +481,7 @@
                 const tipoProposta = document.getElementById('fTipoProposta') ? document.getElementById('fTipoProposta').value : '';
                 const params = [];
                 params.push('cadastro=1'); // Sempre filtrar por cadastro=1 nesta tela
+                params.push('status=Em andamento'); // Mostrar apenas as que ainda não foram enviadas ao BKO (Concluídas)
                 if (cnpj) params.push('cnpj=' + encodeURIComponent(cnpj));
                 if (data) params.push('data=' + encodeURIComponent(data));
                 if (razao) params.push('razao=' + encodeURIComponent(razao));
@@ -491,6 +495,19 @@
                 renderNegociacoesTable([]);
             }
         }
+        window.enviarBko = function(id) {
+            try {
+                const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
+                const txt = (n ? ((n.tipo || '-') + ' • ' + (n.proposta || '-') + ' • ' + formatCnpj(n.cnpj || '')) : ('ID ' + String(id)));
+                const t = document.getElementById('confirmBkoText');
+                if (t) t.textContent = txt;
+                const btn = document.getElementById('confirmBkoConfirm');
+                if (btn) btn.dataset.id = String(id);
+                const m = document.getElementById('confirmBkoModal');
+                if (m) m.classList.add('show');
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+            } catch {}
+        };
         window.removerBko = async function(id) {
             if (!confirm('Deseja remover esta proposta do cadastro e retornar para negociação?')) return;
             try {
@@ -675,6 +692,11 @@
                     const u = JSON.parse(auth || '{}');
                     __userRole = String(u && u.role ? u.role : '');
                 } catch { __userRole = ''; }
+                
+                if (__userRole !== 'admin') {
+                    window.location.href = 'index.html';
+                    return;
+                }
                 
                 await carregarTiposSelect();
                 await carregarUsuariosSelect();
@@ -882,6 +904,31 @@
                     }
                 });
             }
+            {
+                const modal = document.getElementById('confirmBkoModal');
+                const btnClose = document.getElementById('confirmBkoClose');
+                const btnCancel = document.getElementById('confirmBkoCancel');
+                const btnConfirm = document.getElementById('confirmBkoConfirm');
+                function fecharBko() {
+                    if (btnConfirm) btnConfirm.dataset.id = '';
+                    if (modal) modal.classList.remove('show');
+                }
+                if (btnClose) btnClose.addEventListener('click', fecharBko);
+                if (btnCancel) btnCancel.addEventListener('click', fecharBko);
+                if (btnConfirm) btnConfirm.addEventListener('click', async () => {
+                    const id = Number(btnConfirm.dataset.id || 0);
+                    if (!id) { fecharBko(); return; }
+                    try {
+                        await api('/negotiations/' + id, { method: 'PUT', body: JSON.stringify({ status: 'Concluída' }) });
+                        fecharBko();
+                        toast('Enviado ao BKO.', 'success');
+                        buscar();
+                    } catch {
+                        toast('Falha ao enviar ao BKO', 'error');
+                        fecharBko();
+                    }
+                });
+            }
             const mSearch = document.getElementById('mClienteSearch');
             const mDropdown = document.getElementById('mClienteDropdown');
             const mWrap = document.getElementById('mClienteWrap');
@@ -1001,6 +1048,19 @@
             <div class="modal-actions">
                 <button id="confirmNegociacaoCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
                 <button id="confirmNegociacaoConfirm" class="btn btn-ghost" type="button" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i><span>Excluir</span></button>
+            </div>
+        </div>
+    </div>
+    <div id="confirmBkoModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Enviar BKO</div><button id="confirmBkoClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="label">Confirmar envio ao BKO e concluir a negociação?</div>
+                <div id="confirmBkoText" class="muted" style="margin-top:0.5rem;"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmBkoCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
+                <button id="confirmBkoConfirm" class="btn btn-primary" type="button"><i data-lucide="check"></i><span>Confirmar</span></button>
             </div>
         </div>
     </div>

@@ -77,7 +77,7 @@
           '<a href="clientes.html" class="nav-link' + (isActive('clientes') ? ' active' : '') + '"><i data-lucide="building-2"></i><span>Clientes</span></a>' +
           '<a href="funil.html" class="nav-link' + (isActive('funil') ? ' active' : '') + '"><i data-lucide="columns-3"></i><span>Funil</span></a>' +
           '<a href="negociar.html" class="nav-link' + (isActive('negociar') ? ' active' : '') + '"><i data-lucide="handshake"></i><span>Propostas</span></a>' +
-          '<a href="cadastro-negociacao.html" class="nav-link' + (isActive('cadastro-negociacao') ? ' active' : '') + '"><i data-lucide="clipboard-check"></i><span>Cadastro</span></a>' +
+          (isAdmin ? '<a href="cadastro-negociacao.html" class="nav-link' + (isActive('cadastro-negociacao') ? ' active' : '') + '"><i data-lucide="clipboard-check"></i><span>Cadastro</span></a>' : '') +
           '<a href="top-sellers.html" style="display: none;" class="nav-link' + (isActive('top-sellers') ? ' active' : '') + '"><i data-lucide="star"></i><span>Top Sellers</span></a>' +
           '<a href="quadro-vendas.html" style="display: none;" class="nav-link' + (isActive('quadro-vendas') ? ' active' : '') + '"><i data-lucide="bar-chart-3"></i><span>Quadro de Vendas</span></a>' +
           '<a href="agenda.html" style="display: none;" class="nav-link' + (isActive('agenda') ? ' active' : '') + '"><i data-lucide="calendar"></i><span>Agenda</span></a>' +

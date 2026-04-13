@@ -323,8 +323,8 @@
                                 <button type="button" class="action-item" onclick="configurarNegociacao(${n.id})">
                                     <i data-lucide="edit-3"></i> Editar
                                 </button>
-                                <button type="button" class="action-item" onclick="enviarBko(${n.id})" ${isDisabled}>
-                                    <i data-lucide="send"></i> Cadastro
+                                <button type="button" class="action-item" onclick="enviarParaCadastro(${n.id})" ${isDisabled}>
+                                    <i data-lucide="clipboard-check"></i> Enviar para Cadastro
                                 </button>
                                 <button style="display:none;" type="button" class="action-item" onclick="editarNegociacao(${n.id})" ${isDisabled}>
                                     <i data-lucide="edit-3"></i> Editar
@@ -477,6 +477,7 @@
                 const vendedor = document.getElementById('fVendedor') ? document.getElementById('fVendedor').value : '';
                 const tipoProposta = document.getElementById('fTipoProposta') ? document.getElementById('fTipoProposta').value : '';
                 const params = [];
+                params.push('cadastro=0');
                 if (cnpj) params.push('cnpj=' + encodeURIComponent(cnpj));
                 if (data) params.push('data=' + encodeURIComponent(data));
                 if (razao) params.push('razao=' + encodeURIComponent(razao));
@@ -566,15 +567,15 @@
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             } catch {}
         };
-        window.enviarBko = function(id) {
+        window.enviarParaCadastro = function(id) {
             try {
                 const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
                 const txt = (n ? ((n.tipo || '-') + ' • ' + (n.proposta || '-') + ' • ' + formatCnpj(n.cnpj || '')) : ('ID ' + String(id)));
-                const t = document.getElementById('confirmBkoText');
+                const t = document.getElementById('confirmCadastroText');
                 if (t) t.textContent = txt;
-                const btn = document.getElementById('confirmBkoConfirm');
+                const btn = document.getElementById('confirmCadastroConfirm');
                 if (btn) btn.dataset.id = String(id);
-                const m = document.getElementById('confirmBkoModal');
+                const m = document.getElementById('confirmCadastroModal');
                 if (m) m.classList.add('show');
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             } catch {}
@@ -895,27 +896,27 @@
                 });
             }
             {
-                const modal = document.getElementById('confirmBkoModal');
-                const btnClose = document.getElementById('confirmBkoClose');
-                const btnCancel = document.getElementById('confirmBkoCancel');
-                const btnConfirm = document.getElementById('confirmBkoConfirm');
-                function fecharBko() {
+                const modal = document.getElementById('confirmCadastroModal');
+                const btnClose = document.getElementById('confirmCadastroClose');
+                const btnCancel = document.getElementById('confirmCadastroCancel');
+                const btnConfirm = document.getElementById('confirmCadastroConfirm');
+                function fecharCadastro() {
                     if (btnConfirm) btnConfirm.dataset.id = '';
                     if (modal) modal.classList.remove('show');
                 }
-                if (btnClose) btnClose.addEventListener('click', fecharBko);
-                if (btnCancel) btnCancel.addEventListener('click', fecharBko);
+                if (btnClose) btnClose.addEventListener('click', fecharCadastro);
+                if (btnCancel) btnCancel.addEventListener('click', fecharCadastro);
                 if (btnConfirm) btnConfirm.addEventListener('click', async () => {
                     const id = Number(btnConfirm.dataset.id || 0);
-                    if (!id) { fecharBko(); return; }
+                    if (!id) { fecharCadastro(); return; }
                     try {
-                        await api('/negotiations/' + id, { method: 'PUT', body: JSON.stringify({ status: 'Concluída', cadastro: 1 }) });
-                        fecharBko();
-                        toast('Enviado ao BKO.', 'success');
+                        await api('/negotiations/' + id, { method: 'PUT', body: JSON.stringify({ cadastro: 1 }) });
+                        fecharCadastro();
+                        toast('Enviado para Cadastro.', 'success');
                         buscar();
                     } catch {
-                        toast('Falha ao enviar ao BKO', 'error');
-                        fecharBko();
+                        toast('Falha ao enviar para Cadastro', 'error');
+                        fecharCadastro();
                     }
                 });
             }
@@ -1047,16 +1048,16 @@
             </div>
         </div>
     </div>
-    <div id="confirmBkoModal" class="modal">
+    <div id="confirmCadastroModal" class="modal">
         <div class="modal-card">
-            <div class="modal-head"><div>Enviar BKO</div><button id="confirmBkoClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-head"><div>Enviar para Cadastro</div><button id="confirmCadastroClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
             <div class="modal-body">
-                <div class="label">Confirmar envio ao BKO e concluir a negociação?</div>
-                <div id="confirmBkoText" class="muted" style="margin-top:0.5rem;"></div>
+                <div class="label">Confirmar envio para a tela de cadastro?</div>
+                <div id="confirmCadastroText" class="muted" style="margin-top:0.5rem;"></div>
             </div>
             <div class="modal-actions">
-                <button id="confirmBkoCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
-                <button id="confirmBkoConfirm" class="btn btn-primary" type="button"><i data-lucide="check"></i><span>Confirmar</span></button>
+                <button id="confirmCadastroCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
+                <button id="confirmCadastroConfirm" class="btn btn-primary" type="button"><i data-lucide="check"></i><span>Confirmar</span></button>
             </div>
         </div>
     </div>
