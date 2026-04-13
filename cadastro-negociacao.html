@@ -919,7 +919,7 @@
                     const id = Number(btnConfirm.dataset.id || 0);
                     if (!id) { fecharBko(); return; }
                     try {
-                        await api('/negotiations/' + id, { method: 'PUT', body: JSON.stringify({ status: 'Concluída' }) });
+                        await api('/negotiations/' + id, { method: 'PUT', body: JSON.stringify({ status: 'Concluída', funil_stage: 4 }) });
                         fecharBko();
                         toast('Enviado ao BKO.', 'success');
                         buscar();

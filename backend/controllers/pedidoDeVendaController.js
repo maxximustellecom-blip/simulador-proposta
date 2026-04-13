@@ -143,7 +143,16 @@ export async function atualizarPedidoDeVenda(req, res) {
     if (!pedido) {
       return res.status(404).json({ error: 'Pedido não encontrado' });
     }
-    if (status !== undefined && status !== null) pedido.status = String(status);
+    if (status !== undefined && status !== null) {
+      pedido.status = String(status);
+      if (String(status) === '7-Contratos Ativos') {
+        const negotiation = await Negotiation.findByPk(pedido.negotiation_id);
+        if (negotiation) {
+          negotiation.funil_stage = 5; // Finalizado
+          await negotiation.save();
+        }
+      }
+    }
     if (num_p2b !== undefined) pedido.num_p2b = num_p2b || null;
     if (num_radar !== undefined) pedido.num_radar = num_radar || null;
     if (data_entrada !== undefined) pedido.data_entrada = data_entrada || null;

@@ -3604,8 +3604,28 @@
                         // const p = Number(l.valorParcela || 0); // Removido para bater com o totalGeral visual
                         return acc + (q * v);
                     }, 0);
-                    await api(`/negotiations/${__negociacaoId}`, { method: 'PUT', body: JSON.stringify({ valor: totalNeg }) }).catch(() => {});
-                    if (__negociacaoInfo) __negociacaoInfo.valor = totalNeg;
+
+                    const updateData = { valor: totalNeg };
+                    
+                    // Lógica de transição de estágio do funil
+                    if (__negociacaoInfo && Number(__negociacaoInfo.funil_stage || 1) === 1) {
+                        // Se estiver no estágio 1 (Prospecção)
+                        if (__linhas.length > 0 && totalNeg > 0) {
+                            // Se houver linhas e valor > 0, move para estágio 2 (Negociação)
+                            updateData.funil_stage = 2;
+                        }
+                    } else if (__negociacaoInfo && Number(__negociacaoInfo.funil_stage || 1) === 2) {
+                        // Se estiver no estágio 2 (Negociação) e a proposta for resetada (sem linhas ou valor 0)
+                        if (__linhas.length === 0 || totalNeg === 0) {
+                            updateData.funil_stage = 1;
+                        }
+                    }
+
+                    await api(`/negotiations/${__negociacaoId}`, { method: 'PUT', body: JSON.stringify(updateData) }).catch(() => {});
+                    if (__negociacaoInfo) {
+                        __negociacaoInfo.valor = totalNeg;
+                        if (updateData.funil_stage) __negociacaoInfo.funil_stage = updateData.funil_stage;
+                    }
 
                     toast('Proposta salva', 'success');
                     if (shouldReload) {

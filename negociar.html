@@ -910,7 +910,7 @@
                     const id = Number(btnConfirm.dataset.id || 0);
                     if (!id) { fecharCadastro(); return; }
                     try {
-                        await api('/negotiations/' + id, { method: 'PUT', body: JSON.stringify({ cadastro: 1 }) });
+                        await api('/negotiations/' + id, { method: 'PUT', body: JSON.stringify({ cadastro: 1, funil_stage: 3 }) });
                         fecharCadastro();
                         toast('Enviado para Cadastro.', 'success');
                         buscar();
