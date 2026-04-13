@@ -323,10 +323,10 @@
                                     <th class="th-group-reneg" style="opacity: 0.8">R$</th>
                                     <th class="th-group-reneg" style="opacity: 0.8">QTD</th>
                                     <th class="th-group-reneg" style="opacity: 0.8">R$</th>
-                                    <th class="th-group-fibra" style="opacity: 0.8">QTD</th>
-                                    <th class="th-group-fibra" style="opacity: 0.8">R$</th>
-                                    <th class="th-group-tim" style="opacity: 0.8">QTD</th>
-                                    <th class="th-group-tim" style="opacity: 0.8; text-align: left;">R$</th>
+                                    <th class="th-group-fibra" style="opacity: 0.8">ENT</th>
+                                    <th class="th-group-fibra" style="opacity: 0.8">AT</th>
+                                    <th class="th-group-tim" style="opacity: 0.8">ENT</th>
+                                    <th class="th-group-tim" style="opacity: 0.8; text-align: left;">AT</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody-consultores">
@@ -387,58 +387,89 @@
             return res.json();
         }
 
-        async function loadConsultants() {
+        async function loadQuadroData() {
             const tbody = document.getElementById('tbody-consultores');
             tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding: 1rem;">Carregando...</td></tr>';
             
             try {
-                const users = await api('/auth/users', { method: 'GET' });
-                // Filter only role 'user'
-                const consultants = Array.isArray(users) ? users.filter(u => u.role === 'user') : [];
+                // targetMonth is 1-indexed in backend
+                const data = await api(`/sales/quadro?month=${currentMonth + 1}&year=${currentYear}&week=${currentWeek}`, { method: 'GET' });
                 
                 tbody.innerHTML = '';
                 
-                if (consultants.length === 0) {
-                     tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding: 1rem;">Nenhum consultor encontrado.</td></tr>';
+                if (!data || data.length === 0) {
+                     tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding: 1rem;">Nenhum dado encontrado para este período.</td></tr>';
                      calcularTotais();
                      return;
                 }
 
-                consultants.forEach(user => {
+                data.forEach(user => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td class="consultor-col">${user.name || 'Sem Nome'}</td>
-                        <td><span class="qv-input">0</span></td>
-                        <td><span class="qv-input">0</span></td>
-                        <td><span class="qv-input">0</span></td>
-                        <td><span class="qv-input">0</span></td>
-                        <td><span class="qv-input">0</span></td>
-                        <td><span class="qv-input">0</span></td>
-                        <td><span class="qv-input">0</span></td>
-                        <td><span class="qv-input">0</span></td>
-                        <td><span class="qv-input">0</span></td>
-                        <td><span class="qv-input">0</span></td>
-                        <td><span class="qv-input">0</span></td>
-                        <td><span class="qv-input">0</span></td>
+                        <td><span class="qv-input">${user.novo.ent.qtd}</span></td>
+                        <td><span class="qv-input">${user.novo.ent.rec.toFixed(2)}</span></td>
+                        <td><span class="qv-input">${user.novo.at.qtd}</span></td>
+                        <td><span class="qv-input">${user.novo.at.rec.toFixed(2)}</span></td>
+                        <td><span class="qv-input">${user.reneg.ent.qtd}</span></td>
+                        <td><span class="qv-input">${user.reneg.ent.rec.toFixed(2)}</span></td>
+                        <td><span class="qv-input">${user.reneg.at.qtd}</span></td>
+                        <td><span class="qv-input">${user.reneg.at.rec.toFixed(2)}</span></td>
+                        <td><span class="qv-input">${user.fibra.ent.qtd}</span></td>
+                        <td><span class="qv-input">${user.fibra.at.qtd}</span></td>
+                        <td><span class="qv-input">${user.tim.ent.qtd}</span></td>
+                        <td><span class="qv-input">${user.tim.at.qtd}</span></td>
                     `;
                     tbody.appendChild(tr);
                 });
                 
-                // Recalculate totals (should be 0)
                 calcularTotais();
                 
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding: 1rem; color: var(--danger);">Erro ao carregar consultores.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding: 1rem; color: var(--danger);">Erro ao carregar dados do quadro.</td></tr>';
             }
         }
 
-        function toast(msg, type) {
-            const el = document.getElementById('toast');
-            el.textContent = msg;
-            el.style.borderColor = type === 'error' ? 'rgba(239,68,68,0.35)' : 'rgba(16,185,129,0.35)';
-            el.style.display = 'block';
-            setTimeout(() => { el.style.display = 'none'; }, 2500);
+        function calcularTotais() {
+            const rows = document.querySelectorAll('#tbody-consultores tr');
+            const totals = {
+                novoEntQtd: 0, novoEntRec: 0, novoAtQtd: 0, novoAtRec: 0,
+                renegEntQtd: 0, renegEntRec: 0, renegAtQtd: 0, renegAtRec: 0,
+                fibraEntQtd: 0, fibraAtQtd: 0,
+                timEntQtd: 0, timAtQtd: 0
+            };
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('.qv-input');
+                if (cells.length === 12) {
+                    totals.novoEntQtd += parseInt(cells[0].textContent) || 0;
+                    totals.novoEntRec += parseFloat(cells[1].textContent) || 0;
+                    totals.novoAtQtd += parseInt(cells[2].textContent) || 0;
+                    totals.novoAtRec += parseFloat(cells[3].textContent) || 0;
+                    totals.renegEntQtd += parseInt(cells[4].textContent) || 0;
+                    totals.renegEntRec += parseFloat(cells[5].textContent) || 0;
+                    totals.renegAtQtd += parseInt(cells[6].textContent) || 0;
+                    totals.renegAtRec += parseFloat(cells[7].textContent) || 0;
+                    totals.fibraEntQtd += parseInt(cells[8].textContent) || 0;
+                    totals.fibraAtQtd += parseInt(cells[9].textContent) || 0;
+                    totals.timEntQtd += parseInt(cells[10].textContent) || 0;
+                    totals.timAtQtd += parseInt(cells[11].textContent) || 0;
+                }
+            });
+
+            document.getElementById('total-novo-ent-qtd').textContent = totals.novoEntQtd;
+            document.getElementById('total-novo-ent-rec').textContent = totals.novoEntRec.toFixed(2);
+            document.getElementById('total-novo-at-qtd').textContent = totals.novoAtQtd;
+            document.getElementById('total-novo-at-rec').textContent = totals.novoAtRec.toFixed(2);
+            document.getElementById('total-reneg-ent-qtd').textContent = totals.renegEntQtd;
+            document.getElementById('total-reneg-ent-rec').textContent = totals.renegEntRec.toFixed(2);
+            document.getElementById('total-reneg-at-qtd').textContent = totals.renegAtQtd;
+            document.getElementById('total-reneg-at-rec').textContent = totals.renegAtRec.toFixed(2);
+            document.getElementById('total-fibra-ent-qtd').textContent = totals.fibraEntQtd;
+            document.getElementById('total-fibra-at-qtd').textContent = totals.fibraAtQtd;
+            document.getElementById('total-tim-ent-qtd').textContent = totals.timEntQtd;
+            document.getElementById('total-tim-at-qtd').textContent = totals.timAtQtd;
         }
 
         const monthNames = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
@@ -446,25 +477,16 @@
         let currentYear = new Date().getFullYear();
         let currentWeek = 1; // 0 = TODAS
 
-        function getWeeksInMonth(year, month) {
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const daysInMonth = lastDay.getDate();
-            const startWeekday = firstDay.getDay(); // 0=Sunday
-            // Calculate number of weeks the month spans
-            return Math.ceil((startWeekday + daysInMonth) / 7);
-        }
-
         function updateMonthDisplay() {
             const name = monthNames[currentMonth];
             document.getElementById('monthLabel').textContent = `${name} ${currentYear}`;
             
-            // Re-validate current week for the new month
             const maxWeeks = getWeeksInMonth(currentYear, currentMonth);
             if (currentWeek > maxWeeks && currentWeek !== 0) {
                 currentWeek = maxWeeks;
-                updateWeekDisplay();
             }
+            updateWeekDisplay();
+            loadQuadroData();
         }
 
         function updateWeekDisplay() {
@@ -474,7 +496,62 @@
             } else {
                 label.textContent = `${currentWeek}ª SEMANA`;
             }
+            loadQuadroData();
         }
+
+        function getWeeksInMonth(year, month) {
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startWeekday = firstDay.getDay();
+            return Math.ceil((startWeekday + daysInMonth) / 7);
+        }
+
+        document.getElementById('prevMonth').onclick = () => {
+            if (currentMonth === 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else {
+                currentMonth--;
+            }
+            updateMonthDisplay();
+        };
+
+        document.getElementById('nextMonth').onclick = () => {
+            if (currentMonth === 11) {
+                currentMonth = 0;
+                currentYear++;
+            } else {
+                currentMonth++;
+            }
+            updateMonthDisplay();
+        };
+
+        document.getElementById('prevWeek').onclick = () => {
+            const maxWeeks = getWeeksInMonth(currentYear, currentMonth);
+            if (currentWeek === 0) {
+                currentWeek = maxWeeks;
+            } else {
+                currentWeek--;
+            }
+            updateWeekDisplay();
+        };
+
+        document.getElementById('nextWeek').onclick = () => {
+            const maxWeeks = getWeeksInMonth(currentYear, currentMonth);
+            if (currentWeek >= maxWeeks) {
+                currentWeek = 0;
+            } else {
+                currentWeek++;
+            }
+            updateWeekDisplay();
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateMonthDisplay();
+            updateWeekDisplay();
+            if (window.lucide) lucide.createIcons();
+        });
 
         async function copiarImagemWhatsApp() {
             const captureTarget = document.querySelector('.card');

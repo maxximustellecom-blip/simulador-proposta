@@ -1,4 +1,155 @@
-import { Client, Simulation, Sale, Negotiation, User } from '../models/index.js';
+import { Client, Simulation, Sale, Negotiation, User, AccessProfile, NegociacaoProposta, NegociacaoPropostaCustomizada, PedidoDeVenda } from '../models/index.js';
+
+function parsePercentage(str) {
+  if (typeof str === 'number') return str;
+  if (!str) return 0;
+  return parseFloat(String(str).replace('%', '').replace(',', '.')) / 100;
+}
+
+function getWeekOfMonth(dateStr) {
+  // dateStr is DD/MM/YYYY
+  try {
+    const parts = dateStr.split('/');
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const year = parseInt(parts[2], 10);
+    const date = new Date(year, month, day);
+    const firstDay = new Date(year, month, 1);
+    const startWeekday = firstDay.getDay(); // 0=Sunday
+    return Math.ceil((day + startWeekday) / 7);
+  } catch { return 0; }
+}
+
+function mapProductToGroup(tipo) {
+  const t = String(tipo || '').toLowerCase();
+  if (t.includes('novo') || t.includes('aditivo')) return 'novo';
+  if (t.includes('renovação') || t.includes('migracao pf-pj') || t.includes('tt')) return 'reneg';
+  if (t.includes('ultra fibra') || t.includes('wttx') || t.includes('m2m')) return 'fibra';
+  if (t.includes('controle pf')) return 'tim';
+  return 'novo'; // Default
+}
+
+function mapProductToCommissionKey(tipo) {
+  const t = String(tipo || '').toLowerCase();
+  if (t.includes('novo')) return 'novo';
+  if (t.includes('aditivo')) return 'aditivo';
+  if (t.includes('portabilidade')) return 'portabilidade';
+  if (t.includes('renovação')) return 'renovacao';
+  if (t.includes('ultra fibra')) return 'ultra_fibra';
+  if (t.includes('wttx')) return 'wttx';
+  if (t.includes('m2m')) return 'm2m';
+  if (t.includes('controle pf')) return 'controle';
+  if (t.includes('migracao pf-pj')) return 'migracao';
+  if (t.includes('tt')) return 'tt';
+  return 'novo';
+}
+
+export async function getQuadroVendas(req, res) {
+  try {
+    const { month, year, week } = req.query;
+    const targetMonth = parseInt(month);
+    const targetYear = parseInt(year);
+    const targetWeek = parseInt(week || 0);
+
+    const users = await User.findAll({
+      where: { role: 'user' },
+      include: [{ model: AccessProfile, as: 'profile' }]
+    });
+
+    const negotiations = await Negotiation.findAll({
+      include: [
+        { model: PedidoDeVenda, as: 'pedidoDeVenda' },
+        { model: NegociacaoProposta, as: 'proposal' },
+        { model: NegociacaoPropostaCustomizada, as: 'customProposal' }
+      ]
+    });
+
+    // Filter by month/year
+    const filteredNegs = negotiations.filter(n => {
+      const parts = String(n.data || '').split('/');
+      if (parts.length !== 3) return false;
+      const m = parseInt(parts[1]);
+      const y = parseInt(parts[2]);
+      if (m !== targetMonth || y !== targetYear) return false;
+      if (targetWeek !== 0) {
+        const w = getWeekOfMonth(n.data);
+        if (w !== targetWeek) return false;
+      }
+      return true;
+    });
+
+    const result = users.map(user => {
+      const userNegs = filteredNegs.filter(n => Number(n.created_by) === Number(user.id));
+      
+      // Calculate level based on ATIVAS (Novo + Aditivo) in the period
+      const ativasNovosRec = userNegs.reduce((acc, n) => {
+        if (n.pedidoDeVenda && n.pedidoDeVenda.status === '7-Contratos Ativos') {
+          const group = mapProductToGroup(n.tipo);
+          if (group === 'novo') return acc + Number(n.valor || 0);
+        }
+        return acc;
+      }, 0);
+
+      const level = calcularNivel(ativasNovosRec);
+      const config = user.profile && user.profile.commission_config ? (typeof user.profile.commission_config === 'string' ? JSON.parse(user.profile.commission_config) : user.profile.commission_config) : null;
+      
+      const stats = {
+        name: user.name,
+        novo: { ent: { qtd: 0, rec: 0 }, at: { qtd: 0, rec: 0 } },
+        reneg: { ent: { qtd: 0, rec: 0 }, at: { qtd: 0, rec: 0 } },
+        fibra: { ent: { qtd: 0, rec: 0 }, at: { qtd: 0, rec: 0 } },
+        tim: { ent: { qtd: 0, rec: 0 }, at: { qtd: 0, rec: 0 } }
+      };
+
+      userNegs.forEach(n => {
+        const group = mapProductToGroup(n.tipo);
+        const isAtiva = n.pedidoDeVenda && n.pedidoDeVenda.status === '7-Contratos Ativos';
+        const isEntrante = n.status === 'Em andamento' && !isAtiva;
+        
+        if (!isAtiva && !isEntrante) return;
+
+        // Process proposal items to calculate commission
+        let totalCommission = 0;
+        let qtd = 0;
+        
+        const lines = n.proposal ? n.proposal.linhas : (n.customProposal ? n.customProposal.linhas : []);
+        const linesArr = Array.isArray(lines) ? lines : [];
+
+        linesArr.forEach(l => {
+          const q = Number(l.quantidade || 1);
+          qtd += q;
+          const itemVal = Number(l.valorPlano || 0) * q;
+          
+          // Determine rate from profile config
+          let rate = 0;
+          if (config && config.products) {
+            const levelConfig = config.products.find(p => p.level_group === level.nome);
+            if (levelConfig) {
+              const key = mapProductToCommissionKey(l.tipo || n.tipo);
+              rate = parsePercentage(levelConfig[key]);
+            }
+          } else {
+            // Fallback to default rates if no profile config
+            const fallbackRate = (calcularComissaoProduto(ativasNovosRec, mapProductToCommissionKey(l.tipo || n.tipo), 100) / 100);
+            rate = fallbackRate;
+          }
+          totalCommission += itemVal * rate;
+        });
+
+        const target = isAtiva ? stats[group].at : stats[group].ent;
+        target.qtd += qtd;
+        target.rec += totalCommission;
+      });
+
+      return stats;
+    });
+
+    return res.json(result);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'erro ao gerar quadro de vendas', details: String(err.message) });
+  }
+}
 
 function calcularNivel(receitaTotal) {
   if (receitaTotal < 700) return { nome: 'BLUE', fator: 0.6 };
