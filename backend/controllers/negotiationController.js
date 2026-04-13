@@ -31,7 +31,7 @@ function dedupeById(list) {
 
 export async function listNegotiations(req, res) {
   try {
-    const { cnpj, status, data, creator_id, razao, tipo_proposta } = req.query || {};
+    const { cnpj, status, data, creator_id, razao, tipo_proposta, cadastro } = req.query || {};
     let list = await Negotiation.findAll({
       include: [
         { 
@@ -93,6 +93,10 @@ export async function listNegotiations(req, res) {
       const br = String(data).split('-').reverse().join('/');
       list = list.filter(n => String(n.data || '').includes(br));
     }
+    if (cadastro !== undefined) {
+      const c = Number(cadastro);
+      list = list.filter(n => Number(n.cadastro || 0) === c);
+    }
     return res.json(list.map(n => {
       const totalAcessos = n.customProposal ? n.customProposal.total_acessos : (n.proposal ? n.proposal.total_acessos : 0);
       return {
@@ -102,6 +106,7 @@ export async function listNegotiations(req, res) {
         proposta: n.proposta,
         valor: n.valor !== null && n.valor !== undefined ? Number(n.valor) : null,
         status: n.status,
+        cadastro: Number(n.cadastro || 0),
         funil_stage: Number(n.funil_stage || 1),
         fatura_due_date: n.fatura_due_date || null,
         data: n.data,
@@ -143,6 +148,7 @@ export async function listFunnelNegotiations(req, res) {
         proposta: n.proposta,
         valor: n.valor !== null && n.valor !== undefined ? Number(n.valor) : null,
         status: n.status,
+        cadastro: Number(n.cadastro || 0),
         fatura_due_date: n.fatura_due_date || null,
         data: n.data,
         created_at: n.created_at,
@@ -169,7 +175,7 @@ export async function createNegotiation(req, res) {
     if (!req.user || !req.user.id) {
       return res.status(401).json({ error: 'unauthorized: usuário não autenticado' });
     }
-    const { cnpj, tipo, proposta, valor, status, data, fatura_due_date } = req.body || {};
+    const { cnpj, tipo, proposta, valor, status, data, fatura_due_date, cadastro } = req.body || {};
     const cleanCnpj = onlyDigits(cnpj);
     if (!cleanCnpj || !tipo || !proposta) {
       return res.status(400).json({ error: 'cnpj, tipo e proposta são obrigatórios' });
@@ -187,6 +193,7 @@ export async function createNegotiation(req, res) {
       proposta,
       valor: valor !== undefined ? Number(valor || 0) : null,
       status: status || 'Em andamento',
+      cadastro: cadastro !== undefined ? Number(cadastro) : 0,
       funil_stage: 1,
       fatura_due_date: fatura_due_date ? (String(fatura_due_date).includes('-') ? String(fatura_due_date).split('-').reverse().join('/') : String(fatura_due_date)) : null,
       data: data ? String(data).split('-').reverse().join('/') : new Date().toLocaleDateString('pt-BR'),
@@ -205,6 +212,7 @@ export async function createNegotiation(req, res) {
       proposta: negotiation.proposta,
       valor: negotiation.valor !== null && negotiation.valor !== undefined ? Number(negotiation.valor) : null,
       status: negotiation.status,
+      cadastro: Number(negotiation.cadastro || 0),
       fatura_due_date: negotiation.fatura_due_date || null,
       data: negotiation.data
     });
@@ -223,12 +231,13 @@ export async function updateNegotiation(req, res) {
     if (!actor || (actor.role !== 'admin' && Number(negotiation.created_by || 0) !== Number(actor.id))) {
       return res.status(403).json({ error: 'forbidden' });
     }
-    const { cnpj, tipo, proposta, valor, status, data, funil_stage, fatura_due_date } = req.body || {};
+    const { cnpj, tipo, proposta, valor, status, data, funil_stage, fatura_due_date, cadastro } = req.body || {};
     if (cnpj !== undefined) negotiation.cnpj = onlyDigits(cnpj);
     if (tipo) negotiation.tipo = tipo;
     if (proposta) negotiation.proposta = proposta;
     if (valor !== undefined) negotiation.valor = Number(valor || 0);
     if (status) negotiation.status = status;
+    if (cadastro !== undefined) negotiation.cadastro = Number(cadastro);
     if (fatura_due_date !== undefined) {
       const v = String(fatura_due_date || '').trim();
       negotiation.fatura_due_date = v ? (v.includes('-') ? v.split('-').reverse().join('/') : v) : null;
@@ -273,6 +282,7 @@ export async function updateNegotiation(req, res) {
       proposta: negotiation.proposta,
       valor: negotiation.valor !== null && negotiation.valor !== undefined ? Number(negotiation.valor) : null,
       status: negotiation.status,
+      cadastro: Number(negotiation.cadastro || 0),
       fatura_due_date: negotiation.fatura_due_date || null,
       data: negotiation.data
     });

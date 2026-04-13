@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Propostas • Maxximus Telecom</title>
+    <title>Cadastro de Propostas • Maxximus Telecom</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -79,8 +79,8 @@
         <div class="card">
             <div class="card-head">
                 <div class="card-title">
-                    <span>Propostas</span>&nbsp;
-                    <span class="chip">Painel de propostas</span>
+                    <span>Cadastro</span>&nbsp;
+                    <span class="chip">Painel de cadastro</span>
                 </div>
                 <div class="muted">
                     <button id="novaNegociacaoBtn" class="btn btn-primary" type="button"><i data-lucide="plus"></i><span>Nova proposta</span></button>
@@ -123,7 +123,7 @@
                 </section>
                 <section class="section" style="margin-top:1rem;">
                     <div style="display:flex; align-items:center; justify-content:space-between;">
-                        <div class="label">Lista de negociações</div>
+                        <div class="label">Lista de propostas para cadastro</div>
                         <div class="muted" id="countLabel">0 itens</div>
                     </div>
                     <div class="table-container">
@@ -323,8 +323,8 @@
                                 <button type="button" class="action-item" onclick="configurarNegociacao(${n.id})">
                                     <i data-lucide="edit-3"></i> Editar
                                 </button>
-                                <button type="button" class="action-item" onclick="enviarBko(${n.id})" ${isDisabled}>
-                                    <i data-lucide="send"></i> Cadastro
+                                <button type="button" class="action-item" onclick="removerBko(${n.id})" ${isDisabled}>
+                                    <i data-lucide="rotate-ccw"></i> Remover Cadastro
                                 </button>
                                 <button style="display:none;" type="button" class="action-item" onclick="editarNegociacao(${n.id})" ${isDisabled}>
                                     <i data-lucide="edit-3"></i> Editar
@@ -477,6 +477,7 @@
                 const vendedor = document.getElementById('fVendedor') ? document.getElementById('fVendedor').value : '';
                 const tipoProposta = document.getElementById('fTipoProposta') ? document.getElementById('fTipoProposta').value : '';
                 const params = [];
+                params.push('cadastro=1'); // Sempre filtrar por cadastro=1 nesta tela
                 if (cnpj) params.push('cnpj=' + encodeURIComponent(cnpj));
                 if (data) params.push('data=' + encodeURIComponent(data));
                 if (razao) params.push('razao=' + encodeURIComponent(razao));
@@ -490,6 +491,16 @@
                 renderNegociacoesTable([]);
             }
         }
+        window.removerBko = async function(id) {
+            if (!confirm('Deseja remover esta proposta do cadastro e retornar para negociação?')) return;
+            try {
+                await api('/negotiations/' + id, { method: 'PUT', body: JSON.stringify({ cadastro: 0, status: 'Em andamento' }) });
+                toast('Proposta retornada para negociação', 'success');
+                buscar();
+            } catch (e) {
+                toast('Erro ao remover do cadastro: ' + e.message, 'error');
+            }
+        };
         window.editarNegociacao = function(id) {
             const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
             if (__userRole !== 'admin' && String(n?.status || '') === 'Concluída') return;
@@ -566,19 +577,6 @@
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             } catch {}
         };
-        window.enviarBko = function(id) {
-            try {
-                const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
-                const txt = (n ? ((n.tipo || '-') + ' • ' + (n.proposta || '-') + ' • ' + formatCnpj(n.cnpj || '')) : ('ID ' + String(id)));
-                const t = document.getElementById('confirmBkoText');
-                if (t) t.textContent = txt;
-                const btn = document.getElementById('confirmBkoConfirm');
-                if (btn) btn.dataset.id = String(id);
-                const m = document.getElementById('confirmBkoModal');
-                if (m) m.classList.add('show');
-                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-            } catch {}
-        };
         async function salvarNegociacao() {
             try {
                 const cnpj = onlyDigits(document.getElementById('mCliente').value || '');
@@ -587,7 +585,7 @@
                 const status = document.getElementById('mStatus').value;
                 if (!cnpj || !tipo || !proposta) return;
                 const faturaVenc = normalizeDateBr(document.getElementById('mFaturaVenc') ? document.getElementById('mFaturaVenc').value : '');
-                const payload = { cnpj, tipo, proposta, status, fatura_due_date: faturaVenc || null };
+                const payload = { cnpj, tipo, proposta, status, fatura_due_date: faturaVenc || null, cadastro: 1 };
                 
                 // Add creator_id if available (admin feature)
                 const mCriadoPor = document.getElementById('mCriadoPor');
@@ -663,14 +661,7 @@
                     if (divFilter) divFilter.style.display = 'block';
                 }
                 
-                // Populate modal select (this one might need admins too? usually creator is user, but admin can create on behalf)
-                // Let's keep all users for modal creation if admin wants to assign to another admin?
-                // The requirement said "no filtro Vendedor listar somente usuarios e nao admins"
-                // So the filter definitely needs to be filtered.
-                
                 if (select) {
-                     // For the modal "Criado Por", maybe we want all users including admins? 
-                     // Or just sellers? Let's stick to the same list for consistency unless specified otherwise.
                      select.innerHTML = '<option value="">Selecione...</option>' + usersOnly.map(user => `<option value="${user.id}">${user.name}</option>`).join('');
                 }
 
@@ -696,7 +687,6 @@
                     const c = (__clients || []).find(x => Number(x.id) === idNum);
                     if (c) {
                         setClienteSelected(c.cnpj || '');
-                        // document.getElementById('mTipo').value = '1º VENDA'; // Let it be default
                         document.getElementById('mProposta').value = 'PROPOSTA PADRÃO';
                         document.getElementById('mStatus').value = 'Em andamento';
                         openModal();
@@ -714,7 +704,6 @@
             document.getElementById('novaNegociacaoBtn').addEventListener('click', () => {
                 __editingNegId = null;
                 setClienteSelected('');
-                // Default mTipo is handled by browser/load (first option) unless we force reset to first option explicitly
                 const mTipo = document.getElementById('mTipo');
                 if (mTipo && mTipo.options.length > 0) mTipo.selectedIndex = 0;
                 
@@ -722,7 +711,6 @@
                 const vencEl = document.getElementById('mFaturaVenc');
                 if (vencEl) vencEl.value = '';
                 
-                // Set default creator to current user
                 try {
                     const auth = localStorage.getItem('authUser');
                     const u = JSON.parse(auth || '{}');
@@ -788,12 +776,12 @@
                 const body = {
                     razaoSocial: c ? c.name : 'Cliente',
                     cnpj: cnpjFinal,
-                    tipo: tipo || '1º VENDA', // Fallback
+                    tipo: tipo || '1º VENDA',
                     proposta: proposta,
                     status: status,
-                    cadastro: 0,
+                    cadastro: 1, // Nesta tela, salvar sempre com cadastro=1
                     fatura_due_date: faturaVenc || null,
-                    creator_id: criadoPor || undefined // If admin wants to set creator
+                    creator_id: criadoPor || undefined
                 };
                 
                 try {
@@ -894,40 +882,10 @@
                     }
                 });
             }
-            {
-                const modal = document.getElementById('confirmBkoModal');
-                const btnClose = document.getElementById('confirmBkoClose');
-                const btnCancel = document.getElementById('confirmBkoCancel');
-                const btnConfirm = document.getElementById('confirmBkoConfirm');
-                function fecharBko() {
-                    if (btnConfirm) btnConfirm.dataset.id = '';
-                    if (modal) modal.classList.remove('show');
-                }
-                if (btnClose) btnClose.addEventListener('click', fecharBko);
-                if (btnCancel) btnCancel.addEventListener('click', fecharBko);
-                if (btnConfirm) btnConfirm.addEventListener('click', async () => {
-                    const id = Number(btnConfirm.dataset.id || 0);
-                    if (!id) { fecharBko(); return; }
-                    try {
-                        await api('/negotiations/' + id, { method: 'PUT', body: JSON.stringify({ status: 'Concluída', cadastro: 1 }) });
-                        fecharBko();
-                        toast('Enviado ao BKO.', 'success');
-                        buscar();
-                    } catch {
-                        toast('Falha ao enviar ao BKO', 'error');
-                        fecharBko();
-                    }
-                });
-            }
             const mSearch = document.getElementById('mClienteSearch');
             const mDropdown = document.getElementById('mClienteDropdown');
             const mWrap = document.getElementById('mClienteWrap');
             function updateDropdownPos() {
-                // Fixed position not needed if we rely on CSS relative positioning within modal
-                // But if we want it to float over everything, fixed is okay.
-                // However, user reports it "not appearing".
-                // Let's stick to standard absolute positioning relative to parent wrapper
-                // and ensure z-index is high enough.
                 if (!mDropdown || !mWrap) return;
                 mDropdown.style.width = '100%';
                 mDropdown.style.top = '100%';
@@ -951,7 +909,6 @@
                     }
                 });
             }
-            // Removed complex scroll/resize handlers that might be miscalculating position
             document.addEventListener('click', (e) => {
                 const wrap = document.getElementById('mClienteWrap');
                 if (!wrap) return;
@@ -1044,19 +1001,6 @@
             <div class="modal-actions">
                 <button id="confirmNegociacaoCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
                 <button id="confirmNegociacaoConfirm" class="btn btn-ghost" type="button" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;"><i data-lucide="trash-2"></i><span>Excluir</span></button>
-            </div>
-        </div>
-    </div>
-    <div id="confirmBkoModal" class="modal">
-        <div class="modal-card">
-            <div class="modal-head"><div>Enviar BKO</div><button id="confirmBkoClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
-            <div class="modal-body">
-                <div class="label">Confirmar envio ao BKO e concluir a negociação?</div>
-                <div id="confirmBkoText" class="muted" style="margin-top:0.5rem;"></div>
-            </div>
-            <div class="modal-actions">
-                <button id="confirmBkoCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
-                <button id="confirmBkoConfirm" class="btn btn-primary" type="button"><i data-lucide="check"></i><span>Confirmar</span></button>
             </div>
         </div>
     </div>
