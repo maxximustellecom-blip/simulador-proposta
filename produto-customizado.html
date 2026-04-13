@@ -37,6 +37,10 @@
                             <div class="label">Nome</div>
                             <input id="fProdNome" class="input" type="text" placeholder="Nome da oferta" autocomplete="off">
                         </div>
+                        <div>
+                            <div class="label">Região</div>
+                            <select id="fProdRegiao" class="select"><option value="">Todas</option></select>
+                        </div>
                         <div style="display:flex; align-items:flex-end; gap:0.5rem; margin-left:auto; justify-content:flex-end;">
                             <button id="prodBuscarBtn" class="btn btn-primary" type="button" title="Buscar"><i data-lucide="search"></i><span>Buscar</span></button>
                             <button id="prodLimparBtn" class="btn btn-ghost" type="button" title="Limpar"><i data-lucide="rotate-ccw"></i><span>Limpar</span></button>
@@ -234,10 +238,12 @@
             const cid = Number(document.getElementById('fProdCategoria').value || 0);
             const tipo = String(document.getElementById('fProdTipo').value || '');
             const nome = String(document.getElementById('fProdNome').value || '').trim().toUpperCase();
+            const regiao = String(document.getElementById('fProdRegiao').value || '');
             let arr = (__produtos || []).slice();
             if (cid) arr = arr.filter(p => Number(p.categoria_id) === cid);
             if (tipo) arr = arr.filter(p => String(p.category && p.category.tipo ? p.category.tipo : '').toLowerCase() === String(tipo).toLowerCase());
             if (nome) arr = arr.filter(p => String(p.nome || p.name || '').toUpperCase().includes(nome));
+            if (regiao) arr = arr.filter(p => String(p.regiao || '') === regiao);
             renderProdutosTable(arr);
         }
         function renderProdutosTable(list) {
@@ -458,7 +464,7 @@
             const buscarBtn = document.getElementById('prodBuscarBtn');
             const limparBtn = document.getElementById('prodLimparBtn');
             if (buscarBtn) buscarBtn.addEventListener('click', aplicarFiltroProdutos);
-            ['fProdCategoria','fProdNome','fProdTipo'].forEach(id => {
+            ['fProdCategoria','fProdNome','fProdTipo','fProdRegiao'].forEach(id => {
                 const el = document.getElementById(id);
                 if (!el) return;
                 el.addEventListener('keydown', (e) => {
@@ -471,6 +477,7 @@
             if (limparBtn) limparBtn.addEventListener('click', () => {
                 document.getElementById('fProdCategoria').value = '';
                 document.getElementById('fProdNome').value = '';
+                document.getElementById('fProdRegiao').value = '';
                 aplicarFiltroProdutos();
             });
             const mSalvar = document.getElementById('mProdSalvar');
@@ -568,12 +575,14 @@
         window.fecharConfirmDupProduto = fecharConfirmDupProduto;
         async function carregarRegioes() {
             const sel = document.getElementById('regiao');
-            if (!sel) return;
+            const fsel = document.getElementById('fProdRegiao');
+            if (!sel && !fsel) return;
             try {
                 const list = await api('/regioes', { method: 'GET' }).catch(() => []);
                 const regioes = Array.isArray(list) ? list : [];
                 
                 let html = '<option value="">Selecione</option>';
+                let fhtml = '<option value="">Todas</option>';
                 
                 regioes.forEach(r => {
                     let items = r.items;
@@ -584,17 +593,19 @@
                     
                     const values = items.map(i => i.v).join(',');
                     html += `<option value="${values}">${r.nome}</option>`;
+                    fhtml += `<option value="${values}">${r.nome}</option>`;
                     
                     // Populate map for table display
-                    // PREFER the FIRST occurrence of a value to match the select default behavior
                     if (values && !__regioesMap[values]) {
                         __regioesMap[values] = r.nome;
                     }
                 });
                 
-                sel.innerHTML = html;
+                if (sel) sel.innerHTML = html;
+                if (fsel) fsel.innerHTML = fhtml;
             } catch {
-                sel.innerHTML = '<option value="">Erro ao carregar</option>';
+                if (sel) sel.innerHTML = '<option value="">Erro ao carregar</option>';
+                if (fsel) fsel.innerHTML = '<option value="">Erro ao carregar</option>';
             }
         }
     </script>

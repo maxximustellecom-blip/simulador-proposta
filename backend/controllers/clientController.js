@@ -163,7 +163,7 @@ export async function updateClient(req, res) {
 
 export async function getClients(req, res) {
   try {
-    const { cnpj, user_id } = req.query || {};
+    const { cnpj, user_id, email, phone, name, razao } = req.query || {};
     const and = [{ cnpj: { [Op.ne]: '00000000000000' } }];
     if (cnpj) {
       const clean = String(cnpj).replace(/\D/g, '');
@@ -174,6 +174,44 @@ export async function getClients(req, res) {
           and.push({ cnpj: { [Op.like]: `%${clean}%` } });
         }
       }
+    }
+    if (razao) {
+      and.push({
+        [Op.or]: [
+          { name: { [Op.like]: `%${razao}%` } },
+          { fantasy_name: { [Op.like]: `%${razao}%` } }
+        ]
+      });
+    }
+    if (name) {
+      and.push({
+        [Op.or]: [
+          { gestor_nome: { [Op.like]: `%${name}%` } },
+          { rep_nome: { [Op.like]: `%${name}%` } },
+          { auth1_nome: { [Op.like]: `%${name}%` } },
+          { fantasy_name: { [Op.like]: `%${name}%` } }
+        ]
+      });
+    }
+    if (email) {
+      and.push({
+        [Op.or]: [
+          { email: { [Op.like]: `%${email}%` } },
+          { gestor_email: { [Op.like]: `%${email}%` } },
+          { rep_email: { [Op.like]: `%${email}%` } }
+        ]
+      });
+    }
+    if (phone) {
+      const cleanPhone = String(phone).replace(/\D/g, '');
+      and.push({
+        [Op.or]: [
+          { phone: { [Op.like]: `%${cleanPhone}%` } },
+          { gestor_tel1: { [Op.like]: `%${cleanPhone}%` } },
+          { rep_tel1: { [Op.like]: `%${cleanPhone}%` } },
+          { auth1_contato: { [Op.like]: `%${cleanPhone}%` } }
+        ]
+      });
     }
     const actor = req.user || null;
     if (!actor || actor.role !== 'admin') {

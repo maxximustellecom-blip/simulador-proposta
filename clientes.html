@@ -107,7 +107,7 @@
                     <div id="filtersClientes" style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;">
                         <div style="flex: 1; min-width: 200px;">
                             <div class="label">Razão Social</div>
-                            <input id="fNome" class="input" type="text" placeholder="Razão social" autocomplete="off">
+                            <input id="fRazao" class="input" type="text" placeholder="Razão social" autocomplete="off">
                         </div>
                         <div style="flex: 1; min-width: 200px;">
                             <div class="label">CNPJ</div>
@@ -118,6 +118,10 @@
                             <select id="fUser" class="input">
                                 <option value="">Todos</option>
                             </select>
+                        </div>
+                        <div style="flex: 1; min-width: 200px;">
+                            <div class="label">Nome</div>
+                            <input id="fNome" class="input" type="text" placeholder="Nome do contato" autocomplete="off">
                         </div>
                         <div style="flex: 1; min-width: 200px;">
                             <div class="label">Email</div>
@@ -483,32 +487,26 @@
         }
         async function buscar() {
             try {
+                const razao = String(document.getElementById('fRazao').value || '').trim();
                 const nome = String(document.getElementById('fNome').value || '').trim();
                 const cnpj = String(document.getElementById('fCnpj').value || '').trim();
                 const userId = document.getElementById('fUser') ? document.getElementById('fUser').value : '';
+                const email = String(document.getElementById('fEmail').value || '').trim();
+                const phone = String(document.getElementById('fPhone').value || '').trim();
                 
                 let qsParts = [];
+                if (razao) qsParts.push('razao=' + encodeURIComponent(razao));
+                if (nome) qsParts.push('name=' + encodeURIComponent(nome));
                 if (cnpj) qsParts.push('cnpj=' + encodeURIComponent(cnpj));
                 if (userId) qsParts.push('user_id=' + encodeURIComponent(userId));
+                if (email) qsParts.push('email=' + encodeURIComponent(email));
+                if (phone) qsParts.push('phone=' + encodeURIComponent(onlyDigits(phone)));
                 
                 const qs = qsParts.length > 0 ? ('?' + qsParts.join('&')) : '';
 
                 const list = await api('/clients' + qs, { method: 'GET' });
                 let arr = Array.isArray(list) ? list : [];
-                if (nome) {
-                    const needle = nome.toUpperCase();
-                    arr = arr.filter(c => String(c.name || '').toUpperCase().includes(needle));
-                }
-                const email = String(document.getElementById('fEmail').value || '').trim();
-                if (email) {
-                    const en = email.toUpperCase();
-                    arr = arr.filter(c => String(c.email || '').toUpperCase().includes(en));
-                }
-                const phone = String(document.getElementById('fPhone').value || '').trim();
-                if (phone) {
-                    const nd = String(phone).replace(/\D/g, '');
-                    arr = arr.filter(c => String(c.phone || '').replace(/\D/g, '').includes(nd));
-                }
+                
                 const de = document.getElementById('fCadDe').value;
                 const ate = document.getElementById('fCadAte').value;
                 if (de || ate) {
@@ -1135,7 +1133,7 @@
                 }
             }
             document.getElementById('buscarBtn').addEventListener('click', buscar);
-            ['fNome','fCnpj','fUser','fEmail','fPhone','fCadDe','fCadAte'].forEach(id => {
+            ['fRazao','fNome','fCnpj','fUser','fEmail','fPhone','fCadDe','fCadAte'].forEach(id => {
                 const el = document.getElementById(id);
                 if (!el) return;
                 el.addEventListener('keydown', (e) => {
@@ -1146,6 +1144,7 @@
                 });
             });
             document.getElementById('limparBtn').addEventListener('click', () => {
+                document.getElementById('fRazao').value = '';
                 document.getElementById('fNome').value = '';
                 document.getElementById('fCnpj').value = '';
                 const fEmailEl = document.getElementById('fEmail');
