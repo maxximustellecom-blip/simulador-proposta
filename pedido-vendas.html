@@ -99,7 +99,7 @@
         }
 
         tr { transition: background-color 0.2s; }
-        tr:hover { filter: brightness(0.98); }
+        tr:hover { background-color: rgba(0, 0, 0, 0.02); }
 
         /* Input styling within table */
         table input, table select {
@@ -558,9 +558,21 @@
         // --- BACKEND INTEGRATION ---
         async function fetchPedidosBackend() {
             try {
-                // Endpoint updated to use the dedicated route for concluded sales
                 const data = await api('/pedidos-venda/concluidos');
-                backendData = data || []; // Store data
+                backendData = data || [];
+                backendData = backendData.map(item => {
+                    let valorFatura = null;
+                    if (item.valor) {
+                        valorFatura = item.valor;
+                    } else if (item.totalFatura) {
+                        valorFatura = item.totalFatura;
+                    } else if (item.faturaTotal) {
+                        valorFatura = item.faturaTotal;
+                    } else if (typeof item.valorTotal === 'number') {
+                        valorFatura = item.valorTotal.toFixed(2).replace('.', ',');
+                    }
+                    return { ...item, valorTotalFatura: valorFatura };
+                });
                 renderBackendTable(backendData);
             } catch (error) {
                 console.error(error);
@@ -607,6 +619,7 @@
                     </td>
                     <td>
                         <div style="font-weight: 600;">${item.totalAcessos || 0} acessos</div>
+                        ${item.valorTotalFatura ? `<div class="muted" style="font-size: 0.8rem;">R$ ${item.valorTotalFatura}</div>` : ''}
                         <div class="muted" style="font-size: 0.8rem;">${item.infoTexto || '-'}</div>
                     </td>
                     <td><span class="${getStatusClass(item.statusPedido )}">${item.statusPedido  || '-'}</span></td>
@@ -615,9 +628,9 @@
                             <div class="dropdown">
                                 <button type="button" class="btn btn-ghost btn-icon" title="Ações" onclick="togglePedidoMenu(event, ${item.id})"><i data-lucide="more-vertical"></i></button>
                                 <div id="pedido-menu-${item.id}" class="action-menu" onclick="event.stopPropagation()">
-                                    <button type="button" class="action-item" onclick="configurarPedido('${item.id}')"><i data-lucide="settings"></i><span>Configurar</span></button>
-                                    <button type="button" class="action-item" onclick="voltarCadastro('${item.id}')"><i data-lucide="clipboard-check"></i><span>Voltar para Cadastro</span></button>
-                                    <button type="button" class="action-item" onclick="voltarNegociacao('${item.id}')"><i data-lucide="handshake"></i><span>Voltar para Negociação</span></button>
+                                    <button type="button" class="action-item" onclick="closeActiveDropdown(); configurarPedido('${item.id}')"><i data-lucide="settings"></i><span>Configurar</span></button>
+                                    <button type="button" class="action-item" onclick="closeActiveDropdown(); voltarCadastro('${item.id}')"><i data-lucide="clipboard-check"></i><span>Voltar para Cadastro</span></button>
+                                    <button type="button" class="action-item" onclick="closeActiveDropdown(); voltarNegociacao('${item.id}')"><i data-lucide="handshake"></i><span>Voltar para Negociação</span></button>
                                 </div>
                             </div>
                         </div>
@@ -631,26 +644,45 @@
             e.stopPropagation();
             const btn = e.currentTarget;
             const dropdown = btn.closest('.dropdown');
+            const row = dropdown.closest('tr');
             
-            // Fecha todos os outros dropdowns ativos
+            // Fecha todos os outros dropdowns ativos e remove classe das linhas
             document.querySelectorAll('.dropdown.active').forEach(el => {
-                if (el !== dropdown) el.classList.remove('active');
+                if (el !== dropdown) {
+                    el.classList.remove('active');
+                    el.closest('tr').classList.remove('active-row');
+                }
             });
 
-            // Toggle do dropdown atual
-            dropdown.classList.toggle('active');
+            // Toggle do dropdown atual e da linha
+            const isActive = dropdown.classList.toggle('active');
+            row.classList.toggle('active-row', isActive);
+        };
+
+        function closeActiveDropdown() {
+            document.querySelectorAll('.dropdown.active').forEach(el => {
+                el.classList.remove('active');
+                const row = el.closest('tr');
+                if (row) row.classList.remove('active-row');
+            });
         };
 
         // Fecha dropdown ao clicar fora
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.dropdown')) {
-                document.querySelectorAll('.dropdown.active').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.dropdown.active').forEach(el => {
+                    el.classList.remove('active');
+                    el.closest('tr').classList.remove('active-row');
+                });
             }
         });
 
         // Fecha dropdown ao dar scroll
         window.addEventListener('scroll', () => {
-            document.querySelectorAll('.dropdown.active').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.dropdown.active').forEach(el => {
+                el.classList.remove('active');
+                el.closest('tr').classList.remove('active-row');
+            });
         }, true);
 
         let __confirmCallback = null;
