@@ -1433,7 +1433,7 @@
                     if (!opi) erros.push('Selecione a Operadora Doadora para Linha ' + i);
                     if (!num || num.replace(/\D/g,'').length < 8) erros.push('Informe o Número da linha a portar válido para Linha ' + i);
                     if (!nome) erros.push('Informe o Nome para Linha ' + i);
-                    if (!cpf || cpf.replace(/\D/g,'').length !== 11) erros.push('Informe o CPF válido para Linha ' + i);
+                    //if (!cpf || cpf.replace(/\D/g,'').length !== 11) erros.push('Informe o CPF válido para Linha ' + i);
                     if (tem === 'Sim' && tipoPi !== 'Comodato' && valPi <= 0) erros.push('Informe o valor do aparelho para Linha ' + i);
                 }
             }
