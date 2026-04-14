@@ -59,6 +59,7 @@ export async function obterDetalhesPedido(req, res) {
 export async function listarPedidosConcluidos(req, res) {
   try {
     const pedidos = await PedidoDeVenda.findAll({
+      distinct: true,
       include: [
         {
           model: Negotiation,
@@ -79,8 +80,11 @@ export async function listarPedidosConcluidos(req, res) {
       order: [['created_at', 'DESC']]
     });
 
-    // Formatting the response to match what the frontend table likely expects
-    const result = pedidos.map(p => {
+    // Formatting the response and ensuring uniqueness by negotiation_id
+    const uniqueNegotiationIds = new Set();
+    const result = pedidos.reduce((acc, p) => {
+      if (!p.negotiation_id || uniqueNegotiationIds.has(p.negotiation_id)) return acc;
+      uniqueNegotiationIds.add(p.negotiation_id);
       
       const neg = p.negotiation || {};
       const prop = neg.proposal || null;
@@ -139,7 +143,7 @@ export async function listarPedidosConcluidos(req, res) {
       if (breakdown.outros) parts.push(`${breakdown.outros} outro${breakdown.outros > 1 ? 's' : ''}`);
       const infoTexto = parts.length > 0 ? parts.join(', ') : '-';
 
-      return {
+      acc.push({
         id: p.id,
         negotiation_id: p.negotiation_id,
         consultor: neg.creator?.name || '',
@@ -160,8 +164,9 @@ export async function listarPedidosConcluidos(req, res) {
         infoTexto,
         breakdown,
         created_at: p.created_at
-      };
-    });
+      });
+      return acc;
+    }, []);
 
     return res.json(result);
   } catch (error) {

@@ -289,7 +289,12 @@
                     <span>Pedidos de Vendas</span>
                     <span class="chip">Somente Admin</span>
                 </div>
-
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+                    <button class="btn btn-green" onclick="exportarTabela()">
+                        <i data-lucide="download"></i>
+                        <span>Exportar para CSV</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Filters -->
@@ -308,6 +313,7 @@
                     <table id="tabelaPrincipal">
                         <thead>
                             <tr>
+                                <th style="min-width: 60px;">ID</th>
                                 <th style="min-width: 150px;">Consultor</th>
                                 <th style="min-width: 200px; max-width: 200px;">Razão Social</th>
                                 <th style="min-width: 120px;">Nº P2B / Nº Radar</th>
@@ -318,7 +324,7 @@
                             </tr>
                         </thead>
                         <tbody id="tbodyBackend">
-                            <tr><td colspan="7" class="text-center p-4">Carregando...</td></tr>
+                            <tr><td colspan="8" class="text-center p-4">Carregando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -577,8 +583,47 @@
             } catch (error) {
                 console.error(error);
                 document.getElementById('tbodyBackend').innerHTML = 
-                    '<tr><td colspan="7" class="text-center p-4 text-red-600">Erro ao carregar dados do backend.</td></tr>';
+                    '<tr><td colspan="8" class="text-center p-4 text-red-600">Erro ao carregar dados do backend.</td></tr>';
             }
+        }
+
+        function exportarTabela() {
+            if (!backendData || backendData.length === 0) {
+                toast('Não há dados para exportar', 'error');
+                return;
+            }
+
+            const headers = ['ID', 'Consultor', 'Razão Social', 'CNPJ', 'P2B', 'Radar', 'Data Entrada', 'Data Input', 'Data Ativação', 'Acessos', 'Valor Fatura', 'Status'];
+            const rows = backendData.map(item => [
+                item.negotiation_id || '',
+                item.consultor || '',
+                item.razaoSocial || item.cliente || '',
+                item.cnpj || '',
+                item.numP2B || '',
+                item.numRadar || '',
+                formatData(item.dataEntrada),
+                formatData(item.dataInput),
+                formatData(item.dataAtivacao),
+                item.totalAcessos || 0,
+                item.valorTotalFatura || '',
+                item.statusPedido || ''
+            ]);
+
+            const csvContent = [
+                headers.join(';'),
+                ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
+            ].join('\n');
+
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `pedidos_vendas_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast('Tabela exportada com sucesso!');
         }
 
         function formatData(d) {
@@ -601,11 +646,12 @@
         function renderBackendTable(data) {
             const tbody = document.getElementById('tbodyBackend');
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4">Nenhum pedido concluído encontrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4">Nenhum pedido concluído encontrado.</td></tr>';
                 return;
             }
             tbody.innerHTML = data.map(item => `
                 <tr>
+                    <td>${item.negotiation_id || '-'}</td>
                     <td>${item.consultor || '-'}</td>
                     <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.razaoSocial || item.cliente || '-'}</td>
                     <td>
