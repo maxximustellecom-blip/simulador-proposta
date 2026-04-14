@@ -366,6 +366,24 @@
             if (len <= 12) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8)}`;
             return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8,12)}-${d.slice(12,14)}`;
         }
+        function formatCpfCnpj(s) {
+            const digits = onlyDigits(String(s || '')).slice(0, 14);
+            if (!digits) return '';
+            if (digits.length <= 11) {
+                if (digits.length <= 3) return digits;
+                if (digits.length <= 6) return `${digits.slice(0,3)}.${digits.slice(3)}`;
+                if (digits.length <= 9) return `${digits.slice(0,3)}.${digits.slice(3,6)}.${digits.slice(6)}`;
+                return `${digits.slice(0,3)}.${digits.slice(3,6)}.${digits.slice(6,9)}-${digits.slice(9,11)}`;
+            }
+            if (digits.length <= 14) {
+                if (digits.length <= 2) return digits;
+                if (digits.length <= 5) return `${digits.slice(0,2)}.${digits.slice(2)}`;
+                if (digits.length <= 8) return `${digits.slice(0,2)}.${digits.slice(2,5)}.${digits.slice(5)}`;
+                if (digits.length <= 12) return `${digits.slice(0,2)}.${digits.slice(2,5)}.${digits.slice(5,8)}/${digits.slice(8)}`;
+                return `${digits.slice(0,2)}.${digits.slice(2,5)}.${digits.slice(5,8)}/${digits.slice(8,12)}-${digits.slice(12,14)}`;
+            }
+            return digits;
+        }
         function formatPhone(s) {
             const p = onlyDigits(s);
             if (p.length >= 11) return `(${p.slice(0,2)}) ${p.slice(2,7)}-${p.slice(7,11)}`;
@@ -1232,8 +1250,8 @@
                             <input id="portNome_${n}" type="text" class="input" value="${it.nome || ''}">
                         </div>
                         <div>
-                            <div class="label">CPF</div>
-                            <input id="portCpf_${n}" type="text" class="input" maxlength="14" value="${it.cpf || ''}">
+                            <div class="label">CPF/CNPJ</div>
+                            <input id="portCpf_${n}" type="text" class="input" maxlength="18" value="${formatCpfCnpj(it.cpf || '')}">
                         </div>
                     </div>
                     <div style="margin-top:0.5rem;">
@@ -1306,7 +1324,10 @@
             });
             Array.from(container.querySelectorAll('input[id^="portCpf_"]')).forEach(el => {
                 el.addEventListener('input', (e) => {
-                    e.target.value = e.target.value.replace(/\D/g, '');
+                    e.target.value = formatCpfCnpj(e.target.value);
+                });
+                el.addEventListener('paste', () => {
+                    setTimeout(() => { el.value = formatCpfCnpj(el.value); }, 0);
                 });
             });
             Array.from(container.querySelectorAll('select[id^="portTem_"]')).forEach(el => {
