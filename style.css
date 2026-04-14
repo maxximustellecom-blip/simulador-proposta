@@ -528,6 +528,84 @@ th.col-actions, td.col-actions {
   justify-content: flex-end;
   gap: 0.5rem;
 }
+
+/* --- Novo Mecanismo de Dropdown Moderno --- */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.action-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  background: rgba(var(--surface-rgb, 255, 255, 255), 0.8);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid rgba(var(--border-rgb, 200, 200, 200), 0.3);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  padding: 0.5rem;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 1000;
+  transform-origin: top right;
+  animation: dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.dropdown.active .action-menu {
+  display: flex;
+}
+
+.dropdown.active {
+  z-index: 10100 !important;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.action-item:hover {
+  background: rgba(var(--primary-rgb, 37, 99, 235), 0.1);
+  color: var(--primary);
+  transform: translateX(4px);
+}
+
+.action-item i {
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+}
+
+.action-item:hover i {
+  opacity: 1;
+}
+
+/* Ajuste para o botão do dropdown quando ativo */
+.dropdown.active .btn-icon {
+  background: rgba(var(--primary-rgb, 37, 99, 235), 0.1);
+  color: var(--primary);
+}
 .filters-section-sticky {
   position: sticky;
   top: 3.2rem;
@@ -1167,23 +1245,4 @@ select option[disabled], .select option[disabled] {
 
 @media (min-width: 920px) {
   .auth-hero { display: block; }
-}
-
-
-.action-menu {
-  display: none;
-  position: fixed; /* Alterado para fixed para ignorar overflow de elementos pais */
-  z-index: 9999;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: var(--shadow);
-  min-width: 160px;
-  padding: 0.5rem;
-  flex-direction: column;
-  gap: 0.2rem;
-  pointer-events: auto;
-}
-.action-menu.show {
-  display: flex;
 }

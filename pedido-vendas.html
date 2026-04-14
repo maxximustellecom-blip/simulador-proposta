@@ -249,6 +249,34 @@
             font-weight: 500;
             color: var(--text);
         }
+        .action-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.7rem;
+            border-radius: 6px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+            font-size: 0.9rem;
+            transition: background 0.15s;
+        }
+        .action-item:hover {
+            background: var(--surface-strong);
+        }
+        .action-item:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .action-item.text-danger {
+            color: var(--danger);
+        }
+        .action-item.text-danger:hover {
+            background: rgba(239,68,68,0.1);
+        }
     </style>
 </head>
 <body>
@@ -582,14 +610,90 @@
                         <div class="muted" style="font-size: 0.8rem;">${item.infoTexto || '-'}</div>
                     </td>
                     <td><span class="${getStatusClass(item.statusPedido )}">${item.statusPedido  || '-'}</span></td>
-                    <td>
-                        <button class="btn btn-ghost btn-sm" title="Configurar" style="gap: 5px;" onclick="configurarPedido('${item.id}')">
-                            <i data-lucide="settings"></i>
-                        </button>
+                    <td class="col-actions">
+                        <div class="table-actions">
+                            <div class="dropdown">
+                                <button type="button" class="btn btn-ghost btn-icon" title="Ações" onclick="togglePedidoMenu(event, ${item.id})"><i data-lucide="more-vertical"></i></button>
+                                <div id="pedido-menu-${item.id}" class="action-menu" onclick="event.stopPropagation()">
+                                    <button type="button" class="action-item" onclick="configurarPedido('${item.id}')"><i data-lucide="settings"></i><span>Configurar</span></button>
+                                    <button type="button" class="action-item" onclick="voltarCadastro('${item.id}')"><i data-lucide="clipboard-check"></i><span>Voltar para Cadastro</span></button>
+                                    <button type="button" class="action-item" onclick="voltarNegociacao('${item.id}')"><i data-lucide="handshake"></i><span>Voltar para Negociação</span></button>
+                                </div>
+                            </div>
+                        </div>
                     </td>
                 </tr>
             `).join('');
             if (window.lucide) window.lucide.createIcons();
+        }
+
+        window.togglePedidoMenu = function(e, id) {
+            e.stopPropagation();
+            const btn = e.currentTarget;
+            const dropdown = btn.closest('.dropdown');
+            
+            // Fecha todos os outros dropdowns ativos
+            document.querySelectorAll('.dropdown.active').forEach(el => {
+                if (el !== dropdown) el.classList.remove('active');
+            });
+
+            // Toggle do dropdown atual
+            dropdown.classList.toggle('active');
+        };
+
+        // Fecha dropdown ao clicar fora
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown.active').forEach(el => el.classList.remove('active'));
+            }
+        });
+
+        // Fecha dropdown ao dar scroll
+        window.addEventListener('scroll', () => {
+            document.querySelectorAll('.dropdown.active').forEach(el => el.classList.remove('active'));
+        }, true);
+
+        let __confirmCallback = null;
+        function showConfirmModal(title, message, onConfirm) {
+            document.getElementById('confirmModalTitle').textContent = title;
+            document.getElementById('confirmModalMessage').textContent = message;
+            document.getElementById('confirmModalBtn').onclick = () => {
+                closeConfirmModal();
+                onConfirm();
+            };
+            document.getElementById('confirmModal').classList.add('show');
+        }
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.remove('show');
+            __confirmCallback = null;
+        }
+
+        async function voltarCadastro(id) {
+            showConfirmModal('Voltar para Cadastro', 'Deseja voltar esta proposta para Cadastro?', async () => {
+                try {
+                    const negId = backendData.find(i => String(i.id) === String(id))?.negotiation_id;
+                    if (!negId) { toast('Negociação não encontrada', 'error'); return; }
+                    await api('/negotiations/' + negId, { method: 'PUT', body: JSON.stringify({ cadastro: 1, funil_stage: 3, status: 'Em andamento' }) });
+                    toast('Proposta retornada para Cadastro', 'success');
+                    fetchPedidosBackend();
+                } catch (e) {
+                    toast('Erro ao retornar para Cadastro: ' + e.message, 'error');
+                }
+            });
+        }
+
+        async function voltarNegociacao(id) {
+            showConfirmModal('Voltar para Negociação', 'Deseja voltar esta proposta para Negociação?', async () => {
+                try {
+                    const negId = backendData.find(i => String(i.id) === String(id))?.negotiation_id;
+                    if (!negId) { toast('Negociação não encontrada', 'error'); return; }
+                    await api('/negotiations/' + negId, { method: 'PUT', body: JSON.stringify({ cadastro: 0, funil_stage: 2, status: 'Em andamento' }) });
+                    toast('Proposta retornada para Negociação', 'success');
+                    fetchPedidosBackend();
+                } catch (e) {
+                    toast('Erro ao retornar para Negociação: ' + e.message, 'error');
+                }
+            });
         }
 
         function filtrarBackend() {
@@ -1321,6 +1425,21 @@
             <div class="modal-actions">
                 <button class="btn btn-ghost" type="button" onclick="closeEditVenda()"><i data-lucide="x"></i><span>Cancelar</span></button>
                 <button class="btn btn-primary" type="button" onclick="saveEditVenda()"><i data-lucide="check"></i><span>Salvar</span></button>
+            </div>
+        </div>
+    </div>
+<div id="confirmModal" class="modal">
+        <div class="modal-card" style="max-width: 400px;">
+            <div class="modal-head">
+                <div id="confirmModalTitle">Confirmar Ação</div>
+                <button class="btn btn-ghost btn-icon" onclick="closeConfirmModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmModalMessage" style="margin: 0; font-size: 0.95rem;"></p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" type="button" onclick="closeConfirmModal()"><span>Cancelar</span></button>
+                <button class="btn btn-primary" type="button" id="confirmModalBtn"><span>Confirmar</span></button>
             </div>
         </div>
     </div>
