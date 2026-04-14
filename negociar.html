@@ -212,13 +212,13 @@
             try { return (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })).format(Number(v || 0)); } catch { return 'R$ 0,00'; }
         }
         function formatCnpj(s) {
-            const p = String(s || '').replace(/\D/g,'').split('');
-            if (p.length >= 14) return `${p[0]}${p[1]}.${p[2]}${p[3]}${p[4]}.${p[5]}${p[6]}${p[7]}/${p[8]}${p[9]}${p[10]}${p[11]}-${p[12]}${p[13]}`;
-            if (p.length >= 12) return `${p[0]}${p[1]}.${p[2]}${p[3]}${p[4]}.${p[5]}${p[6]}${p[7]}/${p[8]}${p[9]}${p[10]}${p[11]}`;
-            if (p.length >= 8) return `${p[0]}${p[1]}.${p[2]}${p[3]}${p[4]}.${p[5]}${p[6]}${p[7]}`;
-            if (p.length >= 5) return `${p[0]}${p[1]}.${p[2]}${p[3]}${p[4]}`;
-            if (p.length >= 2) return `${p[0]}${p[1]}`;
-            return p[0] || '';
+            const digits = String(s || '').replace(/\D/g, '').slice(0, 14);
+            if (digits.length === 0) return '';
+            if (digits.length <= 2) return digits;
+            if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+            if (digits.length <= 8) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
+            if (digits.length <= 12) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+            return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
         }
         function formatDate(s) {
             const d = String(s || '').replace(/\D/g, '').slice(0, 8);
@@ -877,7 +877,12 @@
                 faturaVencEl.addEventListener('blur', () => { faturaVencEl.value = formatDate(faturaVencEl.value); });
             }
             const cnpjNovoEl = document.getElementById('mCnpjNovo');
-            if (cnpjNovoEl) cnpjNovoEl.addEventListener('input', () => { cnpjNovoEl.value = formatCnpj(cnpjNovoEl.value); });
+            if (cnpjNovoEl) {
+                cnpjNovoEl.addEventListener('input', () => { cnpjNovoEl.value = formatCnpj(cnpjNovoEl.value); });
+                cnpjNovoEl.addEventListener('paste', () => {
+                    setTimeout(() => { cnpjNovoEl.value = formatCnpj(cnpjNovoEl.value); }, 0);
+                });
+            }
             Array.from(document.querySelectorAll('input[name="mCadastroMode"]')).forEach(el => {
                 el.addEventListener('change', updateCadastroModeUI);
             });
