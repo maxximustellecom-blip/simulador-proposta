@@ -86,19 +86,59 @@ export async function listarPedidosConcluidos(req, res) {
       const prop = neg.proposal || null;
       const cust = neg.customProposal || null;
       let totalAcessos = 0;
-      if (prop && prop.total_acessos !== undefined && prop.total_acessos !== null) {
-        totalAcessos = Number(prop.total_acessos || 0);
-      } else if (cust && cust.total_acessos !== undefined && cust.total_acessos !== null) {
-        totalAcessos = Number(cust.total_acessos || 0);
-      } else {
-        const linhas = (prop && Array.isArray(prop.linhas)) ? prop.linhas
-                      : (cust && Array.isArray(cust.linhas)) ? cust.linhas
-                      : [];
+      let linhas = [];
+      if (prop && prop.linhas && Array.isArray(prop.linhas)) {
+        linhas = prop.linhas;
         totalAcessos = linhas.reduce((sum, l) => {
           const q = Number(l && l.quantidade !== undefined ? l.quantidade : 1);
           return sum + (isFinite(q) ? q : 1);
         }, 0);
+      } else if (cust && cust.linhas && Array.isArray(cust.linhas)) {
+        linhas = cust.linhas;
+        totalAcessos = linhas.reduce((sum, l) => {
+          const q = Number(l && l.quantidade !== undefined ? l.quantidade : 1);
+          return sum + (isFinite(q) ? q : 1);
+        }, 0);
+      } else {
+        totalAcessos = Number(prop?.total_acessos || cust?.total_acessos || 0);
       }
+
+      // Calculate breakdown by tipoNegociacao (Novo, Renegociação, Aditivo, WTTx, etc.)
+      const breakdown = {};
+      linhas.forEach(l => {
+        const tipo = String(l.tipoNegociacao || l.tipo || 'Novo').toLowerCase();
+        const qtd = Number(l.quantidade || 1);
+        if (tipo.includes('novo')) {
+          breakdown.novo = (breakdown.novo || 0) + qtd;
+        } else if (tipo.includes('aditivo')) {
+          breakdown.aditivo = (breakdown.aditivo || 0) + qtd;
+        } else if (tipo.includes('reneg') || tipo.includes('renov')) {
+          breakdown.reneg = (breakdown.reneg || 0) + qtd;
+        } else if (tipo.includes('wttx')) {
+          breakdown.wttx = (breakdown.wttx || 0) + qtd;
+        } else if (tipo.includes('m2m')) {
+          breakdown.m2m = (breakdown.m2m || 0) + qtd;
+        } else if (tipo.includes('fibra') || tipo.includes('ultra')) {
+          breakdown.fibra = (breakdown.fibra || 0) + qtd;
+        } else if (tipo.includes('tim') || tipo.includes('controle')) {
+          breakdown.tim = (breakdown.tim || 0) + qtd;
+        } else {
+          breakdown.outros = (breakdown.outros || 0) + qtd;
+        }
+      });
+
+      // Build info string like "7 novos, 8 reneg, 3 wttx"
+      const parts = [];
+      if (breakdown.novo) parts.push(`${breakdown.novo} novo${breakdown.novo > 1 ? 's' : ''}`);
+      if (breakdown.aditivo) parts.push(`${breakdown.aditivo} aditivo${breakdown.aditivo > 1 ? 's' : ''}`);
+      if (breakdown.reneg) parts.push(`${breakdown.reneg} reneg${breakdown.reneg > 1 ? 's' : ''}`);
+      if (breakdown.wttx) parts.push(`${breakdown.wttx} wttx`);
+      if (breakdown.m2m) parts.push(`${breakdown.m2m} m2m`);
+      if (breakdown.fibra) parts.push(`${breakdown.fibra} fibra`);
+      if (breakdown.tim) parts.push(`${breakdown.tim} tim`);
+      if (breakdown.outros) parts.push(`${breakdown.outros} outro${breakdown.outros > 1 ? 's' : ''}`);
+      const infoTexto = parts.length > 0 ? parts.join(', ') : '-';
+
       return {
         id: p.id,
         negotiation_id: p.negotiation_id,
@@ -117,6 +157,8 @@ export async function listarPedidosConcluidos(req, res) {
         status: neg.status,
         data: neg.data,
         totalAcessos,
+        infoTexto,
+        breakdown,
         created_at: p.created_at
       };
     });
