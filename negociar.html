@@ -303,10 +303,20 @@
                 const rowStyle = isConcluida ? ' style="background: var(--pill-bg);"' : '';
                 const isDisabled = (__userRole !== 'admin' && String(n.status) === 'Concluída') ? 'disabled' : '';
                 
+                let tags = '';
+                if (isConcluida) {
+                    tags = '<span class="chip" style="background: var(--success-bg); color: var(--success-text); font-size: 0.7rem; margin-left: 5px;">PEDIDO DE VENDA</span>';
+                } else if (Number(n.cadastro || 0) === 1) {
+                    tags = '<span class="chip" style="background: var(--warning-bg); color: var(--warning-text); font-size: 0.7rem; margin-left: 5px;">CADASTRO</span>';
+                }
+
                 return `
                 <tr${rowStyle} data-id="${n.id}">
                     <td>
-                        <div style="font-weight:600;">${n.razaoSocial || '-'}</div>
+                        <div style="display:flex; align-items:center;">
+                            <div style="font-weight:600;">${n.razaoSocial || '-'}</div>
+                            ${tags}
+                        </div>
                         <div class="muted" style="font-size:0.8rem; margin-top:2px;">${formatCnpj(n.cnpj || '')}</div>
                     </td>
                     <td><span class="ellipsis">${n.proposta === "PROPOSTA PADRÃO" ? "PADRÃO" : "CUSTOMIZADA" || '-'}</span></td>
@@ -323,9 +333,10 @@
                                 <button type="button" class="action-item" onclick="configurarNegociacao(${n.id})">
                                     <i data-lucide="edit-3"></i> Editar
                                 </button>
+                                ${(!isConcluida && Number(n.cadastro || 0) === 0) ? `
                                 <button type="button" class="action-item" onclick="enviarParaCadastro(${n.id})" ${isDisabled}>
                                     <i data-lucide="clipboard-check"></i> Enviar para Cadastro
-                                </button>
+                                </button>` : ''}
                                 <button style="display:none;" type="button" class="action-item" onclick="editarNegociacao(${n.id})" ${isDisabled}>
                                     <i data-lucide="edit-3"></i> Editar
                                 </button>
@@ -477,7 +488,6 @@
                 const vendedor = document.getElementById('fVendedor') ? document.getElementById('fVendedor').value : '';
                 const tipoProposta = document.getElementById('fTipoProposta') ? document.getElementById('fTipoProposta').value : '';
                 const params = [];
-                params.push('cadastro=0');
                 if (cnpj) params.push('cnpj=' + encodeURIComponent(cnpj));
                 if (data) params.push('data=' + encodeURIComponent(data));
                 if (razao) params.push('razao=' + encodeURIComponent(razao));
