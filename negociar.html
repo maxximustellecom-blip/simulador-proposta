@@ -333,6 +333,10 @@
                                 <button type="button" class="action-item" onclick="configurarNegociacao(${n.id})">
                                     <i data-lucide="edit-3"></i> Editar
                                 </button>
+                                ${__userRole === 'admin' ? `
+                                <button type="button" class="action-item" onclick="abrirAlterarVendedor(${n.id})">
+                                    <i data-lucide="user-plus"></i> Alterar Vendedor
+                                </button>` : ''}
                                 ${(!isConcluida && Number(n.cadastro || 0) === 0) ? `
                                 <button type="button" class="action-item" onclick="enviarParaCadastro(${n.id})" ${isDisabled}>
                                     <i data-lucide="clipboard-check"></i> Enviar para Cadastro
@@ -589,6 +593,30 @@
                 if (m) m.classList.add('show');
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             } catch {}
+        };
+
+        window.abrirAlterarVendedor = async function(id) {
+            try {
+                const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
+                if (!n) return;
+                
+                const select = document.getElementById('mAlterarVendedorSelect');
+                const mCriadoPor = document.getElementById('mCriadoPor');
+                
+                // Copia os vendedores já carregados no modal principal
+                if (select && mCriadoPor) {
+                    select.innerHTML = mCriadoPor.innerHTML;
+                    select.value = n.created_by || '';
+                }
+
+                const btn = document.getElementById('alterarVendedorConfirm');
+                if (btn) btn.dataset.id = String(id);
+                
+                const m = document.getElementById('alterarVendedorModal');
+                if (m) m.classList.add('show');
+            } catch (e) {
+                toast('Erro ao abrir modal: ' + e.message, 'error');
+            }
         };
         async function salvarNegociacao() {
             try {
@@ -935,6 +963,39 @@
                     }
                 });
             }
+            {
+                const modal = document.getElementById('alterarVendedorModal');
+                const btnClose = document.getElementById('alterarVendedorClose');
+                const btnCancel = document.getElementById('alterarVendedorCancel');
+                const btnConfirm = document.getElementById('alterarVendedorConfirm');
+                const select = document.getElementById('mAlterarVendedorSelect');
+
+                function fecharAlterar() {
+                    if (btnConfirm) btnConfirm.dataset.id = '';
+                    if (modal) modal.classList.remove('show');
+                }
+                if (btnClose) btnClose.addEventListener('click', fecharAlterar);
+                if (btnCancel) btnCancel.addEventListener('click', fecharAlterar);
+                if (btnConfirm) btnConfirm.addEventListener('click', async () => {
+                    const id = Number(btnConfirm.dataset.id || 0);
+                    const newCreatorId = select.value;
+                    if (!id || !newCreatorId) {
+                        toast('Selecione um vendedor', 'warning');
+                        return;
+                    }
+                    try {
+                        await api('/negotiations/' + id, { 
+                            method: 'PUT', 
+                            body: JSON.stringify({ creator_id: newCreatorId }) 
+                        });
+                        toast('Vendedor alterado com sucesso!', 'success');
+                        fecharAlterar();
+                        buscar(); // Atualiza a tabela
+                    } catch (e) {
+                        toast('Erro ao alterar vendedor: ' + e.message, 'error');
+                    }
+                });
+            }
             const mSearch = document.getElementById('mClienteSearch');
             const mDropdown = document.getElementById('mClienteDropdown');
             const mWrap = document.getElementById('mClienteWrap');
@@ -1073,6 +1134,21 @@
             <div class="modal-actions">
                 <button id="confirmCadastroCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
                 <button id="confirmCadastroConfirm" class="btn btn-primary" type="button"><i data-lucide="check"></i><span>Confirmar</span></button>
+            </div>
+        </div>
+    </div>
+    <div id="alterarVendedorModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Alterar Vendedor</div><button id="alterarVendedorClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="label">Selecione o novo vendedor para esta negociação</div>
+                <select id="mAlterarVendedorSelect" class="select" style="margin-top: 1rem;">
+                    <option value="">Carregando vendedores...</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button id="alterarVendedorCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
+                <button id="alterarVendedorConfirm" class="btn btn-primary" type="button"><i data-lucide="check"></i><span>Salvar</span></button>
             </div>
         </div>
     </div>

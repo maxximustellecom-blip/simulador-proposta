@@ -643,6 +643,16 @@
             return s;
         }
 
+        function formatCnpj(s) {
+            const digits = String(s || '').replace(/\D/g, '').slice(0, 14);
+            if (!digits) return '';
+            if (digits.length <= 2) return digits;
+            if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+            if (digits.length <= 8) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
+            if (digits.length <= 12) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+            return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
+        }
+
         function renderBackendTable(data) {
             const tbody = document.getElementById('tbodyBackend');
             if (!data || data.length === 0) {
@@ -653,7 +663,10 @@
                 <tr>
                     <td>${item.negotiation_id || '-'}</td>
                     <td>${item.consultor || '-'}</td>
-                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.razaoSocial || item.cliente || '-'}</td>
+                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <div>${item.razaoSocial || item.cliente || '-'}</div>
+                        <div class="muted" style="font-size: 0.75rem;">${item.cnpj ? formatCnpj(item.cnpj) : '-'}</div>
+                    </td>
                     <td>
                         <div><span class="muted">P2B:</span> ${item.numP2B || '-'}</div>
                         <div><span class="muted">Radar:</span> ${item.numRadar || '-'}</div>
