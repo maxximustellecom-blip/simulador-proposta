@@ -2,7 +2,17 @@ import { PedidoDeVenda, Negotiation, NegociacaoProposta, NegociacaoPropostaCusto
 import { Op } from 'sequelize';
 
 function toNumber(x, d = 0) {
-  const n = Number(String(x === null || x === undefined ? '' : x).replace(',', '.'));
+  if (typeof x === 'number') return isFinite(x) ? x : d;
+  const raw = String(x === null || x === undefined ? '' : x).trim();
+  if (!raw) return d;
+  const cleaned = raw.replace(/[^\d.,-]/g, '');
+  if (!cleaned) return d;
+  const hasDot = cleaned.includes('.');
+  const hasComma = cleaned.includes(',');
+  const normalized = (hasDot && hasComma)
+    ? cleaned.replace(/\./g, '').replace(',', '.')
+    : (hasComma ? cleaned.replace(',', '.') : cleaned);
+  const n = Number(normalized);
   return isFinite(n) ? n : d;
 }
 
@@ -137,12 +147,9 @@ export async function listarPedidosConcluidos(req, res) {
             const v = toNumber(l.valorNaoFidelizado !== undefined ? l.valorNaoFidelizado : (l.valorPlano !== undefined ? l.valorPlano : l.precoAtual), 0);
             const desc = toNumber(l.desconto, 0);
             const planoFinal = v * (1 - desc / 100);
-            const device = String(l.temAparelho || '') === 'Sim' ? toNumber(l.valorAparelho, 0) : 0;
-            return planoFinal + device;
+            return planoFinal;
           }
-          const vPlano = toNumber(l.valorPlano, 0);
-          const vAparelho = String(l.temAparelho || '') === 'Sim' ? toNumber(l.valorAparelho, 0) : 0;
-          return vPlano + vAparelho;
+          return toNumber(l.valorPlano, 0);
         })();
         breakdown[key] = (breakdown[key] || 0) + qtd;
         breakdownValor[key] = (breakdownValor[key] || 0) + (qtd * unit);
@@ -171,9 +178,12 @@ export async function listarPedidosConcluidos(req, res) {
         outros: 'Outros'
       };
       const ordem = ['reneg', 'adit', 'novo', 'wttx', 'm2m', 'fibra', 'tim', 'outros'];
+      const totalTarget = toNumber(neg.valor, 0);
+      const totalRaw = ordem.reduce((sum, k) => sum + toNumber(breakdownValor[k], 0), 0);
+      const scale = (totalRaw > 0 && totalTarget > 0) ? (totalTarget / totalRaw) : 1;
       const itensResumo = ordem
         .filter(k => breakdown[k] && breakdownValor[k] !== undefined)
-        .map(k => ({ qtd: Number(breakdown[k] || 0), tipo: labels[k] || k, valor: Number(breakdownValor[k] || 0) }));
+        .map(k => ({ qtd: Number(breakdown[k] || 0), tipo: labels[k] || k, valor: toNumber(breakdownValor[k], 0) * scale }));
 
       acc.push({
         id: p.id,
