@@ -330,7 +330,7 @@ export async function updateFunnelStage(req, res) {
     }
     const stage = Number((req.body || {}).funil_stage);
     if (!isFinite(stage)) return res.status(400).json({ error: 'funil_stage inválido' });
-    const bounded = Math.max(1, Math.min(5, Math.trunc(stage)));
+    const bounded = Math.max(1, Math.min(6, Math.trunc(stage)));
     negotiation.funil_stage = bounded;
     await negotiation.save();
     return res.json({ id: negotiation.id, funil_stage: Number(negotiation.funil_stage || 1) });
