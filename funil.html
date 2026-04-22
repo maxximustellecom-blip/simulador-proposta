@@ -350,7 +350,6 @@
                             <div class="deal-sub">${sub}</div>
                         </div>
                         <div class="deal-actions">
-                            ${pedidoBadge}
                             <button type="button" class="btn btn-ghost btn-icon" title="Abrir" onclick="window.openNegotiation(${d.id})"><i data-lucide="arrow-right"></i></button>
                         </div>
                     </div>
@@ -359,6 +358,7 @@
                         <div><span>Acessos:</span> <strong>${totalAcessos}</strong></div>
                         <div><span>Criação:</span> <strong>${created}</strong></div>
                     </div>
+                    ${pedidoBadge ? `<div style="margin-top: 0.55rem; display: flex; justify-content: flex-end;">${pedidoBadge}</div>` : ''}
                 </div>
             `;
         }
