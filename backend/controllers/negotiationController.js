@@ -128,7 +128,8 @@ export async function listFunnelNegotiations(req, res) {
         { model: User, as: 'creator', attributes: ['id', 'name', 'email', 'celular', 'role'] },
         { model: Client, as: 'client' },
         { model: NegociacaoProposta, as: 'proposal', attributes: ['total_acessos'] },
-        { model: NegociacaoPropostaCustomizada, as: 'customProposal', attributes: ['total_acessos'] }
+        { model: NegociacaoPropostaCustomizada, as: 'customProposal', attributes: ['total_acessos'] },
+        { model: PedidoDeVenda, as: 'pedidoDeVenda', attributes: ['id', 'status', 'num_p2b', 'num_radar', 'data_entrada', 'data_input', 'data_ativacao'] }
       ],
       order: [['created_at', 'DESC']],
       distinct: true
@@ -140,6 +141,7 @@ export async function listFunnelNegotiations(req, res) {
     }
     return res.json(list.map(n => {
       const totalAcessos = n.customProposal ? n.customProposal.total_acessos : (n.proposal ? n.proposal.total_acessos : 0);
+      const pedido = n.pedidoDeVenda || null;
       return {
         id: n.id,
         funil_stage: Number(n.funil_stage || 1),
@@ -154,6 +156,13 @@ export async function listFunnelNegotiations(req, res) {
         created_at: n.created_at,
         created_by: n.created_by !== null && n.created_by !== undefined ? Number(n.created_by) : null,
         creator: n.creator ? { id: n.creator.id, name: n.creator.name, email: n.creator.email || null, celular: n.creator.celular || null } : null,
+        pedido_venda_id: pedido ? pedido.id : null,
+        pedido_venda_status: pedido ? (pedido.status || null) : null,
+        pedido_num_p2b: pedido ? (pedido.num_p2b || null) : null,
+        pedido_num_radar: pedido ? (pedido.num_radar || null) : null,
+        pedido_data_entrada: pedido ? (pedido.data_entrada || null) : null,
+        pedido_data_input: pedido ? (pedido.data_input || null) : null,
+        pedido_data_ativacao: pedido ? (pedido.data_ativacao || null) : null,
         client: n.client ? {
           id: n.client.id,
           name: n.client.name || '',

@@ -10,9 +10,9 @@
     <style>
         .kanban {
             display: grid;
-            grid-template-columns: repeat(5, minmax(260px, 1fr));
+            grid-template-columns: repeat(6, minmax(0, 1fr));
             gap: 0.75rem;
-            overflow-x: auto;
+            overflow-x: hidden;
             padding-bottom: 0.25rem;
         }
         .filters {
@@ -29,6 +29,7 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             min-height: 520px;
+            min-width: 0;
             display: flex;
             flex-direction: column;
         }
@@ -109,13 +110,15 @@
         .stage-3 { border-left-color: #06B6D4; }
         .stage-4 { border-left-color: #F59E0B; }
         .stage-5 { border-left-color: #10B981; }
+        .stage-6 { border-left-color: #EF4444; }
         .col-1 .kanban-head { background: rgba(59,130,246,0.10); }
         .col-2 .kanban-head { background: rgba(168,85,247,0.10); }
         .col-3 .kanban-head { background: rgba(6,182,212,0.10); }
         .col-4 .kanban-head { background: rgba(245,158,11,0.12); }
         .col-5 .kanban-head { background: rgba(16,185,129,0.10); }
+        .col-6 .kanban-head { background: rgba(239,68,68,0.10); }
         @media (max-width: 900px) {
-            .kanban { grid-template-columns: repeat(5, minmax(240px, 1fr)); }
+            .kanban { grid-template-columns: repeat(6, minmax(0, 1fr)); }
         }
     </style>
 </head>
@@ -164,6 +167,7 @@
                                 <option value="3">Cadastro</option>
                                 <option value="4">Análise</option>
                                 <option value="5">Finalizado</option>
+                                <option value="6">Portabilidade</option>
                             </select>
                         </div>
                     </div>
@@ -203,6 +207,13 @@
                             </div>
                             <div class="kanban-drop" data-stage="5" id="drop-5"></div>
                         </div>
+                        <div class="kanban-col col-6">
+                            <div class="kanban-head">
+                                <div class="kanban-title"><i data-lucide="repeat"></i><span>Portabilidade</span></div>
+                                <div class="kanban-badge" id="count-6">0</div>
+                            </div>
+                            <div class="kanban-drop" data-stage="6" id="drop-6"></div>
+                        </div>
                     </div>
                 </section>
             </div>
@@ -237,6 +248,15 @@
             clearTimeout(window.__toastTimer);
             window.__toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2500);
         }
+        function getStatusClass(status) {
+            if (!status) return 'chip-status neutral';
+            const s = String(status).toLowerCase();
+            if (s.includes('entrada') || s.includes('andamento')) return 'chip-status in-progress';
+            if (s.includes('pendente') || s.includes('pendência') || s.includes('pendencia') || s.includes('aguardando')) return 'chip-status pending';
+            if (s.includes('validado') || s.includes('ativos') || s.includes('concluído') || s.includes('concluido') || s.includes('concluída')) return 'chip-status concluded';
+            if (s.includes('reprovado') || s.includes('cancelado') || s.includes('cancelada') || s.includes('devolver')) return 'chip-status canceled';
+            return 'chip-status neutral';
+        }
         function fmtMoney(v) {
             try { return (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })).format(Number(v || 0)); } catch { return 'R$ 0,00'; }
         }
@@ -268,6 +288,27 @@
             const t = dt.getTime();
             return isFinite(t) ? t : null;
         }
+        function parseAnyDateToTime(raw) {
+            if (!raw) return null;
+            const s = String(raw).trim();
+            if (!s) return null;
+            const br = parseBRDateToTime(s);
+            if (br) return br;
+            if (s.includes('-') && s.length >= 10) {
+                const p = s.slice(0, 10).split('-');
+                if (p.length === 3) {
+                    const yr = Number(p[0]);
+                    const mon = Number(p[1]);
+                    const day = Number(p[2]);
+                    const dt = new Date(yr, mon - 1, day, 12, 0, 0);
+                    const t = dt.getTime();
+                    return isFinite(t) ? t : null;
+                }
+            }
+            const dt = new Date(s);
+            const t = dt.getTime();
+            return isFinite(t) ? t : null;
+        }
         function onlyDigits(s) { return String(s || '').replace(/\D/g, ''); }
         function fmtPhone(s) {
             const p = onlyDigits(s);
@@ -286,10 +327,18 @@
             const sub = [d.proposta].filter(Boolean).join(' • ') || '-';
             const valor = (d.valor !== null && d.valor !== undefined) ? fmtMoney(d.valor) : '-';
             const due = c.due_date ? fmtDateBR(c.due_date) : '-';
-            const created = d.created_at ? fmtDateBR(d.created_at) : '-';
+            const createdRaw = d.created_at || d.createdAt || d.data || null;
+            const created = createdRaw ? fmtDateBR(createdRaw) : '-';
             const phone = c.phone ? fmtPhone(c.phone) : '-';
             const vendedor = (d.creator && d.creator.name) ? d.creator.name : '-';
             const totalAcessos = (d.totalAcessos !== null && d.totalAcessos !== undefined) ? String(d.totalAcessos) : '-';
+            const stage = Number(d.funil_stage || 0);
+            const pedidoStatus = (stage === 4 || stage === 5 || stage === 6)
+                ? (d.pedido_venda_status || d.pedidoStatus || d.pedido_status || '')
+                : '';
+            const pedidoBadge = pedidoStatus
+                ? `<span class="${getStatusClass(pedidoStatus)}" title="Status do Pedido">${pedidoStatus}</span>`
+                : '';
             return `
                 <div class="deal stage-${d.funil_stage}" draggable="true" data-id="${d.id}">
                     <div class="deal-top">
@@ -301,6 +350,7 @@
                             <div class="deal-sub">${sub}</div>
                         </div>
                         <div class="deal-actions">
+                            ${pedidoBadge}
                             <button type="button" class="btn btn-ghost btn-icon" title="Abrir" onclick="window.openNegotiation(${d.id})"><i data-lucide="arrow-right"></i></button>
                         </div>
                     </div>
@@ -314,13 +364,13 @@
         }
 
         function render() {
-            const byStage = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+            const byStage = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
             (__deals || []).forEach(d => {
                 const s = Number(d.funil_stage || 1);
-                const k = (s >= 1 && s <= 5) ? s : 1;
+                const k = (s >= 1 && s <= 6) ? s : 1;
                 byStage[k].push(d);
             });
-            for (let s = 1; s <= 5; s++) {
+            for (let s = 1; s <= 6; s++) {
                 const drop = document.getElementById('drop-' + s);
                 const cnt = document.getElementById('count-' + s);
                 if (cnt) cnt.textContent = String(byStage[s].length);
@@ -362,7 +412,7 @@
                     if (!v.includes(vendedorNeedle)) return false;
                 }
                 if (tDe || tAte) {
-                    const base = parseBRDateToTime(d.data) || (d.created_at ? new Date(d.created_at).getTime() : null);
+                    const base = parseBRDateToTime(d.data) || parseAnyDateToTime(d.created_at || d.createdAt);
                     const bt = (base !== null && base !== undefined) ? Number(base) : null;
                     if (!bt || !isFinite(bt)) return false;
                     if (tDe && bt < tDe) return false;
@@ -380,6 +430,7 @@
             if (s === 3) return 'Cadastro';
             if (s === 4) return 'Análise';
             if (s === 5) return 'Finalizado';
+            if (s === 6) return 'Portabilidade';
             return 'Prospecção';
         }
 
@@ -453,6 +504,9 @@
                     render();
                     try {
                         await api('/negotiations/' + id + '/funnel-stage', { method: 'PUT', body: JSON.stringify({ funil_stage: stage }) });
+                        if (stage === 4 || stage === 5 || stage === 6 || prev === 4 || prev === 5 || prev === 6) {
+                            await load();
+                        }
                     } catch (err) {
                         deal.funil_stage = prev;
                         render();
@@ -464,7 +518,13 @@
 
         async function load() {
             try {
-                __dealsAll = await api('/negotiations/funnel', { method: 'GET' });
+                const raw = await api('/negotiations/funnel', { method: 'GET' });
+                __dealsAll = (Array.isArray(raw) ? raw : []).map(d => {
+                    const createdRaw = d.created_at || d.createdAt || d.data || null;
+                    if (d.created_at) return d;
+                    if (!createdRaw) return d;
+                    return { ...d, created_at: createdRaw };
+                });
                 applyFilters();
             } catch (err) {
                 __dealsAll = [];
