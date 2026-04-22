@@ -652,6 +652,12 @@
             if (digits.length <= 12) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
             return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
         }
+        function formatMoneyCompact(v) {
+            const n = Number(String(v === null || v === undefined ? '' : v).replace(',', '.'));
+            if (!isFinite(n)) return 'R$0,00';
+            const s = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
+            return s.replace(/\s/g, '');
+        }
 
         function renderBackendTable(data) {
             const tbody = document.getElementById('tbodyBackend');
@@ -679,7 +685,11 @@
                     <td>
                         <div style="font-weight: 600;">${item.totalAcessos || 0} acessos</div>
                         ${item.valorTotalFatura ? `<div class="muted" style="font-size: 0.8rem;">R$ ${item.valorTotalFatura}</div>` : ''}
-                        <div class="muted" style="font-size: 0.8rem;">${item.infoTexto || '-'}</div>
+                        ${
+                            (Array.isArray(item.itensResumo) && item.itensResumo.length > 0)
+                                ? item.itensResumo.map(it => `<div class="muted" style="font-size: 0.8rem;">${it.qtd || 0} - ${it.tipo || '-'} - ${formatMoneyCompact(it.valor)}</div>`).join('')
+                                : `<div class="muted" style="font-size: 0.8rem;">${item.infoTexto || '-'}</div>`
+                        }
                     </td>
                     <td><span class="${getStatusClass(item.statusPedido )}">${item.statusPedido  || '-'}</span></td>
                     <td class="col-actions">

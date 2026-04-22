@@ -1,6 +1,11 @@
 import { PedidoDeVenda, Negotiation, NegociacaoProposta, NegociacaoPropostaCustomizada, Client, User } from '../models/index.js';
 import { Op } from 'sequelize';
 
+function toNumber(x, d = 0) {
+  const n = Number(String(x === null || x === undefined ? '' : x).replace(',', '.'));
+  return isFinite(n) ? n : d;
+}
+
 export async function obterDetalhesPedido(req, res) {
   try {
     const { id } = req.params;
@@ -91,6 +96,7 @@ export async function listarPedidosConcluidos(req, res) {
       const cust = neg.customProposal || null;
       let totalAcessos = 0;
       let linhas = [];
+      let isCustom = false;
       if (prop && prop.linhas && Array.isArray(prop.linhas)) {
         linhas = prop.linhas;
         totalAcessos = linhas.reduce((sum, l) => {
@@ -99,6 +105,7 @@ export async function listarPedidosConcluidos(req, res) {
         }, 0);
       } else if (cust && cust.linhas && Array.isArray(cust.linhas)) {
         linhas = cust.linhas;
+        isCustom = true;
         totalAcessos = linhas.reduce((sum, l) => {
           const q = Number(l && l.quantidade !== undefined ? l.quantidade : 1);
           return sum + (isFinite(q) ? q : 1);
@@ -107,41 +114,66 @@ export async function listarPedidosConcluidos(req, res) {
         totalAcessos = Number(prop?.total_acessos || cust?.total_acessos || 0);
       }
 
+      const bucketKey = (raw) => {
+        const tipo = String(raw || 'Novo').toLowerCase();
+        if (tipo.includes('novo')) return 'novo';
+        if (tipo.includes('aditivo') || tipo.includes('adtiv')) return 'adit';
+        if (tipo.includes('reneg') || tipo.includes('renov')) return 'reneg';
+        if (tipo.includes('wttx')) return 'wttx';
+        if (tipo.includes('m2m')) return 'm2m';
+        if (tipo.includes('fibra') || tipo.includes('ultra')) return 'fibra';
+        if (tipo.includes('tim') || tipo.includes('controle')) return 'tim';
+        return 'outros';
+      };
+
       // Calculate breakdown by tipoNegociacao (Novo, Renegociação, Aditivo, WTTx, etc.)
       const breakdown = {};
+      const breakdownValor = {};
       linhas.forEach(l => {
-        const tipo = String(l.tipoNegociacao || l.tipo || 'Novo').toLowerCase();
-        const qtd = Number(l.quantidade || 1);
-        if (tipo.includes('novo')) {
-          breakdown.novo = (breakdown.novo || 0) + qtd;
-        } else if (tipo.includes('aditivo')) {
-          breakdown.aditivo = (breakdown.aditivo || 0) + qtd;
-        } else if (tipo.includes('reneg') || tipo.includes('renov')) {
-          breakdown.reneg = (breakdown.reneg || 0) + qtd;
-        } else if (tipo.includes('wttx')) {
-          breakdown.wttx = (breakdown.wttx || 0) + qtd;
-        } else if (tipo.includes('m2m')) {
-          breakdown.m2m = (breakdown.m2m || 0) + qtd;
-        } else if (tipo.includes('fibra') || tipo.includes('ultra')) {
-          breakdown.fibra = (breakdown.fibra || 0) + qtd;
-        } else if (tipo.includes('tim') || tipo.includes('controle')) {
-          breakdown.tim = (breakdown.tim || 0) + qtd;
-        } else {
-          breakdown.outros = (breakdown.outros || 0) + qtd;
-        }
+        const qtd = toNumber(l.quantidade, 1) || 1;
+        const key = bucketKey(l.tipoNegociacao || l.tipo);
+        const unit = (() => {
+          if (isCustom) {
+            const v = toNumber(l.valorNaoFidelizado !== undefined ? l.valorNaoFidelizado : (l.valorPlano !== undefined ? l.valorPlano : l.precoAtual), 0);
+            const desc = toNumber(l.desconto, 0);
+            const planoFinal = v * (1 - desc / 100);
+            const device = String(l.temAparelho || '') === 'Sim' ? toNumber(l.valorAparelho, 0) : 0;
+            return planoFinal + device;
+          }
+          const vPlano = toNumber(l.valorPlano, 0);
+          const vAparelho = String(l.temAparelho || '') === 'Sim' ? toNumber(l.valorAparelho, 0) : 0;
+          return vPlano + vAparelho;
+        })();
+        breakdown[key] = (breakdown[key] || 0) + qtd;
+        breakdownValor[key] = (breakdownValor[key] || 0) + (qtd * unit);
       });
 
       // Build info string like "7 novos, 8 reneg, 3 wttx"
       const parts = [];
-      if (breakdown.novo) parts.push(`${breakdown.novo} novo${breakdown.novo > 1 ? 's' : ''}`);
-      if (breakdown.aditivo) parts.push(`${breakdown.aditivo} aditivo${breakdown.aditivo > 1 ? 's' : ''}`);
       if (breakdown.reneg) parts.push(`${breakdown.reneg} reneg${breakdown.reneg > 1 ? 's' : ''}`);
+      if (breakdown.adit) parts.push(`${breakdown.adit} adit${breakdown.adit > 1 ? 's' : ''}`);
+      if (breakdown.novo) parts.push(`${breakdown.novo} novo${breakdown.novo > 1 ? 's' : ''}`);
       if (breakdown.wttx) parts.push(`${breakdown.wttx} wttx`);
       if (breakdown.m2m) parts.push(`${breakdown.m2m} m2m`);
       if (breakdown.fibra) parts.push(`${breakdown.fibra} fibra`);
       if (breakdown.tim) parts.push(`${breakdown.tim} tim`);
       if (breakdown.outros) parts.push(`${breakdown.outros} outro${breakdown.outros > 1 ? 's' : ''}`);
       const infoTexto = parts.length > 0 ? parts.join(', ') : '-';
+
+      const labels = {
+        reneg: 'reneg',
+        adit: 'Adit',
+        novo: 'Novo',
+        wttx: 'WTTx',
+        m2m: 'M2M',
+        fibra: 'Fibra',
+        tim: 'TIM',
+        outros: 'Outros'
+      };
+      const ordem = ['reneg', 'adit', 'novo', 'wttx', 'm2m', 'fibra', 'tim', 'outros'];
+      const itensResumo = ordem
+        .filter(k => breakdown[k] && breakdownValor[k] !== undefined)
+        .map(k => ({ qtd: Number(breakdown[k] || 0), tipo: labels[k] || k, valor: Number(breakdownValor[k] || 0) }));
 
       acc.push({
         id: p.id,
@@ -163,6 +195,7 @@ export async function listarPedidosConcluidos(req, res) {
         totalAcessos,
         infoTexto,
         breakdown,
+        itensResumo,
         created_at: p.created_at
       });
       return acc;
