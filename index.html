@@ -1297,6 +1297,7 @@
         }
         let usuarios = [];
         async function carregarUsuarios() {
+            window.location.href = 'quadro-vendas.html'
             try {
                 let list = await api('/auth/users?role=user', { method: 'GET' });
                 if (!Array.isArray(list) || list.length === 0) {
