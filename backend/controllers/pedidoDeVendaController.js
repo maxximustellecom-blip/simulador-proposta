@@ -71,6 +71,28 @@ function pickLevelNameFromConfig(baseRevenue, levels) {
   return chosen;
 }
 
+function rowHasRates(row) {
+  if (!row || typeof row !== 'object') return false;
+  return ['novo', 'aditivo', 'portabilidade', 'renovacao', 'ultra_fibra', 'wttx', 'm2m', 'controle', 'migracao', 'tt']
+    .some(k => {
+      const v = row[k];
+      if (v === undefined || v === null) return false;
+      const s = String(v).trim();
+      if (!s) return false;
+      const n = parsePercentage(s);
+      return isFinite(n) && n > 0;
+    });
+}
+
+function pickBestProductRow(config, desiredLevelName) {
+  const products = config && Array.isArray(config.products) ? config.products : [];
+  if (!products.length) return null;
+  const desired = products.find(p => p && p.level_group === desiredLevelName) || null;
+  if (desired && rowHasRates(desired)) return desired;
+  const any = products.find(p => rowHasRates(p)) || null;
+  return any;
+}
+
 function mapLineToCommissionKey(line) {
   const isPort = String(line && line.portabilidade || '').toLowerCase() === 'sim';
   if (isPort) return 'portabilidade';
@@ -226,46 +248,55 @@ export async function listarPedidosConcluidos(req, res) {
         totalAcessos = Number(prop?.total_acessos || cust?.total_acessos || 0);
       }
 
-      // Calculate breakdown by tipoNegociacao (Novo, Aditivo, Portabilidade, Renov., etc.)
+      const bucketKey = (line) => {
+        const isPort = String(line && line.portabilidade || '').toLowerCase() === 'sim';
+        const tipo = String((line && (line.tipoNegociacao || line.tipo)) || 'Novo').toLowerCase();
+        if (isPort || tipo.includes('port')) return 'port';
+        if (tipo.includes('novo')) return 'novo';
+        if (tipo.includes('aditivo') || tipo.includes('adtiv')) return 'adit';
+        if (tipo.includes('reneg') || tipo.includes('renov')) return 'reneg';
+        if (tipo.includes('wttx')) return 'wttx';
+        if (tipo.includes('m2m')) return 'm2m';
+        if (tipo.includes('fibra') || tipo.includes('ultra')) return 'fibra';
+        if (tipo.includes('tim') || tipo.includes('controle')) return 'tim';
+        return 'outros';
+      };
+
+      // Calculate breakdown for UI grouping (pedido-vendas)
       const breakdown = {};
       const breakdownValor = {};
       linhas.forEach(l => {
         const qtd = getLineQty(l);
-        const key = mapLineToCommissionKey(l);
+        const key = bucketKey(l);
         const unit = getLineUnitValue(l, isCustom);
         breakdown[key] = (breakdown[key] || 0) + qtd;
         breakdownValor[key] = (breakdownValor[key] || 0) + (qtd * unit);
       });
 
-      // Build info string like "7 novos, 8 reneg, 3 wttx"
       const parts = [];
-      if (breakdown.renovacao) parts.push(`${breakdown.renovacao} renov`);
-      if (breakdown.aditivo) parts.push(`${breakdown.aditivo} adit`);
-      if (breakdown.novo) parts.push(`${breakdown.novo} novo`);
-      if (breakdown.portabilidade) parts.push(`${breakdown.portabilidade} port`);
-      if (breakdown.ultra_fibra) parts.push(`${breakdown.ultra_fibra} fibra`);
+      if (breakdown.reneg) parts.push(`${breakdown.reneg} reneg${breakdown.reneg > 1 ? 's' : ''}`);
+      if (breakdown.adit) parts.push(`${breakdown.adit} adit${breakdown.adit > 1 ? 's' : ''}`);
+      if (breakdown.novo) parts.push(`${breakdown.novo} novo${breakdown.novo > 1 ? 's' : ''}`);
+      if (breakdown.port) parts.push(`${breakdown.port} port`);
       if (breakdown.wttx) parts.push(`${breakdown.wttx} wttx`);
       if (breakdown.m2m) parts.push(`${breakdown.m2m} m2m`);
-      if (breakdown.controle) parts.push(`${breakdown.controle} controle`);
-      if (breakdown.migracao) parts.push(`${breakdown.migracao} migr`);
-      if (breakdown.tt) parts.push(`${breakdown.tt} tt`);
+      if (breakdown.fibra) parts.push(`${breakdown.fibra} fibra`);
+      if (breakdown.tim) parts.push(`${breakdown.tim} tim`);
       if (breakdown.outros) parts.push(`${breakdown.outros} outro${breakdown.outros > 1 ? 's' : ''}`);
       const infoTexto = parts.length > 0 ? parts.join(', ') : '-';
 
       const labels = {
+        reneg: 'reneg',
+        adit: 'Adit',
         novo: 'Novo',
-        aditivo: 'Aditivo',
-        portabilidade: 'Portabilidade',
-        renovacao: 'Renov.',
-        ultra_fibra: 'U. Fibra',
-        wttx: 'WTTX',
+        port: 'Port',
+        wttx: 'WTTx',
         m2m: 'M2M',
-        controle: 'Controle',
-        migracao: 'Migração PF/PJ',
-        tt: 'TT',
+        fibra: 'Fibra',
+        tim: 'TIM',
         outros: 'Outros'
       };
-      const ordem = ['novo', 'aditivo', 'portabilidade', 'renovacao', 'ultra_fibra', 'wttx', 'm2m', 'controle', 'migracao', 'tt', 'outros'];
+      const ordem = ['reneg', 'adit', 'novo', 'port', 'wttx', 'm2m', 'fibra', 'tim', 'outros'];
       const totalTarget = toNumber(neg.valor, 0);
       const totalRaw = ordem.reduce((sum, k) => sum + toNumber(breakdownValor[k], 0), 0);
       const scale = (totalRaw > 0 && totalTarget > 0) ? (totalTarget / totalRaw) : 1;
@@ -430,9 +461,7 @@ export async function exportarComissaoPedidos(req, res) {
         return acc + sum;
       }, 0);
       const levelName = useLevel ? pickLevelNameFromConfig(baseRevenue, cfg && cfg.levels) : null;
-      const levelRow = (useLevel && cfg && Array.isArray(cfg.products))
-        ? cfg.products.find(p => p && p.level_group === levelName)
-        : null;
+      const levelRow = useLevel ? pickBestProductRow(cfg, levelName) : null;
       consultorRule.set(consultorId, { useLevel, levelRow, defaults: DEFAULT_RATES });
     });
 
@@ -456,9 +485,14 @@ export async function exportarComissaoPedidos(req, res) {
         let rate = fallback;
         if (rule.useLevel && rule.levelRow) {
           const raw = rule.levelRow[key];
-          if (raw !== undefined && raw !== null && String(raw).trim() !== '') {
-            rate = parsePercentage(raw);
-            if (!isFinite(rate) || rate <= 0) rate = fallback;
+          if (raw !== undefined && raw !== null) {
+            const rawStr = String(raw).trim();
+            if (rawStr !== '') {
+              rate = parsePercentage(rawStr);
+              const isExplicitZero = /^0+([,.]0+)?%?$/.test(rawStr);
+              if (!isFinite(rate)) rate = fallback;
+              else if (rate <= 0 && !isExplicitZero) rate = fallback;
+            }
           }
         }
         return acc + (toNumber(it.valor, 0) * rate);

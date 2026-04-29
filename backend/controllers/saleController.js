@@ -97,6 +97,28 @@ function pickLevelNameFromConfig(baseRevenue, levels) {
   return chosen;
 }
 
+function rowHasRates(row) {
+  if (!row || typeof row !== 'object') return false;
+  return ['novo', 'aditivo', 'portabilidade', 'renovacao', 'ultra_fibra', 'wttx', 'm2m', 'controle', 'migracao', 'tt']
+    .some(k => {
+      const v = row[k];
+      if (v === undefined || v === null) return false;
+      const s = String(v).trim();
+      if (!s) return false;
+      const n = parsePercentage(s);
+      return isFinite(n) && n > 0;
+    });
+}
+
+function pickBestProductRow(config, desiredLevelName) {
+  const products = config && Array.isArray(config.products) ? config.products : [];
+  if (!products.length) return null;
+  const desired = products.find(p => p && p.level_group === desiredLevelName) || null;
+  if (desired && rowHasRates(desired)) return desired;
+  const any = products.find(p => rowHasRates(p)) || null;
+  return any;
+}
+
 function getLineTypeRaw(n, l, productTypeByName) {
   const direct = (l && (l.tipoNegociacao || l.tipo)) || (n && n.tipo) || '';
   if (direct) return direct;
@@ -192,6 +214,7 @@ export async function getQuadroVendas(req, res) {
         });
       }
       const levelName = shouldUseLevel ? pickLevelNameFromConfig(baseRevenueForLevel, config.levels) : null;
+      const levelConfigRow = shouldUseLevel ? pickBestProductRow(config, levelName) : null;
       
       const stats = {
         name: user.name,
@@ -219,25 +242,30 @@ export async function getQuadroVendas(req, res) {
           const qtd = getLineQty(l);
           
           let rate = 0;
-          if (shouldUseLevel && config && Array.isArray(config.products)) {
-            const levelConfig = config.products.find(p => p.level_group === levelName);
-            if (levelConfig) {
-              rate = parsePercentage(levelConfig[key]);
+          const defaults = {
+            novo: 0.6,
+            aditivo: 0.6,
+            portabilidade: 0.6,
+            renovacao: 0.3,
+            ultra_fibra: 0.3,
+            wttx: 0.6,
+            m2m: 0.6,
+            controle: 0.6,
+            migracao: 0.3,
+            tt: 0.3
+          };
+          const fallback = defaults[key] || 0;
+          rate = fallback;
+          if (shouldUseLevel && levelConfigRow) {
+            const raw = levelConfigRow[key];
+            if (raw !== undefined && raw !== null) {
+              const rawStr = String(raw).trim();
+              if (rawStr !== '') {
+                const parsed = parsePercentage(rawStr);
+                const isExplicitZero = /^0+([,.]0+)?%?$/.test(rawStr);
+                if (isFinite(parsed) && (parsed > 0 || isExplicitZero)) rate = parsed;
+              }
             }
-          } else {
-            const defaults = {
-              novo: 0.6,
-              aditivo: 0.6,
-              portabilidade: 0.6,
-              renovacao: 0.3,
-              ultra_fibra: 0.3,
-              wttx: 0.6,
-              m2m: 0.6,
-              controle: 0.6,
-              migracao: 0.3,
-              tt: 0.3
-            };
-            rate = defaults[key] || 0;
           }
           const target = isAtiva ? stats[group].at : stats[group].ent;
           target.qtd += qtd;
