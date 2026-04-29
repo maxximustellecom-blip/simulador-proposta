@@ -289,10 +289,14 @@
                     <span>Pedidos de Vendas</span>
                     <span class="chip">Somente Admin</span>
                 </div>
-                <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-bottom: 12px; flex-wrap: wrap;">
                     <button class="btn btn-green" onclick="exportarTabela()">
                         <i data-lucide="download"></i>
                         <span>Exportar para CSV</span>
+                    </button>
+                    <button class="btn btn-primary" onclick="exportarComissao()">
+                        <i data-lucide="file-down"></i>
+                        <span>Exportar Comissão</span>
                     </button>
                 </div>
             </div>
@@ -694,6 +698,63 @@
             link.click();
             document.body.removeChild(link);
             toast('Tabela exportada com sucesso!');
+        }
+
+        async function exportarComissao() {
+            const data = Array.isArray(__filteredBackendData) ? __filteredBackendData : (Array.isArray(backendData) ? backendData : []);
+            if (!data || data.length === 0) {
+                toast('Não há dados para exportar', 'error');
+                return;
+            }
+            const ids = data.map(x => Number(x && x.id)).filter(Boolean);
+            if (!ids.length) {
+                toast('Não há dados para exportar', 'error');
+                return;
+            }
+
+            let rows = [];
+            try {
+                rows = await api('/pedidos-venda/export-comissao', { method: 'POST', body: JSON.stringify({ ids }) });
+            } catch (e) {
+                console.error(e);
+                toast('Erro ao exportar comissão: ' + (e && e.message ? e.message : 'falha'), 'error');
+                return;
+            }
+
+            const buildValores = (item) => {
+                if (Array.isArray(item.itensResumo) && item.itensResumo.length > 0) {
+                    return item.itensResumo
+                        .map(it => `${it.qtd || 0} - ${it.tipo || '-'} - ${formatMoneyCompact(it.valor)}`)
+                        .join('\n');
+                }
+                return '-';
+            };
+
+            const headers = ['Razão social', 'Data ativação', 'Acessos', 'Produto / Tipo / Valores', 'Status do Pedido', 'Comissão'];
+            const table = (Array.isArray(rows) ? rows : []).map(item => ([
+                String(item.razaoSocial || '-') || '-',
+                formatData(item.dataAtivacao),
+                String(item.totalAcessos || 0),
+                buildValores(item),
+                String(item.statusPedido || '-') || '-',
+                formatMoneyCompact(item.comissao || 0)
+            ]));
+
+            const csvContent = [
+                headers.join(';'),
+                ...table.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
+            ].join('\n');
+
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `comissao_consultores_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast('Comissão exportada com sucesso!');
         }
 
         function formatData(d) {
