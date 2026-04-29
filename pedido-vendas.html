@@ -730,8 +730,9 @@
                 return '-';
             };
 
-            const headers = ['Razão social', 'Data ativação', 'Acessos', 'Produto / Tipo / Valores', 'Status do Pedido', 'Comissão'];
+            const headers = ['Consultor', 'Razão social', 'Data ativação', 'Acessos', 'Produto / Tipo / Valores', 'Status do Pedido', 'Comissão'];
             const table = (Array.isArray(rows) ? rows : []).map(item => ([
+                String(item.consultor || '-') || '-',
                 String(item.razaoSocial || '-') || '-',
                 formatData(item.dataAtivacao),
                 String(item.totalAcessos || 0),

@@ -80,6 +80,7 @@ function mapLineToCommissionKey(line) {
     .replace(/\s+/g, ' ')
     .trim();
   if (t.includes('portabilidade')) return 'portabilidade';
+  if (t.includes('1º') || t.includes('1o') || (t.includes('acesso') && !t.includes('renov') && !t.includes('reneg'))) return 'novo';
   if (t.includes('novo')) return 'novo';
   if (t.includes('aditivo') || t.includes('adtivo') || t.includes('adit')) return 'aditivo';
   if (t.includes('reneg') || t.includes('renov')) return 'renovacao';
@@ -382,6 +383,7 @@ export async function exportarComissaoPedidos(req, res) {
         pedido_id: p.id,
         negotiation_id: p.negotiation_id,
         consultor_id: creator ? creator.id : null,
+        consultor: creator ? (creator.name || '') : '',
         razaoSocial: neg.client?.name || '',
         dataAtivacao: p.data_ativacao || '',
         totalAcessos,
@@ -390,6 +392,20 @@ export async function exportarComissaoPedidos(req, res) {
         commission_config
       });
     });
+
+    const DEFAULT_RATES = {
+      novo: 0.6,
+      aditivo: 0.6,
+      portabilidade: 0.6,
+      renovacao: 0.3,
+      ultra_fibra: 0.3,
+      wttx: 0.6,
+      m2m: 0.6,
+      controle: 0.6,
+      migracao: 0.3,
+      tt: 0.3,
+      outros: 0
+    };
 
     const byConsultor = new Map();
     prepared.forEach(r => {
@@ -417,26 +433,11 @@ export async function exportarComissaoPedidos(req, res) {
       const levelRow = (useLevel && cfg && Array.isArray(cfg.products))
         ? cfg.products.find(p => p && p.level_group === levelName)
         : null;
-
-      const defaults = {
-        novo: 0.6,
-        aditivo: 0.6,
-        portabilidade: 0.6,
-        renovacao: 0.3,
-        ultra_fibra: 0.3,
-        wttx: 0.6,
-        m2m: 0.6,
-        controle: 0.6,
-        migracao: 0.3,
-        tt: 0.3,
-        outros: 0
-      };
-
-      consultorRule.set(consultorId, { useLevel, levelRow, defaults });
+      consultorRule.set(consultorId, { useLevel, levelRow, defaults: DEFAULT_RATES });
     });
 
     const result = prepared.map(row => {
-      const rule = consultorRule.get(Number(row.consultor_id || 0)) || null;
+      const rule = consultorRule.get(Number(row.consultor_id || 0)) || { useLevel: false, levelRow: null, defaults: DEFAULT_RATES };
       const itens = Array.isArray(row.itensResumo) ? row.itensResumo : [];
       const comissao = itens.reduce((acc, it) => {
         const label = normalizeText(it && it.tipo);
@@ -451,12 +452,19 @@ export async function exportarComissaoPedidos(req, res) {
         else if (label.includes('controle')) key = 'controle';
         else if (label.includes('migr')) key = 'migracao';
         else if (label === 'tt') key = 'tt';
-        const rate = (rule && rule.useLevel && rule.levelRow)
-          ? parsePercentage(rule.levelRow[key])
-          : (rule ? (rule.defaults[key] || 0) : 0);
+        const fallback = (rule.defaults && rule.defaults[key] !== undefined) ? rule.defaults[key] : 0;
+        let rate = fallback;
+        if (rule.useLevel && rule.levelRow) {
+          const raw = rule.levelRow[key];
+          if (raw !== undefined && raw !== null && String(raw).trim() !== '') {
+            rate = parsePercentage(raw);
+            if (!isFinite(rate) || rate <= 0) rate = fallback;
+          }
+        }
         return acc + (toNumber(it.valor, 0) * rate);
       }, 0);
       return {
+        consultor: row.consultor || '',
         razaoSocial: row.razaoSocial,
         dataAtivacao: row.dataAtivacao,
         totalAcessos: row.totalAcessos,
