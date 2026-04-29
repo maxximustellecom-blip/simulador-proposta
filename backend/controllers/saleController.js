@@ -223,12 +223,24 @@ export async function getQuadroVendas(req, res) {
       const levelName = shouldUseLevel ? pickLevelNameFromConfig(baseRevenueForLevel, config.levels) : null;
       const levelConfigRow = shouldUseLevel ? pickBestProductRow(config, levelName) : null;
       
+      const empty = () => ({ ent: { qtd: 0, com: 0 }, at: { qtd: 0, com: 0 } });
+      const types = {
+        novo: empty(),
+        aditivo: empty(),
+        portabilidade: empty(),
+        renovacao: empty(),
+        ultra_fibra: empty(),
+        wttx: empty(),
+        m2m: empty(),
+        controle: empty(),
+        migracao: empty(),
+        tt: empty(),
+        outros: empty()
+      };
       const stats = {
         name: user.name,
-        novo: { ent: { qtd: 0, rec: 0 }, at: { qtd: 0, rec: 0 } },
-        reneg: { ent: { qtd: 0, rec: 0 }, at: { qtd: 0, rec: 0 } },
-        fibra: { ent: { qtd: 0, rec: 0 }, at: { qtd: 0, rec: 0 } },
-        tim: { ent: { qtd: 0, rec: 0 }, at: { qtd: 0, rec: 0 } }
+        types,
+        totals: { ent: { qtd: 0, com: 0 }, at: { qtd: 0, com: 0 } }
       };
 
       userNegs.forEach(n => {
@@ -244,7 +256,6 @@ export async function getQuadroVendas(req, res) {
           const isPort = String(l && l.portabilidade || '').toLowerCase() === 'sim';
           const tipoRaw = getLineTypeRaw(n, l, productTypeByName);
           const key = mapProductToCommissionKeyFromRaw(tipoRaw, isPort);
-          const group = mapCommissionKeyToGroup(key);
           const itemVal = getLineValue(l);
           const qtd = getLineQty(l);
           
@@ -274,9 +285,13 @@ export async function getQuadroVendas(req, res) {
               }
             }
           }
-          const target = isAtiva ? stats[group].at : stats[group].ent;
+          const bucket = stats.types[key] ? key : 'outros';
+          const target = isAtiva ? stats.types[bucket].at : stats.types[bucket].ent;
           target.qtd += qtd;
-          target.rec += itemVal * rate;
+          target.com += itemVal * rate;
+          const totalTarget = isAtiva ? stats.totals.at : stats.totals.ent;
+          totalTarget.qtd += qtd;
+          totalTarget.com += itemVal * rate;
         });
       });
 

@@ -57,24 +57,27 @@
             --card-bg: #ffffff;
         }
 
-        .qv-input {
-            display: block;
-            min-width: 50px;
-            text-align: center;
-            padding: 6px;
-            font-size: 0.9rem;
-            border: 1px solid transparent;
-            border-radius: var(--radius);
-            background: transparent;
-            color: var(--text);
-            transition: all 0.2s;
-            cursor: default;
+        .qv-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 6px 4px;
+            min-width: 74px;
         }
-        /* Removed hover/focus styles for non-editable inputs */
-        /* Style for read-only spans in footer */
-        tfoot .qv-input {
-            cursor: default;
-            pointer-events: none;
+        .qv-qtd {
+            font-size: 0.72rem;
+            color: var(--muted);
+            line-height: 1;
+            font-weight: 600;
+        }
+        .qv-money {
+            font-size: 0.82rem;
+            font-weight: 800;
+            line-height: 1.1;
+            color: var(--text);
+            white-space: nowrap;
         }
         
         .board-container {
@@ -139,7 +142,15 @@
             font-weight: 500;
             color: var(--text);
             background-color: var(--header-bg);
-            width: 150px;
+            width: 180px;
+            position: sticky;
+            left: 0;
+            z-index: 3;
+        }
+        thead .th-group-consultor {
+            position: sticky;
+            left: 0;
+            z-index: 60;
         }
 
         .total-row td {
@@ -248,10 +259,15 @@
                 font-size: 0.7rem;
             }
             
-            .qv-input {
-                min-width: 35px;
-                font-size: 0.75rem;
+            .qv-cell {
+                min-width: 60px;
                 padding: 4px 2px;
+            }
+            .qv-qtd {
+                font-size: 0.68rem;
+            }
+            .qv-money {
+                font-size: 0.76rem;
             }
 
             .card-footer {
@@ -291,6 +307,9 @@
                     </div>
                 </div>
             </div>
+            <div class="muted" style="margin-top:-0.25rem; padding: 0 0.25rem 0.75rem 0.25rem; font-size: 0.85rem;">
+                ENT = Em andamento • AT = Contratos Ativos • Cada célula mostra Qtd + Comissão (R$)
+            </div>
             
             <div id="captureArea" class="capture-area">
                 <div class="board-container">
@@ -298,35 +317,41 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th rowspan="3" class="th-group-consultor" style="min-width: 150px;">CONSULTOR</th>
-                                    <th colspan="4" class="th-group-novo">NOVO + ADITIVO</th>
-                                    <th colspan="4" class="th-group-reneg">RENEG</th>
-                                    <th colspan="2" class="th-group-fibra">FIBRA</th>
-                                    <th colspan="2" class="th-group-tim">TIM CONTROLE</th>
+                                    <th rowspan="2" class="th-group-consultor" style="min-width: 180px;">CONSULTOR</th>
+                                    <th colspan="2" class="th-group-novo">NOVO</th>
+                                    <th colspan="2" class="th-group-novo">ADITIVO</th>
+                                    <th colspan="2" class="th-group-novo">PORTABILIDADE</th>
+                                    <th colspan="2" class="th-group-reneg">RENOV.</th>
+                                    <th colspan="2" class="th-group-fibra">U. FIBRA</th>
+                                    <th colspan="2" class="th-group-fibra">WTTX</th>
+                                    <th colspan="2" class="th-group-fibra">M2M</th>
+                                    <th colspan="2" class="th-group-tim">CONTROLE</th>
+                                    <th colspan="2" class="th-group-reneg">MIGRAÇÃO PF/PJ</th>
+                                    <th colspan="2" class="th-group-reneg">TT</th>
+                                    <th colspan="1" class="th-group-consultor">TOTAL</th>
                                 </tr>
                                 <tr>
-                                    <th colspan="2" class="th-group-novo" style="opacity: 0.9">ENTRANTES</th>
-                                    <th colspan="2" class="th-group-novo" style="opacity: 0.9">ATIVOS</th>
-                                    <th colspan="2" class="th-group-reneg" style="opacity: 0.9">ENTRANTES</th>
-                                    <th colspan="2" class="th-group-reneg" style="opacity: 0.9">ATIVOS</th>
-                                    <th colspan="1" class="th-group-fibra" style="opacity: 0.9">ENTRANTES</th>
-                                    <th colspan="1" class="th-group-fibra" style="opacity: 0.9">ATIVOS</th>
-                                    <th colspan="1" class="th-group-tim" style="opacity: 0.9">ENTRANTES</th>
-                                    <th colspan="1" class="th-group-tim" style="opacity: 0.9">ATIVOS</th>
-                                </tr>
-                                <tr>
-                                    <th class="th-group-novo" style="opacity: 0.8">QTD</th>
-                                    <th class="th-group-novo" style="opacity: 0.8">R$</th>
-                                    <th class="th-group-novo" style="opacity: 0.8">QTD</th>
-                                    <th class="th-group-novo" style="opacity: 0.8">R$</th>
-                                    <th class="th-group-reneg" style="opacity: 0.8">QTD</th>
-                                    <th class="th-group-reneg" style="opacity: 0.8">R$</th>
-                                    <th class="th-group-reneg" style="opacity: 0.8">QTD</th>
-                                    <th class="th-group-reneg" style="opacity: 0.8">R$</th>
-                                    <th class="th-group-fibra" style="opacity: 0.8">ENT</th>
-                                    <th class="th-group-fibra" style="opacity: 0.8">AT</th>
-                                    <th class="th-group-tim" style="opacity: 0.8">ENT</th>
-                                    <th class="th-group-tim" style="opacity: 0.8; text-align: left;">AT</th>
+                                    <th class="th-group-novo" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-novo" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-novo" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-novo" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-novo" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-novo" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-reneg" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-reneg" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-fibra" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-fibra" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-fibra" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-fibra" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-fibra" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-fibra" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-tim" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-tim" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-reneg" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-reneg" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-reneg" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-reneg" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-consultor" style="opacity: 0.9">R$</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody-consultores">
@@ -335,18 +360,27 @@
                             <tfoot>
                                 <tr class="total-row">
                                     <td class="total-cell">TOTAL EMPRESA</td>
-                                    <td><span id="total-novo-ent-qtd" class="qv-input">0</span></td>
-                                    <td><span id="total-novo-ent-rec" class="qv-input">0.00</span></td>
-                                    <td><span id="total-novo-at-qtd" class="qv-input">0</span></td>
-                                    <td><span id="total-novo-at-rec" class="qv-input">0.00</span></td>
-                                    <td><span id="total-reneg-ent-qtd" class="qv-input">0</span></td>
-                                    <td><span id="total-reneg-ent-rec" class="qv-input">0.00</span></td>
-                                    <td><span id="total-reneg-at-qtd" class="qv-input">0</span></td>
-                                    <td><span id="total-reneg-at-rec" class="qv-input">0.00</span></td>
-                                    <td><span id="total-fibra-ent-qtd" class="qv-input">0</span></td>
-                                    <td><span id="total-fibra-at-qtd" class="qv-input">0</span></td>
-                                    <td><span id="total-tim-ent-qtd" class="qv-input">0</span></td>
-                                    <td><span id="total-tim-at-qtd" class="qv-input">0</span></td>
+                                    <td><div class="qv-cell"><div id="total-novo-ent-qtd" class="qv-qtd">0</div><div id="total-novo-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-novo-at-qtd" class="qv-qtd">0</div><div id="total-novo-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-aditivo-ent-qtd" class="qv-qtd">0</div><div id="total-aditivo-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-aditivo-at-qtd" class="qv-qtd">0</div><div id="total-aditivo-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-portabilidade-ent-qtd" class="qv-qtd">0</div><div id="total-portabilidade-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-portabilidade-at-qtd" class="qv-qtd">0</div><div id="total-portabilidade-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-renovacao-ent-qtd" class="qv-qtd">0</div><div id="total-renovacao-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-renovacao-at-qtd" class="qv-qtd">0</div><div id="total-renovacao-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-ultra_fibra-ent-qtd" class="qv-qtd">0</div><div id="total-ultra_fibra-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-ultra_fibra-at-qtd" class="qv-qtd">0</div><div id="total-ultra_fibra-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-wttx-ent-qtd" class="qv-qtd">0</div><div id="total-wttx-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-wttx-at-qtd" class="qv-qtd">0</div><div id="total-wttx-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-m2m-ent-qtd" class="qv-qtd">0</div><div id="total-m2m-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-m2m-at-qtd" class="qv-qtd">0</div><div id="total-m2m-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-controle-ent-qtd" class="qv-qtd">0</div><div id="total-controle-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-controle-at-qtd" class="qv-qtd">0</div><div id="total-controle-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-migracao-ent-qtd" class="qv-qtd">0</div><div id="total-migracao-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-migracao-at-qtd" class="qv-qtd">0</div><div id="total-migracao-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-tt-ent-qtd" class="qv-qtd">0</div><div id="total-tt-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-tt-at-qtd" class="qv-qtd">0</div><div id="total-tt-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td><div class="qv-cell"><div id="total-company-com" class="qv-money">R$ 0,00</div></div></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -420,7 +454,7 @@
 
         async function loadQuadroData() {
             const tbody = document.getElementById('tbody-consultores');
-            tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding: 1rem;">Carregando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="22" style="text-align:center; padding: 1rem;">Carregando...</td></tr>';
             
             try {
                 // targetMonth is 1-indexed in backend
@@ -429,27 +463,54 @@
                 tbody.innerHTML = '';
                 
                 if (!data || data.length === 0) {
-                     tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding: 1rem;">Nenhum dado encontrado para este período.</td></tr>';
+                     tbody.innerHTML = '<tr><td colspan="22" style="text-align:center; padding: 1rem;">Nenhum dado encontrado para este período.</td></tr>';
                      calcularTotais();
                      return;
                 }
 
+                const types = ['novo','aditivo','portabilidade','renovacao','ultra_fibra','wttx','m2m','controle','migracao','tt'];
                 data.forEach(user => {
+                    const t = user && user.types ? user.types : {};
+                    const cell = (key, side) => {
+                        const obj = (t && t[key] && t[key][side]) ? t[key][side] : { qtd: 0, com: 0 };
+                        const qtd = Number(obj.qtd || 0);
+                        const com = Number(obj.com || 0);
+                        return `
+                            <div class="qv-cell" data-key="${key}-${side}" data-qtd="${qtd}" data-com="${com}">
+                                <div class="qv-qtd">${qtd}</div>
+                                <div class="qv-money" data-value="${com}">${formatMoneyBR(com)}</div>
+                            </div>
+                        `;
+                    };
+                    const totalCom = Number(((user && user.totals && user.totals.ent && user.totals.ent.com) || 0)) + Number(((user && user.totals && user.totals.at && user.totals.at.com) || 0));
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td class="consultor-col">${user.name || 'Sem Nome'}</td>
-                        <td><span class="qv-input">${user.novo.ent.qtd}</span></td>
-                        <td><span class="qv-input" data-value="${Number(user.novo.ent.rec || 0)}">${formatMoneyBR(user.novo.ent.rec)}</span></td>
-                        <td><span class="qv-input">${user.novo.at.qtd}</span></td>
-                        <td><span class="qv-input" data-value="${Number(user.novo.at.rec || 0)}">${formatMoneyBR(user.novo.at.rec)}</span></td>
-                        <td><span class="qv-input">${user.reneg.ent.qtd}</span></td>
-                        <td><span class="qv-input" data-value="${Number(user.reneg.ent.rec || 0)}">${formatMoneyBR(user.reneg.ent.rec)}</span></td>
-                        <td><span class="qv-input">${user.reneg.at.qtd}</span></td>
-                        <td><span class="qv-input" data-value="${Number(user.reneg.at.rec || 0)}">${formatMoneyBR(user.reneg.at.rec)}</span></td>
-                        <td><span class="qv-input">${user.fibra.ent.qtd}</span></td>
-                        <td><span class="qv-input">${user.fibra.at.qtd}</span></td>
-                        <td><span class="qv-input">${user.tim.ent.qtd}</span></td>
-                        <td><span class="qv-input">${user.tim.at.qtd}</span></td>
+                        <td>${cell('novo','ent')}</td>
+                        <td>${cell('novo','at')}</td>
+                        <td>${cell('aditivo','ent')}</td>
+                        <td>${cell('aditivo','at')}</td>
+                        <td>${cell('portabilidade','ent')}</td>
+                        <td>${cell('portabilidade','at')}</td>
+                        <td>${cell('renovacao','ent')}</td>
+                        <td>${cell('renovacao','at')}</td>
+                        <td>${cell('ultra_fibra','ent')}</td>
+                        <td>${cell('ultra_fibra','at')}</td>
+                        <td>${cell('wttx','ent')}</td>
+                        <td>${cell('wttx','at')}</td>
+                        <td>${cell('m2m','ent')}</td>
+                        <td>${cell('m2m','at')}</td>
+                        <td>${cell('controle','ent')}</td>
+                        <td>${cell('controle','at')}</td>
+                        <td>${cell('migracao','ent')}</td>
+                        <td>${cell('migracao','at')}</td>
+                        <td>${cell('tt','ent')}</td>
+                        <td>${cell('tt','at')}</td>
+                        <td>
+                            <div class="qv-cell" data-key="total" data-com="${totalCom}">
+                                <div class="qv-money" data-value="${totalCom}">${formatMoneyBR(totalCom)}</div>
+                            </div>
+                        </td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -458,49 +519,46 @@
                 
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding: 1rem; color: var(--danger);">Erro ao carregar dados do quadro.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="22" style="text-align:center; padding: 1rem; color: var(--danger);">Erro ao carregar dados do quadro.</td></tr>';
             }
         }
 
         function calcularTotais() {
-            const rows = document.querySelectorAll('#tbody-consultores tr');
-            const totals = {
-                novoEntQtd: 0, novoEntRec: 0, novoAtQtd: 0, novoAtRec: 0,
-                renegEntQtd: 0, renegEntRec: 0, renegAtQtd: 0, renegAtRec: 0,
-                fibraEntQtd: 0, fibraAtQtd: 0,
-                timEntQtd: 0, timAtQtd: 0
-            };
-
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('.qv-input');
-                if (cells.length === 12) {
-                    totals.novoEntQtd += readSpanNumber(cells[0]);
-                    totals.novoEntRec += readSpanNumber(cells[1]);
-                    totals.novoAtQtd += readSpanNumber(cells[2]);
-                    totals.novoAtRec += readSpanNumber(cells[3]);
-                    totals.renegEntQtd += readSpanNumber(cells[4]);
-                    totals.renegEntRec += readSpanNumber(cells[5]);
-                    totals.renegAtQtd += readSpanNumber(cells[6]);
-                    totals.renegAtRec += readSpanNumber(cells[7]);
-                    totals.fibraEntQtd += readSpanNumber(cells[8]);
-                    totals.fibraAtQtd += readSpanNumber(cells[9]);
-                    totals.timEntQtd += readSpanNumber(cells[10]);
-                    totals.timAtQtd += readSpanNumber(cells[11]);
-                }
+            const totals = {};
+            let companyCom = 0;
+            document.querySelectorAll('#tbody-consultores .qv-cell').forEach(el => {
+                const key = el.dataset.key || '';
+                if (!key) return;
+                const qtd = Number(el.dataset.qtd || 0);
+                const com = Number(el.dataset.com || 0);
+                if (!totals[key]) totals[key] = { qtd: 0, com: 0 };
+                totals[key].qtd += isFinite(qtd) ? qtd : 0;
+                totals[key].com += isFinite(com) ? com : 0;
+                if (key === 'total') companyCom += isFinite(com) ? com : 0;
             });
 
-            document.getElementById('total-novo-ent-qtd').textContent = totals.novoEntQtd;
-            setMoneySpan(document.getElementById('total-novo-ent-rec'), totals.novoEntRec);
-            document.getElementById('total-novo-at-qtd').textContent = totals.novoAtQtd;
-            setMoneySpan(document.getElementById('total-novo-at-rec'), totals.novoAtRec);
-            document.getElementById('total-reneg-ent-qtd').textContent = totals.renegEntQtd;
-            setMoneySpan(document.getElementById('total-reneg-ent-rec'), totals.renegEntRec);
-            document.getElementById('total-reneg-at-qtd').textContent = totals.renegAtQtd;
-            setMoneySpan(document.getElementById('total-reneg-at-rec'), totals.renegAtRec);
-            document.getElementById('total-fibra-ent-qtd').textContent = totals.fibraEntQtd;
-            document.getElementById('total-fibra-at-qtd').textContent = totals.fibraAtQtd;
-            document.getElementById('total-tim-ent-qtd').textContent = totals.timEntQtd;
-            document.getElementById('total-tim-at-qtd').textContent = totals.timAtQtd;
+            const setCell = (k, side) => {
+                const key = `${k}-${side}`;
+                const t = totals[key] || { qtd: 0, com: 0 };
+                const qtdEl = document.getElementById(`total-${k}-${side}-qtd`);
+                const comEl = document.getElementById(`total-${k}-${side}-com`);
+                if (qtdEl) qtdEl.textContent = String(t.qtd || 0);
+                if (comEl) {
+                    comEl.dataset.value = String(t.com || 0);
+                    comEl.textContent = formatMoneyBR(t.com || 0);
+                }
+            };
+
+            ['novo','aditivo','portabilidade','renovacao','ultra_fibra','wttx','m2m','controle','migracao','tt'].forEach(k => {
+                setCell(k, 'ent');
+                setCell(k, 'at');
+            });
+
+            const compEl = document.getElementById('total-company-com');
+            if (compEl) {
+                compEl.dataset.value = String(companyCom || 0);
+                compEl.textContent = formatMoneyBR(companyCom || 0);
+            }
         }
 
         const monthNames = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
@@ -631,96 +689,7 @@
             }
         }
 
-        function calcularTotais() {
-            const tbody = document.getElementById('tbody-consultores');
-            const linhas = tbody.getElementsByTagName('tr');
-            
-            let totalNovoEntQtd = 0, totalNovoEntRec = 0, totalNovoAtQtd = 0, totalNovoAtRec = 0;
-            let totalRenegEntQtd = 0, totalRenegEntRec = 0, totalRenegAtQtd = 0, totalRenegAtRec = 0;
-            let totalFibraEntQtd = 0, totalFibraAtQtd = 0;
-            let totalTimEntQtd = 0, totalTimAtQtd = 0;
-
-            for (let linha of linhas) {
-                // Select spans with class qv-input inside the row
-                const spans = linha.querySelectorAll('span.qv-input');
-                
-                const val = (idx) => {
-                    if (!spans[idx]) return 0;
-                    return readSpanNumber(spans[idx]);
-                };
-
-                // Novo + Aditivo - Entrantes
-                totalNovoEntQtd += val(0);
-                totalNovoEntRec += val(1);
-                // Novo + Aditivo - Ativos
-                totalNovoAtQtd += val(2);
-                totalNovoAtRec += val(3);
-                
-                // Reneg - Entrantes
-                totalRenegEntQtd += val(4);
-                totalRenegEntRec += val(5);
-                // Reneg - Ativos
-                totalRenegAtQtd += val(6);
-                totalRenegAtRec += val(7);
-                
-                // Fibra - Entrantes e Ativos
-                totalFibraEntQtd += val(8);
-                totalFibraAtQtd += val(9);
-                
-                // TIM Controle - Entrantes e Ativos
-                totalTimEntQtd += val(10);
-                totalTimAtQtd += val(11);
-            }
-
-            document.getElementById('total-novo-ent-qtd').textContent = totalNovoEntQtd;
-            setMoneySpan(document.getElementById('total-novo-ent-rec'), totalNovoEntRec);
-            document.getElementById('total-novo-at-qtd').textContent = totalNovoAtQtd;
-            setMoneySpan(document.getElementById('total-novo-at-rec'), totalNovoAtRec);
-            
-            document.getElementById('total-reneg-ent-qtd').textContent = totalRenegEntQtd;
-            setMoneySpan(document.getElementById('total-reneg-ent-rec'), totalRenegEntRec);
-            document.getElementById('total-reneg-at-qtd').textContent = totalRenegAtQtd;
-            setMoneySpan(document.getElementById('total-reneg-at-rec'), totalRenegAtRec);
-            
-            document.getElementById('total-fibra-ent-qtd').textContent = totalFibraEntQtd;
-            document.getElementById('total-fibra-at-qtd').textContent = totalFibraAtQtd;
-            
-            document.getElementById('total-tim-ent-qtd').textContent = totalTimEntQtd;
-            document.getElementById('total-tim-at-qtd').textContent = totalTimAtQtd;
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            updateMonthDisplay();
-            updateWeekDisplay();
-            lucide.createIcons();
-            loadConsultants();
-
-            // Listeners
-            document.getElementById('prevMonth').addEventListener('click', () => {
-                currentMonth--;
-                if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-                updateMonthDisplay();
-            });
-            document.getElementById('nextMonth').addEventListener('click', () => {
-                currentMonth++;
-                if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-                updateMonthDisplay();
-            });
-            document.getElementById('prevWeek').addEventListener('click', () => {
-                const maxWeeks = getWeeksInMonth(currentYear, currentMonth);
-                currentWeek--;
-                // Cycle: 1 -> 0 -> max -> max-1 ...
-                if (currentWeek < 0) currentWeek = maxWeeks;
-                updateWeekDisplay();
-            });
-            document.getElementById('nextWeek').addEventListener('click', () => {
-                const maxWeeks = getWeeksInMonth(currentYear, currentMonth);
-                currentWeek++;
-                // Cycle: ... max -> 0 -> 1
-                if (currentWeek > maxWeeks) currentWeek = 0;
-                updateWeekDisplay();
-            });
-        });
+        
     </script>
 </body>
 </html>
