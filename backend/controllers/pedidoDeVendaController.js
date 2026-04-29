@@ -57,6 +57,8 @@ export async function obterDetalhesPedido(req, res) {
       razaoSocial: pedido.negotiation.client?.name || '',
       cnpj: pedido.negotiation.cnpj || '',
       status: pedido.status || '',
+      etiqueta: pedido.etiqueta || null,
+      etiqueta_cor: pedido.etiqueta_cor || null,
       numP2B: pedido.num_p2b || '',
       numRadar: pedido.num_radar || '',
       dataEntrada: pedido.data_entrada || '',
@@ -198,6 +200,8 @@ export async function listarPedidosConcluidos(req, res) {
         dataInput: p.data_input || '',
         dataAtivacao: p.data_ativacao || '',
         statusPedido: p.status,
+        etiqueta: p.etiqueta || null,
+        etiqueta_cor: p.etiqueta_cor || null,
         proposta: neg.proposta,
         valor: neg.valor,
         status: neg.status,
@@ -223,6 +227,8 @@ export async function atualizarPedidoDeVenda(req, res) {
     const { id } = req.params;
     const {
       status,
+      etiqueta,
+      etiqueta_cor,
       num_p2b,
       num_radar,
       data_entrada,
@@ -243,6 +249,14 @@ export async function atualizarPedidoDeVenda(req, res) {
         }
       }
     }
+    if (etiqueta !== undefined) {
+      const v = String(etiqueta || '').trim();
+      pedido.etiqueta = v ? v : null;
+    }
+    if (etiqueta_cor !== undefined) {
+      const c = String(etiqueta_cor || '').trim();
+      pedido.etiqueta_cor = c ? c : null;
+    }
     if (num_p2b !== undefined) pedido.num_p2b = num_p2b || null;
     if (num_radar !== undefined) pedido.num_radar = num_radar || null;
     if (data_entrada !== undefined) pedido.data_entrada = data_entrada || null;
@@ -253,6 +267,8 @@ export async function atualizarPedidoDeVenda(req, res) {
       id: pedido.id,
       negotiation_id: pedido.negotiation_id,
       status: pedido.status,
+      etiqueta: pedido.etiqueta || null,
+      etiqueta_cor: pedido.etiqueta_cor || null,
       num_p2b: pedido.num_p2b,
       num_radar: pedido.num_radar,
       data_entrada: pedido.data_entrada,

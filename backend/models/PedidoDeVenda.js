@@ -39,6 +39,14 @@ const PedidoDeVenda = sequelize.define('PedidoDeVenda', {
   data_ativacao: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  etiqueta: {
+    type: DataTypes.STRING(120),
+    allowNull: true
+  },
+  etiqueta_cor: {
+    type: DataTypes.STRING(20),
+    allowNull: true
   }
 }, {
   tableName: 'pedidos_de_venda',

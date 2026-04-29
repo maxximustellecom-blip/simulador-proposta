@@ -313,18 +313,16 @@
                     <table id="tabelaPrincipal">
                         <thead>
                             <tr>
-                                <th style="min-width: 60px;">ID</th>
-                                <th style="min-width: 150px;">Consultor</th>
-                                <th style="min-width: 200px; max-width: 200px;">Razão Social</th>
-                                <th style="min-width: 120px;">Nº P2B / Nº Radar</th>
+                                <th style="min-width: 200px; max-width: 200px;">Informações</th>
+                                <th style="min-width: 120px;">ID/ P2B / Radar</th>
                                 <th style="min-width: 180px;">Dados</th>
-                                <th style="min-width: 150px;">Informações</th>
+                                <th style="min-width: 150px;">Valores</th>
                                 <th style="min-width: 150px;">Status do Pedido</th>
                                 <th style="min-width: 100px;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tbodyBackend">
-                            <tr><td colspan="8" class="text-center p-4">Carregando...</td></tr>
+                            <tr><td colspan="6" class="text-center p-4">Carregando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -583,7 +581,7 @@
             } catch (error) {
                 console.error(error);
                 document.getElementById('tbodyBackend').innerHTML = 
-                    '<tr><td colspan="8" class="text-center p-4 text-red-600">Erro ao carregar dados do backend.</td></tr>';
+                    '<tr><td colspan="6" class="text-center p-4 text-red-600">Erro ao carregar dados do backend.</td></tr>';
             }
         }
 
@@ -658,22 +656,29 @@
             const s = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
             return s.replace(/\s/g, '');
         }
+        function etiquetaHtml(etiqueta, cor) {
+            const txt = String(etiqueta || '').trim();
+            if (!txt) return '';
+            const c = String(cor || '').trim() || '#6B7280';
+            return `<span style="display:inline-block; padding:0.12rem 0.45rem; border-radius:999px; font-weight:700; font-size:0.75rem; border:1px solid ${c}55; background:${c}22; color:${c};">${txt}</span>`;
+        }
 
         function renderBackendTable(data) {
             const tbody = document.getElementById('tbodyBackend');
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4">Nenhum pedido concluído encontrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">Nenhum pedido concluído encontrado.</td></tr>';
                 return;
             }
             tbody.innerHTML = data.map(item => `
                 <tr>
-                    <td>${item.negotiation_id || '-'}</td>
-                    <td>${item.consultor || '-'}</td>
                     <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                         <div>${item.razaoSocial || item.cliente || '-'}</div>
                         <div class="muted" style="font-size: 0.75rem;">${item.cnpj ? formatCnpj(item.cnpj) : '-'}</div>
+                        <div class="muted" style="font-size: 0.75rem;">${item.consultor || '-'}</div>
+                        ${item.etiqueta ? `<div style="margin-top: 0.25rem;">${etiquetaHtml(item.etiqueta, item.etiqueta_cor)}</div>` : ''}
                     </td>
                     <td>
+                        <div><span class="muted">ID:</span> ${item.negotiation_id || '-'}</div>
                         <div><span class="muted">P2B:</span> ${item.numP2B || '-'}</div>
                         <div><span class="muted">Radar:</span> ${item.numRadar || '-'}</div>
                     </td>
@@ -683,11 +688,11 @@
                         <div><span class="muted">Ativação:</span> ${formatData(item.dataAtivacao)}</div>
                     </td>
                     <td>
-                        <div style="font-weight: 600;">${item.totalAcessos || 0} acessos</div>
-                        ${item.valorTotalFatura ? `<div class="muted" style="font-size: 0.8rem;">R$ ${item.valorTotalFatura}</div>` : ''}
+                        <div style="font-weight: 600; display: none;">${item.totalAcessos || 0} acessos</div>
+                        ${item.valorTotalFatura ? `<div class="muted" style="font-size: 0.8rem; display: none;">R$ ${item.valorTotalFatura}</div>` : ''}
                         ${
                             (Array.isArray(item.itensResumo) && item.itensResumo.length > 0)
-                                ? item.itensResumo.map(it => `<div class="muted" style="font-size: 0.8rem;">${it.qtd || 0} - ${it.tipo || '-'} - ${formatMoneyCompact(it.valor)}</div>`).join('')
+                                ? item.itensResumo.map(it => `<div class="muted" style="font-size: 0.8rem;"><b>${it.qtd || 0}</b> - ${it.tipo || '-'} - ${formatMoneyCompact(it.valor)}</div>`).join('')
                                 : `<div class="muted" style="font-size: 0.8rem;">${item.infoTexto || '-'}</div>`
                         }
                     </td>
@@ -698,6 +703,7 @@
                                 <button type="button" class="btn btn-ghost btn-icon" title="Ações" onclick="togglePedidoMenu(event, ${item.id})"><i data-lucide="more-vertical"></i></button>
                                 <div id="pedido-menu-${item.id}" class="action-menu" onclick="event.stopPropagation()">
                                     <button type="button" class="action-item" onclick="closeActiveDropdown(); configurarPedido('${item.id}')"><i data-lucide="settings"></i><span>Configurar</span></button>
+                                    <button type="button" class="action-item" onclick="closeActiveDropdown(); openEtiquetaModal('${item.id}')"><i data-lucide="tag"></i><span>Etiquetar</span></button>
                                     <button type="button" class="action-item" onclick="closeActiveDropdown(); voltarCadastro('${item.id}')"><i data-lucide="clipboard-check"></i><span>Voltar para Cadastro</span></button>
                                     <button type="button" class="action-item" onclick="closeActiveDropdown(); voltarNegociacao('${item.id}')"><i data-lucide="handshake"></i><span>Voltar para Negociação</span></button>
                                 </div>
@@ -767,6 +773,48 @@
         function closeConfirmModal() {
             document.getElementById('confirmModal').classList.remove('show');
             __confirmCallback = null;
+        }
+
+        let __currentEtiquetaPedidoId = null;
+        function openEtiquetaModal(id) {
+            const item = backendData.find(i => String(i.id) === String(id));
+            if (!item) { toast('Pedido não encontrado', 'error'); return; }
+            __currentEtiquetaPedidoId = String(id);
+            const nomeEl = document.getElementById('etiquetaNome');
+            const corEl = document.getElementById('etiquetaCor');
+            if (nomeEl) nomeEl.value = item.etiqueta || '';
+            if (corEl) corEl.value = item.etiqueta_cor || '#6B7280';
+            const m = document.getElementById('etiquetaModal');
+            if (m) m.classList.add('show');
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        }
+        function closeEtiquetaModal() {
+            const m = document.getElementById('etiquetaModal');
+            if (m) m.classList.remove('show');
+            __currentEtiquetaPedidoId = null;
+        }
+        async function saveEtiquetaModal() {
+            if (!__currentEtiquetaPedidoId) return;
+            const nomeEl = document.getElementById('etiquetaNome');
+            const corEl = document.getElementById('etiquetaCor');
+            const etiqueta = nomeEl ? String(nomeEl.value || '').trim() : '';
+            const etiqueta_cor = corEl ? String(corEl.value || '').trim() : '';
+            try {
+                await api(`/pedidos-venda/${__currentEtiquetaPedidoId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ etiqueta, etiqueta_cor })
+                });
+                const idx = backendData.findIndex(i => String(i.id) === String(__currentEtiquetaPedidoId));
+                if (idx >= 0) {
+                    backendData[idx].etiqueta = etiqueta || null;
+                    backendData[idx].etiqueta_cor = etiqueta ? (etiqueta_cor || null) : null;
+                }
+                closeEtiquetaModal();
+                renderBackendTable(backendData);
+                toast('Etiqueta atualizada', 'success');
+            } catch (e) {
+                toast('Erro ao salvar etiqueta: ' + (e && e.message ? e.message : e), 'error');
+            }
         }
 
         async function voltarCadastro(id) {
@@ -1526,6 +1574,30 @@
             <div class="modal-actions">
                 <button class="btn btn-ghost" type="button" onclick="closeEditVenda()"><i data-lucide="x"></i><span>Cancelar</span></button>
                 <button class="btn btn-primary" type="button" onclick="saveEditVenda()"><i data-lucide="check"></i><span>Salvar</span></button>
+            </div>
+        </div>
+    </div>
+    <div id="etiquetaModal" class="modal">
+        <div class="modal-card" style="max-width: 480px; width: 95%;">
+            <div class="modal-head">
+                <div>Etiqueta</div>
+                <button class="btn btn-ghost btn-icon" onclick="closeEtiquetaModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="grid-2">
+                    <div>
+                        <div class="label">Nome</div>
+                        <input id="etiquetaNome" type="text" class="input" placeholder="Ex: Urgente">
+                    </div>
+                    <div>
+                        <div class="label">Cor</div>
+                        <input id="etiquetaCor" type="color" class="input" style="height: 40px; padding: 0.2rem;">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" type="button" onclick="closeEtiquetaModal()"><span>Cancelar</span></button>
+                <button class="btn btn-primary" type="button" onclick="saveEtiquetaModal()"><span>Salvar</span></button>
             </div>
         </div>
     </div>
