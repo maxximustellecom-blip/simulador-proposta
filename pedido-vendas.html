@@ -301,8 +301,54 @@
             <section class="section" style="margin-top: 20px;">
                 <div class="filters-container">
                     <div class="filter-group" style="flex: 2;">
-                        <label class="label"><i data-lucide="search" size="14"></i> Buscar</label>
-                        <input type="text" id="filtroBusca" class="input" placeholder="Buscar por Razão Social ou CNPJ" oninput="filtrarBackend()">
+                        <label class="label"><i data-lucide="search" size="14"></i> Buscar (geral)</label>
+                        <input type="text" id="filtroBusca" class="input" placeholder="Razão social, CNPJ, consultor, etiqueta, P2B, Radar, ID..." oninput="filtrarBackend()">
+                    </div>
+                    <div class="filter-group">
+                        <label class="label">Razão social</label>
+                        <input type="text" id="fRazao" class="input" placeholder="Razão social" oninput="filtrarBackend()">
+                    </div>
+                    <div class="filter-group">
+                        <label class="label">CNPJ</label>
+                        <input type="text" id="fCnpj" class="input" placeholder="00.000.000/0000-00" oninput="filtrarBackend()">
+                    </div>
+                    <div class="filter-group">
+                        <label class="label">Consultor</label>
+                        <input type="text" id="fConsultor" class="input" placeholder="Nome do consultor" oninput="filtrarBackend()">
+                    </div>
+                    <div class="filter-group">
+                        <label class="label">Etiqueta</label>
+                        <input type="text" id="fEtiqueta" class="input" placeholder="Nome da etiqueta" oninput="filtrarBackend()">
+                    </div>
+                    <div class="filter-group">
+                        <label class="label">ID</label>
+                        <input type="text" id="fNegId" class="input" placeholder="ID da negociação" oninput="filtrarBackend()">
+                    </div>
+                    <div class="filter-group">
+                        <label class="label">P2B</label>
+                        <input type="text" id="fP2B" class="input" placeholder="Número P2B" oninput="filtrarBackend()">
+                    </div>
+                    <div class="filter-group">
+                        <label class="label">Radar</label>
+                        <input type="text" id="fRadar" class="input" placeholder="Número Radar" oninput="filtrarBackend()">
+                    </div>
+                    <div class="filter-group">
+                        <label class="label">Entrada</label>
+                        <input type="date" id="fDataEntrada" class="input" onchange="filtrarBackend()">
+                    </div>
+                    <div class="filter-group">
+                        <label class="label">Input</label>
+                        <input type="date" id="fDataInput" class="input" onchange="filtrarBackend()">
+                    </div>
+                    <div class="filter-group">
+                        <label class="label">Ativação</label>
+                        <input type="date" id="fDataAtivacao" class="input" onchange="filtrarBackend()">
+                    </div>
+                    <div class="filter-group">
+                        <label class="label">Status</label>
+                        <select id="fStatusPedido" class="input" onchange="filtrarBackend()">
+                            <option value="">Todos</option>
+                        </select>
                     </div>
                 </div>
             </section>
@@ -560,6 +606,7 @@
         };
 
         // --- BACKEND INTEGRATION ---
+        let __filteredBackendData = [];
         async function fetchPedidosBackend() {
             try {
                 const data = await api('/pedidos-venda/concluidos');
@@ -577,7 +624,7 @@
                     }
                     return { ...item, valorTotalFatura: valorFatura };
                 });
-                renderBackendTable(backendData);
+                filtrarBackend();
             } catch (error) {
                 console.error(error);
                 document.getElementById('tbodyBackend').innerHTML = 
@@ -586,24 +633,49 @@
         }
 
         function exportarTabela() {
-            if (!backendData || backendData.length === 0) {
+            const data = Array.isArray(__filteredBackendData) ? __filteredBackendData : (Array.isArray(backendData) ? backendData : []);
+            if (!data || data.length === 0) {
                 toast('Não há dados para exportar', 'error');
                 return;
             }
 
-            const headers = ['ID', 'Consultor', 'Razão Social', 'CNPJ', 'P2B', 'Radar', 'Data Entrada', 'Data Input', 'Data Ativação', 'Acessos', 'Valor Fatura', 'Status'];
-            const rows = backendData.map(item => [
-                item.negotiation_id || '',
-                item.consultor || '',
-                item.razaoSocial || item.cliente || '',
-                item.cnpj || '',
-                item.numP2B || '',
-                item.numRadar || '',
-                formatData(item.dataEntrada),
-                formatData(item.dataInput),
-                formatData(item.dataAtivacao),
-                item.totalAcessos || 0,
-                item.valorTotalFatura || '',
+            const buildInfo = (item) => {
+                const lines = [];
+                lines.push(String(item.razaoSocial || item.cliente || '-') || '-');
+                lines.push((item.cnpj ? formatCnpj(item.cnpj) : '-') || '-');
+                lines.push(String(item.consultor || '-') || '-');
+                if (item.etiqueta) lines.push(String(item.etiqueta));
+                return lines.join('\n');
+            };
+            const buildIds = (item) => {
+                const lines = [];
+                lines.push('ID: ' + (item.negotiation_id || '-'));
+                lines.push('P2B: ' + (item.numP2B || '-'));
+                lines.push('Radar: ' + (item.numRadar || '-'));
+                return lines.join('\n');
+            };
+            const buildDatas = (item) => {
+                const lines = [];
+                lines.push('Entrada: ' + formatData(item.dataEntrada));
+                lines.push('Input: ' + formatData(item.dataInput));
+                lines.push('Ativação: ' + formatData(item.dataAtivacao));
+                return lines.join('\n');
+            };
+            const buildValores = (item) => {
+                if (Array.isArray(item.itensResumo) && item.itensResumo.length > 0) {
+                    return item.itensResumo
+                        .map(it => `${it.qtd || 0} - ${it.tipo || '-'} - ${formatMoneyCompact(it.valor)}`)
+                        .join('\n');
+                }
+                return String(item.infoTexto || '-') || '-';
+            };
+
+            const headers = ['Informações', 'ID/ P2B / Radar', 'Dados', 'Valores', 'Status do Pedido'];
+            const rows = data.map(item => [
+                buildInfo(item),
+                buildIds(item),
+                buildDatas(item),
+                buildValores(item),
                 item.statusPedido || ''
             ]);
 
@@ -616,7 +688,7 @@
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.setAttribute('href', url);
-            link.setAttribute('download', `pedidos_vendas_${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute('download', `pedidos_vendas_tabela_${new Date().toISOString().split('T')[0]}.csv`);
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
@@ -649,6 +721,23 @@
             if (digits.length <= 8) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
             if (digits.length <= 12) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
             return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
+        }
+        function normalizeText(s) {
+            return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        }
+        function onlyDigits(s) {
+            return String(s || '').replace(/\D/g, '');
+        }
+        function toISODate(raw) {
+            const s = String(raw || '').trim();
+            if (!s) return '';
+            const m1 = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (m1) return `${m1[1]}-${m1[2]}-${m1[3]}`;
+            const m2 = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+            if (m2) return `${m2[3]}-${m2[2]}-${m2[1]}`;
+            const dt = new Date(s);
+            if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10);
+            return '';
         }
         function formatMoneyCompact(v) {
             const n = Number(String(v === null || v === undefined ? '' : v).replace(',', '.'));
@@ -810,7 +899,7 @@
                     backendData[idx].etiqueta_cor = etiqueta ? (etiqueta_cor || null) : null;
                 }
                 closeEtiquetaModal();
-                renderBackendTable(backendData);
+                filtrarBackend();
                 toast('Etiqueta atualizada', 'success');
             } catch (e) {
                 toast('Erro ao salvar etiqueta: ' + (e && e.message ? e.message : e), 'error');
@@ -846,17 +935,58 @@
         }
 
         function filtrarBackend() {
-            const busca = document.getElementById('filtroBusca').value.toLowerCase();
-            const filtered = backendData.filter(item => {
-                const searchStr = (
-                    (item.razaoSocial || '') + 
-                    (item.cliente || '') + 
-                    (item.cnpj || '') + 
-                    (item.status || '') +
-                    (item.tipo || '')
-                ).toLowerCase();
-                return searchStr.includes(busca);
+            const busca = normalizeText(document.getElementById('filtroBusca') ? document.getElementById('filtroBusca').value : '').trim();
+            const razao = normalizeText(document.getElementById('fRazao') ? document.getElementById('fRazao').value : '').trim();
+            const cnpj = onlyDigits(document.getElementById('fCnpj') ? document.getElementById('fCnpj').value : '').trim();
+            const consultor = normalizeText(document.getElementById('fConsultor') ? document.getElementById('fConsultor').value : '').trim();
+            const etiqueta = normalizeText(document.getElementById('fEtiqueta') ? document.getElementById('fEtiqueta').value : '').trim();
+            const negId = String(document.getElementById('fNegId') ? document.getElementById('fNegId').value : '').trim();
+            const p2b = String(document.getElementById('fP2B') ? document.getElementById('fP2B').value : '').trim();
+            const radar = String(document.getElementById('fRadar') ? document.getElementById('fRadar').value : '').trim();
+            const dEntrada = String(document.getElementById('fDataEntrada') ? document.getElementById('fDataEntrada').value : '').trim();
+            const dInput = String(document.getElementById('fDataInput') ? document.getElementById('fDataInput').value : '').trim();
+            const dAtiv = String(document.getElementById('fDataAtivacao') ? document.getElementById('fDataAtivacao').value : '').trim();
+            const status = String(document.getElementById('fStatusPedido') ? document.getElementById('fStatusPedido').value : '').trim();
+
+            const filtered = (backendData || []).filter(item => {
+                const itemRazao = normalizeText(item.razaoSocial || item.cliente || '');
+                const itemCnpj = onlyDigits(item.cnpj || '');
+                const itemConsultor = normalizeText(item.consultor || '');
+                const itemEtiqueta = normalizeText(item.etiqueta || '');
+                const itemNegId = String(item.negotiation_id || '');
+                const itemP2B = String(item.numP2B || '');
+                const itemRadar = String(item.numRadar || '');
+                const itemStatus = String(item.statusPedido || '');
+                const itemEntrada = toISODate(item.dataEntrada);
+                const itemInput = toISODate(item.dataInput);
+                const itemAtiv = toISODate(item.dataAtivacao);
+
+                if (razao && !itemRazao.includes(razao)) return false;
+                if (cnpj && !itemCnpj.includes(cnpj)) return false;
+                if (consultor && !itemConsultor.includes(consultor)) return false;
+                if (etiqueta && !itemEtiqueta.includes(etiqueta)) return false;
+                if (negId && !itemNegId.includes(negId)) return false;
+                if (p2b && !itemP2B.includes(p2b)) return false;
+                if (radar && !itemRadar.includes(radar)) return false;
+                if (dEntrada && itemEntrada !== dEntrada) return false;
+                if (dInput && itemInput !== dInput) return false;
+                if (dAtiv && itemAtiv !== dAtiv) return false;
+                if (status && itemStatus !== status) return false;
+
+                if (busca) {
+                    const searchStr = normalizeText(
+                        [
+                            item.razaoSocial, item.cliente, item.cnpj, item.consultor,
+                            item.etiqueta, item.negotiation_id, item.numP2B, item.numRadar,
+                            item.statusPedido, item.infoTexto
+                        ].filter(Boolean).join(' ')
+                    );
+                    if (!searchStr.includes(busca)) return false;
+                }
+                return true;
             });
+
+            __filteredBackendData = filtered;
             renderBackendTable(filtered);
         }
 
@@ -997,6 +1127,13 @@
             const stored = localStorage.getItem('vendas_data');
             if (stored) vendas = JSON.parse(stored);
             
+            const fStatus = document.getElementById('fStatusPedido');
+            if (fStatus) {
+                fStatus.innerHTML = ['<option value="">Todos</option>']
+                    .concat(statusPedido.map(s => `<option value="${s}">${s}</option>`))
+                    .join('');
+            }
+
             renderTable();
             lucide.createIcons();
             const filtroBusca = document.getElementById('filtroBusca');
