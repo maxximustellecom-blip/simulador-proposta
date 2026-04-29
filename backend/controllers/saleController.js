@@ -1,9 +1,31 @@
-import { Client, Simulation, Sale, Negotiation, User, AccessProfile, NegociacaoProposta, NegociacaoPropostaCustomizada, PedidoDeVenda } from '../models/index.js';
+import { Client, Simulation, Sale, Negotiation, User, AccessProfile, NegociacaoProposta, NegociacaoPropostaCustomizada, PedidoDeVenda, Product, CustomProduct } from '../models/index.js';
 
 function parsePercentage(str) {
   if (typeof str === 'number') return str;
   if (!str) return 0;
   return parseFloat(String(str).replace('%', '').replace(',', '.')) / 100;
+}
+
+function normalizeText(str) {
+  return String(str || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function parseMoneyLike(v) {
+  if (typeof v === 'number') return isFinite(v) ? v : 0;
+  const s = String(v || '').trim();
+  if (!s) return 0;
+  const only = s.replace(/[^\d,.-]/g, '');
+  if (!only) return 0;
+  if (only.includes(',') && only.includes('.')) {
+    const normalized = only.replace(/\./g, '').replace(',', '.');
+    const n = Number(normalized);
+    return isFinite(n) ? n : 0;
+  }
+  const n = Number(only.replace(',', '.'));
+  return isFinite(n) ? n : 0;
 }
 
 function getWeekOfMonth(dateStr) {
@@ -20,28 +42,87 @@ function getWeekOfMonth(dateStr) {
   } catch { return 0; }
 }
 
-function mapProductToGroup(tipo) {
-  const t = String(tipo || '').toLowerCase();
-  if (t.includes('novo') || t.includes('aditivo')) return 'novo';
-  if (t.includes('renovação') || t.includes('migracao pf-pj') || t.includes('tt')) return 'reneg';
-  if (t.includes('ultra fibra') || t.includes('wttx') || t.includes('m2m')) return 'fibra';
-  if (t.includes('controle pf')) return 'tim';
-  return 'novo'; // Default
+function mapCommissionKeyToGroup(key) {
+  if (key === 'novo' || key === 'aditivo' || key === 'portabilidade') return 'novo';
+  if (key === 'renovacao' || key === 'migracao' || key === 'tt') return 'reneg';
+  if (key === 'ultra_fibra' || key === 'wttx' || key === 'm2m') return 'fibra';
+  if (key === 'controle') return 'tim';
+  return 'novo';
 }
 
-function mapProductToCommissionKey(tipo) {
-  const t = String(tipo || '').toLowerCase();
-  if (t.includes('novo')) return 'novo';
-  if (t.includes('aditivo')) return 'aditivo';
+function mapProductToCommissionKeyFromRaw(tipoRaw, isPortabilidade) {
+  if (isPortabilidade) return 'portabilidade';
+  const t = normalizeText(tipoRaw)
+    .replace(/[/\\]/g, ' ')
+    .replace(/\./g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
   if (t.includes('portabilidade')) return 'portabilidade';
-  if (t.includes('renovação')) return 'renovacao';
-  if (t.includes('ultra fibra')) return 'ultra_fibra';
+  if (t.includes('novo')) return 'novo';
+  if (t.includes('aditivo') || t.includes('adtivo') || t.includes('adit')) return 'aditivo';
+  if (t.includes('renov')) return 'renovacao';
+  if (t.includes('ultra fibra') || t.includes('u fibra') || t.includes('ultrafibra')) return 'ultra_fibra';
   if (t.includes('wttx')) return 'wttx';
   if (t.includes('m2m')) return 'm2m';
-  if (t.includes('controle pf')) return 'controle';
-  if (t.includes('migracao pf-pj')) return 'migracao';
-  if (t.includes('tt')) return 'tt';
+  if (t.includes('controle')) return 'controle';
+  if (t.includes('migracao') && (t.includes('pf') || t.includes('pj') || t.includes('pf pj'))) return 'migracao';
+  if (t === 'tt' || t.includes(' tt')) return 'tt';
   return 'novo';
+}
+
+function hasCommissionConfig(config) {
+  if (!config || typeof config !== 'object') return false;
+  const products = Array.isArray(config.products) ? config.products : [];
+  const levels = Array.isArray(config.levels) ? config.levels : [];
+  const hasProducts = products.some(p => {
+    if (!p || typeof p !== 'object') return false;
+    return ['novo', 'aditivo', 'portabilidade', 'renovacao', 'ultra_fibra', 'wttx', 'm2m', 'controle', 'migracao', 'tt']
+      .some(k => parsePercentage(p[k]) > 0);
+  });
+  const hasLevels = levels.some(l => parseMoneyLike(l && l.revenue) > 0);
+  return hasProducts || hasLevels;
+}
+
+function pickLevelNameFromConfig(baseRevenue, levels) {
+  const list = Array.isArray(levels) ? levels.slice() : [];
+  const parsed = list
+    .map(l => ({ name: l && l.name ? String(l.name) : '', revenue: parseMoneyLike(l && l.revenue) }))
+    .filter(x => x.name);
+  if (parsed.length === 0) return 'BLUE';
+  parsed.sort((a, b) => a.revenue - b.revenue);
+  let chosen = parsed[0].name;
+  for (const row of parsed) {
+    if (baseRevenue >= row.revenue) chosen = row.name;
+  }
+  return chosen;
+}
+
+function getLineTypeRaw(n, l, productTypeByName) {
+  const direct = (l && (l.tipoNegociacao || l.tipo)) || (n && n.tipo) || '';
+  if (direct) return direct;
+  const plan = (l && (l.plano || l.planoSelecionado)) || '';
+  if (!plan) return '';
+  return productTypeByName.get(String(plan)) || '';
+}
+
+function getLineQty(l) {
+  if (!l) return 1;
+  const isPort = String(l.portabilidade || '').toLowerCase() === 'sim';
+  if (isPort) {
+    const pi = Array.isArray(l.portarItens) ? l.portarItens.length : 0;
+    const pq = Number(l.portarQtd || 0);
+    const q = Math.max(pq, pi, Number(l.quantidade || 0), 1);
+    return isFinite(q) && q > 0 ? q : 1;
+  }
+  const q = Number(l.quantidade || 1);
+  return isFinite(q) && q > 0 ? q : 1;
+}
+
+function getLineValue(l) {
+  const q = getLineQty(l);
+  const v = Number(l && l.valorPlano !== undefined ? l.valorPlano : 0);
+  const vv = isFinite(v) ? v : 0;
+  return vv * q;
 }
 
 export async function getQuadroVendas(req, res) {
@@ -64,6 +145,18 @@ export async function getQuadroVendas(req, res) {
       ]
     });
 
+    const [products, customProducts] = await Promise.all([
+      Product.findAll({ attributes: ['nome', 'tipos'] }),
+      CustomProduct.findAll({ attributes: ['nome', 'tipos'] })
+    ]);
+    const productTypeByName = new Map();
+    (products || []).forEach(p => {
+      if (p && p.nome) productTypeByName.set(String(p.nome), p.tipos || '');
+    });
+    (customProducts || []).forEach(p => {
+      if (p && p.nome && !productTypeByName.has(String(p.nome))) productTypeByName.set(String(p.nome), p.tipos || '');
+    });
+
     // Filter by month/year
     const filteredNegs = negotiations.filter(n => {
       const parts = String(n.data || '').split('/');
@@ -81,17 +174,24 @@ export async function getQuadroVendas(req, res) {
     const result = users.map(user => {
       const userNegs = filteredNegs.filter(n => Number(n.created_by) === Number(user.id));
       
-      // Calculate level based on ATIVAS (Novo + Aditivo) in the period
-      const ativasNovosRec = userNegs.reduce((acc, n) => {
-        if (n.pedidoDeVenda && n.pedidoDeVenda.status === '7-Contratos Ativos') {
-          const group = mapProductToGroup(n.tipo);
-          if (group === 'novo') return acc + Number(n.valor || 0);
-        }
-        return acc;
-      }, 0);
-
-      const level = calcularNivel(ativasNovosRec);
       const config = user.profile && user.profile.commission_config ? (typeof user.profile.commission_config === 'string' ? JSON.parse(user.profile.commission_config) : user.profile.commission_config) : null;
+      const shouldUseLevel = hasCommissionConfig(config);
+      let baseRevenueForLevel = 0;
+      if (shouldUseLevel) {
+        userNegs.forEach(n => {
+          const isAtiva = n.pedidoDeVenda && n.pedidoDeVenda.status === '7-Contratos Ativos';
+          if (!isAtiva) return;
+          const lines = n.proposal ? n.proposal.linhas : (n.customProposal ? n.customProposal.linhas : []);
+          const linesArr = Array.isArray(lines) ? lines : [];
+          linesArr.forEach(l => {
+            const isPort = String(l && l.portabilidade || '').toLowerCase() === 'sim';
+            const tipoRaw = getLineTypeRaw(n, l, productTypeByName);
+            const key = mapProductToCommissionKeyFromRaw(tipoRaw, isPort);
+            if (key === 'novo' || key === 'aditivo') baseRevenueForLevel += getLineValue(l);
+          });
+        });
+      }
+      const levelName = shouldUseLevel ? pickLevelNameFromConfig(baseRevenueForLevel, config.levels) : null;
       
       const stats = {
         name: user.name,
@@ -102,43 +202,47 @@ export async function getQuadroVendas(req, res) {
       };
 
       userNegs.forEach(n => {
-        const group = mapProductToGroup(n.tipo);
         const isAtiva = n.pedidoDeVenda && n.pedidoDeVenda.status === '7-Contratos Ativos';
         const isEntrante = n.status === 'Em andamento' && !isAtiva;
         
         if (!isAtiva && !isEntrante) return;
 
-        // Process proposal items to calculate commission
-        let totalCommission = 0;
-        let qtd = 0;
-        
         const lines = n.proposal ? n.proposal.linhas : (n.customProposal ? n.customProposal.linhas : []);
         const linesArr = Array.isArray(lines) ? lines : [];
 
         linesArr.forEach(l => {
-          const q = Number(l.quantidade || 1);
-          qtd += q;
-          const itemVal = Number(l.valorPlano || 0) * q;
+          const isPort = String(l && l.portabilidade || '').toLowerCase() === 'sim';
+          const tipoRaw = getLineTypeRaw(n, l, productTypeByName);
+          const key = mapProductToCommissionKeyFromRaw(tipoRaw, isPort);
+          const group = mapCommissionKeyToGroup(key);
+          const itemVal = getLineValue(l);
+          const qtd = getLineQty(l);
           
-          // Determine rate from profile config
           let rate = 0;
-          if (config && config.products) {
-            const levelConfig = config.products.find(p => p.level_group === level.nome);
+          if (shouldUseLevel && config && Array.isArray(config.products)) {
+            const levelConfig = config.products.find(p => p.level_group === levelName);
             if (levelConfig) {
-              const key = mapProductToCommissionKey(l.tipo || n.tipo);
               rate = parsePercentage(levelConfig[key]);
             }
           } else {
-            // Fallback to default rates if no profile config
-            const fallbackRate = (calcularComissaoProduto(ativasNovosRec, mapProductToCommissionKey(l.tipo || n.tipo), 100) / 100);
-            rate = fallbackRate;
+            const defaults = {
+              novo: 0.6,
+              aditivo: 0.6,
+              portabilidade: 0.6,
+              renovacao: 0.3,
+              ultra_fibra: 0.3,
+              wttx: 0.6,
+              m2m: 0.6,
+              controle: 0.6,
+              migracao: 0.3,
+              tt: 0.3
+            };
+            rate = defaults[key] || 0;
           }
-          totalCommission += itemVal * rate;
+          const target = isAtiva ? stats[group].at : stats[group].ent;
+          target.qtd += qtd;
+          target.rec += itemVal * rate;
         });
-
-        const target = isAtiva ? stats[group].at : stats[group].ent;
-        target.qtd += qtd;
-        target.rec += totalCommission;
       });
 
       return stats;
