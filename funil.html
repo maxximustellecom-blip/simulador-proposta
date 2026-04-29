@@ -90,6 +90,7 @@
         }
         .deal-title {
             font-weight: 700;
+            font-size: 0.95rem;
             line-height: 1.15;
         }
         .deal-sub {
@@ -264,6 +265,12 @@
             if (s.includes('reprovado') || s.includes('cancelado') || s.includes('cancelada') || s.includes('devolver')) return 'chip-status canceled';
             return 'chip-status neutral';
         }
+        function etiquetaHtml(etiqueta, cor) {
+            const txt = String(etiqueta || '').trim();
+            if (!txt) return '';
+            const c = String(cor || '').trim() || '#6B7280';
+            return `<span style="display:inline-block; padding:0.12rem 0.45rem; border-radius:999px; font-weight:700; font-size:0.75rem; border:1px solid ${c}55; background:${c}22; color:${c};">${txt}</span>`;
+        }
         function fmtMoney(v) {
             try { return (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })).format(Number(v || 0)); } catch { return 'R$ 0,00'; }
         }
@@ -339,6 +346,7 @@
             const created = createdRaw ? fmtDateBR(createdRaw) : '-';
             const phone = c.phone ? fmtPhone(c.phone) : '-';
             const vendedor = (d.creator && d.creator.name) ? d.creator.name : '-';
+            const adminContato = String(c.rep_nome || c.gestor_nome || c.auth1_nome || '').trim() || '-';
             const totalAcessos = (d.totalAcessos !== null && d.totalAcessos !== undefined) ? String(d.totalAcessos) : '-';
             const stage = Number(d.funil_stage || 0);
             const pedidoStatus = (stage === 4 || stage === 5 || stage === 6)
@@ -347,12 +355,16 @@
             const pedidoBadge = pedidoStatus
                 ? `<span class="${getStatusClass(pedidoStatus)}" title="Status do Pedido">${pedidoStatus}</span>`
                 : '';
+            const pedidoEtiqueta = d.pedido_venda_etiqueta || '';
+            const pedidoEtiquetaCor = d.pedido_venda_etiqueta_cor || '';
+            const etiquetaBadge = pedidoEtiqueta ? etiquetaHtml(pedidoEtiqueta, pedidoEtiquetaCor) : '';
             return `
                 <div class="deal stage-${d.funil_stage}" draggable="true" data-id="${d.id}">
                     <div class="deal-top">
                         <div>
                             <div class="deal-title">${title}</div>
-                            <div style="grid-column: 1 / -1; font-size: 8pt !important;"><span style='font-size: 8pt !important;'>CNPJ:</span> <strong>${d.cnpj || '-'}</strong></div>
+                            <div style="grid-column: 1 / -1; font-size: 8pt !important;"><span style='font-size: 8pt !important;'>Admin:</span> <strong>${adminContato}</strong></div>
+                            ${etiquetaBadge ? `<div style="margin-top: 0.35rem;">${etiquetaBadge}</div>` : ''}
                         </div>
                         <div class="deal-actions">
                             <i data-lucide="chevron-down" class="deal-chevron"></i>
@@ -362,13 +374,14 @@
                     <div class="deal-expanded">
                         <div style="grid-column: 1 / -1; font-size: 8pt !important;"><span style='font-size: 8pt !important;'>Tel:</span> <strong>${phone || '-'}</strong></div>
                         <div style="grid-column: 1 / -1; font-size: 8pt !important;"><span style='font-size: 8pt !important;'>Vendedor:</span> <strong>${vendedor}</strong></div>
+                        <div style="grid-column: 1 / -1; font-size: 8pt !important;"><span style='font-size: 8pt !important;'>Admin:</span> <strong>${adminContato}</strong></div>
                         <div class="deal-sub">${sub}</div>
                         <div class="deal-meta">
                             <div><span>Valor:</span> <strong>${valor}</strong></div>
                             <div><span>Acessos:</span> <strong>${totalAcessos}</strong></div>
                             <div><span>Criação:</span> <strong>${created}</strong></div>
                         </div>
-                        ${pedidoBadge ? `<div style="margin-top: 0.55rem; display: flex; justify-content: flex-end;">${pedidoBadge}</div>` : ''}
+                        ${(etiquetaBadge || pedidoBadge) ? `<div style="margin-top: 0.55rem; display: flex; justify-content: flex-end; gap: 0.35rem; align-items: center;">${etiquetaBadge || ''}${pedidoBadge || ''}</div>` : ''}
                     </div>
                 </div>
             `;

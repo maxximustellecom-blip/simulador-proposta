@@ -129,7 +129,7 @@ export async function listFunnelNegotiations(req, res) {
         { model: Client, as: 'client' },
         { model: NegociacaoProposta, as: 'proposal', attributes: ['total_acessos'] },
         { model: NegociacaoPropostaCustomizada, as: 'customProposal', attributes: ['total_acessos'] },
-        { model: PedidoDeVenda, as: 'pedidoDeVenda', attributes: ['id', 'status', 'num_p2b', 'num_radar', 'data_entrada', 'data_input', 'data_ativacao'] }
+        { model: PedidoDeVenda, as: 'pedidoDeVenda', attributes: ['id', 'status', 'num_p2b', 'num_radar', 'data_entrada', 'data_input', 'data_ativacao', 'etiqueta', 'etiqueta_cor'] }
       ],
       order: [['created_at', 'DESC']],
       distinct: true
@@ -158,6 +158,8 @@ export async function listFunnelNegotiations(req, res) {
         creator: n.creator ? { id: n.creator.id, name: n.creator.name, email: n.creator.email || null, celular: n.creator.celular || null } : null,
         pedido_venda_id: pedido ? pedido.id : null,
         pedido_venda_status: pedido ? (pedido.status || null) : null,
+        pedido_venda_etiqueta: pedido ? (pedido.etiqueta || null) : null,
+        pedido_venda_etiqueta_cor: pedido ? (pedido.etiqueta_cor || null) : null,
         pedido_num_p2b: pedido ? (pedido.num_p2b || null) : null,
         pedido_num_radar: pedido ? (pedido.num_radar || null) : null,
         pedido_data_entrada: pedido ? (pedido.data_entrada || null) : null,
@@ -169,7 +171,10 @@ export async function listFunnelNegotiations(req, res) {
           fantasy_name: n.client.fantasy_name || '',
           email: n.client.email || '',
           phone: n.client.phone || '',
-          due_date: n.client.due_date || null
+          due_date: n.client.due_date || null,
+          rep_nome: n.client.rep_nome || '',
+          gestor_nome: n.client.gestor_nome || '',
+          auth1_nome: n.client.auth1_nome || ''
         } : null,
         totalAcessos
       };
