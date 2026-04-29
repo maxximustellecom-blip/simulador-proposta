@@ -387,6 +387,37 @@
             return res.json();
         }
 
+        function formatMoneyBR(v) {
+            const n = Number(v || 0);
+            if (!isFinite(n)) return 'R$ 0,00';
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
+        }
+        function setMoneySpan(el, v) {
+            if (!el) return;
+            const n = Number(v || 0);
+            const nv = isFinite(n) ? n : 0;
+            el.dataset.value = String(nv);
+            el.textContent = formatMoneyBR(nv);
+        }
+        function readSpanNumber(el) {
+            if (!el) return 0;
+            const dv = el.dataset ? el.dataset.value : '';
+            if (dv !== undefined && dv !== null && String(dv).trim() !== '') {
+                const n = Number(dv);
+                if (isFinite(n)) return n;
+            }
+            const txt = String(el.textContent || '').trim();
+            const cleaned = txt.replace(/[^\d.,-]/g, '');
+            if (!cleaned) return 0;
+            const hasDot = cleaned.includes('.');
+            const hasComma = cleaned.includes(',');
+            const normalized = (hasDot && hasComma)
+                ? cleaned.replace(/\./g, '').replace(',', '.')
+                : (hasComma ? cleaned.replace(',', '.') : cleaned);
+            const n = Number(normalized);
+            return isFinite(n) ? n : 0;
+        }
+
         async function loadQuadroData() {
             const tbody = document.getElementById('tbody-consultores');
             tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding: 1rem;">Carregando...</td></tr>';
@@ -408,13 +439,13 @@
                     tr.innerHTML = `
                         <td class="consultor-col">${user.name || 'Sem Nome'}</td>
                         <td><span class="qv-input">${user.novo.ent.qtd}</span></td>
-                        <td><span class="qv-input">${user.novo.ent.rec.toFixed(2)}</span></td>
+                        <td><span class="qv-input" data-value="${Number(user.novo.ent.rec || 0)}">${formatMoneyBR(user.novo.ent.rec)}</span></td>
                         <td><span class="qv-input">${user.novo.at.qtd}</span></td>
-                        <td><span class="qv-input">${user.novo.at.rec.toFixed(2)}</span></td>
+                        <td><span class="qv-input" data-value="${Number(user.novo.at.rec || 0)}">${formatMoneyBR(user.novo.at.rec)}</span></td>
                         <td><span class="qv-input">${user.reneg.ent.qtd}</span></td>
-                        <td><span class="qv-input">${user.reneg.ent.rec.toFixed(2)}</span></td>
+                        <td><span class="qv-input" data-value="${Number(user.reneg.ent.rec || 0)}">${formatMoneyBR(user.reneg.ent.rec)}</span></td>
                         <td><span class="qv-input">${user.reneg.at.qtd}</span></td>
-                        <td><span class="qv-input">${user.reneg.at.rec.toFixed(2)}</span></td>
+                        <td><span class="qv-input" data-value="${Number(user.reneg.at.rec || 0)}">${formatMoneyBR(user.reneg.at.rec)}</span></td>
                         <td><span class="qv-input">${user.fibra.ent.qtd}</span></td>
                         <td><span class="qv-input">${user.fibra.at.qtd}</span></td>
                         <td><span class="qv-input">${user.tim.ent.qtd}</span></td>
@@ -443,29 +474,29 @@
             rows.forEach(row => {
                 const cells = row.querySelectorAll('.qv-input');
                 if (cells.length === 12) {
-                    totals.novoEntQtd += parseInt(cells[0].textContent) || 0;
-                    totals.novoEntRec += parseFloat(cells[1].textContent) || 0;
-                    totals.novoAtQtd += parseInt(cells[2].textContent) || 0;
-                    totals.novoAtRec += parseFloat(cells[3].textContent) || 0;
-                    totals.renegEntQtd += parseInt(cells[4].textContent) || 0;
-                    totals.renegEntRec += parseFloat(cells[5].textContent) || 0;
-                    totals.renegAtQtd += parseInt(cells[6].textContent) || 0;
-                    totals.renegAtRec += parseFloat(cells[7].textContent) || 0;
-                    totals.fibraEntQtd += parseInt(cells[8].textContent) || 0;
-                    totals.fibraAtQtd += parseInt(cells[9].textContent) || 0;
-                    totals.timEntQtd += parseInt(cells[10].textContent) || 0;
-                    totals.timAtQtd += parseInt(cells[11].textContent) || 0;
+                    totals.novoEntQtd += readSpanNumber(cells[0]);
+                    totals.novoEntRec += readSpanNumber(cells[1]);
+                    totals.novoAtQtd += readSpanNumber(cells[2]);
+                    totals.novoAtRec += readSpanNumber(cells[3]);
+                    totals.renegEntQtd += readSpanNumber(cells[4]);
+                    totals.renegEntRec += readSpanNumber(cells[5]);
+                    totals.renegAtQtd += readSpanNumber(cells[6]);
+                    totals.renegAtRec += readSpanNumber(cells[7]);
+                    totals.fibraEntQtd += readSpanNumber(cells[8]);
+                    totals.fibraAtQtd += readSpanNumber(cells[9]);
+                    totals.timEntQtd += readSpanNumber(cells[10]);
+                    totals.timAtQtd += readSpanNumber(cells[11]);
                 }
             });
 
             document.getElementById('total-novo-ent-qtd').textContent = totals.novoEntQtd;
-            document.getElementById('total-novo-ent-rec').textContent = totals.novoEntRec.toFixed(2);
+            setMoneySpan(document.getElementById('total-novo-ent-rec'), totals.novoEntRec);
             document.getElementById('total-novo-at-qtd').textContent = totals.novoAtQtd;
-            document.getElementById('total-novo-at-rec').textContent = totals.novoAtRec.toFixed(2);
+            setMoneySpan(document.getElementById('total-novo-at-rec'), totals.novoAtRec);
             document.getElementById('total-reneg-ent-qtd').textContent = totals.renegEntQtd;
-            document.getElementById('total-reneg-ent-rec').textContent = totals.renegEntRec.toFixed(2);
+            setMoneySpan(document.getElementById('total-reneg-ent-rec'), totals.renegEntRec);
             document.getElementById('total-reneg-at-qtd').textContent = totals.renegAtQtd;
-            document.getElementById('total-reneg-at-rec').textContent = totals.renegAtRec.toFixed(2);
+            setMoneySpan(document.getElementById('total-reneg-at-rec'), totals.renegAtRec);
             document.getElementById('total-fibra-ent-qtd').textContent = totals.fibraEntQtd;
             document.getElementById('total-fibra-at-qtd').textContent = totals.fibraAtQtd;
             document.getElementById('total-tim-ent-qtd').textContent = totals.timEntQtd;
@@ -613,12 +644,9 @@
                 // Select spans with class qv-input inside the row
                 const spans = linha.querySelectorAll('span.qv-input');
                 
-                // Helper to parse float from span text
                 const val = (idx) => {
                     if (!spans[idx]) return 0;
-                    // Replace comma with dot if user typed comma
-                    let text = spans[idx].textContent.trim().replace(',', '.');
-                    return parseFloat(text) || 0;
+                    return readSpanNumber(spans[idx]);
                 };
 
                 // Novo + Aditivo - Entrantes
@@ -645,14 +673,14 @@
             }
 
             document.getElementById('total-novo-ent-qtd').textContent = totalNovoEntQtd;
-            document.getElementById('total-novo-ent-rec').textContent = totalNovoEntRec.toFixed(2);
+            setMoneySpan(document.getElementById('total-novo-ent-rec'), totalNovoEntRec);
             document.getElementById('total-novo-at-qtd').textContent = totalNovoAtQtd;
-            document.getElementById('total-novo-at-rec').textContent = totalNovoAtRec.toFixed(2);
+            setMoneySpan(document.getElementById('total-novo-at-rec'), totalNovoAtRec);
             
             document.getElementById('total-reneg-ent-qtd').textContent = totalRenegEntQtd;
-            document.getElementById('total-reneg-ent-rec').textContent = totalRenegEntRec.toFixed(2);
+            setMoneySpan(document.getElementById('total-reneg-ent-rec'), totalRenegEntRec);
             document.getElementById('total-reneg-at-qtd').textContent = totalRenegAtQtd;
-            document.getElementById('total-reneg-at-rec').textContent = totalRenegAtRec.toFixed(2);
+            setMoneySpan(document.getElementById('total-reneg-at-rec'), totalRenegAtRec);
             
             document.getElementById('total-fibra-ent-qtd').textContent = totalFibraEntQtd;
             document.getElementById('total-fibra-at-qtd').textContent = totalFibraAtQtd;
