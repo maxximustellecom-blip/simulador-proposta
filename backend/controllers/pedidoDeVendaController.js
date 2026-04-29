@@ -29,6 +29,22 @@ function parsePercentage(str) {
   return parseFloat(String(str).replace('%', '').replace(',', '.')) / 100;
 }
 
+function parseCommissionRate(str) {
+  if (typeof str === 'number') {
+    if (!isFinite(str)) return 0;
+    if (Math.abs(str) >= 10) return str / 10000;
+    return str / 100;
+  }
+  if (str === null || str === undefined) return 0;
+  const s = String(str).trim();
+  if (!s) return 0;
+  const raw = s.replace('%', '').replace(',', '.');
+  const n = Number(raw);
+  if (!isFinite(n)) return 0;
+  if (Math.abs(n) >= 10) return n / 10000;
+  return n / 100;
+}
+
 function parseMoneyLike(v) {
   if (typeof v === 'number') return isFinite(v) ? v : 0;
   const raw = String(v === null || v === undefined ? '' : v).trim();
@@ -51,7 +67,7 @@ function hasCommissionConfig(config) {
   const hasProducts = products.some(p => {
     if (!p || typeof p !== 'object') return false;
     return ['novo', 'aditivo', 'portabilidade', 'renovacao', 'ultra_fibra', 'wttx', 'm2m', 'controle', 'migracao', 'tt']
-      .some(k => parsePercentage(p[k]) > 0);
+      .some(k => parseCommissionRate(p[k]) > 0);
   });
   const hasLevels = levels.some(l => parseMoneyLike(l && l.revenue) > 0);
   return hasProducts || hasLevels;
@@ -79,7 +95,7 @@ function rowHasRates(row) {
       if (v === undefined || v === null) return false;
       const s = String(v).trim();
       if (!s) return false;
-      const n = parsePercentage(s);
+      const n = parseCommissionRate(s);
       return isFinite(n) && n > 0;
     });
 }
@@ -488,7 +504,7 @@ export async function exportarComissaoPedidos(req, res) {
           if (raw !== undefined && raw !== null) {
             const rawStr = String(raw).trim();
             if (rawStr !== '') {
-              rate = parsePercentage(rawStr);
+              rate = parseCommissionRate(rawStr);
               const isExplicitZero = /^0+([,.]0+)?%?$/.test(rawStr);
               if (!isFinite(rate)) rate = fallback;
               else if (rate <= 0 && !isExplicitZero) rate = fallback;
