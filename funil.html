@@ -74,7 +74,14 @@
             cursor: grab;
             user-select: none;
         }
+        .deal.is-open {
+            background: var(--surface);
+        }
         .deal:active { cursor: grabbing; }
+        .deal-expanded { display: none; margin-top: 0.55rem; }
+        .deal.is-open .deal-expanded { display: block; }
+        .deal-chevron { width: 16px; height: 16px; color: var(--muted); transition: transform 0.15s ease; }
+        .deal.is-open .deal-chevron { transform: rotate(180deg); }
         .deal-top {
             display: flex;
             align-items: flex-start;
@@ -320,6 +327,7 @@
         let __dealsAll = [];
         let __deals = [];
         let __dragId = null;
+        let __isDragging = false;
 
         function dealHtml(d) {
             const c = d.client || {};
@@ -345,20 +353,23 @@
                         <div>
                             <div class="deal-title">${title}</div>
                             <div style="grid-column: 1 / -1; font-size: 8pt !important;"><span style='font-size: 8pt !important;'>CNPJ:</span> <strong>${d.cnpj || '-'}</strong></div>
-                            <div style="grid-column: 1 / -1; font-size: 8pt !important;"><span style='font-size: 8pt !important;'>Tel:</span> <strong>${phone || '-'}</strong></div>
-                            <div style="grid-column: 1 / -1; font-size: 8pt !important;"><span style='font-size: 8pt !important;'>Vendedor:</span> <strong>${vendedor}</strong></div>
-                            <div class="deal-sub">${sub}</div>
                         </div>
                         <div class="deal-actions">
-                            <button type="button" class="btn btn-ghost btn-icon" title="Abrir" onclick="window.openNegotiation(${d.id})"><i data-lucide="arrow-right"></i></button>
+                            <i data-lucide="chevron-down" class="deal-chevron"></i>
+                            <button type="button" style='display: none;' class="btn btn-ghost btn-icon" title="Abrir" onclick="window.openNegotiation(${d.id})"><i data-lucide="arrow-right"></i></button>
                         </div>
                     </div>
-                    <div class="deal-meta">
-                        <div><span>Valor:</span> <strong>${valor}</strong></div>
-                        <div><span>Acessos:</span> <strong>${totalAcessos}</strong></div>
-                        <div><span>Criação:</span> <strong>${created}</strong></div>
+                    <div class="deal-expanded">
+                        <div style="grid-column: 1 / -1; font-size: 8pt !important;"><span style='font-size: 8pt !important;'>Tel:</span> <strong>${phone || '-'}</strong></div>
+                        <div style="grid-column: 1 / -1; font-size: 8pt !important;"><span style='font-size: 8pt !important;'>Vendedor:</span> <strong>${vendedor}</strong></div>
+                        <div class="deal-sub">${sub}</div>
+                        <div class="deal-meta">
+                            <div><span>Valor:</span> <strong>${valor}</strong></div>
+                            <div><span>Acessos:</span> <strong>${totalAcessos}</strong></div>
+                            <div><span>Criação:</span> <strong>${created}</strong></div>
+                        </div>
+                        ${pedidoBadge ? `<div style="margin-top: 0.55rem; display: flex; justify-content: flex-end;">${pedidoBadge}</div>` : ''}
                     </div>
-                    ${pedidoBadge ? `<div style="margin-top: 0.55rem; display: flex; justify-content: flex-end;">${pedidoBadge}</div>` : ''}
                 </div>
             `;
         }
@@ -377,6 +388,7 @@
                 if (drop) drop.innerHTML = byStage[s].map(dealHtml).join('') || '<div class="muted">Sem propostas</div>';
             }
             bindDrag();
+            bindAccordion();
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         }
 
@@ -480,11 +492,12 @@
         function bindDrag() {
             document.querySelectorAll('.deal[draggable="true"]').forEach(el => {
                 el.addEventListener('dragstart', (e) => {
+                    __isDragging = true;
                     __dragId = Number(el.getAttribute('data-id') || 0) || null;
                     try { e.dataTransfer.setData('text/plain', String(__dragId || '')); } catch {}
                     try { e.dataTransfer.effectAllowed = 'move'; } catch {}
                 });
-                el.addEventListener('dragend', () => { __dragId = null; });
+                el.addEventListener('dragend', () => { __dragId = null; __isDragging = false; });
             });
             document.querySelectorAll('.kanban-drop').forEach(drop => {
                 drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('dragover'); });
@@ -512,6 +525,17 @@
                         render();
                         toast(err && err.message ? err.message : 'Erro ao atualizar funil', 'error');
                     }
+                });
+            });
+        }
+
+        function bindAccordion() {
+            document.querySelectorAll('.deal').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (__isDragging) return;
+                    const t = e.target;
+                    if (t && (t.closest('button') || t.closest('a') || t.closest('input') || t.closest('select') || t.closest('textarea'))) return;
+                    el.classList.toggle('is-open');
                 });
             });
         }
