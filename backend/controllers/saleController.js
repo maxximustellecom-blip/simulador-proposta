@@ -65,6 +65,7 @@ function mapProductToCommissionKeyFromRaw(tipoRaw, isPortabilidade) {
     .replace(/\s+/g, ' ')
     .trim();
   if (t.includes('portabilidade')) return 'portabilidade';
+  if (t.includes('1º') || t.includes('1o') || (t.includes('acesso') && !t.includes('renov') && !t.includes('reneg'))) return 'novo';
   if (t.includes('novo')) return 'novo';
   if (t.includes('aditivo') || t.includes('adtivo') || t.includes('adit')) return 'aditivo';
   if (t.includes('renov')) return 'renovacao';
@@ -147,11 +148,20 @@ function getLineQty(l) {
   return isFinite(q) && q > 0 ? q : 1;
 }
 
-function getLineValue(l) {
+function getLineUnitValue(l, isCustom) {
+  if (!l) return 0;
+  if (isCustom) {
+    const base = parseMoneyLike(l.valorNaoFidelizado !== undefined ? l.valorNaoFidelizado : (l.valorPlano !== undefined ? l.valorPlano : l.precoAtual));
+    const desc = parseMoneyLike(l.desconto !== undefined ? l.desconto : 0);
+    return base * (1 - desc / 100);
+  }
+  return parseMoneyLike(l.valorPlano);
+}
+
+function getLineValue(l, isCustom) {
   const q = getLineQty(l);
-  const v = Number(l && l.valorPlano !== undefined ? l.valorPlano : 0);
-  const vv = isFinite(v) ? v : 0;
-  return vv * q;
+  const unit = getLineUnitValue(l, isCustom);
+  return unit * q;
 }
 
 export async function getQuadroVendas(req, res) {
@@ -210,13 +220,14 @@ export async function getQuadroVendas(req, res) {
         userNegs.forEach(n => {
           const isAtiva = n.pedidoDeVenda && n.pedidoDeVenda.status === '7-Contratos Ativos';
           if (!isAtiva) return;
+          const isCustom = Boolean(n.customProposal && n.customProposal.linhas);
           const lines = n.proposal ? n.proposal.linhas : (n.customProposal ? n.customProposal.linhas : []);
           const linesArr = Array.isArray(lines) ? lines : [];
           linesArr.forEach(l => {
             const isPort = String(l && l.portabilidade || '').toLowerCase() === 'sim';
             const tipoRaw = getLineTypeRaw(n, l, productTypeByName);
             const key = mapProductToCommissionKeyFromRaw(tipoRaw, isPort);
-            if (key === 'novo' || key === 'aditivo') baseRevenueForLevel += getLineValue(l);
+            if (key === 'novo' || key === 'aditivo') baseRevenueForLevel += getLineValue(l, isCustom);
           });
         });
       }
@@ -249,6 +260,7 @@ export async function getQuadroVendas(req, res) {
         
         if (!isAtiva && !isEntrante) return;
 
+        const isCustom = Boolean(n.customProposal && n.customProposal.linhas);
         const lines = n.proposal ? n.proposal.linhas : (n.customProposal ? n.customProposal.linhas : []);
         const linesArr = Array.isArray(lines) ? lines : [];
 
@@ -256,7 +268,7 @@ export async function getQuadroVendas(req, res) {
           const isPort = String(l && l.portabilidade || '').toLowerCase() === 'sim';
           const tipoRaw = getLineTypeRaw(n, l, productTypeByName);
           const key = mapProductToCommissionKeyFromRaw(tipoRaw, isPort);
-          const itemVal = getLineValue(l);
+          const itemVal = getLineValue(l, isCustom);
           const qtd = getLineQty(l);
           
           let rate = 0;
@@ -272,18 +284,21 @@ export async function getQuadroVendas(req, res) {
             migracao: 0.3,
             tt: 0.3
           };
-          const fallback = defaults[key] || 0;
-          rate = fallback;
-          if (shouldUseLevel && levelConfigRow) {
-            const raw = levelConfigRow[key];
-            if (raw !== undefined && raw !== null) {
-              const rawStr = String(raw).trim();
-              if (rawStr !== '') {
-                const parsed = parsePercentage(rawStr);
-                const isExplicitZero = /^0+([,.]0+)?%?$/.test(rawStr);
-                if (isFinite(parsed) && (parsed > 0 || isExplicitZero)) rate = parsed;
+          if (shouldUseLevel) {
+            rate = 0;
+            if (levelConfigRow) {
+              const raw = levelConfigRow[key];
+              if (raw !== undefined && raw !== null) {
+                const rawStr = String(raw).trim();
+                if (rawStr !== '') {
+                  const parsed = parsePercentage(rawStr);
+                  const isExplicitZero = /^0+([,.]0+)?%?$/.test(rawStr);
+                  if (isFinite(parsed) && (parsed > 0 || isExplicitZero)) rate = parsed;
+                }
               }
             }
+          } else {
+            rate = defaults[key] || 0;
           }
           const bucket = stats.types[key] ? key : 'outros';
           const target = isAtiva ? stats.types[bucket].at : stats.types[bucket].ent;

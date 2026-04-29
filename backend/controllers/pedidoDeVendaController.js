@@ -488,19 +488,21 @@ export async function exportarComissaoPedidos(req, res) {
         else if (label.includes('controle')) key = 'controle';
         else if (label.includes('migr')) key = 'migracao';
         else if (label === 'tt') key = 'tt';
-        const fallback = (rule.defaults && rule.defaults[key] !== undefined) ? rule.defaults[key] : 0;
-        let rate = fallback;
-        if (rule.useLevel && rule.levelRow) {
-          const raw = rule.levelRow[key];
-          if (raw !== undefined && raw !== null) {
-            const rawStr = String(raw).trim();
-            if (rawStr !== '') {
-              rate = parsePercentage(rawStr);
-              const isExplicitZero = /^0+([,.]0+)?%?$/.test(rawStr);
-              if (!isFinite(rate)) rate = fallback;
-              else if (rate <= 0 && !isExplicitZero) rate = fallback;
+        let rate = 0;
+        if (rule.useLevel) {
+          if (rule.levelRow) {
+            const raw = rule.levelRow[key];
+            if (raw !== undefined && raw !== null) {
+              const rawStr = String(raw).trim();
+              if (rawStr !== '') {
+                const parsed = parsePercentage(rawStr);
+                const isExplicitZero = /^0+([,.]0+)?%?$/.test(rawStr);
+                if (isFinite(parsed) && (parsed > 0 || isExplicitZero)) rate = parsed;
+              }
             }
           }
+        } else {
+          rate = (rule.defaults && rule.defaults[key] !== undefined) ? rule.defaults[key] : 0;
         }
         return acc + (toNumber(it.valor, 0) * rate);
       }, 0);

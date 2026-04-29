@@ -488,7 +488,7 @@
                             </div>
                         `;
                     };
-                    const totalCom = Number(((user && user.totals && user.totals.ent && user.totals.ent.com) || 0)) + Number(((user && user.totals && user.totals.at && user.totals.at.com) || 0));
+                    const totalComAt = Number(((user && user.totals && user.totals.at && user.totals.at.com) || 0));
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td class="consultor-col">${user.name || 'Sem Nome'}</td>
@@ -513,8 +513,8 @@
                         <td>${cell('tt','ent')}</td>
                         <td>${cell('tt','at')}</td>
                         <td>
-                            <div class="qv-cell" data-key="total" data-com="${totalCom}">
-                                <div class="qv-money" data-value="${totalCom}">${formatMoneyBR(totalCom)}</div>
+                            <div class="qv-cell" data-key="total-at" data-com="${totalComAt}">
+                                <div class="qv-money" data-value="${totalComAt}">${formatMoneyBR(totalComAt)}</div>
                             </div>
                         </td>
                     `;
@@ -535,17 +535,18 @@
             document.querySelectorAll('#tbody-consultores .qv-cell').forEach(el => {
                 const key = el.dataset.key || '';
                 if (!key) return;
+                if (!key.endsWith('-at') && key !== 'total-at') return;
                 const qtd = Number(el.dataset.qtd || 0);
                 const com = Number(el.dataset.com || 0);
                 if (!totals[key]) totals[key] = { qtd: 0, com: 0 };
                 totals[key].qtd += isFinite(qtd) ? qtd : 0;
                 totals[key].com += isFinite(com) ? com : 0;
-                if (key === 'total') companyCom += isFinite(com) ? com : 0;
+                if (key === 'total-at') companyCom += isFinite(com) ? com : 0;
             });
 
             const setCell = (k, side) => {
                 const key = `${k}-${side}`;
-                const t = totals[key] || { qtd: 0, com: 0 };
+                const t = (side === 'at') ? (totals[key] || { qtd: 0, com: 0 }) : { qtd: 0, com: 0 };
                 const qtdEl = document.getElementById(`total-${k}-${side}-qtd`);
                 const comEl = document.getElementById(`total-${k}-${side}-com`);
                 if (qtdEl) qtdEl.textContent = String(t.qtd || 0);
