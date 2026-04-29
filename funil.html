@@ -88,10 +88,14 @@
             justify-content: space-between;
             gap: 0.5rem;
         }
+        .deal-top > div:first-child { min-width: 0; }
         .deal-title {
             font-weight: 700;
             font-size: 0.95rem;
             line-height: 1.15;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .deal-sub {
             color: var(--muted);
@@ -112,6 +116,40 @@
             display:flex;
             gap:0.35rem;
             align-items:center;
+        }
+        .deal-badges {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.35rem;
+            flex-wrap: wrap;
+        }
+        .deal-badges--closed {
+            justify-content: flex-start;
+            flex-wrap: nowrap;
+            overflow: hidden;
+        }
+        .deal-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.12rem 0.4rem;
+            border-radius: 999px;
+            font-weight: 800;
+            font-size: 0.72rem;
+            line-height: 1.1;
+            border: 1px solid var(--border);
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .deal-badge.etiqueta {
+            background: rgba(107,114,128,0.10);
+            border-color: rgba(107,114,128,0.25);
+            color: #6B7280;
+        }
+        .deal-badge.etiqueta strong {
+            font-weight: 900;
         }
         .stage-1 { border-left-color: #3B82F6; }
         .stage-2 { border-left-color: #A855F7; }
@@ -269,7 +307,7 @@
             const txt = String(etiqueta || '').trim();
             if (!txt) return '';
             const c = String(cor || '').trim() || '#6B7280';
-            return `<span style="display:inline-block; padding:0.12rem 0.45rem; border-radius:999px; font-weight:700; font-size:0.75rem; border:1px solid ${c}55; background:${c}22; color:${c};">${txt}</span>`;
+            return `<span class="deal-badge etiqueta" style="border-color:${c}55; background:${c}1f; color:${c};">${txt}</span>`;
         }
         function fmtMoney(v) {
             try { return (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })).format(Number(v || 0)); } catch { return 'R$ 0,00'; }
@@ -353,7 +391,7 @@
                 ? (d.pedido_venda_status || d.pedidoStatus || d.pedido_status || '')
                 : '';
             const pedidoBadge = pedidoStatus
-                ? `<span class="${getStatusClass(pedidoStatus)}" title="Status do Pedido">${pedidoStatus}</span>`
+                ? `<span class="${getStatusClass(pedidoStatus)} deal-badge" title="Status do Pedido">${pedidoStatus}</span>`
                 : '';
             const pedidoEtiqueta = d.pedido_venda_etiqueta || '';
             const pedidoEtiquetaCor = d.pedido_venda_etiqueta_cor || '';
@@ -364,7 +402,7 @@
                         <div>
                             <div class="deal-title">${title}</div>
                             <div style="grid-column: 1 / -1; font-size: 8pt !important;"><span style='font-size: 8pt !important;'>Admin:</span> <strong>${adminContato}</strong></div>
-                            ${etiquetaBadge ? `<div style="margin-top: 0.35rem;">${etiquetaBadge}</div>` : ''}
+                            ${etiquetaBadge ? `<div class="deal-badges deal-badges--closed" style="margin-top: 0.35rem;">${etiquetaBadge}</div>` : ''}
                         </div>
                         <div class="deal-actions">
                             <i data-lucide="chevron-down" class="deal-chevron"></i>
@@ -381,7 +419,7 @@
                             <div><span>Acessos:</span> <strong>${totalAcessos}</strong></div>
                             <div><span>Criação:</span> <strong>${created}</strong></div>
                         </div>
-                        ${(etiquetaBadge || pedidoBadge) ? `<div style="margin-top: 0.55rem; display: flex; justify-content: flex-end; gap: 0.35rem; align-items: center;">${etiquetaBadge || ''}${pedidoBadge || ''}</div>` : ''}
+                        ${(etiquetaBadge || pedidoBadge) ? `<div class="deal-badges" style="margin-top: 0.55rem;">${etiquetaBadge || ''}${pedidoBadge || ''}</div>` : ''}
                     </div>
                 </div>
             `;
