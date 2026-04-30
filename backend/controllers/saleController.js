@@ -213,8 +213,11 @@ export async function getQuadroVendas(req, res) {
     const result = users.map(user => {
       const userNegs = filteredNegs.filter(n => Number(n.created_by) === Number(user.id));
       
+      const isExternal = String(user && user.tipo ? user.tipo : 'interno').toLowerCase() === 'externo';
+      const fixedCommission = parseMoneyLike(user && user.comissao !== undefined ? user.comissao : 0);
+
       const config = user.profile && user.profile.commission_config ? (typeof user.profile.commission_config === 'string' ? JSON.parse(user.profile.commission_config) : user.profile.commission_config) : null;
-      const shouldUseLevel = hasCommissionConfig(config);
+      const shouldUseLevel = !isExternal && hasCommissionConfig(config);
       let baseRevenueForLevel = 0;
       if (shouldUseLevel) {
         userNegs.forEach(n => {
@@ -268,10 +271,9 @@ export async function getQuadroVendas(req, res) {
           const isPort = String(l && l.portabilidade || '').toLowerCase() === 'sim';
           const tipoRaw = getLineTypeRaw(n, l, productTypeByName);
           const key = mapProductToCommissionKeyFromRaw(tipoRaw, isPort);
-          const itemVal = getLineValue(l, isCustom);
           const qtd = getLineQty(l);
           
-          let rate = 0;
+          let commissionValue = 0;
           const defaults = {
             novo: 0.6,
             aditivo: 0.6,
@@ -284,29 +286,39 @@ export async function getQuadroVendas(req, res) {
             migracao: 0.3,
             tt: 0.3
           };
-          if (shouldUseLevel) {
-            rate = 0;
-            if (levelConfigRow) {
-              const raw = levelConfigRow[key];
-              if (raw !== undefined && raw !== null) {
-                const rawStr = String(raw).trim();
-                if (rawStr !== '') {
-                  const parsed = parsePercentage(rawStr);
-                  const isExplicitZero = /^0+([,.]0+)?%?$/.test(rawStr);
-                  if (isFinite(parsed) && (parsed > 0 || isExplicitZero)) rate = parsed;
+
+          if (isExternal) {
+            const eligible = (key === 'novo' || key === 'aditivo' || key === 'migracao');
+            commissionValue = eligible ? ((isFinite(fixedCommission) ? fixedCommission : 0) * (isFinite(qtd) ? qtd : 0)) : 0;
+          } else {
+            const itemVal = getLineValue(l, isCustom);
+            let rate = 0;
+            if (shouldUseLevel) {
+              rate = 0;
+              if (levelConfigRow) {
+                const raw = levelConfigRow[key];
+                if (raw !== undefined && raw !== null) {
+                  const rawStr = String(raw).trim();
+                  if (rawStr !== '') {
+                    const parsed = parsePercentage(rawStr);
+                    const isExplicitZero = /^0+([,.]0+)?%?$/.test(rawStr);
+                    if (isFinite(parsed) && (parsed > 0 || isExplicitZero)) rate = parsed;
+                  }
                 }
               }
+            } else {
+              rate = defaults[key] || 0;
             }
-          } else {
-            rate = defaults[key] || 0;
+            commissionValue = itemVal * rate;
           }
+
           const bucket = stats.types[key] ? key : 'outros';
           const target = isAtiva ? stats.types[bucket].at : stats.types[bucket].ent;
           target.qtd += qtd;
-          target.com += itemVal * rate;
+          target.com += commissionValue;
           const totalTarget = isAtiva ? stats.totals.at : stats.totals.ent;
           totalTarget.qtd += qtd;
-          totalTarget.com += itemVal * rate;
+          totalTarget.com += commissionValue;
         });
       });
 

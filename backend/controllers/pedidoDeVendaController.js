@@ -360,7 +360,7 @@ export async function exportarComissaoPedidos(req, res) {
           as: 'negotiation',
           include: [
             { model: Client, as: 'client' },
-            { model: User, as: 'creator', include: [{ model: AccessProfile, as: 'profile' }] },
+            { model: User, as: 'creator', attributes: ['id', 'name', 'tipo', 'comissao'], include: [{ model: AccessProfile, as: 'profile' }] },
             { model: NegociacaoProposta, as: 'proposal' },
             { model: NegociacaoPropostaCustomizada, as: 'customProposal' }
           ]
@@ -416,16 +416,21 @@ export async function exportarComissaoPedidos(req, res) {
       const profile = creator && creator.profile ? creator.profile : null;
       const rawConfig = profile && profile.commission_config ? profile.commission_config : null;
       const commission_config = (typeof rawConfig === 'string') ? (() => { try { return JSON.parse(rawConfig); } catch { return null; } })() : rawConfig;
+      const consultorTipo = creator ? (creator.tipo || 'interno') : 'interno';
+      const consultorComissaoFixa = creator ? toNumber(creator.comissao, 0) : 0;
 
       prepared.push({
         pedido_id: p.id,
         negotiation_id: p.negotiation_id,
         consultor_id: creator ? creator.id : null,
         consultor: creator ? (creator.name || '') : '',
+        consultorTipo,
+        consultorComissaoFixa,
         razaoSocial: neg.client?.name || '',
         dataAtivacao: p.data_ativacao || '',
         totalAcessos,
         itensResumo,
+        breakdownQtd,
         statusPedido: p.status || '',
         commission_config
       });
@@ -473,6 +478,25 @@ export async function exportarComissaoPedidos(req, res) {
     });
 
     const result = prepared.map(row => {
+      if (String(row.consultorTipo || '').toLowerCase() === 'externo') {
+        const bq = row.breakdownQtd || {};
+        const qtdElegivel =
+          Number(bq.novo || 0) +
+          Number(bq.aditivo || 0) +
+          Number(bq.migracao || 0);
+        const fixa = toNumber(row.consultorComissaoFixa, 0);
+        const comissao = (isFinite(qtdElegivel) ? qtdElegivel : 0) * (isFinite(fixa) ? fixa : 0);
+        return {
+          consultor: row.consultor || '',
+          razaoSocial: row.razaoSocial,
+          dataAtivacao: row.dataAtivacao,
+          totalAcessos: row.totalAcessos,
+          itensResumo: row.itensResumo,
+          statusPedido: row.statusPedido,
+          comissao
+        };
+      }
+
       const rule = consultorRule.get(Number(row.consultor_id || 0)) || { useLevel: false, levelRow: null, defaults: DEFAULT_RATES };
       const itens = Array.isArray(row.itensResumo) ? row.itensResumo : [];
       const comissao = itens.reduce((acc, it) => {
