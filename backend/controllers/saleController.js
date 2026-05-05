@@ -276,6 +276,18 @@ export async function getQuadroVendas(req, res) {
           const qtd = getLineQty(l);
           
           let commissionValue = 0;
+          const defaults = {
+            novo: 0.6,
+            aditivo: 0.6,
+            portabilidade: 0.6,
+            renovacao: 0.3,
+            ultra_fibra: 0.3,
+            wttx: 0.6,
+            m2m: 0.6,
+            controle: 0.6,
+            migracao: 0.3,
+            tt: 0.3
+          };
           
           if (comissaoFixaAtiva) {
             let specificFixed = 0;

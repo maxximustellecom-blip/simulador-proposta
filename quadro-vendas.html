@@ -298,6 +298,12 @@
                     <span>Quadro de Vendas</span>
                 </div>
                 <div class="header-filters">
+                    <!-- View Mode Selector -->
+                    <div class="picker-group">
+                        <button id="modeSimple" class="btn btn-primary btn-sm" onclick="setViewMode('simple')">Simples</button>
+                        <button id="modeDetailed" class="btn btn-ghost btn-sm" onclick="setViewMode('detailed')">Detalhado</button>
+                    </div>
+
                     <!-- Month Picker -->
                     <div class="picker-group">
                         <button id="prevMonth" class="btn btn-ghost btn-icon" type="button"><i data-lucide="chevron-left"></i></button>
@@ -320,43 +326,43 @@
             <div id="captureArea" class="capture-area">
                 <div class="board-container">
                     <div class="table-container">
-                        <table>
+                        <table id="quadroTable">
                             <thead>
-                                <tr>
+                                <tr id="header-row-1">
                                     <th rowspan="2" class="th-group-consultor" style="min-width: 180px;">CONSULTOR</th>
-                                    <th colspan="2" class="th-group-novo">NOVO</th>
-                                    <th colspan="2" class="th-group-novo">ADITIVO</th>
-                                    <th colspan="2" class="th-group-novo">PORTABILIDADE</th>
-                                    <th colspan="2" class="th-group-reneg">RENOV.</th>
-                                    <th colspan="2" class="th-group-fibra">U. FIBRA</th>
-                                    <th colspan="2" class="th-group-fibra">WTTX</th>
-                                    <th colspan="2" class="th-group-fibra">M2M</th>
-                                    <th colspan="2" class="th-group-tim">CONTROLE</th>
-                                    <th colspan="2" class="th-group-reneg">MIGRAÇÃO PF/PJ</th>
-                                    <th colspan="2" class="th-group-reneg">TT</th>
+                                    <th colspan="2" class="th-group-novo" data-group="novo">NOVO</th>
+                                    <th colspan="2" class="th-group-novo" data-group="aditivo">ADITIVO</th>
+                                    <th colspan="2" class="th-group-novo" data-group="portabilidade">PORTABILIDADE</th>
+                                    <th colspan="2" class="th-group-reneg" data-group="renovacao">RENOV.</th>
+                                    <th colspan="2" class="th-group-fibra" data-group="ultra_fibra">U. FIBRA</th>
+                                    <th colspan="2" class="th-group-fibra" data-group="wttx">WTTX</th>
+                                    <th colspan="2" class="th-group-fibra" data-group="m2m">M2M</th>
+                                    <th colspan="2" class="th-group-tim" data-group="controle">CONTROLE</th>
+                                    <th colspan="2" class="th-group-reneg" data-group="migracao">MIGRAÇÃO PF/PJ</th>
+                                    <th colspan="2" class="th-group-reneg" data-group="tt">TT</th>
                                     <th colspan="1" class="th-group-consultor">TOTAL</th>
                                 </tr>
-                                <tr>
-                                    <th class="th-group-novo" style="opacity: 0.85">ENT</th>
-                                    <th class="th-group-novo" style="opacity: 0.85">AT</th>
-                                    <th class="th-group-novo" style="opacity: 0.85">ENT</th>
-                                    <th class="th-group-novo" style="opacity: 0.85">AT</th>
-                                    <th class="th-group-novo" style="opacity: 0.85">ENT</th>
-                                    <th class="th-group-novo" style="opacity: 0.85">AT</th>
-                                    <th class="th-group-reneg" style="opacity: 0.85">ENT</th>
-                                    <th class="th-group-reneg" style="opacity: 0.85">AT</th>
-                                    <th class="th-group-fibra" style="opacity: 0.85">ENT</th>
-                                    <th class="th-group-fibra" style="opacity: 0.85">AT</th>
-                                    <th class="th-group-fibra" style="opacity: 0.85">ENT</th>
-                                    <th class="th-group-fibra" style="opacity: 0.85">AT</th>
-                                    <th class="th-group-fibra" style="opacity: 0.85">ENT</th>
-                                    <th class="th-group-fibra" style="opacity: 0.85">AT</th>
-                                    <th class="th-group-tim" style="opacity: 0.85">ENT</th>
-                                    <th class="th-group-tim" style="opacity: 0.85">AT</th>
-                                    <th class="th-group-reneg" style="opacity: 0.85">ENT</th>
-                                    <th class="th-group-reneg" style="opacity: 0.85">AT</th>
-                                    <th class="th-group-reneg" style="opacity: 0.85">ENT</th>
-                                    <th class="th-group-reneg" style="opacity: 0.85">AT</th>
+                                <tr id="header-row-2">
+                                    <th class="th-group-novo col-ent" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-novo col-at" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-novo col-ent" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-novo col-at" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-novo col-ent" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-novo col-at" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-reneg col-ent" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-reneg col-at" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-fibra col-ent" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-fibra col-at" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-fibra col-ent" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-fibra col-at" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-fibra col-ent" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-fibra col-at" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-tim col-ent" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-tim col-at" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-reneg col-ent" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-reneg col-at" style="opacity: 0.85">AT</th>
+                                    <th class="th-group-reneg col-ent" style="opacity: 0.85">ENT</th>
+                                    <th class="th-group-reneg col-at" style="opacity: 0.85">AT</th>
                                     <th class="th-group-consultor" style="opacity: 0.9">R$</th>
                                 </tr>
                             </thead>
@@ -366,26 +372,26 @@
                             <tfoot>
                                 <tr class="total-row">
                                     <td class="total-cell">TOTAL EMPRESA</td>
-                                    <td><div class="qv-cell"><div id="total-novo-ent-qtd" class="qv-qtd">0</div><div id="total-novo-ent-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-novo-at-qtd" class="qv-qtd">0</div><div id="total-novo-at-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-aditivo-ent-qtd" class="qv-qtd">0</div><div id="total-aditivo-ent-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-aditivo-at-qtd" class="qv-qtd">0</div><div id="total-aditivo-at-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-portabilidade-ent-qtd" class="qv-qtd">0</div><div id="total-portabilidade-ent-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-portabilidade-at-qtd" class="qv-qtd">0</div><div id="total-portabilidade-at-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-renovacao-ent-qtd" class="qv-qtd">0</div><div id="total-renovacao-ent-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-renovacao-at-qtd" class="qv-qtd">0</div><div id="total-renovacao-at-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-ultra_fibra-ent-qtd" class="qv-qtd">0</div><div id="total-ultra_fibra-ent-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-ultra_fibra-at-qtd" class="qv-qtd">0</div><div id="total-ultra_fibra-at-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-wttx-ent-qtd" class="qv-qtd">0</div><div id="total-wttx-ent-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-wttx-at-qtd" class="qv-qtd">0</div><div id="total-wttx-at-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-m2m-ent-qtd" class="qv-qtd">0</div><div id="total-m2m-ent-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-m2m-at-qtd" class="qv-qtd">0</div><div id="total-m2m-at-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-controle-ent-qtd" class="qv-qtd">0</div><div id="total-controle-ent-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-controle-at-qtd" class="qv-qtd">0</div><div id="total-controle-at-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-migracao-ent-qtd" class="qv-qtd">0</div><div id="total-migracao-ent-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-migracao-at-qtd" class="qv-qtd">0</div><div id="total-migracao-at-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-tt-ent-qtd" class="qv-qtd">0</div><div id="total-tt-ent-com" class="qv-money">R$ 0,00</div></div></td>
-                                    <td><div class="qv-cell"><div id="total-tt-at-qtd" class="qv-qtd">0</div><div id="total-tt-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-ent"><div class="qv-cell"><div id="total-novo-ent-qtd" class="qv-qtd">0</div><div id="total-novo-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-at"><div class="qv-cell"><div id="total-novo-at-qtd" class="qv-qtd">0</div><div id="total-novo-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-ent"><div class="qv-cell"><div id="total-aditivo-ent-qtd" class="qv-qtd">0</div><div id="total-aditivo-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-at"><div class="qv-cell"><div id="total-aditivo-at-qtd" class="qv-qtd">0</div><div id="total-aditivo-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-ent"><div class="qv-cell"><div id="total-portabilidade-ent-qtd" class="qv-qtd">0</div><div id="total-portabilidade-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-at"><div class="qv-cell"><div id="total-portabilidade-at-qtd" class="qv-qtd">0</div><div id="total-portabilidade-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-ent"><div class="qv-cell"><div id="total-renovacao-ent-qtd" class="qv-qtd">0</div><div id="total-renovacao-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-at"><div class="qv-cell"><div id="total-renovacao-at-qtd" class="qv-qtd">0</div><div id="total-renovacao-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-ent"><div class="qv-cell"><div id="total-ultra_fibra-ent-qtd" class="qv-qtd">0</div><div id="total-ultra_fibra-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-at"><div class="qv-cell"><div id="total-ultra_fibra-at-qtd" class="qv-qtd">0</div><div id="total-ultra_fibra-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-ent"><div class="qv-cell"><div id="total-wttx-ent-qtd" class="qv-qtd">0</div><div id="total-wttx-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-at"><div class="qv-cell"><div id="total-wttx-at-qtd" class="qv-qtd">0</div><div id="total-wttx-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-ent"><div class="qv-cell"><div id="total-m2m-ent-qtd" class="qv-qtd">0</div><div id="total-m2m-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-at"><div class="qv-cell"><div id="total-m2m-at-qtd" class="qv-qtd">0</div><div id="total-m2m-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-ent"><div class="qv-cell"><div id="total-controle-ent-qtd" class="qv-qtd">0</div><div id="total-controle-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-at"><div class="qv-cell"><div id="total-controle-at-qtd" class="qv-qtd">0</div><div id="total-controle-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-ent"><div class="qv-cell"><div id="total-migracao-ent-qtd" class="qv-qtd">0</div><div id="total-migracao-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-at"><div class="qv-cell"><div id="total-migracao-at-qtd" class="qv-qtd">0</div><div id="total-migracao-at-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-ent"><div class="qv-cell"><div id="total-tt-ent-qtd" class="qv-qtd">0</div><div id="total-tt-ent-com" class="qv-money">R$ 0,00</div></div></td>
+                                    <td class="col-at"><div class="qv-cell"><div id="total-tt-at-qtd" class="qv-qtd">0</div><div id="total-tt-at-com" class="qv-money">R$ 0,00</div></div></td>
                                     <td><div class="qv-cell"><div id="total-company-com" class="qv-money">R$ 0,00</div></div></td>
                                 </tr>
                             </tfoot>
@@ -458,120 +464,155 @@
             return isFinite(n) ? n : 0;
         }
 
+        let viewMode = 'simple'; // 'simple' or 'detailed'
+        let __quadroDataCache = null;
+
+        function setViewMode(mode) {
+            viewMode = mode;
+            
+            // Update buttons
+            const btnSimple = document.getElementById('modeSimple');
+            const btnDetailed = document.getElementById('modeDetailed');
+            
+            if (mode === 'simple') {
+                btnSimple.className = 'btn btn-primary btn-sm';
+                btnDetailed.className = 'btn btn-ghost btn-sm';
+                document.querySelectorAll('.col-ent').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('[data-group]').forEach(el => el.colSpan = 1);
+            } else {
+                btnSimple.className = 'btn btn-ghost btn-sm';
+                btnDetailed.className = 'btn btn-primary btn-sm';
+                document.querySelectorAll('.col-ent').forEach(el => el.style.display = '');
+                document.querySelectorAll('[data-group]').forEach(el => el.colSpan = 2);
+            }
+            
+            // Re-render data if already loaded
+            if (__quadroDataCache) {
+                renderQuadro(__quadroDataCache);
+            }
+        }
+
         async function loadQuadroData() {
             const tbody = document.getElementById('tbody-consultores');
-            tbody.innerHTML = '<tr><td colspan="22" style="text-align:center; padding: 1rem;">Carregando...</td></tr>';
+            const colCount = viewMode === 'simple' ? 12 : 22;
+            tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; padding: 1rem;">Carregando...</td></tr>`;
             
             try {
-                // targetMonth is 1-indexed in backend
                 const data = await api(`/sales/quadro?month=${currentMonth + 1}&year=${currentYear}&week=${currentWeek}`, { method: 'GET' });
-                
-                tbody.innerHTML = '';
-                
-                if (!data || data.length === 0) {
-                     tbody.innerHTML = '<tr><td colspan="22" style="text-align:center; padding: 1rem;">Nenhum dado encontrado para este período.</td></tr>';
-                     calcularTotais();
-                     return;
-                }
+                __quadroDataCache = data;
+                renderQuadro(data);
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; padding: 1rem; color: var(--danger);">Erro ao carregar dados.</td></tr>`;
+            }
+        }
 
-                const types = ['novo','aditivo','portabilidade','renovacao','ultra_fibra','wttx','m2m','controle','migracao','tt'];
-                data.forEach(user => {
-                    const t = user && user.types ? user.types : {};
-                    const cell = (key, side) => {
-                        const obj = (t && t[key] && t[key][side]) ? t[key][side] : { qtd: 0, com: 0 };
-                        const qtd = Number(obj.qtd || 0);
-                        const com = Number(obj.com || 0);
-                        return `
+        function renderQuadro(data) {
+            const tbody = document.getElementById('tbody-consultores');
+            tbody.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                 const colCount = viewMode === 'simple' ? 12 : 22;
+                 tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; padding: 1rem;">Nenhum dado encontrado para este período.</td></tr>`;
+                 calcularTotais();
+                 return;
+            }
+
+            data.forEach(user => {
+                const t = user && user.types ? user.types : {};
+                const cell = (key, side) => {
+                    const obj = (t && t[key] && t[key][side]) ? t[key][side] : { qtd: 0, com: 0 };
+                    const qtd = Number(obj.qtd || 0);
+                    const com = Number(obj.com || 0);
+                    const displayStyle = (side === 'ent' && viewMode === 'simple') ? 'display: none;' : '';
+                    return `
+                        <td class="col-${side}" style="${displayStyle}">
                             <div class="qv-cell" data-key="${key}-${side}" data-qtd="${qtd}" data-com="${com}">
                                 <div class="qv-qtd">${qtd}</div>
                                 <div class="qv-money" data-value="${com}">${formatMoneyBR(com)}</div>
                             </div>
-                        `;
-                    };
-                    const totalComAt = Number(((user && user.totals && user.totals.at && user.totals.at.com) || 0));
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td class="consultor-col">${user.name || 'Sem Nome'}</td>
-                        <td>${cell('novo','ent')}</td>
-                        <td>${cell('novo','at')}</td>
-                        <td>${cell('aditivo','ent')}</td>
-                        <td>${cell('aditivo','at')}</td>
-                        <td>${cell('portabilidade','ent')}</td>
-                        <td>${cell('portabilidade','at')}</td>
-                        <td>${cell('renovacao','ent')}</td>
-                        <td>${cell('renovacao','at')}</td>
-                        <td>${cell('ultra_fibra','ent')}</td>
-                        <td>${cell('ultra_fibra','at')}</td>
-                        <td>${cell('wttx','ent')}</td>
-                        <td>${cell('wttx','at')}</td>
-                        <td>${cell('m2m','ent')}</td>
-                        <td>${cell('m2m','at')}</td>
-                        <td>${cell('controle','ent')}</td>
-                        <td>${cell('controle','at')}</td>
-                        <td>${cell('migracao','ent')}</td>
-                        <td>${cell('migracao','at')}</td>
-                        <td>${cell('tt','ent')}</td>
-                        <td>${cell('tt','at')}</td>
-                        <td>
-                            <div class="qv-cell" data-key="total-at" data-com="${totalComAt}">
-                                <div class="qv-money" data-value="${totalComAt}">${formatMoneyBR(totalComAt)}</div>
-                            </div>
                         </td>
                     `;
-                    tbody.appendChild(tr);
-                });
-                
-                calcularTotais();
-                
-            } catch (err) {
-                console.error(err);
-                tbody.innerHTML = '<tr><td colspan="22" style="text-align:center; padding: 1rem; color: var(--danger);">Erro ao carregar dados do quadro.</td></tr>';
-            }
+                };
+
+                const totalCom = viewMode === 'simple' 
+                    ? Number(((user && user.totals && user.totals.at && user.totals.at.com) || 0))
+                    : Number(((user && user.totals && user.totals.at && user.totals.at.com) || 0)) + Number(((user && user.totals && user.totals.ent && user.totals.ent.com) || 0));
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="consultor-col">${user.name || 'Sem Nome'}</td>
+                    ${cell('novo','ent')}
+                    ${cell('novo','at')}
+                    ${cell('aditivo','ent')}
+                    ${cell('aditivo','at')}
+                    ${cell('portabilidade','ent')}
+                    ${cell('portabilidade','at')}
+                    ${cell('renovacao','ent')}
+                    ${cell('renovacao','at')}
+                    ${cell('ultra_fibra','ent')}
+                    ${cell('ultra_fibra','at')}
+                    ${cell('wttx','ent')}
+                    ${cell('wttx','at')}
+                    ${cell('m2m','ent')}
+                    ${cell('m2m','at')}
+                    ${cell('controle','ent')}
+                    ${cell('controle','at')}
+                    ${cell('migracao','ent')}
+                    ${cell('migracao','at')}
+                    ${cell('tt','ent')}
+                    ${cell('tt','at')}
+                    <td><div class="qv-cell"><div class="qv-money" style="color:var(--primary);">${formatMoneyBR(totalCom)}</div></div></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            calcularTotais();
         }
 
         function calcularTotais() {
-            const totals = {};
-            let companyCom = 0;
-            document.querySelectorAll('#tbody-consultores .qv-cell').forEach(el => {
-                const key = el.dataset.key || '';
-                if (!key) return;
-                if (!key.endsWith('-at') && key !== 'total-at') return;
-                const qtd = Number(el.dataset.qtd || 0);
-                const com = Number(el.dataset.com || 0);
-                if (!totals[key]) totals[key] = { qtd: 0, com: 0 };
-                totals[key].qtd += isFinite(qtd) ? qtd : 0;
-                totals[key].com += isFinite(com) ? com : 0;
-                if (key === 'total-at') companyCom += isFinite(com) ? com : 0;
+            const types = ['novo', 'aditivo', 'portabilidade', 'renovacao', 'ultra_fibra', 'wttx', 'm2m', 'controle', 'migracao', 'tt'];
+            const sides = ['ent', 'at'];
+            let companyTotal = 0;
+
+            types.forEach(type => {
+                sides.forEach(side => {
+                    let sumQtd = 0;
+                    let sumCom = 0;
+                    
+                    document.querySelectorAll(`.qv-cell[data-key="${type}-${side}"]`).forEach(cell => {
+                        sumQtd += Number(cell.dataset.qtd || 0);
+                        sumCom += Number(cell.dataset.com || 0);
+                    });
+
+                    const qel = document.getElementById(`total-${type}-${side}-qtd`);
+                    const cel = document.getElementById(`total-${type}-${side}-com`);
+                    if (qel) qel.textContent = String(sumQtd);
+                    if (cel) {
+                        cel.dataset.value = String(sumCom);
+                        cel.textContent = formatMoneyBR(sumCom);
+                    }
+
+                    // Add to company total based on view mode
+                    if (side === 'at') {
+                        companyTotal += sumCom;
+                    } else if (viewMode === 'detailed') {
+                        companyTotal += sumCom;
+                    }
+                });
             });
 
-            const setCell = (k, side) => {
-                const key = `${k}-${side}`;
-                const t = (side === 'at') ? (totals[key] || { qtd: 0, com: 0 }) : { qtd: 0, com: 0 };
-                const qtdEl = document.getElementById(`total-${k}-${side}-qtd`);
-                const comEl = document.getElementById(`total-${k}-${side}-com`);
-                if (qtdEl) qtdEl.textContent = String(t.qtd || 0);
-                if (comEl) {
-                    comEl.dataset.value = String(t.com || 0);
-                    comEl.textContent = formatMoneyBR(t.com || 0);
-                }
-            };
-
-            ['novo','aditivo','portabilidade','renovacao','ultra_fibra','wttx','m2m','controle','migracao','tt'].forEach(k => {
-                setCell(k, 'ent');
-                setCell(k, 'at');
-            });
-
-            const compEl = document.getElementById('total-company-com');
-            if (compEl) {
-                compEl.dataset.value = String(companyCom || 0);
-                compEl.textContent = formatMoneyBR(companyCom || 0);
+            const tcc = document.getElementById('total-company-com');
+            if (tcc) {
+                tcc.dataset.value = String(companyTotal);
+                tcc.textContent = formatMoneyBR(companyTotal);
             }
         }
 
         const monthNames = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
         let currentMonth = new Date().getMonth();
         let currentYear = new Date().getFullYear();
-        let currentWeek = 1; // 0 = TODAS
+        let currentWeek = 0; // 0 = TODAS
 
         function updateMonthDisplay() {
             const name = monthNames[currentMonth];
@@ -646,6 +687,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             updateMonthDisplay();
             updateWeekDisplay();
+            setViewMode('simple'); // Ensure it starts in simple mode
             if (window.lucide) lucide.createIcons();
         });
 
