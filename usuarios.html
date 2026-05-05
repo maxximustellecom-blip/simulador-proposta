@@ -186,54 +186,69 @@
                 <button type="button" class="btn btn-ghost btn-icon" onclick="fecharEditarUsuario()"><i data-lucide="x"></i></button>
             </div>
             <div class="modal-body">
-                <div class="section" style="padding:0.8rem;">
-                    <div class="label">Nome</div>
-                    <input id="editName" class="input" type="text" placeholder="Nome completo">
+                <div class="grid-2">
+                    <div>
+                        <div class="label">Nome</div>
+                        <input id="editName" class="input" type="text" placeholder="Nome completo">
+                    </div>
+                    <div>
+                        <div class="label">Email</div>
+                        <input id="editEmail" class="input" type="email" placeholder="email@empresa.com">
+                    </div>
                 </div>
-                <div class="section" style="padding:0.8rem; margin-top:0.6rem;">
-                    <div class="label">Email</div>
-                    <input id="editEmail" class="input" type="email" placeholder="email@empresa.com">
+                <div class="grid-2" style="margin-top:0.75rem;">
+                    <div>
+                        <div class="label">Matrícula</div>
+                        <input id="editMatricula" class="input" type="text" placeholder="Matrícula">
+                    </div>
+                    <div>
+                        <div class="label">Celular</div>
+                        <input id="editCelular" class="input" type="text" placeholder="(99) 99999-9999" maxlength="15">
+                    </div>
                 </div>
-                <div class="section" style="padding:0.8rem; margin-top:0.6rem;">
-                    <div class="label">Matrícula</div>
-                    <input id="editMatricula" class="input" type="text" placeholder="Matrícula">
+                <div class="grid-2" style="margin-top:0.75rem;">
+                    <div>
+                        <div class="label">Tipo</div>
+                        <select id="editRole" class="select">
+                            <option value="user">Usuário</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="label">Perfil de Acesso</div>
+                        <select id="editProfileId" class="select">
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="section" style="padding:0.8rem; margin-top:0.6rem;">
-                    <div class="label">Celular</div>
-                    <input id="editCelular" class="input" type="text" placeholder="(99) 99999-9999" maxlength="15">
+                <div class="grid-2" style="margin-top:0.75rem;">
+                    <div>
+                        <div class="label">Origem do Usuário</div>
+                        <select id="editTipo" class="select" onchange="toggleComissao('editTipo', 'editComissaoWrap')">
+                            <option value="interno">Interno</option>
+                            <option value="externo">Externo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="label">Nova senha (opcional)</div>
+                        <input id="editPassword" class="input" type="password" placeholder="Definir nova senha">
+                    </div>
                 </div>
-                <div class="section" style="padding:0.8rem; margin-top:0.6rem;">
-                    <div class="label">Tipo</div>
-                    <select id="editRole" class="select">
-                        <option value="user">Usuário</option>
-                        <option value="admin">Admin</option>
-                    </select>
+                <div id="editComissaoWrap" class="grid-2" style="margin-top:0.75rem; display:none;">
+                    <div>
+                        <div class="label">Valor Fixo Comissão (R$)</div>
+                        <input id="editComissao" class="input mask-money" type="text" placeholder="R$ 0,00">
+                    </div>
                 </div>
-                <div class="section" style="padding:0.8rem; margin-top:0.6rem;">
-                    <div class="label">Perfil de Acesso</div>
-                    <select id="editProfileId" class="select">
-                        <option value="">Selecione...</option>
-                    </select>
-                </div>
-                <div class="section" style="padding:0.8rem; margin-top:0.6rem;">
-                    <div class="label">Origem do Usuário</div>
-                    <select id="editTipo" class="select" onchange="toggleComissao('editTipo', 'editComissaoWrap')">
-                        <option value="interno">Interno</option>
-                        <option value="externo">Externo</option>
-                    </select>
-                </div>
-                <div id="editComissaoWrap" class="section" style="padding:0.8rem; margin-top:0.6rem; display:none;">
-                    <div class="label">Valor Fixo Comissão (R$)</div>
-                    <input id="editComissao" class="input mask-money" type="text" placeholder="R$ 0,00">
-                </div>
-                <div class="section-title" style="padding:0.8rem; margin-top:0.6rem; font-weight:bold; border-bottom:1px solid #eee;">Comissões Fixas</div>
+
+                <div class="section-title" style="margin-top:1.5rem; font-weight:bold; border-bottom:1px solid #eee; padding-bottom:0.5rem;">Comissões Fixas</div>
                 
-                <div class="alert-info" style="margin: 0.8rem;">
+                <div class="alert-info" style="margin-top:0.75rem;">
                     <i data-lucide="info" style="width:14px; height:14px; vertical-align:middle; margin-right:4px;"></i>
                     Ao ativar o comissionamento fixo será considerado os valores fixos no relatório de comissões do consultor.
                 </div>
 
-                <div style="padding:0.8rem; display:flex; align-items:center; gap:0.75rem;">
+                <div style="margin-top:1rem; display:flex; align-items:center; gap:0.75rem;">
                     <label class="switch">
                         <input type="checkbox" id="editComissaoFixaAtiva" onchange="toggleComissaoGrid('editComissaoFixaAtiva', 'editComissaoGrid')">
                         <span class="slider"></span>
@@ -242,7 +257,7 @@
                 </div>
 
                 <div id="editComissaoGrid" style="display:none;">
-                    <div class="grid-2" style="padding:0.8rem;">
+                    <div class="grid-2" style="margin-top:1rem;">
                         <div>
                             <div class="label">Novo (R$)</div>
                             <input id="editComissaoNovo" class="input mask-money" type="text" placeholder="R$ 0,00">
@@ -252,7 +267,7 @@
                             <input id="editComissaoAditivo" class="input mask-money" type="text" placeholder="R$ 0,00">
                         </div>
                     </div>
-                    <div class="grid-2" style="padding:0.8rem;">
+                    <div class="grid-2" style="margin-top:0.75rem;">
                         <div>
                             <div class="label">Renovação (R$)</div>
                             <input id="editComissaoRenovacao" class="input mask-money" type="text" placeholder="R$ 0,00">
@@ -262,7 +277,7 @@
                             <input id="editComissaoMigracao" class="input mask-money" type="text" placeholder="R$ 0,00">
                         </div>
                     </div>
-                    <div class="grid-2" style="padding:0.8rem;">
+                    <div class="grid-2" style="margin-top:0.75rem;">
                         <div>
                             <div class="label">PF/PJ (R$)</div>
                             <input id="editComissaoPfPj" class="input mask-money" type="text" placeholder="R$ 0,00">
@@ -272,7 +287,7 @@
                             <input id="editComissaoTt" class="input mask-money" type="text" placeholder="R$ 0,00">
                         </div>
                     </div>
-                    <div class="grid-2" style="padding:0.8rem;">
+                    <div class="grid-2" style="margin-top:0.75rem;">
                         <div>
                             <div class="label">Ultra Fibra (R$)</div>
                             <input id="editComissaoUltraFibra" class="input mask-money" type="text" placeholder="R$ 0,00">
@@ -282,7 +297,7 @@
                             <input id="editComissaoControlePf" class="input mask-money" type="text" placeholder="R$ 0,00">
                         </div>
                     </div>
-                    <div class="grid-2" style="padding:0.8rem;">
+                    <div class="grid-2" style="margin-top:0.75rem;">
                         <div>
                             <div class="label">WTTx (R$)</div>
                             <input id="editComissaoWttx" class="input mask-money" type="text" placeholder="R$ 0,00">
@@ -292,10 +307,6 @@
                             <input id="editComissaoM2m" class="input mask-money" type="text" placeholder="R$ 0,00">
                         </div>
                     </div>
-                </div>
-                <div class="section" style="padding:0.8rem; margin-top:0.6rem;">
-                    <div class="label">Nova senha (opcional)</div>
-                    <input id="editPassword" class="input" type="password" placeholder="Definir nova senha">
                 </div>
             </div>
             <div class="modal-actions">
