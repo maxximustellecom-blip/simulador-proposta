@@ -73,7 +73,8 @@ function mapProductToCommissionKeyFromRaw(tipoRaw, isPortabilidade) {
   if (t.includes('wttx')) return 'wttx';
   if (t.includes('m2m')) return 'm2m';
   if (t.includes('controle')) return 'controle';
-  if (t.includes('migracao') && (t.includes('pf') || t.includes('pj') || t.includes('pf pj'))) return 'migracao';
+  if (t.includes('migracao')) return 'migracao';
+  if (t.includes('pf') || t.includes('pj')) return 'pf_pj';
   if (t === 'tt' || t.includes(' tt')) return 'tt';
   return 'novo';
 }
@@ -286,6 +287,7 @@ export async function getQuadroVendas(req, res) {
             else if (key === 'wttx') specificFixed = user.comissao_wttx;
             else if (key === 'm2m') specificFixed = user.comissao_m2m;
             else if (key === 'controle') specificFixed = user.comissao_controle_pf;
+            else if (key === 'pf_pj') specificFixed = user.comissao_pf_pj;
             else if (key === 'tt') specificFixed = user.comissao_tt;
             else if (key === 'portabilidade') specificFixed = user.comissao_novo;
 

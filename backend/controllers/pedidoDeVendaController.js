@@ -117,7 +117,8 @@ function mapLineToCommissionKey(line) {
   if (t.includes('wttx')) return 'wttx';
   if (t.includes('m2m')) return 'm2m';
   if (t.includes('controle')) return 'controle';
-  if (t.includes('migracao') && (t.includes('pf') || t.includes('pj') || t.includes('pf pj'))) return 'migracao';
+  if (t.includes('migracao')) return 'migracao';
+  if (t.includes('pf') || t.includes('pj')) return 'pf_pj';
   if (t === 'tt' || t.includes(' tt')) return 'tt';
   return 'outros';
 }
@@ -408,11 +409,12 @@ export async function exportarComissaoPedidos(req, res) {
         wttx: 'WTTX',
         m2m: 'M2M',
         controle: 'Controle',
-        migracao: 'Migração PF/PJ',
+        migracao: 'Migração',
+        pf_pj: 'PF/PJ',
         tt: 'TT',
         outros: 'Outros'
       };
-      const ordem = ['novo', 'aditivo', 'portabilidade', 'renovacao', 'ultra_fibra', 'wttx', 'm2m', 'controle', 'migracao', 'tt', 'outros'];
+      const ordem = ['novo', 'aditivo', 'portabilidade', 'renovacao', 'ultra_fibra', 'wttx', 'm2m', 'controle', 'migracao', 'pf_pj', 'tt', 'outros'];
       const itensResumo = ordem
         .filter(k => breakdownQtd[k] && breakdownValor[k] !== undefined)
         .map(k => ({ qtd: Number(breakdownQtd[k] || 0), tipo: labels[k] || k, valor: toNumber(breakdownValor[k], 0) }));
@@ -513,6 +515,7 @@ export async function exportarComissaoPedidos(req, res) {
           (Number(bq.m2m || 0) * (Number(sc.m2m) > 0 ? Number(sc.m2m) : 0)) +
           (Number(bq.controle || 0) * (Number(sc.controle) > 0 ? Number(sc.controle) : 0)) +
           (Number(bq.migracao || 0) * (Number(sc.migracao) > 0 ? Number(sc.migracao) : Number(row.consultorComissaoFixa))) +
+          (Number(bq.pf_pj || 0) * (Number(sc.pf_pj) > 0 ? Number(sc.pf_pj) : 0)) +
           (Number(bq.tt || 0) * (Number(sc.tt) > 0 ? Number(sc.tt) : 0));
 
         return {
@@ -560,6 +563,7 @@ export async function exportarComissaoPedidos(req, res) {
         else if (label.includes('m2m')) key = 'm2m';
         else if (label.includes('controle')) key = 'controle';
         else if (label.includes('migr')) key = 'migracao';
+        else if (label.includes('pf') || label.includes('pj')) key = 'pf_pj';
         else if (label === 'tt') key = 'tt';
         let rate = 0;
         if (rule.useLevel) {
