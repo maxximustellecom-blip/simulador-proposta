@@ -500,7 +500,9 @@ export async function exportarComissaoPedidos(req, res) {
     });
 
     const result = prepared.map(row => {
-      // If fixed commission is active, use the specific values (for both internal and external, as per user's request to have this on the user screen)
+      const rule = consultorRule.get(Number(row.consultor_id || 0)) || { useLevel: false, levelRow: null, defaults: DEFAULT_RATES };
+
+      // 1. If fixed commission is active, use the specific values
       if (row.comissaoFixaAtiva) {
         const bq = row.breakdownQtd || {};
         const sc = row.specificCommissions || {};
@@ -529,7 +531,51 @@ export async function exportarComissaoPedidos(req, res) {
         };
       }
 
-      // If NOT active, check if it's external (old logic) or internal (profile logic)
+      // 2. If profile commission is configured, use it (regardless of internal/external)
+      if (rule.useLevel) {
+        const itens = Array.isArray(row.itensResumo) ? row.itensResumo : [];
+        const comissao = itens.reduce((acc, it) => {
+          const label = normalizeText(it && it.tipo);
+          let key = 'outros';
+          if (label.includes('novo')) key = 'novo';
+          else if (label.includes('aditivo') || label.includes('adit')) key = 'aditivo';
+          else if (label.includes('port')) key = 'portabilidade';
+          else if (label.includes('renov')) key = 'renovacao';
+          else if (label.includes('u. fibra') || label.includes('ultra') || label.includes('fibra')) key = 'ultra_fibra';
+          else if (label.includes('wttx')) key = 'wttx';
+          else if (label.includes('m2m')) key = 'm2m';
+          else if (label.includes('controle')) key = 'controle';
+          else if (label.includes('migr')) key = 'migracao';
+          else if (label.includes('pf') || label.includes('pj')) key = 'pf_pj';
+          else if (label === 'tt') key = 'tt';
+
+          let rate = 0;
+          if (rule.levelRow) {
+            const raw = rule.levelRow[key];
+            if (raw !== undefined && raw !== null) {
+              const rawStr = String(raw).trim();
+              if (rawStr !== '') {
+                const parsed = parsePercentage(rawStr);
+                const isExplicitZero = /^0+([,.]0+)?%?$/.test(rawStr);
+                if (isFinite(parsed) && (parsed > 0 || isExplicitZero)) rate = parsed;
+              }
+            }
+          }
+          return acc + (toNumber(it.valor, 0) * rate);
+        }, 0);
+
+        return {
+          consultor: row.consultor || '',
+          razaoSocial: row.razaoSocial,
+          dataAtivacao: row.dataAtivacao,
+          totalAcessos: row.totalAcessos,
+          itensResumo: row.itensResumo,
+          statusPedido: row.statusPedido,
+          comissao
+        };
+      }
+
+      // 3. If external and no profile config, use old logic (fixed commission)
       if (String(row.consultorTipo || '').toLowerCase() === 'externo') {
         const bq = row.breakdownQtd || {};
         const qtdElegivel =
@@ -549,7 +595,7 @@ export async function exportarComissaoPedidos(req, res) {
         };
       }
 
-      const rule = consultorRule.get(Number(row.consultor_id || 0)) || { useLevel: false, levelRow: null, defaults: DEFAULT_RATES };
+      // 4. Default internal logic (standard percentages)
       const itens = Array.isArray(row.itensResumo) ? row.itensResumo : [];
       const comissao = itens.reduce((acc, it) => {
         const label = normalizeText(it && it.tipo);
@@ -565,24 +611,11 @@ export async function exportarComissaoPedidos(req, res) {
         else if (label.includes('migr')) key = 'migracao';
         else if (label.includes('pf') || label.includes('pj')) key = 'pf_pj';
         else if (label === 'tt') key = 'tt';
-        let rate = 0;
-        if (rule.useLevel) {
-          if (rule.levelRow) {
-            const raw = rule.levelRow[key];
-            if (raw !== undefined && raw !== null) {
-              const rawStr = String(raw).trim();
-              if (rawStr !== '') {
-                const parsed = parsePercentage(rawStr);
-                const isExplicitZero = /^0+([,.]0+)?%?$/.test(rawStr);
-                if (isFinite(parsed) && (parsed > 0 || isExplicitZero)) rate = parsed;
-              }
-            }
-          }
-        } else {
-          rate = (rule.defaults && rule.defaults[key] !== undefined) ? rule.defaults[key] : 0;
-        }
+
+        const rate = (rule.defaults && rule.defaults[key] !== undefined) ? rule.defaults[key] : 0;
         return acc + (toNumber(it.valor, 0) * rate);
       }, 0);
+
       return {
         consultor: row.consultor || '',
         razaoSocial: row.razaoSocial,

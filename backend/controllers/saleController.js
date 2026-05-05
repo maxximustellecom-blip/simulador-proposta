@@ -219,7 +219,7 @@ export async function getQuadroVendas(req, res) {
       const comissaoFixaAtiva = Boolean(user && user.comissao_fixa_ativa);
 
       const config = user.profile && user.profile.commission_config ? (typeof user.profile.commission_config === 'string' ? JSON.parse(user.profile.commission_config) : user.profile.commission_config) : null;
-      const shouldUseLevel = !isExternal && !comissaoFixaAtiva && hasCommissionConfig(config);
+      const shouldUseLevel = !comissaoFixaAtiva && hasCommissionConfig(config);
       let baseRevenueForLevel = 0;
       if (shouldUseLevel) {
         userNegs.forEach(n => {
@@ -305,28 +305,27 @@ export async function getQuadroVendas(req, res) {
 
             const finalFixed = (Number(specificFixed) > 0) ? Number(specificFixed) : fixedCommission;
             commissionValue = (isFinite(finalFixed) ? finalFixed : 0) * (isFinite(qtd) ? qtd : 0);
+          } else if (shouldUseLevel) {
+            const itemVal = getLineValue(l, isCustom);
+            let rate = 0;
+            if (levelConfigRow) {
+              const raw = levelConfigRow[key];
+              if (raw !== undefined && raw !== null) {
+                const rawStr = String(raw).trim();
+                if (rawStr !== '') {
+                  const parsed = parsePercentage(rawStr);
+                  const isExplicitZero = /^0+([,.]0+)?%?$/.test(rawStr);
+                  if (isFinite(parsed) && (parsed > 0 || isExplicitZero)) rate = parsed;
+                }
+              }
+            }
+            commissionValue = itemVal * rate;
           } else if (isExternal) {
             const eligible = (key === 'novo' || key === 'aditivo' || key === 'migracao');
             commissionValue = eligible ? ((isFinite(fixedCommission) ? fixedCommission : 0) * (isFinite(qtd) ? qtd : 0)) : 0;
           } else {
             const itemVal = getLineValue(l, isCustom);
-            let rate = 0;
-            if (shouldUseLevel) {
-              rate = 0;
-              if (levelConfigRow) {
-                const raw = levelConfigRow[key];
-                if (raw !== undefined && raw !== null) {
-                  const rawStr = String(raw).trim();
-                  if (rawStr !== '') {
-                    const parsed = parsePercentage(rawStr);
-                    const isExplicitZero = /^0+([,.]0+)?%?$/.test(rawStr);
-                    if (isFinite(parsed) && (parsed > 0 || isExplicitZero)) rate = parsed;
-                  }
-                }
-              }
-            } else {
-              rate = defaults[key] || 0;
-            }
+            let rate = defaults[key] || 0;
             commissionValue = itemVal * rate;
           }
 
