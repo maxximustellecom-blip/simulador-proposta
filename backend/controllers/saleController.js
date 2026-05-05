@@ -167,10 +167,7 @@ function getLineValue(l, isCustom) {
 
 export async function getQuadroVendas(req, res) {
   try {
-    const { month, year, week } = req.query;
-    const targetMonth = parseInt(month);
-    const targetYear = parseInt(year);
-    const targetWeek = parseInt(week || 0);
+    const { month, year, week, startDate, endDate } = req.query;
 
     const users = await User.findAll({
       where: { role: 'user' },
@@ -197,12 +194,26 @@ export async function getQuadroVendas(req, res) {
       if (p && p.nome && !productTypeByName.has(String(p.nome))) productTypeByName.set(String(p.nome), p.tipos || '');
     });
 
-    // Filter by month/year
+    // Filter logic
     const filteredNegs = negotiations.filter(n => {
       const parts = String(n.data || '').split('/');
       if (parts.length !== 3) return false;
+      const day = parseInt(parts[0]);
       const m = parseInt(parts[1]);
       const y = parseInt(parts[2]);
+      const negDate = new Date(y, m - 1, day);
+
+      if (startDate && endDate) {
+        const start = new Date(startDate + 'T00:00:00');
+        const end = new Date(endDate + 'T23:59:59');
+        return negDate >= start && negDate <= end;
+      }
+
+      // Backward compatibility
+      const targetMonth = parseInt(month);
+      const targetYear = parseInt(year);
+      const targetWeek = parseInt(week || 0);
+
       if (m !== targetMonth || y !== targetYear) return false;
       if (targetWeek !== 0) {
         const w = getWeekOfMonth(n.data);
