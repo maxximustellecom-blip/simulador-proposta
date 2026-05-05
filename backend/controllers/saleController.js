@@ -215,9 +215,10 @@ export async function getQuadroVendas(req, res) {
       
       const isExternal = String(user && user.tipo ? user.tipo : 'interno').toLowerCase() === 'externo';
       const fixedCommission = parseMoneyLike(user && user.comissao !== undefined ? user.comissao : 0);
+      const comissaoFixaAtiva = Boolean(user && user.comissao_fixa_ativa);
 
       const config = user.profile && user.profile.commission_config ? (typeof user.profile.commission_config === 'string' ? JSON.parse(user.profile.commission_config) : user.profile.commission_config) : null;
-      const shouldUseLevel = !isExternal && hasCommissionConfig(config);
+      const shouldUseLevel = !isExternal && !comissaoFixaAtiva && hasCommissionConfig(config);
       let baseRevenueForLevel = 0;
       if (shouldUseLevel) {
         userNegs.forEach(n => {
@@ -274,20 +275,23 @@ export async function getQuadroVendas(req, res) {
           const qtd = getLineQty(l);
           
           let commissionValue = 0;
-          const defaults = {
-            novo: 0.6,
-            aditivo: 0.6,
-            portabilidade: 0.6,
-            renovacao: 0.3,
-            ultra_fibra: 0.3,
-            wttx: 0.6,
-            m2m: 0.6,
-            controle: 0.6,
-            migracao: 0.3,
-            tt: 0.3
-          };
+          
+          if (comissaoFixaAtiva) {
+            let specificFixed = 0;
+            if (key === 'novo') specificFixed = user.comissao_novo;
+            else if (key === 'aditivo') specificFixed = user.comissao_aditivo;
+            else if (key === 'renovacao') specificFixed = user.comissao_renovacao;
+            else if (key === 'migracao') specificFixed = user.comissao_migracao;
+            else if (key === 'ultra_fibra') specificFixed = user.comissao_ultra_fibra;
+            else if (key === 'wttx') specificFixed = user.comissao_wttx;
+            else if (key === 'm2m') specificFixed = user.comissao_m2m;
+            else if (key === 'controle') specificFixed = user.comissao_controle_pf;
+            else if (key === 'tt') specificFixed = user.comissao_tt;
+            else if (key === 'portabilidade') specificFixed = user.comissao_novo;
 
-          if (isExternal) {
+            const finalFixed = (Number(specificFixed) > 0) ? Number(specificFixed) : fixedCommission;
+            commissionValue = (isFinite(finalFixed) ? finalFixed : 0) * (isFinite(qtd) ? qtd : 0);
+          } else if (isExternal) {
             const eligible = (key === 'novo' || key === 'aditivo' || key === 'migracao');
             commissionValue = eligible ? ((isFinite(fixedCommission) ? fixedCommission : 0) * (isFinite(qtd) ? qtd : 0)) : 0;
           } else {

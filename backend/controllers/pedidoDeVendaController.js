@@ -360,7 +360,12 @@ export async function exportarComissaoPedidos(req, res) {
           as: 'negotiation',
           include: [
             { model: Client, as: 'client' },
-            { model: User, as: 'creator', attributes: ['id', 'name', 'tipo', 'comissao'], include: [{ model: AccessProfile, as: 'profile' }] },
+            { model: User, as: 'creator', attributes: [
+              'id', 'name', 'tipo', 'comissao',
+              'comissao_novo', 'comissao_aditivo', 'comissao_renovacao', 'comissao_migracao',
+              'comissao_pf_pj', 'comissao_tt', 'comissao_ultra_fibra', 'comissao_controle_pf',
+              'comissao_wttx', 'comissao_m2m'
+            ], include: [{ model: AccessProfile, as: 'profile' }] },
             { model: NegociacaoProposta, as: 'proposal' },
             { model: NegociacaoPropostaCustomizada, as: 'customProposal' }
           ]
@@ -418,6 +423,19 @@ export async function exportarComissaoPedidos(req, res) {
       const commission_config = (typeof rawConfig === 'string') ? (() => { try { return JSON.parse(rawConfig); } catch { return null; } })() : rawConfig;
       const consultorTipo = creator ? (creator.tipo || 'interno') : 'interno';
       const consultorComissaoFixa = creator ? toNumber(creator.comissao, 0) : 0;
+      const comissaoFixaAtiva = creator ? Boolean(creator.comissao_fixa_ativa) : false;
+      const specificCommissions = {
+        novo: creator ? toNumber(creator.comissao_novo, 0) : 0,
+        aditivo: creator ? toNumber(creator.comissao_aditivo, 0) : 0,
+        renovacao: creator ? toNumber(creator.comissao_renovacao, 0) : 0,
+        migracao: creator ? toNumber(creator.comissao_migracao, 0) : 0,
+        ultra_fibra: creator ? toNumber(creator.comissao_ultra_fibra, 0) : 0,
+        tt: creator ? toNumber(creator.comissao_tt, 0) : 0,
+        wttx: creator ? toNumber(creator.comissao_wttx, 0) : 0,
+        m2m: creator ? toNumber(creator.comissao_m2m, 0) : 0,
+        controle: creator ? toNumber(creator.comissao_controle_pf, 0) : 0,
+        pf_pj: creator ? toNumber(creator.comissao_pf_pj, 0) : 0
+      };
 
       prepared.push({
         pedido_id: p.id,
@@ -426,6 +444,8 @@ export async function exportarComissaoPedidos(req, res) {
         consultor: creator ? (creator.name || '') : '',
         consultorTipo,
         consultorComissaoFixa,
+        comissaoFixaAtiva,
+        specificCommissions,
         razaoSocial: neg.client?.name || '',
         dataAtivacao: p.data_ativacao || '',
         totalAcessos,
@@ -478,6 +498,35 @@ export async function exportarComissaoPedidos(req, res) {
     });
 
     const result = prepared.map(row => {
+      // If fixed commission is active, use the specific values (for both internal and external, as per user's request to have this on the user screen)
+      if (row.comissaoFixaAtiva) {
+        const bq = row.breakdownQtd || {};
+        const sc = row.specificCommissions || {};
+        
+        const comissao = 
+          (Number(bq.novo || 0) * (Number(sc.novo) > 0 ? Number(sc.novo) : Number(row.consultorComissaoFixa))) +
+          (Number(bq.aditivo || 0) * (Number(sc.aditivo) > 0 ? Number(sc.aditivo) : Number(row.consultorComissaoFixa))) +
+          (Number(bq.portabilidade || 0) * (Number(sc.novo) > 0 ? Number(sc.novo) : Number(row.consultorComissaoFixa))) +
+          (Number(bq.renovacao || 0) * (Number(sc.renovacao) > 0 ? Number(sc.renovacao) : 0)) +
+          (Number(bq.ultra_fibra || 0) * (Number(sc.ultra_fibra) > 0 ? Number(sc.ultra_fibra) : 0)) +
+          (Number(bq.wttx || 0) * (Number(sc.wttx) > 0 ? Number(sc.wttx) : 0)) +
+          (Number(bq.m2m || 0) * (Number(sc.m2m) > 0 ? Number(sc.m2m) : 0)) +
+          (Number(bq.controle || 0) * (Number(sc.controle) > 0 ? Number(sc.controle) : 0)) +
+          (Number(bq.migracao || 0) * (Number(sc.migracao) > 0 ? Number(sc.migracao) : Number(row.consultorComissaoFixa))) +
+          (Number(bq.tt || 0) * (Number(sc.tt) > 0 ? Number(sc.tt) : 0));
+
+        return {
+          consultor: row.consultor || '',
+          razaoSocial: row.razaoSocial,
+          dataAtivacao: row.dataAtivacao,
+          totalAcessos: row.totalAcessos,
+          itensResumo: row.itensResumo,
+          statusPedido: row.statusPedido,
+          comissao
+        };
+      }
+
+      // If NOT active, check if it's external (old logic) or internal (profile logic)
       if (String(row.consultorTipo || '').toLowerCase() === 'externo') {
         const bq = row.breakdownQtd || {};
         const qtdElegivel =
