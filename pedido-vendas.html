@@ -721,22 +721,15 @@
                 return;
             }
 
-            const buildValores = (item) => {
-                if (Array.isArray(item.itensResumo) && item.itensResumo.length > 0) {
-                    return item.itensResumo
-                        .map(it => `${it.qtd || 0} - ${it.tipo || '-'} - ${formatMoneyCompact(it.valor)}`)
-                        .join('\n');
-                }
-                return '-';
-            };
-
-            const headers = ['Consultor', 'Razão social', 'Data ativação', 'Acessos', 'Produto / Tipo / Valores', 'Status do Pedido', 'Comissão'];
+            const headers = ['Consultor', 'Razão social', 'Data ativação', 'Produto', 'Tipo', 'Qtd', 'Valor', 'Status do Pedido', 'Comissão'];
             const table = (Array.isArray(rows) ? rows : []).map(item => ([
                 String(item.consultor || '-') || '-',
                 String(item.razaoSocial || '-') || '-',
                 formatData(item.dataAtivacao),
+                String(item.produto || '-'),
+                String(item.tipo || '-'),
                 String(item.totalAcessos || 0),
-                buildValores(item),
+                formatMoneyCompact(item.valor || 0),
                 String(item.statusPedido || '-') || '-',
                 formatMoneyCompact(item.comissao || 0)
             ]));

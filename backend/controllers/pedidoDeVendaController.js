@@ -494,105 +494,28 @@ export async function exportarComissaoPedidos(req, res) {
       consultorRule.set(consultorId, { useLevel, levelRow, defaults: DEFAULT_RATES });
     });
 
-    const result = prepared.map(row => {
+    const result = [];
+    prepared.forEach(row => {
       const rule = consultorRule.get(Number(row.consultor_id || 0)) || { useLevel: false, levelRow: null, defaults: DEFAULT_RATES };
-
-      // 1. If fixed commission is active, use the specific values
-      if (row.comissaoFixaAtiva) {
-        const bq = row.breakdownQtd || {};
-        const sc = row.specificCommissions || {};
-        
-        const comissao = 
-          (Number(bq.novo || 0) * (Number(sc.novo) > 0 ? Number(sc.novo) : Number(row.consultorComissaoFixa))) +
-          (Number(bq.aditivo || 0) * (Number(sc.aditivo) > 0 ? Number(sc.aditivo) : Number(row.consultorComissaoFixa))) +
-          (Number(bq.portabilidade || 0) * (Number(sc.novo) > 0 ? Number(sc.novo) : Number(row.consultorComissaoFixa))) +
-          (Number(bq.renovacao || 0) * (Number(sc.renovacao) > 0 ? Number(sc.renovacao) : 0)) +
-          (Number(bq.ultra_fibra || 0) * (Number(sc.ultra_fibra) > 0 ? Number(sc.ultra_fibra) : 0)) +
-          (Number(bq.wttx || 0) * (Number(sc.wttx) > 0 ? Number(sc.wttx) : 0)) +
-          (Number(bq.m2m || 0) * (Number(sc.m2m) > 0 ? Number(sc.m2m) : 0)) +
-          (Number(bq.controle || 0) * (Number(sc.controle) > 0 ? Number(sc.controle) : 0)) +
-          (Number(bq.migracao || 0) * (Number(sc.migracao) > 0 ? Number(sc.migracao) : Number(row.consultorComissaoFixa))) +
-          (Number(bq.pf_pj || 0) * (Number(sc.pf_pj) > 0 ? Number(sc.pf_pj) : 0)) +
-          (Number(bq.tt || 0) * (Number(sc.tt) > 0 ? Number(sc.tt) : 0));
-
-        return {
-          consultor: row.consultor || '',
-          razaoSocial: row.razaoSocial,
-          dataAtivacao: row.dataAtivacao,
-          totalAcessos: row.totalAcessos,
-          itensResumo: row.itensResumo,
-          statusPedido: row.statusPedido,
-          comissao
-        };
-      }
-
-      // 2. If profile commission is configured, use it (regardless of internal/external)
-      if (rule.useLevel) {
-        const itens = Array.isArray(row.itensResumo) ? row.itensResumo : [];
-        const comissao = itens.reduce((acc, it) => {
-          const label = normalizeText(it && it.tipo);
-          let key = 'outros';
-          if (label.includes('novo')) key = 'novo';
-          else if (label.includes('aditivo') || label.includes('adit')) key = 'aditivo';
-          else if (label.includes('port')) key = 'portabilidade';
-          else if (label.includes('renov')) key = 'renovacao';
-          else if (label.includes('u. fibra') || label.includes('ultra') || label.includes('fibra')) key = 'ultra_fibra';
-          else if (label.includes('wttx')) key = 'wttx';
-          else if (label.includes('m2m')) key = 'm2m';
-          else if (label.includes('controle')) key = 'controle';
-          else if (label.includes('migr')) key = 'migracao';
-          else if (label.includes('pf') || label.includes('pj')) key = 'pf_pj';
-          else if (label === 'tt') key = 'tt';
-
-          let rate = 0;
-          if (rule.levelRow) {
-            const raw = rule.levelRow[key];
-            if (raw !== undefined && raw !== null) {
-              const rawStr = String(raw).trim();
-              if (rawStr !== '') {
-                const parsed = parsePercentage(rawStr);
-                const isExplicitZero = /^0+([,.]0+)?%?$/.test(rawStr);
-                if (isFinite(parsed) && (parsed > 0 || isExplicitZero)) rate = parsed;
-              }
-            }
-          }
-          return acc + (toNumber(it.valor, 0) * rate);
-        }, 0);
-
-        return {
-          consultor: row.consultor || '',
-          razaoSocial: row.razaoSocial,
-          dataAtivacao: row.dataAtivacao,
-          totalAcessos: row.totalAcessos,
-          itensResumo: row.itensResumo,
-          statusPedido: row.statusPedido,
-          comissao
-        };
-      }
-
-      // 3. If external and no profile config, use old logic (fixed commission)
-      if (String(row.consultorTipo || '').toLowerCase() === 'externo') {
-        const bq = row.breakdownQtd || {};
-        const qtdElegivel =
-          Number(bq.novo || 0) +
-          Number(bq.aditivo || 0) +
-          Number(bq.migracao || 0);
-        const fixa = toNumber(row.consultorComissaoFixa, 0);
-        const comissao = (isFinite(qtdElegivel) ? qtdElegivel : 0) * (isFinite(fixa) ? fixa : 0);
-        return {
-          consultor: row.consultor || '',
-          razaoSocial: row.razaoSocial,
-          dataAtivacao: row.dataAtivacao,
-          totalAcessos: row.totalAcessos,
-          itensResumo: row.itensResumo,
-          statusPedido: row.statusPedido,
-          comissao
-        };
-      }
-
-      // 4. Default internal logic (standard percentages)
       const itens = Array.isArray(row.itensResumo) ? row.itensResumo : [];
-      const comissao = itens.reduce((acc, it) => {
+      
+      if (itens.length === 0) {
+        // Fallback for empty items
+        result.push({
+          consultor: row.consultor || '',
+          razaoSocial: row.razaoSocial,
+          dataAtivacao: row.dataAtivacao,
+          totalAcessos: row.totalAcessos,
+          produto: '-',
+          tipo: '-',
+          valor: 0,
+          statusPedido: row.statusPedido,
+          comissao: 0
+        });
+        return;
+      }
+
+      itens.forEach(it => {
         const label = normalizeText(it && it.tipo);
         let key = 'outros';
         if (label.includes('novo')) key = 'novo';
@@ -607,19 +530,50 @@ export async function exportarComissaoPedidos(req, res) {
         else if (label.includes('pf') || label.includes('pj')) key = 'pf_pj';
         else if (label === 'tt') key = 'tt';
 
-        const rate = (rule.defaults && rule.defaults[key] !== undefined) ? rule.defaults[key] : 0;
-        return acc + (toNumber(it.valor, 0) * rate);
-      }, 0);
+        let lineComissao = 0;
+        if (row.comissaoFixaAtiva) {
+          const sc = row.specificCommissions || {};
+          const bqKey = (key === 'portabilidade') ? 'novo' : key;
+          let fixedVal = Number(sc[bqKey] || 0);
+          if (fixedVal === 0 && (key === 'novo' || key === 'aditivo' || key === 'migracao')) {
+            fixedVal = Number(row.consultorComissaoFixa || 0);
+          }
+          lineComissao = (Number(it.qtd || 0) * fixedVal);
+        } else if (rule.useLevel) {
+          let rate = 0;
+          if (rule.levelRow) {
+            const raw = rule.levelRow[key];
+            if (raw !== undefined && raw !== null) {
+              const rawStr = String(raw).trim();
+              if (rawStr !== '') {
+                const parsed = parsePercentage(rawStr);
+                const isExplicitZero = /^0+([,.]0+)?%?$/.test(rawStr);
+                if (isFinite(parsed) && (parsed > 0 || isExplicitZero)) rate = parsed;
+              }
+            }
+          }
+          lineComissao = toNumber(it.valor, 0) * rate;
+        } else if (String(row.consultorTipo || '').toLowerCase() === 'externo') {
+          const eligible = (key === 'novo' || key === 'aditivo' || key === 'migracao');
+          const fixa = toNumber(row.consultorComissaoFixa, 0);
+          lineComissao = eligible ? (Number(it.qtd || 0) * fixa) : 0;
+        } else {
+          const rate = (rule.defaults && rule.defaults[key] !== undefined) ? rule.defaults[key] : 0;
+          lineComissao = toNumber(it.valor, 0) * rate;
+        }
 
-      return {
-        consultor: row.consultor || '',
-        razaoSocial: row.razaoSocial,
-        dataAtivacao: row.dataAtivacao,
-        totalAcessos: row.totalAcessos,
-        itensResumo: row.itensResumo,
-        statusPedido: row.statusPedido,
-        comissao
-      };
+        result.push({
+          consultor: row.consultor || '',
+          razaoSocial: row.razaoSocial,
+          dataAtivacao: row.dataAtivacao,
+          totalAcessos: it.qtd || 0,
+          produto: it.tipo || '-',
+          tipo: key.toUpperCase(),
+          valor: toNumber(it.valor, 0),
+          statusPedido: row.statusPedido,
+          comissao: lineComissao
+        });
+      });
     });
 
     return res.json(result);
