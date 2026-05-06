@@ -417,7 +417,7 @@ export async function listSalesFromNegotiations(req, res) {
     const { vendedor, razao, cnpj, data } = req.query || {};
     let list = await Negotiation.findAll({
       include: [
-        { model: User, as: 'creator', attributes: ['id', 'name'] },
+        { model: User, as: 'creator' },
         { model: Client, as: 'client' }
       ],
       order: [['created_at', 'DESC']]

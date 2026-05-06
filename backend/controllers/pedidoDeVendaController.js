@@ -361,12 +361,7 @@ export async function exportarComissaoPedidos(req, res) {
           as: 'negotiation',
           include: [
             { model: Client, as: 'client' },
-            { model: User, as: 'creator', attributes: [
-              'id', 'name', 'tipo', 'comissao',
-              'comissao_novo', 'comissao_aditivo', 'comissao_renovacao', 'comissao_migracao',
-              'comissao_pf_pj', 'comissao_tt', 'comissao_ultra_fibra', 'comissao_controle_pf',
-              'comissao_wttx', 'comissao_m2m'
-            ], include: [{ model: AccessProfile, as: 'profile' }] },
+            { model: User, as: 'creator', include: [{ model: AccessProfile, as: 'profile' }] },
             { model: NegociacaoProposta, as: 'proposal' },
             { model: NegociacaoPropostaCustomizada, as: 'customProposal' }
           ]
