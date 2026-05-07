@@ -1068,7 +1068,7 @@
                     const email = v('mEmail') || '-';
                     const phone = formatPhone(v('mPhone')) || '-';
                     const abertura = fmtDateBRForMask(v('mAbertura'));
-                    const venc = fmtDateBRForMask(v('mVencimento'));
+                    const venc = v('mVencimento') || '-';
                     const cep = formatCep(v('mCep')) || '-';
                     const uf = v('mUf') || '-';
                     const cidade = v('mCidade') || '-';
