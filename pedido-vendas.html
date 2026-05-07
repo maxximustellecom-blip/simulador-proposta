@@ -370,6 +370,25 @@
         .action-item.text-danger:hover {
             background: rgba(239,68,68,0.1);
         }
+        
+        /* Dropdown fix for table clipping */
+        .action-menu {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            min-width: 180px;
+            padding: 0.5rem;
+            flex-direction: column;
+            gap: 0.2rem;
+            pointer-events: auto;
+        }
+        .action-menu.active {
+            display: flex;
+        }
     </style>
 </head>
 <body>
@@ -965,24 +984,32 @@
         window.togglePedidoMenu = function(e, id) {
             e.stopPropagation();
             const btn = e.currentTarget;
-            const dropdown = btn.closest('.dropdown');
-            const row = dropdown.closest('tr');
-            
-            // Fecha todos os outros dropdowns ativos e remove classe das linhas
-            document.querySelectorAll('.dropdown.active').forEach(el => {
-                if (el !== dropdown) {
+            const menu = document.getElementById('pedido-menu-' + id);
+            if (!menu) return;
+
+            // Fecha todos os outros menus ativos
+            document.querySelectorAll('.action-menu.active').forEach(el => {
+                if (el !== menu) {
                     el.classList.remove('active');
-                    el.closest('tr').classList.remove('active-row');
+                    const row = el.closest('tr');
+                    if (row) row.classList.remove('active-row');
                 }
             });
 
-            // Toggle do dropdown atual e da linha
-            const isActive = dropdown.classList.toggle('active');
-            row.classList.toggle('active-row', isActive);
+            const isActive = menu.classList.toggle('active');
+            const row = btn.closest('tr');
+            if (row) row.classList.toggle('active-row', isActive);
+
+            if (isActive) {
+                const rect = btn.getBoundingClientRect();
+                const menuWidth = 180;
+                menu.style.top = (rect.bottom + 5) + 'px';
+                menu.style.left = (rect.right - menuWidth) + 'px';
+            }
         };
 
         function closeActiveDropdown() {
-            document.querySelectorAll('.dropdown.active').forEach(el => {
+            document.querySelectorAll('.action-menu.active').forEach(el => {
                 el.classList.remove('active');
                 const row = el.closest('tr');
                 if (row) row.classList.remove('active-row');
@@ -991,20 +1018,14 @@
 
         // Fecha dropdown ao clicar fora
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.dropdown')) {
-                document.querySelectorAll('.dropdown.active').forEach(el => {
-                    el.classList.remove('active');
-                    el.closest('tr').classList.remove('active-row');
-                });
+            if (!e.target.closest('.dropdown') && !e.target.closest('.action-menu')) {
+                closeActiveDropdown();
             }
         });
 
         // Fecha dropdown ao dar scroll
         window.addEventListener('scroll', () => {
-            document.querySelectorAll('.dropdown.active').forEach(el => {
-                el.classList.remove('active');
-                el.closest('tr').classList.remove('active-row');
-            });
+            closeActiveDropdown();
         }, true);
 
         let __confirmCallback = null;
