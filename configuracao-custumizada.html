@@ -1710,10 +1710,7 @@
             document.getElementById('mAbertura').value = (abrirDateRaw && abrirDateRaw.includes('-'))
                 ? (() => { const p = abrirDateRaw.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : abrirDateRaw; })()
                 : abrirDateRaw;
-            const vencDateRaw = String(c.due_date || '');
-            document.getElementById('mVencimento').value = (vencDateRaw && vencDateRaw.includes('-'))
-                ? (() => { const p = vencDateRaw.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : vencDateRaw; })()
-                : vencDateRaw;
+            document.getElementById('mVencimento').value = c.due_date || '';
             document.getElementById('mCep').value = formatCep(c.cep || '');
             document.getElementById('mUf').value = c.state || '';
             document.getElementById('mCidade').value = c.city || '';
@@ -1770,7 +1767,6 @@
             };
             bindMask('mCnpj', formatCnpj);
             bindMask('mAbertura', formatDate);
-            bindMask('mVencimento', formatDate);
             bindMask('mCep', formatCep);
             ['mPhone','mRepTel1','mGestorTel1','mAuth1Contato','mAuth2Contato','mSoc1Contato','mSoc2Contato'].forEach(id => bindMask(id, formatPhone));
             ['mRepCpf','mGestorCpf','mAuth1Cpf','mAuth2Cpf','mSoc1Cpf','mSoc2Cpf'].forEach(id => bindMask(id, formatCpf));
@@ -1805,7 +1801,7 @@
                         complement: String(document.getElementById('mComplemento').value || '').trim() || null,
                         reference_point: String(document.getElementById('mPontoReferencia').value || '').trim() || null,
                         opening_date: (() => { const v = String(document.getElementById('mAbertura').value || '').trim(); if (!v) return null; if (v.includes('/')) { const p = v.split('/'); if (p.length === 3) return `${p[2]}-${p[1]}-${p[0]}`; } return v; })(),
-                        due_date: (() => { const v = String(document.getElementById('mVencimento').value || '').trim(); if (!v) return null; if (v.includes('/')) { const p = v.split('/'); if (p.length === 3) return `${p[2]}-${p[1]}-${p[0]}`; } return v; })(),
+                        due_date: String(document.getElementById('mVencimento').value || '').trim() || null,
                         rep_nome: String(document.getElementById('mRepNome').value || '').trim() || null,
                         rep_cpf: String(document.getElementById('mRepCpf').value || '').trim() || null,
                         rep_rg: String(document.getElementById('mRepRg').value || '').trim() || null,
@@ -3486,7 +3482,42 @@
                                 <option value="Igrejas / Organizações Religiosas">Igrejas / Organizações Religiosas</option>
                             </select>
                         </div>
-                        <div class="field"><span class="label-inline">Data de Vencimento</span><input id="mVencimento" class="input" type="text" placeholder="00/00/0000" maxlength="10"></div>
+                        <div class="field"><span class="label-inline">Dia de Vencimento</span>
+                            <select id="mVencimento" class="input">
+                                <option value="">Selecione...</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                                <option value="13">13</option>
+                                <option value="14">14</option>
+                                <option value="15">15</option>
+                                <option value="16">16</option>
+                                <option value="17">17</option>
+                                <option value="18">18</option>
+                                <option value="19">19</option>
+                                <option value="20">20</option>
+                                <option value="21">21</option>
+                                <option value="22">22</option>
+                                <option value="23">23</option>
+                                <option value="24">24</option>
+                                <option value="25">25</option>
+                                <option value="26">26</option>
+                                <option value="27">27</option>
+                                <option value="28">28</option>
+                                <option value="29">29</option>
+                                <option value="30">30</option>
+                                <option value="31">31</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-section">
