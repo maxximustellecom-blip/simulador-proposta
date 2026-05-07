@@ -183,38 +183,24 @@
             </div>
             <div class="card-body">
                 <section class="section" style="margin-top: 20px;">
-                    <div class="filters" style="margin-bottom: 0.75rem;">
+                    <div class="filters card p-4 mb-4">
                         <div>
-                            <div class="label">Razão social</div>
-                            <input id="fRazao" class="input" type="text" placeholder="Razão social / fantasia" autocomplete="off">
-                        </div>
-                        <div>
-                            <div class="label">CNPJ</div>
-                            <input id="fCnpj" class="input" type="text" placeholder="00.000.000/0000-00" autocomplete="off">
+                            <div class="label">Busca</div>
+                            <input id="fBusca" class="input" type="text" placeholder="Cliente, CNPJ, ID..." oninput="applyFilters()">
                         </div>
                         <div>
                             <div class="label">Vendedor</div>
-                            <input id="fVendedor" class="input" type="text" placeholder="Nome do vendedor" autocomplete="off">
-                        </div>
-                        <div>
-                            <div class="label">Data da proposta (de)</div>
-                            <input id="fDataDe" class="input" type="date">
-                        </div>
-                        <div style="display: none;">
-                            <div class="label">Até</div>
-                            <input id="fDataAte" class="input" type="date">
-                        </div>
-                        <div>
-                            <div class="label">Status do funil</div>
-                            <select id="fStage" class="input">
+                            <select id="fVendedor" class="select" onchange="applyFilters()">
                                 <option value="">Todos</option>
-                                <option value="1">Prospecção</option>
-                                <option value="2">Negociação</option>
-                                <option value="3">Cadastro</option>
-                                <option value="4">Análise</option>
-                                <option value="5">Finalizado</option>
-                                <option value="6">Portabilidade</option>
                             </select>
+                        </div>
+                        <div>
+                            <div class="label">De</div>
+                            <input id="fDe" class="input" type="date" onchange="applyFilters()">
+                        </div>
+                        <div>
+                            <div class="label">Até</div>
+                            <input id="fAte" class="input" type="date" onchange="applyFilters()">
                         </div>
                     </div>
                     <div class="kanban" id="kanban">
@@ -448,28 +434,24 @@
         }
 
         function applyFilters() {
-            const razao = normalizeText(document.getElementById('fRazao') ? document.getElementById('fRazao').value : '').trim();
-            const cnpjNeedle = onlyDigits(document.getElementById('fCnpj') ? document.getElementById('fCnpj').value : '').trim();
+            const busca = normalizeText(document.getElementById('fBusca') ? document.getElementById('fBusca').value : '').trim();
             const vendedorNeedle = normalizeText(document.getElementById('fVendedor') ? document.getElementById('fVendedor').value : '').trim();
-            const stageVal = String(document.getElementById('fStage') ? document.getElementById('fStage').value : '').trim();
-            const deIso = document.getElementById('fDataDe') ? document.getElementById('fDataDe').value : '';
-            const ateIso = document.getElementById('fDataAte') ? document.getElementById('fDataAte').value : '';
+            const deIso = document.getElementById('fDe') ? document.getElementById('fDe').value : '';
+            const ateIso = document.getElementById('fAte') ? document.getElementById('fAte').value : '';
             const tDe = parseISODateToTime(deIso, false);
             const tAte = parseISODateToTime(ateIso, true);
 
             __deals = (__dealsAll || []).filter(d => {
                 const c = d.client || {};
-                if (stageVal) {
-                    if (Number(d.funil_stage || 1) !== Number(stageVal)) return false;
+                const name = normalizeText(c.name || '');
+                const fantasy = normalizeText(c.fantasy_name || '');
+                const cnpj = onlyDigits(d.cnpj || '');
+                const id = String(d.id || '');
+                
+                if (busca) {
+                    if (!name.includes(busca) && !fantasy.includes(busca) && !cnpj.includes(busca) && !id.includes(busca)) return false;
                 }
-                if (cnpjNeedle) {
-                    if (!onlyDigits(d.cnpj || '').includes(cnpjNeedle)) return false;
-                }
-                if (razao) {
-                    const n1 = normalizeText(c.name);
-                    const n2 = normalizeText(c.fantasy_name);
-                    if (!n1.includes(razao) && !n2.includes(razao)) return false;
-                }
+
                 if (vendedorNeedle) {
                     const v = normalizeText(d.creator && d.creator.name ? d.creator.name : '');
                     if (!v.includes(vendedorNeedle)) return false;
@@ -620,7 +602,7 @@
             if (btn) btn.addEventListener('click', load);
             const exportBtn = document.getElementById('exportBtn');
             if (exportBtn) exportBtn.addEventListener('click', exportCsv);
-            const fIds = ['fRazao','fCnpj','fVendedor','fDataDe','fDataAte','fStage'];
+            const fIds = ['fBusca', 'fVendedor', 'fDe', 'fAte'];
             fIds.forEach(id => {
                 const el = document.getElementById(id);
                 if (!el) return;

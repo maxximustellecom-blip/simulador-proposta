@@ -8,6 +8,101 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/material_blue.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/pt.js"></script>
+    <style>
+        .date-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--surface-low);
+            padding: 6px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+        .date-range-container {
+            display: flex;
+            align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border-strong);
+            border-radius: 12px;
+            padding: 8px 16px;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .date-range-container:hover {
+            border-color: var(--primary);
+            background: var(--surface-bright);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.12);
+        }
+        .date-range-container i {
+            color: var(--primary);
+            width: 20px;
+            height: 20px;
+            stroke-width: 2.5px;
+        }
+        .date-range-container input {
+            border: none;
+            background: transparent;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+            width: 100%;
+            outline: none;
+            letter-spacing: -0.01em;
+        }
+        .quick-filters {
+            display: flex;
+            gap: 6px;
+            padding-right: 4px;
+        }
+        .quick-filter-btn {
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: transparent;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .quick-filter-btn:hover {
+            background: var(--surface-strong);
+            color: var(--text-main);
+        }
+        .quick-filter-btn.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary-border);
+        }
+        .date-range-container:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+        .flatpickr-calendar {
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12) !important;
+            border: 1px solid var(--border-strong) !important;
+            border-radius: 20px !important;
+            padding: 8px !important;
+            margin-top: 8px !important;
+        }
+        .flatpickr-day.selected {
+            background: var(--primary) !important;
+            border-color: var(--primary) !important;
+            border-radius: 10px !important;
+        }
+        .flatpickr-day:hover {
+            border-radius: 10px !important;
+        }
+    </style>
 </head>
 <body>
     <main class="container">
@@ -77,8 +172,17 @@
                     <div id="adminContent" style="display:none;">
                         <div id="filtersDashboard" class="filters">
                             <select id="fVendor" class="select"><option value="Todos">Todos</option></select>
-                            <input id="fFrom" class="input" type="date">
-                            <input id="fTo" class="input" type="date">
+                            <div class="date-picker-wrapper">
+                                <div class="quick-filters">
+                                    <button type="button" class="quick-filter-btn" onclick="setQuickRange('today', this)">Hoje</button>
+                                    <button type="button" class="quick-filter-btn" onclick="setQuickRange('7days', this)">7 dias</button>
+                                    <button type="button" class="quick-filter-btn active" id="btnThisMonth" onclick="setQuickRange('thisMonth', this)">Mês</button>
+                                </div>
+                                <div class="date-range-container" id="dateRangePickerContainer">
+                                    <i data-lucide="calendar"></i>
+                                    <input type="text" id="dateRangeInput" placeholder="Selecione o período">
+                                </div>
+                            </div>
                             <button id="applyFilters" class="btn" type="button" title="Aplicar"><i data-lucide="filter"></i><span>Aplicar</span></button>
                         </div>
                         <div class="notice">
@@ -311,14 +415,64 @@
         function daysInMonth(y, m) {
             return new Date(Number(y), Number(m), 0).getDate();
         }
+        let datePicker = null;
+        let startDate = null;
+        let endDate = null;
+
+        function initDatePicker() {
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            
+            startDate = firstDay.toISOString().split('T')[0];
+            endDate = lastDay.toISOString().split('T')[0];
+
+            datePicker = flatpickr("#dateRangeInput", {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "d/m/Y",
+                locale: "pt",
+                defaultDate: [firstDay, lastDay],
+                onClose: function(selectedDates) {
+                    if (selectedDates.length === 2) {
+                        startDate = selectedDates[0].toISOString().split('T')[0];
+                        endDate = selectedDates[1].toISOString().split('T')[0];
+                        document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.remove('active'));
+                    }
+                }
+            });
+        }
+
+        function setQuickRange(type, btn) {
+            const now = new Date();
+            let start, end;
+            switch(type) {
+                case 'today':
+                    start = now;
+                    end = now;
+                    break;
+                case '7days':
+                    start = new Date();
+                    start.setDate(now.getDate() - 6);
+                    end = now;
+                    break;
+                case 'thisMonth':
+                    start = new Date(now.getFullYear(), now.getMonth(), 1);
+                    end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                    break;
+            }
+            startDate = start.toISOString().split('T')[0];
+            endDate = end.toISOString().split('T')[0];
+            datePicker.setDate([start, end]);
+            document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
         function getAdminMonthYearDefault(sales) {
-            const fromEl = document.getElementById('fFrom');
-            const toEl = document.getElementById('fTo');
-            const from = fromEl ? fromEl.value : '';
-            const to = toEl ? toEl.value : '';
             let dt = null;
-            if (from) dt = new Date(from);
-            else if (to) dt = new Date(to);
+            if (startDate) dt = new Date(startDate);
+            else if (endDate) dt = new Date(endDate);
             if (!dt) {
                 const dates = (sales || []).map(s => parseBrDateToDate(s.data)).filter(Boolean).sort((a,b) => (b?.getTime()||0) - (a?.getTime()||0));
                 dt = dates[0] || new Date();
@@ -328,12 +482,8 @@
         function filterByControls(sales) {
             const vendorEl = document.getElementById('fVendor');
             const vendorSel = vendorEl ? vendorEl.value : 'Todos';
-            const fromEl = document.getElementById('fFrom') || document.getElementById('fFromUser');
-            const toEl = document.getElementById('fTo') || document.getElementById('fToUser');
-            const from = fromEl ? fromEl.value : '';
-            const to = toEl ? toEl.value : '';
-            const fromDt = from ? new Date(from) : null;
-            const toDt = to ? new Date(to) : null;
+            const fromDt = startDate ? new Date(startDate) : null;
+            const toDt = endDate ? new Date(endDate) : null;
             return (sales || []).filter(s => {
                 if (vendorSel && vendorSel !== 'Todos' && s.vendedor !== vendorSel) return false;
                 const dt = parseBrDateToDate(s.data);
@@ -709,6 +859,7 @@
                 });
             }
             try {
+                initDatePicker();
                 const sales = await api('/negotiations', { method: 'GET' });
                 if (isAdmin) {
                     document.getElementById('adminView').style.display = 'block';
