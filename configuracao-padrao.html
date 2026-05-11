@@ -1884,7 +1884,10 @@
             planos = filterPlansByDdd(planos, selDdd);
 
             const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
-                planos.map((p, idx) => `<option value="${idx}">${p.nome} (${currency(p.preco || p.valor || p.valorPlano || 0)})</option>`)
+                planos.map((p, idx) => {
+                    const tiposStr = (p.tipos && p.tipos.length) ? ` (${Array.isArray(p.tipos) ? p.tipos.join(', ') : p.tipos})` : '';
+                    return `<option value="${idx}">${p.nome}${tiposStr} (${currency(p.preco || p.valor || p.valorPlano || 0)})</option>`;
+                })
             ).join('');
             // populate('editPlano', planoOpts, line.plano); 
             const elPlano = document.getElementById('editPlano');
@@ -2066,7 +2069,10 @@
                 planos = filterPlansByDdd(planos, selDdd);
                 
                 const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
-                    planos.map((p, idx) => `<option value="${idx}">${p.nome} (${currency(p.preco || p.valor || p.valorPlano || 0)})</option>`)
+                    planos.map((p, idx) => {
+                        const tiposStr = (p.tipos && p.tipos.length) ? ` (${Array.isArray(p.tipos) ? p.tipos.join(', ') : p.tipos})` : '';
+                        return `<option value="${idx}">${p.nome}${tiposStr} (${currency(p.preco || p.valor || p.valorPlano || 0)})</option>`;
+                    })
                 ).join('');
                 setHTML('editPlano', planoOpts);
                 setValue('editPlano', '');
