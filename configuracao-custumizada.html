@@ -169,10 +169,12 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Linha</th>
-                                    <th>Tipo</th>
                                     <th>Qtd</th>
-                                    <th>Total</th>
+                                    <th>Tipo</th>
+                                    <th>DDD/Núm/Op</th>
+                                    <th>Plano</th>
+                                    <th>Aparelho</th>
+                                    <th>Valor</th>
                                     <th class="col-actions" style="min-width:140px;">Ações</th>
                                 </tr>
                             </thead>
@@ -1540,11 +1542,28 @@
                 const prod = produtosDaCat.find(p => (p.nome || p.name) === (l.plano || l.planoSelecionado));
                 const tipoProduto = (prod && prod.tipos) ? prod.tipos : 'A DEFINIR';
 
+                const ddd = String(l.ddd || l.dddAtual || '').trim();
+                const numero = numeroPropostaLinha(l);
+                const op = String(l.operadoraDoadora || '').trim();
+                const acesso = [ddd, numero].filter(Boolean).join(' ') + (op ? (' - ' + op) : '');
+
+                let aparelhoDesc = '-';
+                if (l.temAparelho === 'Sim') {
+                    const tipoAp = String(l.tipoAparelho || '').toLowerCase();
+                    const isVf = tipoAp.includes('vf');
+                    aparelhoDesc = `<div>${l.modeloAparelho || '-'}</div><div class="muted" style="font-size:0.75rem;">${isVf ? 'Venda Facilitada' : 'Comodato'}</div>`;
+                }
+
                 return `
                 <tr>
-                    <td>${idx + 1}</td>
+                    <td><input type="number" min="1" class="input" style="width:70px; text-align:center;"  readonly disabled value="${l.quantidade || 1}" data-id="${l.id}" data-field="quantidade"></td>
                     <td>${tipoProduto}</td>
-                    <td><input type="number" min="1" class="input" style="width:60px; text-align:center;" value="${l.quantidade || 1}" data-id="${l.id}" data-field="quantidade"></td>
+                    <td>${acesso || '-'}</td>
+                    <td>
+                        <div style="font-weight:600;">${l.categoria || '-'}</div>
+                        <div class="muted" style="font-size:0.8rem;">${l.plano || '-'}</div>
+                    </td>
+                    <td>${aparelhoDesc}</td>
                     <td>${total}</td>
                     <td class="col-actions">
                         <div class="table-actions">
@@ -1555,7 +1574,7 @@
                     </td>
                 </tr>
                 `;
-            }).join('') || '<tr><td colspan="5" class="muted">Sem linhas</td></tr>';
+            }).join('') || '<tr><td colspan="7" class="muted">Sem linhas</td></tr>';
             
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             
