@@ -61,6 +61,7 @@
                                     <th>Plano</th>
                                     <th>Nome</th>
                                     <th>Região</th>
+                                    <th>Tipos</th>
                                     <th>Preço&nbsp;(R$)</th>
                                     <th class="col-actions" style="min-width:160px;">Ações</th>
                                 </tr>
@@ -271,6 +272,7 @@
                 const nomeVal = p && (p.nome || p.name) ? (p.nome || p.name) : '-';
                 const tipoVal = (p && p.category && p.category.tipo) ? p.category.tipo : '-';
                 const precoVal = Number(p.preco || 0);
+                const tiposProduto = p.tipos ? String(p.tipos).split(',').map(t => t.trim()).join(', ') : '-';
                 
                 // Logic to display Region Name correctly
                 // p.regiao stores a comma-separated list of DDDs (e.g. "11,12")
@@ -294,6 +296,7 @@
                     <td><span class="ellipsis">${catName}</span></td>
                     <td><span class="ellipsis">${nomeVal}</span></td>
                     <td><span class="ellipsis">${regiaoLabel}</span></td>
+                    <td><span class="ellipsis">${tiposProduto}</span></td>
                     <td>${currency(precoVal)}</td>
                     <td class="col-actions">
                         <div class="table-actions">
