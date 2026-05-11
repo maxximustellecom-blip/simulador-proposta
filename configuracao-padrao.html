@@ -1886,7 +1886,7 @@
             const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
                 planos.map((p, idx) => {
                     const tiposStr = (p.tipos && p.tipos.length) ? ` (${Array.isArray(p.tipos) ? p.tipos.join(', ') : p.tipos})` : '';
-                    return `<option value="${idx}">${p.nome}${tiposStr} (${currency(p.preco || p.valor || p.valorPlano || 0)})</option>`;
+                    return `<option value="${idx}">${p.nome} (${currency(p.preco || p.valor || p.valorPlano || 0)})${tiposStr}</option>`;
                 })
             ).join('');
             // populate('editPlano', planoOpts, line.plano); 
@@ -2071,7 +2071,7 @@
                 const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
                     planos.map((p, idx) => {
                         const tiposStr = (p.tipos && p.tipos.length) ? ` (${Array.isArray(p.tipos) ? p.tipos.join(', ') : p.tipos})` : '';
-                        return `<option value="${idx}">${p.nome}${tiposStr} (${currency(p.preco || p.valor || p.valorPlano || 0)})</option>`;
+                        return `<option value="${idx}">${p.nome} (${currency(p.preco || p.valor || p.valorPlano || 0)})${tiposStr}</option>`;
                     })
                 ).join('');
                 setHTML('editPlano', planoOpts);

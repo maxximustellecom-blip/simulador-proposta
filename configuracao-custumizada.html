@@ -848,7 +848,7 @@
             const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
                 filteredPlanos.map((p, idx) => {
                     const tiposStr = (p.tipos && p.tipos.length) ? ` (${Array.isArray(p.tipos) ? p.tipos.join(', ') : p.tipos})` : '';
-                    return `<option value="${idx}">${p.nome}${tiposStr} (${currency(p.valor || 0)})</option>`;
+                    return `<option value="${idx}">${p.nome} (${currency(p.valor || 0)})${tiposStr}</option>`;
                 })
             ).join('');
             
@@ -1058,7 +1058,7 @@
                 const planoOpts = ['<option value="">Selecione um plano...</option>'].concat(
                     filteredPlanos.map((p, idx) => {
                         const tiposStr = (p.tipos && p.tipos.length) ? ` (${Array.isArray(p.tipos) ? p.tipos.join(', ') : p.tipos})` : '';
-                        return `<option value="${idx}">${p.nome}${tiposStr} (${currency(p.valor || 0)})</option>`;
+                        return `<option value="${idx}">${p.nome} (${currency(p.valor || 0)})${tiposStr}</option>`;
                     })
                 ).join('');
                 setHTML('editPlano', planoOpts);
