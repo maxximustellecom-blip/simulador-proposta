@@ -502,6 +502,7 @@
             const tipoLinha = normalizeTipoKey((linha && linha.tipoNegociacao) || '');
             const numeroAtual = String((linha && (linha.numero || linha.numeroAtual)) || '').trim();
             if (tipoLinha === 'renegociacao') return numeroAtual;
+            if (linha && linha.portabilidade === 'Sim' && linha.numeroPortar) return String(linha.numeroPortar).trim();
             return String((linha && linha.numero) || '').trim();
         }
         function parsePctFromText(s) {
