@@ -858,9 +858,14 @@
             const elPlano = document.getElementById('editPlano');
             if (elPlano) {
                 elPlano.innerHTML = planoOpts;
-                // Find index by matching name and preferably price to disambiguate
-                const foundIdx = filteredPlanos.findIndex(p => p.nome === line.plano && (Math.abs((p.valor || 0) - (line.valorPlano || 0)) < 0.01));
-                const finalIdx = foundIdx >= 0 ? foundIdx : filteredPlanos.findIndex(p => p.nome === line.plano);
+                // Find index by matching name, price and types to disambiguate
+                const foundIdx = filteredPlanos.findIndex(p => 
+                    p.nome === line.plano && 
+                    (Math.abs((p.valor || 0) - (line.valorPlano || 0)) < 0.01) &&
+                    (String(p.tipos) === String(line.tipoNegociacao))
+                );
+                // Fallback to name and types if price mismatch
+                const finalIdx = foundIdx >= 0 ? foundIdx : filteredPlanos.findIndex(p => p.nome === line.plano && (String(p.tipos) === String(line.tipoNegociacao)));
                 elPlano.value = finalIdx >= 0 ? finalIdx : '';
             }
 
@@ -1540,8 +1545,9 @@
                 // Encontrar o produto para pegar o tipo
                 const catObj = __customCategorias.find(c => c.nome === l.categoria);
                 const produtosDaCat = catObj ? (__map[catObj.id] || []) : [];
-                const prod = produtosDaCat.find(p => (p.nome || p.name) === (l.plano || l.planoSelecionado));
-                const tipoProduto = (prod && prod.tipos) ? prod.tipos : 'A DEFINIR';
+                // Find product matching name AND type to disambiguate
+                const prod = produtosDaCat.find(p => (p.nome || p.name) === (l.plano || l.planoSelecionado) && String(p.tipos) === String(l.tipoNegociacao));
+                const tipoProduto = (prod && prod.tipos) ? prod.tipos : (l.tipoNegociacao || 'A DEFINIR');
 
                 const ddd = String(l.ddd || l.dddAtual || '').trim();
                 const numero = numeroPropostaLinha(l);
@@ -2570,6 +2576,8 @@
                     if (String(planoRef || '').trim() !== '' && Number.isInteger(planoIdx) && filteredProds[planoIdx]) {
                         currentProd = filteredProds[planoIdx];
                     }
+                    if (!currentProd) currentProd = filteredProds.find(p => (p.nome || p.name) === planoRef && String(p.tipos) === String(l.tipoNegociacao));
+                    if (!currentProd) currentProd = currentProds.find(p => (p.nome || p.name) === planoRef && String(p.tipos) === String(l.tipoNegociacao));
                     if (!currentProd) currentProd = filteredProds.find(p => (p.nome || p.name) === planoRef);
                     if (!currentProd) currentProd = currentProds.find(p => (p.nome || p.name) === planoRef);
                     const planoNome = String(l.categoria || '-');
@@ -2579,7 +2587,7 @@
                     const ofertaPreco = currency(precoFinalUnit);
                     const linhaVal = (Number(qtd)||0) * precoFinalUnit;
                     const totalLinhaValor = currency(linhaVal);
-                    const tipoProduto = (currentProd && currentProd.tipos) ? currentProd.tipos : 'A DEFINIR';
+                    const tipoProduto = (currentProd && currentProd.tipos) ? currentProd.tipos : (l.tipoNegociacao || 'A DEFINIR');
                     const ddd = String(l.ddd || l.dddAtual || '').trim();
                     const numero = numeroPropostaLinha(l);
                     const op = String(l.operadoraDoadora || '').trim();
@@ -2759,6 +2767,8 @@
                     if (String(planoRef || '').trim() !== '' && Number.isInteger(planoIdx) && filteredProds[planoIdx]) {
                         currentProd = filteredProds[planoIdx];
                     }
+                    if (!currentProd) currentProd = filteredProds.find(p => (p.nome || p.name) === planoRef && String(p.tipos) === String(l.tipoNegociacao));
+                    if (!currentProd) currentProd = currentProds.find(p => (p.nome || p.name) === planoRef && String(p.tipos) === String(l.tipoNegociacao));
                     if (!currentProd) currentProd = filteredProds.find(p => (p.nome || p.name) === planoRef);
                     if (!currentProd) currentProd = currentProds.find(p => (p.nome || p.name) === planoRef);
                     const planoNome = String(l.categoria || '-');
@@ -2768,7 +2778,7 @@
                     const ofertaPreco = currency(precoFinalUnit);
                     const linhaVal = (Number(qtd)||0) * precoFinalUnit;
                     const totalLinhaValor = currency(linhaVal);
-                    const tipoProduto = (currentProd && currentProd.tipos) ? currentProd.tipos : 'A DEFINIR';
+                    const tipoProduto = (currentProd && currentProd.tipos) ? currentProd.tipos : (l.tipoNegociacao || 'A DEFINIR');
                     const ddd = String(l.ddd || l.dddAtual || '').trim();
                     const numero = numeroPropostaLinha(l);
                     const op = String(l.operadoraDoadora || '').trim();
@@ -2957,6 +2967,8 @@
                     if (String(planoRef || '').trim() !== '' && Number.isInteger(planoIdx) && filteredProds[planoIdx]) {
                         currentProd = filteredProds[planoIdx];
                     }
+                    if (!currentProd) currentProd = filteredProds.find(p => (p.nome || p.name) === planoRef && String(p.tipos) === String(l.tipoNegociacao));
+                    if (!currentProd) currentProd = currentProds.find(p => (p.nome || p.name) === planoRef && String(p.tipos) === String(l.tipoNegociacao));
                     if (!currentProd) currentProd = filteredProds.find(p => (p.nome || p.name) === planoRef);
                     if (!currentProd) currentProd = currentProds.find(p => (p.nome || p.name) === planoRef);
                     const planoNome = String(l.categoria || '-');
@@ -2966,7 +2978,7 @@
                     const ofertaPreco = currency(precoFinalUnit);
                     const linhaVal = (Number(qtd)||0) * precoFinalUnit;
                     const totalLinhaValor = currency(linhaVal);
-                    const tipoProduto = (currentProd && currentProd.tipos) ? currentProd.tipos : 'A DEFINIR';
+                    const tipoProduto = (currentProd && currentProd.tipos) ? currentProd.tipos : (l.tipoNegociacao || 'A DEFINIR');
                     const ddd = String(l.ddd || l.dddAtual || '').trim();
                     const numero = numeroPropostaLinha(l);
                     const op = String(l.operadoraDoadora || '').trim();
