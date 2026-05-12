@@ -2585,10 +2585,23 @@
                 const acesso = [ddd, numero].filter(Boolean).join(' ') + (op ? (' - ' + op) : '');
 
                 let aparelhoDesc = '-';
-                if (l.temAparelho === 'Sim') {
+                if (l.portabilidade === 'Sim' && Array.isArray(l.portarItens) && l.portarItens.length > 0) {
+                    const devices = l.portarItens.filter(it => it.temAparelho === 'Sim');
+                    if (devices.length > 0) {
+                        aparelhoDesc = devices.map(it => {
+                            const tipoAp = String(it.tipoAparelho || '').toLowerCase();
+                            const isVf = tipoAp.includes('vf');
+                            const valParcela = isVf ? (Number(it.valorAparelho || 0) / 24) : 0;
+                            const valText = isVf ? ` (24x ${currency(valParcela)})` : '';
+                            return `<div style="margin-bottom: 4px;">${it.modeloAparelho || '-'}<br><span class="muted" style="font-size:0.75rem;">${isVf ? 'Venda Facilitada' : 'Comodato'}${valText}</span></div>`;
+                        }).join('');
+                    }
+                } else if (l.temAparelho === 'Sim') {
                     const tipoAp = String(l.tipoAparelho || '').toLowerCase();
                     const isVf = tipoAp.includes('vf');
-                    aparelhoDesc = `<div>${l.modeloAparelho || '-'}</div><div class="muted" style="font-size:0.75rem;">${isVf ? 'Venda Facilitada' : 'Comodato'}</div>`;
+                    const valParcela = isVf ? (Number(l.valorAparelho || 0) / 24) : 0;
+                    const valText = isVf ? ` (24x ${currency(valParcela)})` : '';
+                    aparelhoDesc = `<div>${l.modeloAparelho || '-'}</div><div class="muted" style="font-size:0.75rem;">${isVf ? 'Venda Facilitada' : 'Comodato'}${valText}</div>`;
                 }
 
                 return `
@@ -2879,18 +2892,29 @@
                 const acessos = __linhas.reduce((acc, l) => acc + Number(l.quantidade || 0), 0);
                 const totalBase = totalGeral();
                 const totalAparelhoMensal = __linhas.reduce((acc, l) => {
-                    const qtd = Number(l.quantidade || 1);
-                    if (String(l.temAparelho || '').toLowerCase() !== 'sim') return acc;
-                    const parcelaRaw = Number(l.valorParcela || 0);
-                    let parcela = parcelaRaw;
-                    if (!(parcela > 0)) {
-                        const tipoAp = String(l.tipoAparelho || '').toLowerCase();
-                        if (tipoAp.includes('vf')) {
-                            parcela = (Number(l.valorAparelho || 0) || 0) / 24;
+                    let lineApTotal = 0;
+                    if (l.portabilidade === 'Sim' && Array.isArray(l.portarItens)) {
+                        l.portarItens.forEach(it => {
+                            if (String(it.temAparelho || '').toLowerCase() === 'sim') {
+                                const tipoAp = String(it.tipoAparelho || '').toLowerCase();
+                                if (tipoAp.includes('vf')) {
+                                    lineApTotal += (Number(it.valorAparelho || 0) || 0) / 24;
+                                }
+                            }
+                        });
+                    } else if (String(l.temAparelho || '').toLowerCase() === 'sim') {
+                        const qtd = Number(l.quantidade || 1);
+                        const parcelaRaw = Number(l.valorParcela || 0);
+                        let parcela = parcelaRaw;
+                        if (!(parcela > 0)) {
+                            const tipoAp = String(l.tipoAparelho || '').toLowerCase();
+                            if (tipoAp.includes('vf')) {
+                                parcela = (Number(l.valorAparelho || 0) || 0) / 24;
+                            }
                         }
+                        lineApTotal = (qtd * parcela);
                     }
-                    if (!(parcela > 0)) return acc;
-                    return acc + (qtd * parcela);
+                    return acc + lineApTotal;
                 }, 0);
                 const total = currency(totalBase + totalAparelhoMensal);
                 doc.setFontSize(14);
@@ -3195,7 +3219,20 @@
                     let aparelhoNome = '-';
                     let aparelhoInfo = '-';
                     let aparelhoValor = '-';
-                    if (l.temAparelho === 'Sim') {
+                    if (l.portabilidade === 'Sim' && Array.isArray(l.portarItens) && l.portarItens.length > 0) {
+                        const devices = l.portarItens.filter(it => it.temAparelho === 'Sim');
+                        if (devices.length > 0) {
+                            aparelhoNome = devices.map(it => it.modeloAparelho || '-').join(', ');
+                            aparelhoInfo = devices.map(it => {
+                                const tipoAp = String(it.tipoAparelho || '').toLowerCase();
+                                return tipoAp.includes('vf') ? 'VF' : 'Comodato';
+                            }).join(', ');
+                            aparelhoValor = devices.map(it => {
+                                const tipoAp = String(it.tipoAparelho || '').toLowerCase();
+                                return tipoAp.includes('vf') ? currency((Number(it.valorAparelho || 0) || 0) / 24) : '-';
+                            }).join(', ');
+                        }
+                    } else if (l.temAparelho === 'Sim') {
                         aparelhoNome = String(l.modeloAparelho || '-');
                         const tipoAp = String(l.tipoAparelho || '').toLowerCase();
                         const isVf = tipoAp.includes('vf');
@@ -3236,18 +3273,29 @@
                 }
                 
                 const totalAparelhoMensal = __linhas.reduce((acc, l) => {
-                    const qtd = Number(l.quantidade || 1);
-                    if (String(l.temAparelho || '').toLowerCase() !== 'sim') return acc;
-                    const parcelaRaw = Number(l.valorParcela || 0);
-                    let parcela = parcelaRaw;
-                    if (!(parcela > 0)) {
-                        const tipoAp = String(l.tipoAparelho || '').toLowerCase();
-                        if (tipoAp.includes('vf')) {
-                            parcela = (Number(l.valorAparelho || 0) || 0) / 24;
+                    let lineApTotal = 0;
+                    if (l.portabilidade === 'Sim' && Array.isArray(l.portarItens)) {
+                        l.portarItens.forEach(it => {
+                            if (String(it.temAparelho || '').toLowerCase() === 'sim') {
+                                const tipoAp = String(it.tipoAparelho || '').toLowerCase();
+                                if (tipoAp.includes('vf')) {
+                                    lineApTotal += (Number(it.valorAparelho || 0) || 0) / 24;
+                                }
+                            }
+                        });
+                    } else if (String(l.temAparelho || '').toLowerCase() === 'sim') {
+                        const qtd = Number(l.quantidade || 1);
+                        const parcelaRaw = Number(l.valorParcela || 0);
+                        let parcela = parcelaRaw;
+                        if (!(parcela > 0)) {
+                            const tipoAp = String(l.tipoAparelho || '').toLowerCase();
+                            if (tipoAp.includes('vf')) {
+                                parcela = (Number(l.valorAparelho || 0) || 0) / 24;
+                            }
                         }
+                        lineApTotal = (qtd * parcela);
                     }
-                    if (!(parcela > 0)) return acc;
-                    return acc + (qtd * parcela);
+                    return acc + lineApTotal;
                 }, 0);
                 const footerRowY = headerY - rowHeight - (rowsToDraw * rowHeight);
                 const yTotal = footerRowY + (rowHeight - fontSizeLinha) / 2 - 2;
@@ -3387,7 +3435,20 @@
                     let aparelhoNome = '-';
                     let aparelhoInfo = '-';
                     let aparelhoValor = '-';
-                    if (l.temAparelho === 'Sim') {
+                    if (l.portabilidade === 'Sim' && Array.isArray(l.portarItens) && l.portarItens.length > 0) {
+                        const devices = l.portarItens.filter(it => it.temAparelho === 'Sim');
+                        if (devices.length > 0) {
+                            aparelhoNome = devices.map(it => it.modeloAparelho || '-').join(', ');
+                            aparelhoInfo = devices.map(it => {
+                                const tipoAp = String(it.tipoAparelho || '').toLowerCase();
+                                return tipoAp.includes('vf') ? 'VF' : 'Comodato';
+                            }).join(', ');
+                            aparelhoValor = devices.map(it => {
+                                const tipoAp = String(it.tipoAparelho || '').toLowerCase();
+                                return tipoAp.includes('vf') ? currency((Number(it.valorAparelho || 0) || 0) / 24) : '-';
+                            }).join(', ');
+                        }
+                    } else if (l.temAparelho === 'Sim') {
                         aparelhoNome = String(l.modeloAparelho || '-');
                         const tipoAp = String(l.tipoAparelho || '').toLowerCase();
                         const isVf = tipoAp.includes('vf');
@@ -3426,18 +3487,29 @@
                 }
                 const totalBase = totalGeral();
                 const totalAparelhoMensal = __linhas.reduce((acc, l) => {
-                    const qtd = Number(l.quantidade || 1);
-                    if (String(l.temAparelho || '').toLowerCase() !== 'sim') return acc;
-                    const parcelaRaw = Number(l.valorParcela || 0);
-                    let parcela = parcelaRaw;
-                    if (!(parcela > 0)) {
-                        const tipoAp = String(l.tipoAparelho || '').toLowerCase();
-                        if (tipoAp.includes('vf')) {
-                            parcela = (Number(l.valorAparelho || 0) || 0) / 24;
+                    let lineApTotal = 0;
+                    if (l.portabilidade === 'Sim' && Array.isArray(l.portarItens)) {
+                        l.portarItens.forEach(it => {
+                            if (String(it.temAparelho || '').toLowerCase() === 'sim') {
+                                const tipoAp = String(it.tipoAparelho || '').toLowerCase();
+                                if (tipoAp.includes('vf')) {
+                                    lineApTotal += (Number(it.valorAparelho || 0) || 0) / 24;
+                                }
+                            }
+                        });
+                    } else if (String(l.temAparelho || '').toLowerCase() === 'sim') {
+                        const qtd = Number(l.quantidade || 1);
+                        const parcelaRaw = Number(l.valorParcela || 0);
+                        let parcela = parcelaRaw;
+                        if (!(parcela > 0)) {
+                            const tipoAp = String(l.tipoAparelho || '').toLowerCase();
+                            if (tipoAp.includes('vf')) {
+                                parcela = (Number(l.valorAparelho || 0) || 0) / 24;
+                            }
                         }
+                        lineApTotal = (qtd * parcela);
                     }
-                    if (!(parcela > 0)) return acc;
-                    return acc + (qtd * parcela);
+                    return acc + lineApTotal;
                 }, 0);
                 const totalLabel = 'Valor Total: ' + totalFormatado;
                 const mensalLabel = 'Total Mensal' + (totalAparelhoMensal > 0 ? ' + Aparelho' : '') + ': ' + currency(totalBase + totalAparelhoMensal);
@@ -3594,7 +3666,20 @@
                     let aparelhoNome = '-';
                     let aparelhoInfo = '-';
                     let aparelhoValor = '-';
-                    if (l.temAparelho === 'Sim') {
+                    if (l.portabilidade === 'Sim' && Array.isArray(l.portarItens) && l.portarItens.length > 0) {
+                        const devices = l.portarItens.filter(it => it.temAparelho === 'Sim');
+                        if (devices.length > 0) {
+                            aparelhoNome = devices.map(it => it.modeloAparelho || '-').join(', ');
+                            aparelhoInfo = devices.map(it => {
+                                const tipoAp = String(it.tipoAparelho || '').toLowerCase();
+                                return tipoAp.includes('vf') ? 'VF' : 'Comodato';
+                            }).join(', ');
+                            aparelhoValor = devices.map(it => {
+                                const tipoAp = String(it.tipoAparelho || '').toLowerCase();
+                                return tipoAp.includes('vf') ? currency((Number(it.valorAparelho || 0) || 0) / 24) : '-';
+                            }).join(', ');
+                        }
+                    } else if (l.temAparelho === 'Sim') {
                         aparelhoNome = String(l.modeloAparelho || '-');
                         const tipoAp = String(l.tipoAparelho || '').toLowerCase();
                         const isVf = tipoAp.includes('vf');
@@ -3636,18 +3721,29 @@
                     ctx.fillText(valorLinha, xRight, textY1 + lineGap);
                 }
                 const totalAparelhoMensal = __linhas.reduce((acc, l) => {
-                    const qtd = Number(l.quantidade || 1);
-                    if (String(l.temAparelho || '').toLowerCase() !== 'sim') return acc;
-                    const parcelaRaw = Number(l.valorParcela || 0);
-                    let parcela = parcelaRaw;
-                    if (!(parcela > 0)) {
-                        const tipoAp = String(l.tipoAparelho || '').toLowerCase();
-                        if (tipoAp.includes('vf')) {
-                            parcela = (Number(l.valorAparelho || 0) || 0) / 24;
+                    let lineApTotal = 0;
+                    if (l.portabilidade === 'Sim' && Array.isArray(l.portarItens)) {
+                        l.portarItens.forEach(it => {
+                            if (String(it.temAparelho || '').toLowerCase() === 'sim') {
+                                const tipoAp = String(it.tipoAparelho || '').toLowerCase();
+                                if (tipoAp.includes('vf')) {
+                                    lineApTotal += (Number(it.valorAparelho || 0) || 0) / 24;
+                                }
+                            }
+                        });
+                    } else if (String(l.temAparelho || '').toLowerCase() === 'sim') {
+                        const qtd = Number(l.quantidade || 1);
+                        const parcelaRaw = Number(l.valorParcela || 0);
+                        let parcela = parcelaRaw;
+                        if (!(parcela > 0)) {
+                            const tipoAp = String(l.tipoAparelho || '').toLowerCase();
+                            if (tipoAp.includes('vf')) {
+                                parcela = (Number(l.valorAparelho || 0) || 0) / 24;
+                            }
                         }
+                        lineApTotal = (qtd * parcela);
                     }
-                    if (!(parcela > 0)) return acc;
-                    return acc + (qtd * parcela);
+                    return acc + lineApTotal;
                 }, 0);
                 const totalBase = totalGeral();
                 const totalLabel = 'Valor Total: ' + currency(totalBase);
