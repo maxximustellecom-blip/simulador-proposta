@@ -206,14 +206,9 @@
                                 <option value="CUSTOMIZADA">Customizada</option>
                             </select>
                         </div>
-                        <div style="flex: 1; min-width: 400px;">
+                        <div style="flex: 1; min-width: 200px;">
                             <div class="label">Período</div>
                             <div class="date-picker-wrapper">
-                                <div class="quick-filters">
-                                    <button type="button" class="quick-filter-btn" onclick="setQuickRange('today', this)">Hoje</button>
-                                    <button type="button" class="quick-filter-btn" onclick="setQuickRange('7days', this)">7 dias</button>
-                                    <button type="button" class="quick-filter-btn active" id="btnThisMonth" onclick="setQuickRange('thisMonth', this)">Mês</button>
-                                </div>
                                 <div class="date-range-container" id="dateRangePickerContainer">
                                     <i data-lucide="calendar"></i>
                                     <input type="text" id="dateRangeInput" placeholder="Selecione o período">
@@ -408,6 +403,18 @@
                 const rowStyle = isConcluida ? ' style="background: var(--pill-bg);"' : '';
                 const isDisabled = (__userRole !== 'admin' && String(n.status) === 'Concluída') ? 'disabled' : '';
                 
+                // Lógica de cálculo de valor baseada no pedido-vendas.html
+                let valorExibicao = '-';
+                if (n.valor !== undefined && n.valor !== null) {
+                    valorExibicao = currency(n.valor);
+                } else if (n.totalFatura !== undefined && n.totalFatura !== null) {
+                    valorExibicao = currency(n.totalFatura);
+                } else if (n.faturaTotal !== undefined && n.faturaTotal !== null) {
+                    valorExibicao = currency(n.faturaTotal);
+                } else if (typeof n.valorTotal === 'number') {
+                    valorExibicao = currency(n.valorTotal);
+                }
+
                 return `
                 <tr${rowStyle} data-id="${n.id}">
                     <td>
@@ -416,7 +423,7 @@
                     </td>
                     <td><span class="ellipsis">${n.proposta === "PROPOSTA PADRÃO" ? "PADRÃO" : "CUSTOMIZADA" || '-'}</span></td>
                     <td>${n.totalAcessos || 0}</td>
-                    <td>${(n.valor !== undefined && n.valor !== null) ? currency(n.valor) : '-'}</td>
+                    <td>${valorExibicao}</td>
                     <td>${n.data || '-'}</td>
                     <td>${n.creator && n.creator.name ? n.creator.name : '-'}</td>
                     <td class="col-actions">

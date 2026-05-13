@@ -174,17 +174,7 @@
                         </table>
                     </div>
                 </section>
-                <section class="section" style="margin-top: 1rem;">
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;">
-                        <div>
-                            <div class="label">Dados complementares do cliente</div>
-                            <div class="muted">Preencha informações cadastrais para proposta e contrato.</div>
-                        </div>
-                        <button id="openClienteDataBtn" class="btn btn-ghost" type="button">
-                            <i data-lucide="user-round-pen"></i><span>Completar dados de cliente</span>
-                        </button>
-                    </div>
-                </section>
+
                 <section class="section" style="margin-top:1rem; display: none;">
                     <div style="display:flex; align-items:center; gap:0.75rem;">
                         <div class="label">Status da negociação</div>
@@ -209,36 +199,24 @@
                         </div>
                     </div>
                 </section>
-                <section class="section" style="margin-top:1rem;">
+                <section class="section" style="margin-top:1rem; display: none;">
                     <div class="label">Anotações</div>
                     <textarea id="fAnotacoes" class="input" style="width:100%; min-height:80px; margin-top:0.5rem; padding: 0px; resize: none;" placeholder="Observações gerais sobre a proposta..."></textarea>
                 </section>
-                <section class="section" style="margin-top:1rem;">
-                    <div class="label">Anexos</div>
-                    <div style="margin-top:0.5rem;">
-                        <div id="entityTypeContainer" style="margin-bottom: 1rem; display:none;">
-                            <div class="label" style="font-size:0.85rem; color:var(--muted); margin-bottom:0.25rem;">Tipo de Empresa / Documentação</div>
-                            <select id="entityTypeSelect" class="select" style="width:100%; max-width:400px;">
-                                <option value="">Selecione o tipo de empresa...</option>
-                            </select>
-                        </div>
-                        <div id="entityRequirementsContainer"></div>
-                        
-                        <div style="margin-top:1.5rem; border-top:1px solid var(--border); padding-top:1rem;">
-                            <div class="label" style="margin-bottom:0.5rem;">Outros Anexos</div>
-                            <div id="attachmentsList" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;"></div>
-                            <label class="btn btn-ghost" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.5rem;">
-                                <i data-lucide="paperclip"></i><span>Adicionar anexo extra</span>
-                                <input type="file" id="fileInput" style="display:none;">
-                            </label>
-                        </div>
-                    </div>
-                </section>
+
                 <section style="margin-top:1rem;">
                     <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end;">
-                        <button id="novaBtn" class="btn btn-ghost" type="button"><i data-lucide="rotate-ccw"></i><span>Resetar Proposta</span></button>
+                        <button id="novaBtn" class="btn btn-ghost" type="button" style="display: none;"><i data-lucide="rotate-ccw"></i><span>Resetar Proposta</span></button>
                         <button id="copiarBtn" class="btn btn-ghost" type="button" title="Copiar máscara"><i data-lucide="copy"></i><span>Máscara</span></button>
-                        <button id="relatorioBtn" class="btn btn-ghost" type="button" title="Gerar Relatório"><i data-lucide="file-text"></i><span>Gerar Relatório</span></button>
+                        <button id="relatorioBtn" class="btn btn-ghost" type="button" title="Gerar Relatório" style="display: none;"><i data-lucide="file-text"></i><span>Gerar Relatório</span></button>
+                        
+                        <button id="openClienteDataBtn" class="btn btn-ghost" type="button">
+                            <i data-lucide="user-round-pen"></i><span>Completar dados de cliente</span>
+                        </button>
+                        
+                        <button id="openAttachmentsModalBtn" class="btn btn-ghost" type="button">
+                            <i data-lucide="paperclip"></i><span>Documentações</span>
+                        </button>
                         <div id="propostaDropdownWrap" style="position:relative; display:inline-block;">
                             <button id="propostaComercialBtn" class="btn btn-ghost" type="button" title="Gerar Proposta Comercial" style="display:inline-flex; align-items:center; gap:0.4rem;">
                                 <i data-lucide="file-text"></i>
@@ -297,38 +275,13 @@
                         </div>
                         <div class="field"><span class="label-inline">Dia de Vencimento</span>
                             <select id="mVencimento" class="input">
-                                <option value="">Selecione...</option>
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3">3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                                <option value="6">6</option>
+                                 <option value="1">1</option>
                                 <option value="7">7</option>
-                                <option value="8">8</option>
-                                <option value="9">9</option>
                                 <option value="10">10</option>
-                                <option value="11">11</option>
                                 <option value="12">12</option>
-                                <option value="13">13</option>
-                                <option value="14">14</option>
                                 <option value="15">15</option>
-                                <option value="16">16</option>
-                                <option value="17">17</option>
-                                <option value="18">18</option>
-                                <option value="19">19</option>
                                 <option value="20">20</option>
-                                <option value="21">21</option>
-                                <option value="22">22</option>
-                                <option value="23">23</option>
-                                <option value="24">24</option>
                                 <option value="25">25</option>
-                                <option value="26">26</option>
-                                <option value="27">27</option>
-                                <option value="28">28</option>
-                                <option value="29">29</option>
-                                <option value="30">30</option>
-                                <option value="31">31</option>
                             </select>
                         </div>
                     </div>
@@ -453,7 +406,7 @@
             </div>
         </div>
     </div>
-    <div id="confirmAttachmentDeleteModal" class="modal">
+    <div id="confirmAttachmentDeleteModal" class="modal" style="z-index: 3000;">
         <div class="modal-card">
             <div class="modal-head"><div>Excluir Anexo</div><button id="confirmAttachmentDeleteClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
             <div class="modal-body">
@@ -650,6 +603,37 @@
             </div>
         </div>
     </div>
+    <!-- Attachments Modal -->
+    <div id="attachmentsModal" class="modal">
+        <div class="modal-card" style="max-width: 600px; width: 95%;">
+            <div class="modal-head">
+                <div>Documentações / Anexos</div>
+                <button id="closeAttachmentsModalBtn" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="entityTypeContainer" style="margin-bottom: 1rem; display:none;">
+                    <div class="label" style="font-size:0.85rem; color:var(--muted); margin-bottom:0.25rem;">Tipo de Empresa / Documentação</div>
+                    <select id="entityTypeSelect" class="select" style="width:100%;">
+                        <option value="">Selecione o tipo de empresa...</option>
+                    </select>
+                </div>
+                <div id="entityRequirementsContainer"></div>
+                
+                <div style="margin-top:1.5rem; border-top:1px solid var(--border); padding-top:1rem;">
+                    <div class="label" style="margin-bottom:0.5rem;">Outros Anexos</div>
+                    <div id="attachmentsList" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;"></div>
+                    <label class="btn btn-ghost" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.5rem;">
+                        <i data-lucide="paperclip"></i><span>Adicionar anexo extra</span>
+                        <input type="file" id="fileInput" style="display:none;">
+                    </label>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="closeAttachmentsModalFooterBtn" class="btn btn-primary" type="button"><i data-lucide="check"></i><span>Concluído</span></button>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
     <script>
         const API_BASE = 'https://others-maxximus-backend.pvuzyy.easypanel.host';
@@ -1111,8 +1095,6 @@
                 __negociacaoStatus = exists && exists.status ? String(exists.status) : 'Em andamento';
                 __negociacaoInfo = exists || null;
                 await initConfiguracao();
-                applyEntityRules();
-                await loadAttachments();
                 const fileInput = document.getElementById('fileInput');
                 if (fileInput) fileInput.addEventListener('change', handleFileUpload);
             } catch (e) {
@@ -1259,6 +1241,23 @@
             if (propEl) propEl.textContent = n.proposta || '-';
             if (dataEl) dataEl.textContent = n.data || '-';
             if (statusEl) statusEl.textContent = __negociacaoStatus || (n.status || '-');
+        }
+        function bindAttachmentsModalEvents() {
+            const modal = document.getElementById('attachmentsModal');
+            const openBtn = document.getElementById('openAttachmentsModalBtn');
+            const closeBtn = document.getElementById('closeAttachmentsModalBtn');
+            const footerBtn = document.getElementById('closeAttachmentsModalFooterBtn');
+            if (!modal || !openBtn) return;
+            const close = () => modal.classList.remove('show');
+            const open = () => {
+                modal.classList.add('show');
+                applyEntityRules();
+                loadAttachments();
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+            };
+            openBtn.addEventListener('click', open);
+            if (closeBtn) closeBtn.addEventListener('click', close);
+            if (footerBtn) footerBtn.addEventListener('click', close);
         }
         function preencherCamposClienteModal(c) {
             document.getElementById('mCnpj').value = formatCnpj(c.cnpj || '');
@@ -1512,7 +1511,7 @@
                 precoAtual: 0,
                 numeroPortar: '',
                 quantidade: 1,
-                categoria: (getFilteredCategorias('Novo')[0]?.nome || (__categorias[0]?.nome || '')),
+                categoria: '',
                 plano: '',
                 pct: '',
                 valorPlano: 0,
@@ -1527,6 +1526,7 @@
             bindActions();
             bindEditModalEvents();
             bindClienteDataModalEvents();
+            bindAttachmentsModalEvents();
             renderClienteBasico();
             renderTabela();
             renderResumo();
@@ -1586,7 +1586,7 @@
                     numero: '',
                     planoAtualGB: '',
                     precoAtual: 0,
-                    categoria: (getFilteredCategorias('Novo')[0]?.nome || (__categorias[0]?.nome || '')),
+                    categoria: '',
                     plano: '',
                     pct: '',
                     valorPlano: 0,
@@ -1876,7 +1876,7 @@
 
             // Categoria (All)
             const allCats = (__categorias || []).slice();
-            const catOpts = allCats.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
+            const catOpts = ['<option value="">Selecione...</option>'].concat(allCats.map(c => `<option value="${c.nome}">${c.nome}</option>`)).join('');
             populate('editCategoria', catOpts, line.categoria);
 
             // Plano (Filtered by Categoria AND DDD)
@@ -2610,7 +2610,7 @@
                             <input type="number" min="1" class="input" style="width:70px; text-align:center; background-color: #f3f4f6;" value="${l.quantidade}"
                                    data-id="${l.id}" data-field="quantidade" readonly disabled>
                         </td>
-                        <td>${tipoProduto}</td>
+                        <td>${String(tipoProduto).toUpperCase()}</td>
                         <td>${acesso || '-'}</td>
                         <td>
                             <div style="font-weight:600;">${l.categoria || '-'}</div>
@@ -2620,7 +2620,7 @@
                         <td>${currencyNoRound(totalLinha(l))}</td>
                         <td class="col-actions">
                             <div class="table-actions">
-                                <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="openEditModal(${l.id})"><i data-lucide="settings"></i></button>
+                                <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="openEditModal(${l.id})"><i data-lucide="edit"></i></button>
                                 <button type="button" class="btn btn-ghost btn-icon" title="Copiar" onclick="copiarLinha(${l.id})"><i data-lucide="copy"></i></button>
                                 <button type="button" class="btn btn-ghost btn-icon" title="Remover" data-id="${l.id}" data-action="remover" style="border-color: rgba(239,68,68,0.35); color: #FCA5A5;" ${__linhas.length <= 1 ? 'disabled' : ''}><i data-lucide="trash-2"></i></button>
                             </div>

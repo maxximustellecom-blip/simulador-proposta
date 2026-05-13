@@ -416,10 +416,6 @@
             <!-- Filters -->
             <section class="section" style="margin-top: 20px;">
                 <div class="filters-container">
-                    <div class="filter-group" style="flex: 2;">
-                        <label class="label"><i data-lucide="search" size="14"></i> Buscar (geral)</label>
-                        <input type="text" id="filtroBusca" class="input" placeholder="Razão social, CNPJ, consultor, etiqueta, P2B, Radar, ID..." oninput="filtrarBackend()">
-                    </div>
                     <div class="filter-group">
                         <label class="label">Razão social</label>
                         <input type="text" id="fRazao" class="input" placeholder="Razão social" oninput="filtrarBackend()">
@@ -430,15 +426,17 @@
                     </div>
                     <div class="filter-group">
                         <label class="label">Consultor</label>
-                        <input type="text" id="fConsultor" class="input" placeholder="Nome do consultor" oninput="filtrarBackend()">
+                        <select id="fConsultor" class="input" onchange="filtrarBackend()">
+                            <option value="">Todos</option>
+                        </select>
                     </div>
                     <div class="filter-group">
                         <label class="label">Etiqueta</label>
                         <input type="text" id="fEtiqueta" class="input" placeholder="Nome da etiqueta" oninput="filtrarBackend()">
                     </div>
                     <div class="filter-group">
-                        <label class="label">ID</label>
-                        <input type="text" id="fNegId" class="input" placeholder="ID da negociação" oninput="filtrarBackend()">
+                        <label class="label">Proposta Nº</label>
+                        <input type="text" id="fNegId" class="input" placeholder="Proposta Nº" oninput="filtrarBackend()">
                     </div>
                     <div class="filter-group">
                         <label class="label">P2B</label>
@@ -456,14 +454,9 @@
                             <option value="dataAtivacao">Ativação</option>
                         </select>
                     </div>
-                    <div class="filter-group" style="min-width: 400px;">
+                    <div class="filter-group">
                         <label class="label">Período</label>
                         <div class="date-picker-wrapper">
-                            <div class="quick-filters">
-                                <button type="button" class="quick-filter-btn" onclick="setQuickRange('today', this)">Hoje</button>
-                                <button type="button" class="quick-filter-btn" onclick="setQuickRange('7days', this)">7 dias</button>
-                                <button type="button" class="quick-filter-btn active" id="btnThisMonth" onclick="setQuickRange('thisMonth', this)">Mês</button>
-                            </div>
                             <div class="date-range-container" id="dateRangePickerContainer">
                                 <i data-lucide="calendar"></i>
                                 <input type="text" id="dateRangeInput" placeholder="Selecione o período">
@@ -750,6 +743,17 @@
                     }
                     return { ...item, valorTotalFatura: valorFatura };
                 });
+
+                // Popular select de consultores
+                const consultores = [...new Set(backendData.map(i => i.consultor).filter(Boolean))].sort();
+                const fConsultor = document.getElementById('fConsultor');
+                if (fConsultor) {
+                    const currentVal = fConsultor.value;
+                    fConsultor.innerHTML = '<option value="">Todos</option>' + 
+                        consultores.map(c => `<option value="${c}">${c}</option>`).join('');
+                    fConsultor.value = currentVal;
+                }
+
                 filtrarBackend();
             } catch (error) {
                 console.error(error);
@@ -968,7 +972,7 @@
                             <div class="dropdown">
                                 <button type="button" class="btn btn-ghost btn-icon" title="Ações" onclick="togglePedidoMenu(event, ${item.id})"><i data-lucide="more-vertical"></i></button>
                                 <div id="pedido-menu-${item.id}" class="action-menu" onclick="event.stopPropagation()">
-                                    <button type="button" class="action-item" onclick="closeActiveDropdown(); configurarPedido('${item.id}')"><i data-lucide="settings"></i><span>Configurar</span></button>
+                                    <button type="button" class="action-item" onclick="closeActiveDropdown(); configurarPedido('${item.id}')"><i data-lucide="edit"></i><span>Editar</span></button>
                                     <button type="button" class="action-item" onclick="closeActiveDropdown(); openEtiquetaModal('${item.id}')"><i data-lucide="tag"></i><span>Etiquetar</span></button>
                                     <button type="button" class="action-item" onclick="closeActiveDropdown(); voltarCadastro('${item.id}')"><i data-lucide="clipboard-check"></i><span>Voltar para Cadastro</span></button>
                                     <button type="button" class="action-item" onclick="closeActiveDropdown(); voltarNegociacao('${item.id}')"><i data-lucide="handshake"></i><span>Voltar para Negociação</span></button>

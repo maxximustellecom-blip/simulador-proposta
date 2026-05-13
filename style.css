@@ -1304,3 +1304,25 @@ select option[disabled], .select option[disabled] {
 @media (min-width: 920px) {
   .auth-hero { display: block; }
 }
+
+.date-range-container{
+  padding: 0px !important;
+}
+
+.date-picker-wrapper {
+  padding: 0px !important;
+  border: none !important;
+  display: block !important;
+}
+
+.date-range-container:hover {
+  border-color: none !important;
+  background: transparent !important;
+  transform: translateY(0px) !important;
+  box-shadow: none !important;
+}
+
+.date-range-container:focus-within {
+  border-color: none !important;
+  box-shadow: none !important;
+}

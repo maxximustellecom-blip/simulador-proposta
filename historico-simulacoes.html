@@ -417,14 +417,9 @@
                     <div class="label">CNPJ</div>
                     <input id="fCnpj" class="input" type="text" placeholder="00.000.000/0000-00">
                 </div>
-                <div style="flex: 1; min-width: 400px;">
+                <div style="flex: 1; min-width: 200px;">
                     <div class="label">Período</div>
                     <div class="date-picker-wrapper">
-                        <div class="quick-filters">
-                            <button type="button" class="quick-filter-btn" onclick="setQuickRange('today', this)">Hoje</button>
-                            <button type="button" class="quick-filter-btn" onclick="setQuickRange('7days', this)">7 dias</button>
-                            <button type="button" class="quick-filter-btn active" id="btnThisMonth" onclick="setQuickRange('thisMonth', this)">Mês</button>
-                        </div>
                         <div class="date-range-container" id="dateRangePickerContainer">
                             <i data-lucide="calendar"></i>
                             <input type="text" id="dateRangeInput" placeholder="Selecione o período">
