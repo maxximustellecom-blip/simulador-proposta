@@ -209,6 +209,21 @@
                         <div style="flex: 1; min-width: 200px;">
                             <div class="label">Período</div>
                             <div class="date-picker-wrapper">
+                                <select id="fMes" class="input" style="width: 130px; padding: 0 10px; height: 38px; border: none; background: transparent; font-weight: 500;" onchange="setMonthRange(this.value)">
+                                    <option value="all">Todos</option>
+                                    <option value="0">Janeiro</option>
+                                    <option value="1">Fevereiro</option>
+                                    <option value="2">Março</option>
+                                    <option value="3">Abril</option>
+                                    <option value="4">Maio</option>
+                                    <option value="5">Junho</option>
+                                    <option value="6">Julho</option>
+                                    <option value="7">Agosto</option>
+                                    <option value="8">Setembro</option>
+                                    <option value="9">Outubro</option>
+                                    <option value="10">Novembro</option>
+                                    <option value="11">Dezembro</option>
+                                </select>
                                 <div class="date-range-container" id="dateRangePickerContainer">
                                     <i data-lucide="calendar"></i>
                                     <input type="text" id="dateRangeInput" placeholder="Selecione o período">
@@ -637,6 +652,27 @@
             datePicker.setDate([start, end]);
             document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            buscar();
+        }
+
+        function setMonthRange(val) {
+            if (!datePicker) return;
+            const now = new Date();
+            const year = now.getFullYear();
+            if (val === 'all') {
+                const firstDay = new Date(year, 0, 1);
+                const lastDay = new Date(year, 11, 31);
+                datePicker.setDate([firstDay, lastDay]);
+                startDate = firstDay.toISOString().split('T')[0];
+                endDate = lastDay.toISOString().split('T')[0];
+            } else {
+                const m = parseInt(val);
+                const firstDay = new Date(year, m, 1);
+                const lastDay = new Date(year, m + 1, 0);
+                datePicker.setDate([firstDay, lastDay]);
+                startDate = firstDay.toISOString().split('T')[0];
+                endDate = lastDay.toISOString().split('T')[0];
+            }
             buscar();
         }
 

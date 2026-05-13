@@ -186,21 +186,21 @@
                     <div id="filtersNegociacao" style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;">
                         <div style="flex: 1; min-width: 200px;">
                             <div class="label">CNPJ</div>
-                            <input id="fCnpj" class="input" type="text" placeholder="00.000.000/0000-00" autocomplete="off">
+                            <input id="fCnpj" class="input" type="text" placeholder="00.000.000/0000-00" autocomplete="off" oninput="buscar()">
                         </div>
                         <div style="flex: 1; min-width: 200px;">
                             <div class="label">Razão Social</div>
-                            <input id="fRazao" class="input" type="text" placeholder="Nome do cliente" autocomplete="off">
+                            <input id="fRazao" class="input" type="text" placeholder="Nome do cliente" autocomplete="off" oninput="buscar()">
                         </div>
                         <div id="divFilterVendedor" style="display:none; flex: 1; min-width: 200px;">
                             <div class="label">Vendedor</div>
-                            <select id="fVendedor" class="select">
+                            <select id="fVendedor" class="select" onchange="buscar()">
                                 <option value="">Todos</option>
                             </select>
                         </div>
                         <div style="flex: 1; min-width: 200px;">
                             <div class="label">Tipo</div>
-                            <select id="fTipoProposta" class="select">
+                            <select id="fTipoProposta" class="select" onchange="buscar()">
                                 <option value="">Todos</option>
                                 <option value="PADRÃO">Padrão</option>
                                 <option value="CUSTOMIZADA">Customizada</option>
@@ -209,15 +209,26 @@
                         <div style="flex: 1; min-width: 200px;">
                             <div class="label">Período</div>
                             <div class="date-picker-wrapper">
+                                <select id="fMes" class="input" style="width: 130px; padding: 0 10px; height: 38px; border: none; background: transparent; font-weight: 500;" onchange="setMonthRange(this.value)">
+                                    <option value="all">Todos</option>
+                                    <option value="0">Janeiro</option>
+                                    <option value="1">Fevereiro</option>
+                                    <option value="2">Março</option>
+                                    <option value="3">Abril</option>
+                                    <option value="4">Maio</option>
+                                    <option value="5">Junho</option>
+                                    <option value="6">Julho</option>
+                                    <option value="7">Agosto</option>
+                                    <option value="8">Setembro</option>
+                                    <option value="9">Outubro</option>
+                                    <option value="10">Novembro</option>
+                                    <option value="11">Dezembro</option>
+                                </select>
                                 <div class="date-range-container" id="dateRangePickerContainer">
                                     <i data-lucide="calendar"></i>
                                     <input type="text" id="dateRangeInput" placeholder="Selecione o período">
                                 </div>
                             </div>
-                        </div>
-                        <div style="display:flex; align-items:flex-end; margin-left: auto; gap:0.5rem;">
-                            <button id="buscarBtn" class="btn btn-primary" type="button" title="Buscar"><i data-lucide="search"></i><span>Buscar</span></button>
-                            <button id="limparBtn" class="btn btn-ghost" type="button" title="Limpar"><i data-lucide="rotate-ccw"></i><span>Limpar</span></button>
                         </div>
                     </div>
                 </section>
@@ -640,6 +651,27 @@
             buscar();
         }
 
+        function setMonthRange(val) {
+            if (!datePicker) return;
+            const now = new Date();
+            const year = now.getFullYear();
+            if (val === 'all') {
+                const firstDay = new Date(year, 0, 1);
+                const lastDay = new Date(year, 11, 31);
+                datePicker.setDate([firstDay, lastDay]);
+                startDate = firstDay.toISOString().split('T')[0];
+                endDate = lastDay.toISOString().split('T')[0];
+            } else {
+                const m = parseInt(val);
+                const firstDay = new Date(year, m, 1);
+                const lastDay = new Date(year, m + 1, 0);
+                datePicker.setDate([firstDay, lastDay]);
+                startDate = firstDay.toISOString().split('T')[0];
+                endDate = lastDay.toISOString().split('T')[0];
+            }
+            buscar();
+        }
+
         async function buscar() {
             try {
                 const cnpj = onlyDigits(document.getElementById('fCnpj').value);
@@ -929,25 +961,7 @@
                 openModal();
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             });
-            document.getElementById('buscarBtn').addEventListener('click', buscar);
-            ['fCnpj','fRazao','fVendedor','fTipoProposta','fData'].forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        buscar();
-                    }
-                });
-            });
-            document.getElementById('limparBtn').addEventListener('click', () => {
-                document.getElementById('fCnpj').value = '';
-                document.getElementById('fData').value = '';
-                document.getElementById('fRazao').value = '';
-                const fVendedor = document.getElementById('fVendedor');
-                if (fVendedor) fVendedor.value = '';
-                buscar();
-            });
+
             document.getElementById('mSalvar').addEventListener('click', async () => {
                 if (__savingNegociacao) return;
                 __savingNegociacao = true;

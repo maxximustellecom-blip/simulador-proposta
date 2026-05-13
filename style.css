@@ -1309,10 +1309,14 @@ select option[disabled], .select option[disabled] {
   padding: 0px !important;
 }
 
+.date-range-container > svg {
+  display: none !important;
+}
+
 .date-picker-wrapper {
   padding: 0px !important;
   border: none !important;
-  display: block !important;
+  display: flex !important;
 }
 
 .date-range-container:hover {

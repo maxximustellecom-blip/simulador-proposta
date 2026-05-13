@@ -200,42 +200,53 @@
                     <div id="filtersClientes" style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;">
                         <div style="flex: 1; min-width: 200px;">
                             <div class="label">Razão Social</div>
-                            <input id="fRazao" class="input" type="text" placeholder="Razão social" autocomplete="off">
+                            <input id="fRazao" class="input" type="text" placeholder="Razão social" autocomplete="off" oninput="buscar()">
                         </div>
                         <div style="flex: 1; min-width: 200px;">
                             <div class="label">CNPJ</div>
-                            <input id="fCnpj" class="input" type="text" placeholder="00.000.000/0000-00" autocomplete="off">
+                            <input id="fCnpj" class="input" type="text" placeholder="00.000.000/0000-00" autocomplete="off" oninput="buscar()">
                         </div>
                         <div id="filterUserContainer" style="display: none; flex: 1; min-width: 200px;">
                             <div class="label">Cadastrado por</div>
-                            <select id="fUser" class="input">
+                            <select id="fUser" class="input" onchange="buscar()">
                                 <option value="">Todos</option>
                             </select>
                         </div>
                         <div style="flex: 1; min-width: 200px;">
                             <div class="label">Nome</div>
-                            <input id="fNome" class="input" type="text" placeholder="Nome do contato" autocomplete="off">
+                            <input id="fNome" class="input" type="text" placeholder="Nome do contato" autocomplete="off" oninput="buscar()">
                         </div>
                         <div style="flex: 1; min-width: 200px;">
                             <div class="label">Email</div>
-                            <input id="fEmail" class="input" type="text" placeholder="email@empresa.com" autocomplete="off">
+                            <input id="fEmail" class="input" type="text" placeholder="email@empresa.com" autocomplete="off" oninput="buscar()">
                         </div>
                         <div style="flex: 1; min-width: 200px;">
                             <div class="label">Telefone</div>
-                            <input id="fPhone" class="input" type="text" placeholder="(00) 0000-0000" autocomplete="off">
+                            <input id="fPhone" class="input" type="text" placeholder="(00) 0000-0000" autocomplete="off" oninput="buscar()">
                         </div>
                         <div style="flex: 1; min-width: 200px;">
                             <div class="label">Período de Cadastro</div>
                             <div class="date-picker-wrapper">
+                                <select id="fMes" class="input" style="width: 130px; padding: 0 10px; height: 38px; border: none; background: transparent; font-weight: 500;" onchange="setMonthRange(this.value)">
+                                    <option value="all">Todos</option>
+                                    <option value="0">Janeiro</option>
+                                    <option value="1">Fevereiro</option>
+                                    <option value="2">Março</option>
+                                    <option value="3">Abril</option>
+                                    <option value="4">Maio</option>
+                                    <option value="5">Junho</option>
+                                    <option value="6">Julho</option>
+                                    <option value="7">Agosto</option>
+                                    <option value="8">Setembro</option>
+                                    <option value="9">Outubro</option>
+                                    <option value="10">Novembro</option>
+                                    <option value="11">Dezembro</option>
+                                </select>
                                 <div class="date-range-container" id="dateRangePickerContainer">
                                     <i data-lucide="calendar"></i>
                                     <input type="text" id="dateRangeInput" placeholder="Selecione o período">
                                 </div>
                             </div>
-                        </div>
-                        <div style="display:flex; align-items:flex-end; margin-left: auto; gap:0.5rem;">
-                            <button id="buscarBtn" class="btn btn-primary" type="button" title="Buscar"><i data-lucide="search"></i><span>Buscar</span></button>
-                            <button id="limparBtn" class="btn btn-ghost" type="button" title="Limpar"><i data-lucide="rotate-ccw"></i><span>Limpar</span></button>
                         </div>
                     </div>
                 </section>
@@ -642,6 +653,27 @@
             datePicker.setDate([start, end]);
             document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            buscar();
+        }
+
+        function setMonthRange(val) {
+            if (!datePicker) return;
+            const now = new Date();
+            const year = now.getFullYear();
+            if (val === 'all') {
+                const firstDay = new Date(year, 0, 1);
+                const lastDay = new Date(year, 11, 31);
+                datePicker.setDate([firstDay, lastDay]);
+                startDate = firstDay.toISOString().split('T')[0];
+                endDate = lastDay.toISOString().split('T')[0];
+            } else {
+                const m = parseInt(val);
+                const firstDay = new Date(year, m, 1);
+                const lastDay = new Date(year, m + 1, 0);
+                datePicker.setDate([firstDay, lastDay]);
+                startDate = firstDay.toISOString().split('T')[0];
+                endDate = lastDay.toISOString().split('T')[0];
+            }
             buscar();
         }
 
@@ -1279,31 +1311,10 @@
                     fPhone.addEventListener('blur', () => { fPhone.value = formatPhone(fPhone.value); });
                 }
             }
-            document.getElementById('buscarBtn').addEventListener('click', buscar);
-            ['fRazao','fNome','fCnpj','fUser','fEmail','fPhone','fCadDe','fCadAte'].forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        buscar();
-                    }
-                });
-            });
-            document.getElementById('limparBtn').addEventListener('click', () => {
-                document.getElementById('fRazao').value = '';
-                document.getElementById('fNome').value = '';
-                document.getElementById('fCnpj').value = '';
-                const fEmailEl = document.getElementById('fEmail');
-                if (fEmailEl) fEmailEl.value = '';
-                const fPhoneEl = document.getElementById('fPhone');
-                if (fPhoneEl) fPhoneEl.value = '';
-                const fCadDeEl = document.getElementById('fCadDe');
-                if (fCadDeEl) fCadDeEl.value = '';
-                const fCadAteEl = document.getElementById('fCadAte');
-                if (fCadAteEl) fCadAteEl.value = '';
-                buscar();
-            });
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+
             document.addEventListener('click', (e) => {
                 const t = e && e.target;
                 const inside = (t && typeof t.closest === 'function') ? t.closest('.dropdown') : null;
@@ -1311,16 +1322,15 @@
                     Array.from(document.querySelectorAll('.action-menu')).forEach(el => { el.classList.remove('show'); });
                 }
             });
+
             // Fechar menus ao rolar a página ou a tabela para evitar que o menu fixed fique órfão
             window.addEventListener('scroll', () => {
                 Array.from(document.querySelectorAll('.action-menu')).forEach(el => { el.classList.remove('show'); });
             }, true);
+
             await buscar();
             if (!isAdmin) {
                 toast('Mostrando apenas seus clientes', 'success');
-            }
-            if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                window.lucide.createIcons();
             }
         });
         function toggleRowMenu(evt, id) {
