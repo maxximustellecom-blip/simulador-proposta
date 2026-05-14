@@ -31,7 +31,7 @@ function dedupeById(list) {
 
 export async function listNegotiations(req, res) {
   try {
-    const { cnpj, status, data, creator_id, razao, tipo_proposta, cadastro } = req.query || {};
+    const { cnpj, status, data, creator_id, razao, tipo_proposta, cadastro, startDate, endDate } = req.query || {};
     let list = await Negotiation.findAll({
       include: [
         { 
@@ -49,6 +49,27 @@ export async function listNegotiations(req, res) {
       distinct: true
     });
     list = dedupeById(list);
+
+    // Filtering by startDate and endDate
+    if (startDate && endDate) {
+      list = list.filter(n => {
+        if (!n.created_at && !n.data) return false;
+        
+        // Try to parse n.data (DD/MM/YYYY) or n.created_at (ISO)
+        let itemDateStr = '';
+        if (n.data && n.data.includes('/')) {
+          const [d, m, y] = n.data.split('/');
+          itemDateStr = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+        } else if (n.created_at) {
+          itemDateStr = new Date(n.created_at).toISOString().split('T')[0];
+        } else {
+          return false;
+        }
+        
+        return itemDateStr >= startDate && itemDateStr <= endDate;
+      });
+    }
+
     const role = String(req.user && req.user.role ? req.user.role : '').toLowerCase();
     if (req.user && role === 'user' && req.user.id) {
       list = list.filter(n => Number(n.created_by || 0) === Number(req.user.id));

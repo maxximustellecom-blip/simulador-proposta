@@ -416,6 +416,10 @@
             <!-- Filters -->
             <section class="section" style="margin-top: 20px;">
                 <div class="filters-container">
+                    <div class="filter-group" style="display: none;">
+                        <label class="label">Busca geral</label>
+                        <input type="text" id="filtroBusca" class="input" placeholder="Buscar por qualquer campo..." oninput="filtrarBackend()">
+                    </div>
                     <div class="filter-group">
                         <label class="label">Razão social</label>
                         <input type="text" id="fRazao" class="input" placeholder="Razão social" oninput="filtrarBackend()">
@@ -459,6 +463,7 @@
                         <div class="date-picker-wrapper">
                             <select id="fMes" class="input" style="width: 130px; padding: 0 10px; height: 38px; border: none; background: transparent; font-weight: 500;" onchange="setMonthRange(this.value)">
                                 <option value="all">Todos</option>
+                                <option value="custom" style="display:none;">Personalizado</option>
                                 <option value="0">Janeiro</option>
                                 <option value="1">Fevereiro</option>
                                 <option value="2">Março</option>
@@ -746,11 +751,9 @@
             const now = new Date();
             const year = now.getFullYear();
             if (val === 'all') {
-                const firstDay = new Date(year, 0, 1);
-                const lastDay = new Date(year, 11, 31);
-                datePicker.setDate([firstDay, lastDay]);
-                startDate = firstDay.toISOString().split('T')[0];
-                endDate = lastDay.toISOString().split('T')[0];
+                datePicker.clear();
+                startDate = null;
+                endDate = null;
             } else {
                 const m = parseInt(val);
                 const firstDay = new Date(year, m, 1);
@@ -1162,8 +1165,9 @@
             const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
             const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
             
-            startDate = firstDay.toISOString().split('T')[0];
-            endDate = lastDay.toISOString().split('T')[0];
+            // Inicializar como nulo para mostrar tudo por padrão, já que o select fMes inicia em "all"
+            startDate = null;
+            endDate = null;
 
             datePicker = flatpickr("#dateRangeInput", {
                 mode: "range",
@@ -1171,12 +1175,12 @@
                 altInput: true,
                 altFormat: "d/m/Y",
                 locale: "pt",
-                defaultDate: [firstDay, lastDay],
                 onClose: function(selectedDates) {
                     if (selectedDates.length === 2) {
                         startDate = selectedDates[0].toISOString().split('T')[0];
                         endDate = selectedDates[1].toISOString().split('T')[0];
                         document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.remove('active'));
+                        if (document.getElementById('fMes')) document.getElementById('fMes').value = 'custom';
                         filtrarBackend();
                     }
                 }
