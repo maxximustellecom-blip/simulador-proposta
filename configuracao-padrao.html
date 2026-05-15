@@ -120,6 +120,20 @@
         @media (max-width: 768px) {
             .grid-3-modal { grid-template-columns: 1fr; }
         }
+        .resumo-accordion { padding: 0 !important; overflow: hidden; }
+        .resumo-accordion > summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            user-select: none;
+        }
+        .resumo-accordion > summary::-webkit-details-marker { display: none; }
+        .resumo-accordion[open] > summary { border-bottom: 1px solid var(--border); }
+        .resumo-accordion-body { padding: 0 0.75rem 0.75rem; }
     </style>
 </head>
 <body>
@@ -185,9 +199,18 @@
                         </select>
                     </div>
                 </section>
-                <section class="section" style="margin-top:1rem; display: none;">
+                <section class="section" style="margin-top:1rem;">
                     <div class="label">Resumo</div>
-                    <div class="grid-2" style="margin-top:0.5rem;">
+                    <details id="resumoPropostaAccordion" class="card resumo-accordion" style="margin-top:0.5rem; border:1px solid #86efac;">
+                        <summary>
+                            <div class="muted" style="font-weight:600; color:#15803d;">Nova Proposta</div>
+                            <div id="resumoPropostaTotal" class="muted" style="padding:0.5rem; background:#DCFCE7; color:#166534; font-weight:700; border-radius:6px;">Total: R$ 0,00</div>
+                        </summary>
+                        <div class="resumo-accordion-body">
+                            <div id="resumoPropostaList" class="muted"></div>
+                        </div>
+                    </details>
+                    <div class="grid-2" style="margin-top:0.5rem; display: none;">
                         <div class="card" style="padding:0.75rem;">
                             <div class="muted">Valor total mensal</div>
                             <div id="resumoTotal" style="font-size:1.6rem; font-weight:700; color: var(--primary);">R$ 0,00</div>
@@ -2662,6 +2685,17 @@
             if (elTotal) elTotal.textContent = currency(total);
             if (elAcessos) elAcessos.textContent = `${acessos} ${acessos === 1 ? 'acesso' : 'acessos'}`;
             if (elItens) elItens.textContent = itens;
+
+            const propostaListEl = document.getElementById('resumoPropostaList');
+            const propostaTotalEl = document.getElementById('resumoPropostaTotal');
+            const propostaItens = __linhas.map((l, idx) => {
+                const plano = l.plano || '-';
+                const pct = l.pct || '-';
+                const final = currency(totalLinha(l));
+                return `<div style="background:#ECFDF5; padding:8px; border-radius:6px; margin-bottom:6px;">Linha ${idx + 1}: ${l.quantidade || 1} acesso(s)<br>Plano: ${plano}<br>Pct: ${pct}<br>Final: ${final}</div>`;
+            }).join('') || '<div class="muted">-</div>';
+            if (propostaListEl) propostaListEl.innerHTML = propostaItens;
+            if (propostaTotalEl) propostaTotalEl.textContent = 'Total: ' + currency(total);
         }
         function validar() {
             const erros = [];

@@ -7,6 +7,10 @@
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/material_blue.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/pt.js"></script>
     <style>
         .kanban {
             display: grid;
@@ -17,12 +21,38 @@
         }
         .filters {
             display: grid;
-            grid-template-columns: 1.2fr 1.2fr 1fr 1fr 0.9fr;
+            grid-template-columns: 1.2fr 1.2fr 1.5fr;
             gap: 0.75rem;
             align-items: end;
         }
         @media (max-width: 1100px) {
-            .filters { grid-template-columns: 1fr 1fr; }
+            .filters { grid-template-columns: 1fr; }
+        }
+        .date-range-container {
+            display: flex;
+            align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            gap: 8px;
+            cursor: pointer;
+            height: 38px;
+        }
+        .date-range-container i {
+            color: var(--primary);
+            width: 18px;
+            height: 18px;
+        }
+        .date-range-container input {
+            border: none;
+            background: transparent;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text);
+            cursor: pointer;
+            width: 100%;
+            outline: none;
         }
         .kanban-col {
             background: var(--surface);
@@ -195,12 +225,11 @@
                             </select>
                         </div>
                         <div>
-                            <div class="label">De</div>
-                            <input id="fDe" class="input" type="date" onchange="applyFilters()">
-                        </div>
-                        <div>
-                            <div class="label">Até</div>
-                            <input id="fAte" class="input" type="date" onchange="applyFilters()">
+                            <div class="label">Período</div>
+                            <div class="date-range-container" id="dateRangePickerContainer">
+                                <i data-lucide="calendar"></i>
+                                <input type="text" id="dateRangeInput" placeholder="Selecione o período">
+                            </div>
                         </div>
                     </div>
                     <div class="kanban" id="kanban">
@@ -359,6 +388,34 @@
         let __deals = [];
         let __dragId = null;
         let __isDragging = false;
+        let datePicker = null;
+        let startDate = null;
+        let endDate = null;
+
+        function initDatePicker() {
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            
+            startDate = firstDay.toISOString().split('T')[0];
+            endDate = lastDay.toISOString().split('T')[0];
+
+            datePicker = flatpickr("#dateRangeInput", {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "d/m/Y",
+                locale: "pt",
+                defaultDate: [firstDay, lastDay],
+                onClose: function(selectedDates) {
+                    if (selectedDates.length === 2) {
+                        startDate = selectedDates[0].toISOString().split('T')[0];
+                        endDate = selectedDates[1].toISOString().split('T')[0];
+                        applyFilters();
+                    }
+                }
+            });
+        }
 
         function dealHtml(d) {
             const c = d.client || {};
@@ -436,10 +493,8 @@
         function applyFilters() {
             const busca = normalizeText(document.getElementById('fBusca') ? document.getElementById('fBusca').value : '').trim();
             const vendedorNeedle = normalizeText(document.getElementById('fVendedor') ? document.getElementById('fVendedor').value : '').trim();
-            const deIso = document.getElementById('fDe') ? document.getElementById('fDe').value : '';
-            const ateIso = document.getElementById('fAte') ? document.getElementById('fAte').value : '';
-            const tDe = parseISODateToTime(deIso, false);
-            const tAte = parseISODateToTime(ateIso, true);
+            const tDe = startDate ? new Date(startDate + 'T00:00:00').getTime() : null;
+            const tAte = endDate ? new Date(endDate + 'T23:59:59').getTime() : null;
 
             __deals = (__dealsAll || []).filter(d => {
                 const c = d.client || {};
@@ -598,11 +653,12 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const auth = localStorage.getItem('authUser');
             if (!auth) { window.location.href = 'login.html'; return; }
+            initDatePicker();
             const btn = document.getElementById('refreshBtn');
             if (btn) btn.addEventListener('click', load);
             const exportBtn = document.getElementById('exportBtn');
             if (exportBtn) exportBtn.addEventListener('click', exportCsv);
-            const fIds = ['fBusca', 'fVendedor', 'fDe', 'fAte'];
+            const fIds = ['fBusca', 'fVendedor'];
             fIds.forEach(id => {
                 const el = document.getElementById(id);
                 if (!el) return;
