@@ -353,6 +353,11 @@ export async function exportarComissaoPedidos(req, res) {
     const list = Array.isArray(ids) ? ids.map(x => Number(x)).filter(Boolean) : [];
     if (!list.length) return res.status(400).json({ error: 'ids obrigatórios' });
 
+    const backofficeUsers = await User.findAll({
+      where: { backoffice: true },
+      order: [['name', 'ASC']]
+    });
+
     const pedidos = await PedidoDeVenda.findAll({
       where: { id: { [Op.in]: list } },
       include: [
@@ -419,7 +424,6 @@ export async function exportarComissaoPedidos(req, res) {
       const rawConfig = profile && profile.commission_config ? profile.commission_config : null;
       const commission_config = (typeof rawConfig === 'string') ? (() => { try { return JSON.parse(rawConfig); } catch { return null; } })() : rawConfig;
       const consultorTipo = creator ? (creator.tipo || 'interno') : 'interno';
-      const consultorComissaoFixa = creator ? toNumber(creator.comissao, 0) : 0;
       const comissaoFixaAtiva = creator ? Boolean(creator.comissao_fixa_ativa) : false;
       const specificCommissions = {
         novo: creator ? toNumber(creator.comissao_novo, 0) : 0,
@@ -434,22 +438,53 @@ export async function exportarComissaoPedidos(req, res) {
         pf_pj: creator ? toNumber(creator.comissao_pf_pj, 0) : 0
       };
 
-      prepared.push({
+      const baseRow = {
         pedido_id: p.id,
         negotiation_id: p.negotiation_id,
-        consultor_id: creator ? creator.id : null,
-        consultor: creator ? (creator.name || '') : '',
-        consultorTipo,
-        consultorComissaoFixa,
-        comissaoFixaAtiva,
-        specificCommissions,
         razaoSocial: neg.client?.name || '',
         dataAtivacao: p.data_ativacao || '',
         totalAcessos,
         itensResumo,
         breakdownQtd,
-        statusPedido: p.status || '',
-        commission_config
+        statusPedido: p.status || ''
+      };
+
+      if (creator && creator.id) {
+        prepared.push({
+          ...baseRow,
+          consultor_id: creator.id,
+          consultor: creator.name || '',
+          consultorTipo,
+          comissaoFixaAtiva,
+          specificCommissions,
+          commission_config
+        });
+      }
+
+      (backofficeUsers || []).forEach(bo => {
+        if (!bo || !bo.id) return;
+        const boSpecific = {
+          novo: toNumber(bo.comissao_novo, 0),
+          aditivo: toNumber(bo.comissao_aditivo, 0),
+          renovacao: toNumber(bo.comissao_renovacao, 0),
+          migracao: toNumber(bo.comissao_migracao, 0),
+          ultra_fibra: toNumber(bo.comissao_ultra_fibra, 0),
+          tt: toNumber(bo.comissao_tt, 0),
+          wttx: toNumber(bo.comissao_wttx, 0),
+          m2m: toNumber(bo.comissao_m2m, 0),
+          controle: toNumber(bo.comissao_controle_pf, 0),
+          pf_pj: toNumber(bo.comissao_pf_pj, 0)
+        };
+
+        prepared.push({
+          ...baseRow,
+          consultor_id: bo.id,
+          consultor: bo.name || '',
+          consultorTipo: bo.tipo || 'interno',
+          comissaoFixaAtiva: true,
+          specificCommissions: boSpecific,
+          commission_config: null
+        });
       });
     });
 
@@ -534,10 +569,7 @@ export async function exportarComissaoPedidos(req, res) {
         if (row.comissaoFixaAtiva) {
           const sc = row.specificCommissions || {};
           const bqKey = (key === 'portabilidade') ? 'novo' : key;
-          let fixedVal = Number(sc[bqKey] || 0);
-          if (fixedVal === 0 && (key === 'novo' || key === 'aditivo' || key === 'migracao')) {
-            fixedVal = Number(row.consultorComissaoFixa || 0);
-          }
+          const fixedVal = Number(sc[bqKey] || 0);
           lineComissao = (Number(it.qtd || 0) * fixedVal);
         } else if (rule.useLevel) {
           let rate = 0;
@@ -555,8 +587,9 @@ export async function exportarComissaoPedidos(req, res) {
           lineComissao = toNumber(it.valor, 0) * rate;
         } else if (String(row.consultorTipo || '').toLowerCase() === 'externo') {
           const eligible = (key === 'novo' || key === 'aditivo' || key === 'migracao');
-          const fixa = toNumber(row.consultorComissaoFixa, 0);
-          lineComissao = eligible ? (Number(it.qtd || 0) * fixa) : 0;
+          const sc = row.specificCommissions || {};
+          const fixedVal = Number(sc[key] || 0);
+          lineComissao = eligible ? (Number(it.qtd || 0) * fixedVal) : 0;
         } else {
           const rate = (rule.defaults && rule.defaults[key] !== undefined) ? rule.defaults[key] : 0;
           lineComissao = toNumber(it.valor, 0) * rate;

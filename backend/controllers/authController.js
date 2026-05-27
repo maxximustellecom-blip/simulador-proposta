@@ -5,7 +5,7 @@ import { Op } from 'sequelize';
 export async function register(req, res) {
   try {
     const { 
-      name, email, password, role, matricula, celular, profile_id, tipo, comissao,
+      name, email, password, role, matricula, celular, profile_id, tipo, backoffice,
       comissao_novo, comissao_aditivo, comissao_renovacao, comissao_migracao,
       comissao_pf_pj, comissao_tt, comissao_ultra_fibra, comissao_controle_pf,
       comissao_wttx, comissao_m2m, comissao_fixa_ativa
@@ -28,7 +28,7 @@ export async function register(req, res) {
       celular, 
       profile_id: profile_id || null,
       tipo: tipo || 'interno',
-      comissao: comissao !== undefined ? Number(comissao) : 0,
+      backoffice: backoffice === true || backoffice === 'true',
       comissao_novo: comissao_novo !== undefined ? Number(comissao_novo) : 0,
       comissao_aditivo: comissao_aditivo !== undefined ? Number(comissao_aditivo) : 0,
       comissao_renovacao: comissao_renovacao !== undefined ? Number(comissao_renovacao) : 0,
@@ -50,7 +50,7 @@ export async function register(req, res) {
       celular: user.celular, 
       profile_id: user.profile_id,
       tipo: user.tipo,
-      comissao: Number(user.comissao || 0),
+      backoffice: Boolean(user.backoffice),
       comissao_novo: Number(user.comissao_novo || 0),
       comissao_aditivo: Number(user.comissao_aditivo || 0),
       comissao_renovacao: Number(user.comissao_renovacao || 0),
@@ -100,7 +100,7 @@ export async function listUsers(req, res) {
       matricula: u.matricula,
       celular: u.celular,
       tipo: u.tipo || 'interno',
-      comissao: Number(u.comissao || 0),
+      backoffice: Boolean(u.backoffice),
       comissao_novo: Number(u.comissao_novo || 0),
       comissao_aditivo: Number(u.comissao_aditivo || 0),
       comissao_renovacao: Number(u.comissao_renovacao || 0),
@@ -128,7 +128,7 @@ export async function updateUser(req, res) {
     const user = await User.findByPk(id);
     if (!user) return res.status(404).json({ error: 'not_found' });
     const { 
-      name, email, role, password, matricula, celular, profile_id, tipo, comissao,
+      name, email, role, password, matricula, celular, profile_id, tipo, backoffice,
       comissao_novo, comissao_aditivo, comissao_renovacao, comissao_migracao,
       comissao_pf_pj, comissao_tt, comissao_ultra_fibra, comissao_controle_pf,
        comissao_wttx, comissao_m2m, comissao_fixa_ativa
@@ -148,7 +148,7 @@ export async function updateUser(req, res) {
     if (role) user.role = role === 'admin' ? 'admin' : 'user';
     if (profile_id !== undefined) user.profile_id = profile_id || null;
     if (tipo) user.tipo = tipo;
-    if (comissao !== undefined) user.comissao = Number(comissao);
+    if (backoffice !== undefined) user.backoffice = (backoffice === true || backoffice === 'true');
     if (comissao_novo !== undefined) user.comissao_novo = Number(comissao_novo);
     if (comissao_aditivo !== undefined) user.comissao_aditivo = Number(comissao_aditivo);
     if (comissao_renovacao !== undefined) user.comissao_renovacao = Number(comissao_renovacao);
@@ -174,7 +174,7 @@ export async function updateUser(req, res) {
       matricula: updatedUser.matricula,
       celular: updatedUser.celular,
       tipo: updatedUser.tipo,
-      comissao: Number(updatedUser.comissao || 0),
+      backoffice: Boolean(updatedUser.backoffice),
       comissao_novo: Number(updatedUser.comissao_novo || 0),
       comissao_aditivo: Number(updatedUser.comissao_aditivo || 0),
       comissao_renovacao: Number(updatedUser.comissao_renovacao || 0),

@@ -223,14 +223,14 @@ export async function getQuadroVendas(req, res) {
     });
 
     const result = users.map(user => {
-      const userNegs = filteredNegs.filter(n => Number(n.created_by) === Number(user.id));
+      const isBackoffice = Boolean(user && user.backoffice);
+      const userNegs = isBackoffice ? filteredNegs : filteredNegs.filter(n => Number(n.created_by) === Number(user.id));
       
       const isExternal = String(user && user.tipo ? user.tipo : 'interno').toLowerCase() === 'externo';
-      const fixedCommission = parseMoneyLike(user && user.comissao !== undefined ? user.comissao : 0);
       const comissaoFixaAtiva = Boolean(user && user.comissao_fixa_ativa);
 
       const config = user.profile && user.profile.commission_config ? (typeof user.profile.commission_config === 'string' ? JSON.parse(user.profile.commission_config) : user.profile.commission_config) : null;
-      const shouldUseLevel = !comissaoFixaAtiva && hasCommissionConfig(config);
+      const shouldUseLevel = !isBackoffice && !comissaoFixaAtiva && hasCommissionConfig(config);
       let baseRevenueForLevel = 0;
       if (shouldUseLevel) {
         userNegs.forEach(n => {
@@ -300,7 +300,21 @@ export async function getQuadroVendas(req, res) {
             tt: 0.3
           };
           
-          if (comissaoFixaAtiva) {
+          if (isBackoffice) {
+            const fixedKey = (key === 'portabilidade') ? 'novo' : key;
+            let fixedVal = 0;
+            if (fixedKey === 'novo') fixedVal = user.comissao_novo;
+            else if (fixedKey === 'aditivo') fixedVal = user.comissao_aditivo;
+            else if (fixedKey === 'renovacao') fixedVal = user.comissao_renovacao;
+            else if (fixedKey === 'migracao') fixedVal = user.comissao_migracao;
+            else if (fixedKey === 'ultra_fibra') fixedVal = user.comissao_ultra_fibra;
+            else if (fixedKey === 'wttx') fixedVal = user.comissao_wttx;
+            else if (fixedKey === 'm2m') fixedVal = user.comissao_m2m;
+            else if (fixedKey === 'controle') fixedVal = user.comissao_controle_pf;
+            else if (fixedKey === 'pf_pj') fixedVal = user.comissao_pf_pj;
+            else if (fixedKey === 'tt') fixedVal = user.comissao_tt;
+            commissionValue = (isFinite(Number(fixedVal)) ? Number(fixedVal) : 0) * (isFinite(qtd) ? qtd : 0);
+          } else if (comissaoFixaAtiva) {
             let specificFixed = 0;
             if (key === 'novo') specificFixed = user.comissao_novo;
             else if (key === 'aditivo') specificFixed = user.comissao_aditivo;
@@ -314,7 +328,7 @@ export async function getQuadroVendas(req, res) {
             else if (key === 'tt') specificFixed = user.comissao_tt;
             else if (key === 'portabilidade') specificFixed = user.comissao_novo;
 
-            const finalFixed = (Number(specificFixed) > 0) ? Number(specificFixed) : fixedCommission;
+            const finalFixed = Number(specificFixed) || 0;
             commissionValue = (isFinite(finalFixed) ? finalFixed : 0) * (isFinite(qtd) ? qtd : 0);
           } else if (shouldUseLevel) {
             const itemVal = getLineValue(l, isCustom);
@@ -333,7 +347,11 @@ export async function getQuadroVendas(req, res) {
             commissionValue = itemVal * rate;
           } else if (isExternal) {
             const eligible = (key === 'novo' || key === 'aditivo' || key === 'migracao');
-            commissionValue = eligible ? ((isFinite(fixedCommission) ? fixedCommission : 0) * (isFinite(qtd) ? qtd : 0)) : 0;
+            let fixedVal = 0;
+            if (key === 'novo') fixedVal = user.comissao_novo;
+            else if (key === 'aditivo') fixedVal = user.comissao_aditivo;
+            else if (key === 'migracao') fixedVal = user.comissao_migracao;
+            commissionValue = eligible ? ((isFinite(Number(fixedVal)) ? Number(fixedVal) : 0) * (isFinite(qtd) ? qtd : 0)) : 0;
           } else {
             const itemVal = getLineValue(l, isCustom);
             let rate = defaults[key] || 0;

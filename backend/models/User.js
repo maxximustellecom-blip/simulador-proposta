@@ -10,7 +10,6 @@ const User = sequelize.define('User', {
   password: { type: DataTypes.STRING(200), allowNull: false },
   role: { type: DataTypes.ENUM('admin', 'user'), allowNull: false, defaultValue: 'user' },
   tipo: { type: DataTypes.ENUM('interno', 'externo'), allowNull: false, defaultValue: 'interno' },
-  comissao: { type: DataTypes.DECIMAL(12, 2), allowNull: true, defaultValue: 0 },
   comissao_novo: { type: DataTypes.DECIMAL(12, 2), allowNull: true, defaultValue: 0 },
   comissao_aditivo: { type: DataTypes.DECIMAL(12, 2), allowNull: true, defaultValue: 0 },
   comissao_renovacao: { type: DataTypes.DECIMAL(12, 2), allowNull: true, defaultValue: 0 },
@@ -22,6 +21,7 @@ const User = sequelize.define('User', {
   comissao_wttx: { type: DataTypes.DECIMAL(12, 2), allowNull: true, defaultValue: 0 },
   comissao_m2m: { type: DataTypes.DECIMAL(12, 2), allowNull: true, defaultValue: 0 },
   comissao_fixa_ativa: { type: DataTypes.BOOLEAN, allowNull: true, defaultValue: false },
+  backoffice: { type: DataTypes.BOOLEAN, allowNull: true, defaultValue: false },
   profile_id: { type: DataTypes.INTEGER, allowNull: true }
 }, {
   tableName: 'users',

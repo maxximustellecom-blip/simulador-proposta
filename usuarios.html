@@ -33,7 +33,6 @@
                                     <th>Tipo</th>
                                     <th>Perfil</th>
                                     <th>Origem</th>
-                                    <th>Comissão</th>
                                     <th class="col-actions">Ações</th>
                                 </tr>
                             </thead>
@@ -93,16 +92,17 @@
                     </div>
                     <div>
                         <div class="label">Origem do Usuário</div>
-                        <select id="uTipo" class="select" onchange="toggleComissao('uTipo', 'uComissaoWrap')">
+                        <select id="uTipo" class="select">
                             <option value="interno">Interno</option>
                             <option value="externo">Externo</option>
                         </select>
-                    </div>
-                </div>
-                <div id="uComissaoWrap" class="grid-2" style="margin-top:0.75rem; display:none;">
-                    <div>
-                        <div class="label">Valor Fixo Comissão (R$)</div>
-                        <input id="uComissao" class="input mask-money" type="text" placeholder="R$ 0,00">
+                        <div style="margin-top:0.6rem; display:flex; align-items:center; gap:0.75rem;">
+                            <label class="switch">
+                                <input type="checkbox" id="uBackoffice">
+                                <span class="slider"></span>
+                            </label>
+                            <span style="font-weight:600; font-size:0.9rem;">Backoffice</span>
+                        </div>
                     </div>
                 </div>
                 <div class="section-title" style="margin-top:1.5rem; font-weight:bold; border-bottom:1px solid #eee; padding-bottom:0.5rem;">Comissões Fixas</div>
@@ -224,20 +224,21 @@
                 <div class="grid-2" style="margin-top:0.75rem;">
                     <div>
                         <div class="label">Origem do Usuário</div>
-                        <select id="editTipo" class="select" onchange="toggleComissao('editTipo', 'editComissaoWrap')">
+                        <select id="editTipo" class="select">
                             <option value="interno">Interno</option>
                             <option value="externo">Externo</option>
                         </select>
+                        <div style="margin-top:0.6rem; display:flex; align-items:center; gap:0.75rem;">
+                            <label class="switch">
+                                <input type="checkbox" id="editBackoffice">
+                                <span class="slider"></span>
+                            </label>
+                            <span style="font-weight:600; font-size:0.9rem;">Backoffice</span>
+                        </div>
                     </div>
                     <div>
                         <div class="label">Nova senha (opcional)</div>
                         <input id="editPassword" class="input" type="password" placeholder="Definir nova senha">
-                    </div>
-                </div>
-                <div id="editComissaoWrap" class="grid-2" style="margin-top:0.75rem; display:none;">
-                    <div>
-                        <div class="label">Valor Fixo Comissão (R$)</div>
-                        <input id="editComissao" class="input mask-money" type="text" placeholder="R$ 0,00">
                     </div>
                 </div>
 
@@ -385,13 +386,6 @@
         function currency(v) {
             try { return (new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })).format(Number(v || 0)); } catch { return 'R$ 0,00'; }
         }
-        function toggleComissao(selectId, wrapId) {
-            const select = document.getElementById(selectId);
-            const wrap = document.getElementById(wrapId);
-            if (select && wrap) {
-                wrap.style.display = select.value === 'externo' ? 'block' : 'none';
-            }
-        }
         function toggleComissaoGrid(switchId, gridId) {
             const sw = document.getElementById(switchId);
             const grid = document.getElementById(gridId);
@@ -426,7 +420,6 @@
                     <td>${u.role}</td>
                     <td>${u.profile ? u.profile.name : '-'}</td>
                     <td><span class="chip" style="background:${u.tipo === 'externo' ? 'var(--warning-bg)' : 'var(--info-bg)'}; color:${u.tipo === 'externo' ? 'var(--warning-text)' : 'var(--info-text)'}">${String(u.tipo || 'interno').toUpperCase()}</span></td>
-                    <td>${u.tipo === 'externo' ? currency(u.comissao) : '-'}</td>
                     <td class="col-actions" style="min-width:140px;">
                         <button type="button" class="btn btn-ghost btn-icon" title="Editar" onclick="abrirEditarUsuario(${u.id})"><i data-lucide="edit-3"></i></button>
                         ${String(u.role) === 'admin' ? '' : `<button type="button" class="btn btn-primary btn-icon" title="Excluir" onclick="abrirExcluirUsuario(${u.id})"><i data-lucide='trash-2'></i></button>`}
@@ -455,7 +448,7 @@
             document.getElementById('uRole').value = 'user';
             document.getElementById('uProfileId').value = '';
             document.getElementById('uTipo').value = 'interno';
-            document.getElementById('uComissao').value = '';
+            document.getElementById('uBackoffice').checked = false;
             document.getElementById('uComissaoFixaAtiva').checked = false;
             document.getElementById('uComissaoNovo').value = '';
             document.getElementById('uComissaoAditivo').value = '';
@@ -467,7 +460,6 @@
             document.getElementById('uComissaoControlePf').value = '';
             document.getElementById('uComissaoWttx').value = '';
             document.getElementById('uComissaoM2m').value = '';
-            toggleComissao('uTipo', 'uComissaoWrap');
             toggleComissaoGrid('uComissaoFixaAtiva', 'uComissaoGrid');
         }
         function abrirEditarUsuario(id) {
@@ -481,7 +473,7 @@
             document.getElementById('editRole').value = u.role || 'user';
             document.getElementById('editProfileId').value = (u.profile && u.profile.id) ? u.profile.id : '';
             document.getElementById('editTipo').value = u.tipo || 'interno';
-            document.getElementById('editComissao').value = formatMoneyValue(u.comissao);
+            document.getElementById('editBackoffice').checked = !!u.backoffice;
             document.getElementById('editComissaoFixaAtiva').checked = !!u.comissao_fixa_ativa;
             document.getElementById('editComissaoNovo').value = formatMoneyValue(u.comissao_novo);
             document.getElementById('editComissaoAditivo').value = formatMoneyValue(u.comissao_aditivo);
@@ -493,7 +485,6 @@
             document.getElementById('editComissaoControlePf').value = formatMoneyValue(u.comissao_controle_pf);
             document.getElementById('editComissaoWttx').value = formatMoneyValue(u.comissao_wttx);
             document.getElementById('editComissaoM2m').value = formatMoneyValue(u.comissao_m2m);
-            toggleComissao('editTipo', 'editComissaoWrap');
             toggleComissaoGrid('editComissaoFixaAtiva', 'editComissaoGrid');
             document.getElementById('editPassword').value = '';
             document.getElementById('editUserModal').classList.add('show');
@@ -511,7 +502,7 @@
             const role = document.getElementById('editRole').value || 'user';
             const profile_id = document.getElementById('editProfileId').value || null;
             const tipo = document.getElementById('editTipo').value || 'interno';
-            const comissao = tipo === 'externo' ? parseMoneyValue(document.getElementById('editComissao').value) : 0;
+            const backoffice = document.getElementById('editBackoffice').checked;
             const comissao_fixa_ativa = document.getElementById('editComissaoFixaAtiva').checked;
             const comissao_novo = parseMoneyValue(document.getElementById('editComissaoNovo').value);
             const comissao_aditivo = parseMoneyValue(document.getElementById('editComissaoAditivo').value);
@@ -526,7 +517,7 @@
             const password = (document.getElementById('editPassword').value || '').trim();
             if (!name || !email) { toast('Preencha nome e email', 'error'); return; }
             const payload = { 
-                name, email, role, matricula, celular, profile_id, tipo, comissao,
+                name, email, role, matricula, celular, profile_id, tipo, backoffice,
                 comissao_fixa_ativa,
                 comissao_novo, comissao_aditivo, comissao_renovacao, comissao_migracao,
                 comissao_pf_pj, comissao_tt, comissao_ultra_fibra, comissao_controle_pf,
@@ -575,7 +566,7 @@
             const role = document.getElementById('uRole').value || 'user';
             const profile_id = document.getElementById('uProfileId').value || null;
             const tipo = document.getElementById('uTipo').value || 'interno';
-            const comissao = tipo === 'externo' ? parseMoneyValue(document.getElementById('uComissao').value) : 0;
+            const backoffice = document.getElementById('uBackoffice').checked;
             const comissao_fixa_ativa = document.getElementById('uComissaoFixaAtiva').checked;
             const comissao_novo = parseMoneyValue(document.getElementById('uComissaoNovo').value);
             const comissao_aditivo = parseMoneyValue(document.getElementById('uComissaoAditivo').value);
@@ -593,7 +584,7 @@
             }
             try {
                 await api('/auth/register', { method: 'POST', body: JSON.stringify({ 
-                    name, email, password, role, matricula, celular, profile_id, tipo, comissao,
+                    name, email, password, role, matricula, celular, profile_id, tipo, backoffice,
                     comissao_fixa_ativa,
                     comissao_novo, comissao_aditivo, comissao_renovacao, comissao_migracao,
                     comissao_pf_pj, comissao_tt, comissao_ultra_fibra, comissao_controle_pf,
