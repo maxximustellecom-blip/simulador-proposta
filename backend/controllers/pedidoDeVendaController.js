@@ -353,10 +353,9 @@ export async function exportarComissaoPedidos(req, res) {
     const list = Array.isArray(ids) ? ids.map(x => Number(x)).filter(Boolean) : [];
     if (!list.length) return res.status(400).json({ error: 'ids obrigatórios' });
 
-    const backofficeUsers = await User.findAll({
-      where: { backoffice: true },
-      order: [['name', 'ASC']]
-    });
+    const actorId = req.user && req.user.id ? Number(req.user.id) : null;
+    const actor = actorId ? await User.findByPk(actorId) : null;
+    const isActorBackoffice = Boolean(actor && actor.backoffice);
 
     const pedidos = await PedidoDeVenda.findAll({
       where: { id: { [Op.in]: list } },
@@ -377,7 +376,7 @@ export async function exportarComissaoPedidos(req, res) {
 
     const uniqueNegotiationIds = new Set();
     const prepared = [];
-    const preparedKeySet = new Set();
+    const backofficeRows = [];
     pedidos.forEach(p => {
       if (!p || !p.negotiation_id || uniqueNegotiationIds.has(p.negotiation_id)) return;
       uniqueNegotiationIds.add(p.negotiation_id);
@@ -420,6 +419,41 @@ export async function exportarComissaoPedidos(req, res) {
         .filter(k => breakdownQtd[k] && breakdownValor[k] !== undefined)
         .map(k => ({ qtd: Number(breakdownQtd[k] || 0), tipo: labels[k] || k, valor: toNumber(breakdownValor[k], 0) }));
 
+      if (isActorBackoffice && actor) {
+        const sc = {
+          novo: toNumber(actor.comissao_novo, 0),
+          aditivo: toNumber(actor.comissao_aditivo, 0),
+          renovacao: toNumber(actor.comissao_renovacao, 0),
+          migracao: toNumber(actor.comissao_migracao, 0),
+          ultra_fibra: toNumber(actor.comissao_ultra_fibra, 0),
+          tt: toNumber(actor.comissao_tt, 0),
+          wttx: toNumber(actor.comissao_wttx, 0),
+          m2m: toNumber(actor.comissao_m2m, 0),
+          controle: toNumber(actor.comissao_controle_pf, 0),
+          pf_pj: toNumber(actor.comissao_pf_pj, 0)
+        };
+
+        ordem.forEach(key => {
+          if (!breakdownQtd[key] || breakdownValor[key] === undefined) return;
+          const qtd = Number(breakdownQtd[key] || 0);
+          const valor = toNumber(breakdownValor[key], 0);
+          const fixedKey = (key === 'portabilidade') ? 'novo' : key;
+          const fixedVal = Number(sc[fixedKey] || 0);
+          backofficeRows.push({
+            consultor: actor.name || '',
+            razaoSocial: neg.client?.name || '',
+            dataAtivacao: p.data_ativacao || '',
+            totalAcessos: qtd,
+            produto: labels[key] || key,
+            tipo: String(key).toUpperCase(),
+            valor,
+            statusPedido: p.status || '',
+            comissao: qtd * fixedVal
+          });
+        });
+        return;
+      }
+
       const creator = neg.creator || null;
       const profile = creator && creator.profile ? creator.profile : null;
       const rawConfig = profile && profile.commission_config ? profile.commission_config : null;
@@ -451,51 +485,21 @@ export async function exportarComissaoPedidos(req, res) {
       };
 
       if (creator && creator.id) {
-        const k = `${p.id}:${creator.id}`;
-        if (!preparedKeySet.has(k)) {
-          preparedKeySet.add(k);
-          prepared.push({
-            ...baseRow,
-            consultor_id: creator.id,
-            consultor: creator.name || '',
-            consultorTipo,
-            comissaoFixaAtiva,
-            specificCommissions,
-            commission_config
-          });
-        }
-      }
-
-      (backofficeUsers || []).forEach(bo => {
-        if (!bo || !bo.id) return;
-        if (creator && Number(creator.id) === Number(bo.id)) return;
-        const boSpecific = {
-          novo: toNumber(bo.comissao_novo, 0),
-          aditivo: toNumber(bo.comissao_aditivo, 0),
-          renovacao: toNumber(bo.comissao_renovacao, 0),
-          migracao: toNumber(bo.comissao_migracao, 0),
-          ultra_fibra: toNumber(bo.comissao_ultra_fibra, 0),
-          tt: toNumber(bo.comissao_tt, 0),
-          wttx: toNumber(bo.comissao_wttx, 0),
-          m2m: toNumber(bo.comissao_m2m, 0),
-          controle: toNumber(bo.comissao_controle_pf, 0),
-          pf_pj: toNumber(bo.comissao_pf_pj, 0)
-        };
-
-        const k = `${p.id}:${bo.id}`;
-        if (preparedKeySet.has(k)) return;
-        preparedKeySet.add(k);
         prepared.push({
           ...baseRow,
-          consultor_id: bo.id,
-          consultor: bo.name || '',
-          consultorTipo: bo.tipo || 'interno',
-          comissaoFixaAtiva: true,
-          specificCommissions: boSpecific,
-          commission_config: null
+          consultor_id: creator.id,
+          consultor: creator.name || '',
+          consultorTipo,
+          comissaoFixaAtiva,
+          specificCommissions,
+          commission_config
         });
-      });
+      }
     });
+
+    if (isActorBackoffice) {
+      return res.json(backofficeRows);
+    }
 
     const DEFAULT_RATES = {
       novo: 0.6,
