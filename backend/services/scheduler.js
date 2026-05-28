@@ -33,7 +33,7 @@ export const startScheduler = () => {
             [Op.gte]: todayStr
           }
         },
-        include: [{ model: User, as: "user" }]
+        include: [{ model: User, as: "user", attributes: ["id", "name", "celular"] }]
       });
 
       for (const appt of appointments) {

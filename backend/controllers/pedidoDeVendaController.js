@@ -377,6 +377,7 @@ export async function exportarComissaoPedidos(req, res) {
 
     const uniqueNegotiationIds = new Set();
     const prepared = [];
+    const preparedKeySet = new Set();
     pedidos.forEach(p => {
       if (!p || !p.negotiation_id || uniqueNegotiationIds.has(p.negotiation_id)) return;
       uniqueNegotiationIds.add(p.negotiation_id);
@@ -450,19 +451,24 @@ export async function exportarComissaoPedidos(req, res) {
       };
 
       if (creator && creator.id) {
-        prepared.push({
-          ...baseRow,
-          consultor_id: creator.id,
-          consultor: creator.name || '',
-          consultorTipo,
-          comissaoFixaAtiva,
-          specificCommissions,
-          commission_config
-        });
+        const k = `${p.id}:${creator.id}`;
+        if (!preparedKeySet.has(k)) {
+          preparedKeySet.add(k);
+          prepared.push({
+            ...baseRow,
+            consultor_id: creator.id,
+            consultor: creator.name || '',
+            consultorTipo,
+            comissaoFixaAtiva,
+            specificCommissions,
+            commission_config
+          });
+        }
       }
 
       (backofficeUsers || []).forEach(bo => {
         if (!bo || !bo.id) return;
+        if (creator && Number(creator.id) === Number(bo.id)) return;
         const boSpecific = {
           novo: toNumber(bo.comissao_novo, 0),
           aditivo: toNumber(bo.comissao_aditivo, 0),
@@ -476,6 +482,9 @@ export async function exportarComissaoPedidos(req, res) {
           pf_pj: toNumber(bo.comissao_pf_pj, 0)
         };
 
+        const k = `${p.id}:${bo.id}`;
+        if (preparedKeySet.has(k)) return;
+        preparedKeySet.add(k);
         prepared.push({
           ...baseRow,
           consultor_id: bo.id,
