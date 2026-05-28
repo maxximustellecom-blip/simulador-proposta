@@ -498,6 +498,19 @@ export async function exportarComissaoPedidos(req, res) {
     });
 
     if (isActorBackoffice) {
+      const total = (backofficeRows || []).reduce((acc, r) => acc + toNumber(r && r.comissao, 0), 0);
+      backofficeRows.push({
+        is_total: true,
+        consultor: actor ? (actor.name || '') : '',
+        razaoSocial: '',
+        dataAtivacao: '',
+        totalAcessos: '',
+        produto: '',
+        tipo: '',
+        valor: '',
+        statusPedido: '',
+        comissao: total
+      });
       return res.json(backofficeRows);
     }
 
