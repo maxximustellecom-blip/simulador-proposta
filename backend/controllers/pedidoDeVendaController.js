@@ -353,9 +353,14 @@ export async function exportarComissaoPedidos(req, res) {
     const list = Array.isArray(ids) ? ids.map(x => Number(x)).filter(Boolean) : [];
     if (!list.length) return res.status(400).json({ error: 'ids obrigatórios' });
 
-    const actorId = req.user && req.user.id ? Number(req.user.id) : null;
-    const actor = actorId ? await User.findByPk(actorId) : null;
-    const isActorBackoffice = Boolean(actor && actor.backoffice);
+    const backofficeUsers = await User.findAll({
+      where: { backoffice: true },
+      order: [['name', 'ASC']]
+    });
+    const backofficeTotalById = new Map();
+    (backofficeUsers || []).forEach(u => {
+      if (u && u.id) backofficeTotalById.set(Number(u.id), 0);
+    });
 
     const pedidos = await PedidoDeVenda.findAll({
       where: { id: { [Op.in]: list } },
@@ -376,7 +381,6 @@ export async function exportarComissaoPedidos(req, res) {
 
     const uniqueNegotiationIds = new Set();
     const prepared = [];
-    const backofficeRows = [];
     pedidos.forEach(p => {
       if (!p || !p.negotiation_id || uniqueNegotiationIds.has(p.negotiation_id)) return;
       uniqueNegotiationIds.add(p.negotiation_id);
@@ -419,40 +423,34 @@ export async function exportarComissaoPedidos(req, res) {
         .filter(k => breakdownQtd[k] && breakdownValor[k] !== undefined)
         .map(k => ({ qtd: Number(breakdownQtd[k] || 0), tipo: labels[k] || k, valor: toNumber(breakdownValor[k], 0) }));
 
-      if (isActorBackoffice && actor) {
-        const sc = {
-          novo: toNumber(actor.comissao_novo, 0),
-          aditivo: toNumber(actor.comissao_aditivo, 0),
-          renovacao: toNumber(actor.comissao_renovacao, 0),
-          migracao: toNumber(actor.comissao_migracao, 0),
-          ultra_fibra: toNumber(actor.comissao_ultra_fibra, 0),
-          tt: toNumber(actor.comissao_tt, 0),
-          wttx: toNumber(actor.comissao_wttx, 0),
-          m2m: toNumber(actor.comissao_m2m, 0),
-          controle: toNumber(actor.comissao_controle_pf, 0),
-          pf_pj: toNumber(actor.comissao_pf_pj, 0)
+      (backofficeUsers || []).forEach(bo => {
+        if (!bo || !bo.id) return;
+        let total = backofficeTotalById.get(Number(bo.id)) || 0;
+
+        const fixedByKey = {
+          novo: toNumber(bo.comissao_novo, 0),
+          aditivo: toNumber(bo.comissao_aditivo, 0),
+          portabilidade: toNumber(bo.comissao_novo, 0),
+          renovacao: toNumber(bo.comissao_renovacao, 0),
+          ultra_fibra: toNumber(bo.comissao_ultra_fibra, 0),
+          wttx: toNumber(bo.comissao_wttx, 0),
+          m2m: toNumber(bo.comissao_m2m, 0),
+          controle: toNumber(bo.comissao_controle_pf, 0),
+          migracao: toNumber(bo.comissao_migracao, 0),
+          pf_pj: toNumber(bo.comissao_pf_pj, 0),
+          tt: toNumber(bo.comissao_tt, 0),
+          outros: 0
         };
 
-        ordem.forEach(key => {
-          if (!breakdownQtd[key] || breakdownValor[key] === undefined) return;
+        Object.keys(breakdownQtd || {}).forEach(key => {
           const qtd = Number(breakdownQtd[key] || 0);
-          const valor = toNumber(breakdownValor[key], 0);
-          const fixedKey = (key === 'portabilidade') ? 'novo' : key;
-          const fixedVal = Number(sc[fixedKey] || 0);
-          backofficeRows.push({
-            consultor: actor.name || '',
-            razaoSocial: neg.client?.name || '',
-            dataAtivacao: p.data_ativacao || '',
-            totalAcessos: qtd,
-            produto: labels[key] || key,
-            tipo: String(key).toUpperCase(),
-            valor,
-            statusPedido: p.status || '',
-            comissao: qtd * fixedVal
-          });
+          if (!qtd) return;
+          const fixed = Number(fixedByKey[key] || 0);
+          total += qtd * fixed;
         });
-        return;
-      }
+
+        backofficeTotalById.set(Number(bo.id), total);
+      });
 
       const creator = neg.creator || null;
       const profile = creator && creator.profile ? creator.profile : null;
@@ -496,23 +494,6 @@ export async function exportarComissaoPedidos(req, res) {
         });
       }
     });
-
-    if (isActorBackoffice) {
-      const total = (backofficeRows || []).reduce((acc, r) => acc + toNumber(r && r.comissao, 0), 0);
-      backofficeRows.push({
-        is_total: true,
-        consultor: actor ? (actor.name || '') : '',
-        razaoSocial: '',
-        dataAtivacao: '',
-        totalAcessos: '',
-        produto: '',
-        tipo: '',
-        valor: '',
-        statusPedido: '',
-        comissao: total
-      });
-      return res.json(backofficeRows);
-    }
 
     const DEFAULT_RATES = {
       novo: 0.6,
@@ -632,6 +613,23 @@ export async function exportarComissaoPedidos(req, res) {
           statusPedido: row.statusPedido,
           comissao: lineComissao
         });
+      });
+    });
+
+    (backofficeUsers || []).forEach(bo => {
+      if (!bo || !bo.id) return;
+      const total = backofficeTotalById.get(Number(bo.id)) || 0;
+      result.push({
+        is_total: true,
+        consultor: bo.name || '',
+        razaoSocial: '',
+        dataAtivacao: '',
+        totalAcessos: '',
+        produto: '',
+        tipo: '',
+        valor: '',
+        statusPedido: '',
+        comissao: total
       });
     });
 
