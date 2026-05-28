@@ -267,6 +267,22 @@
             z-index: 70;
         }
 
+        .backoffice-summary-row td {
+            background-color: var(--surface);
+            font-weight: 600;
+            border-top: 1px dashed var(--border);
+        }
+        .backoffice-summary-row td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 20;
+            background-color: var(--surface);
+        }
+        .backoffice-summary-row .qv-money {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
         .capture-area {
             background-color: var(--surface);
             border-radius: var(--radius);
@@ -778,6 +794,30 @@
             });
 
             calcularTotais();
+            renderBackofficeSummary(data);
+        }
+
+        function renderBackofficeSummary(data) {
+            const tfoot = document.querySelector('#quadroTable tfoot');
+            if (!tfoot) return;
+            tfoot.querySelectorAll('tr.backoffice-summary-row').forEach(tr => tr.remove());
+            const list = Array.isArray(data) ? data.filter(u => u && u.backoffice) : [];
+            if (list.length === 0) return;
+
+            list.forEach(u => {
+                const totalCom = viewMode === 'simple'
+                    ? Number(((u && u.totals && u.totals.at && u.totals.at.com) || 0))
+                    : Number(((u && u.totals && u.totals.at && u.totals.at.com) || 0)) + Number(((u && u.totals && u.totals.ent && u.totals.ent.com) || 0));
+
+                const tr = document.createElement('tr');
+                tr.className = 'backoffice-summary-row';
+                tr.innerHTML = `
+                    <td class="total-cell">BACKOFFICE • ${(u && u.name) ? u.name : 'Sem Nome'}</td>
+                    <td colspan="20"></td>
+                    <td><div class="qv-cell"><div class="qv-money">${formatMoneyBR(totalCom)}</div></div></td>
+                `;
+                tfoot.appendChild(tr);
+            });
         }
 
         function calcularTotais() {

@@ -265,7 +265,9 @@ export async function getQuadroVendas(req, res) {
         outros: empty()
       };
       const stats = {
+        id: user.id,
         name: user.name,
+        backoffice: Boolean(user && user.backoffice),
         types,
         totals: { ent: { qtd: 0, com: 0 }, at: { qtd: 0, com: 0 } }
       };
