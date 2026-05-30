@@ -616,21 +616,61 @@ export async function exportarComissaoPedidos(req, res) {
       });
     });
 
+    const totalsByConsultor = new Map();
+    (result || []).forEach(r => {
+      if (!r || r.is_total) return;
+      const name = String(r.consultor || '').trim();
+      if (!name) return;
+      totalsByConsultor.set(name, (totalsByConsultor.get(name) || 0) + toNumber(r.comissao, 0));
+    });
+
+    const totalBackoffice = Array.from(backofficeTotalById.values()).reduce((acc, v) => acc + toNumber(v, 0), 0);
+    const totalVendedores = Array.from(totalsByConsultor.values()).reduce((acc, v) => acc + toNumber(v, 0), 0);
+    const totalEmpresa = totalVendedores + totalBackoffice;
+
+    result.push({ row_type: 'separator' });
+    result.push({ row_type: 'summary_header', label: 'RESUMO' });
+
+    Array.from(totalsByConsultor.entries())
+      .sort((a, b) => String(a[0] || '').localeCompare(String(b[0] || ''), 'pt-BR'))
+      .forEach(([name, total]) => {
+        result.push({
+          is_total: true,
+          total_kind: 'seller',
+          total_label: 'TOTAL VENDEDOR',
+          consultor: name,
+          comissao: toNumber(total, 0)
+        });
+      });
+
     (backofficeUsers || []).forEach(bo => {
       if (!bo || !bo.id) return;
       const total = backofficeTotalById.get(Number(bo.id)) || 0;
       result.push({
         is_total: true,
+        total_kind: 'backoffice',
+        total_label: 'TOTAL BACKOFFICE',
         consultor: bo.name || '',
-        razaoSocial: '',
-        dataAtivacao: '',
-        totalAcessos: '',
-        produto: '',
-        tipo: '',
-        valor: '',
-        statusPedido: '',
-        comissao: total
+        comissao: toNumber(total, 0)
       });
+    });
+
+    if ((backofficeUsers || []).length > 1) {
+      result.push({
+        is_total: true,
+        total_kind: 'backoffice_all',
+        total_label: 'TOTAL BACKOFFICE',
+        consultor: 'TODOS',
+        comissao: toNumber(totalBackoffice, 0)
+      });
+    }
+
+    result.push({
+      is_total: true,
+      total_kind: 'company',
+      total_label: 'TOTAL EMPRESA',
+      consultor: '',
+      comissao: toNumber(totalEmpresa, 0)
     });
 
     return res.json(result);
