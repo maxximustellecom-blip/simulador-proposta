@@ -47,6 +47,11 @@ const PedidoDeVenda = sequelize.define('PedidoDeVenda', {
   etiqueta_cor: {
     type: DataTypes.STRING(20),
     allowNull: true
+  },
+  comissao_paga: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true,
+    defaultValue: false
   }
 }, {
   tableName: 'pedidos_de_venda',

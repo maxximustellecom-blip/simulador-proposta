@@ -187,6 +187,7 @@ export async function obterDetalhesPedido(req, res) {
       razaoSocial: pedido.negotiation.client?.name || '',
       cnpj: pedido.negotiation.cnpj || '',
       status: pedido.status || '',
+      comissao_paga: Boolean(pedido.comissao_paga),
       etiqueta: pedido.etiqueta || null,
       etiqueta_cor: pedido.etiqueta_cor || null,
       numP2B: pedido.num_p2b || '',
@@ -325,6 +326,7 @@ export async function listarPedidosConcluidos(req, res) {
         dataInput: p.data_input || '',
         dataAtivacao: p.data_ativacao || '',
         statusPedido: p.status,
+        comissao_paga: Boolean(p.comissao_paga),
         etiqueta: p.etiqueta || null,
         etiqueta_cor: p.etiqueta_cor || null,
         proposta: neg.proposta,
@@ -685,6 +687,7 @@ export async function atualizarPedidoDeVenda(req, res) {
     const { id } = req.params;
     const {
       status,
+      comissao_paga,
       etiqueta,
       etiqueta_cor,
       num_p2b,
@@ -707,6 +710,9 @@ export async function atualizarPedidoDeVenda(req, res) {
         }
       }
     }
+    if (comissao_paga !== undefined) {
+      pedido.comissao_paga = (comissao_paga === true || comissao_paga === 'true' || comissao_paga === 1 || comissao_paga === '1');
+    }
     if (etiqueta !== undefined) {
       const v = String(etiqueta || '').trim();
       pedido.etiqueta = v ? v : null;
@@ -725,6 +731,7 @@ export async function atualizarPedidoDeVenda(req, res) {
       id: pedido.id,
       negotiation_id: pedido.negotiation_id,
       status: pedido.status,
+      comissao_paga: Boolean(pedido.comissao_paga),
       etiqueta: pedido.etiqueta || null,
       etiqueta_cor: pedido.etiqueta_cor || null,
       num_p2b: pedido.num_p2b,

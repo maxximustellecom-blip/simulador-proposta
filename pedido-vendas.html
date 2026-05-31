@@ -489,6 +489,14 @@
                             <option value="">Todos</option>
                         </select>
                     </div>
+                    <div class="filter-group">
+                        <label class="label">Comissão paga</label>
+                        <select id="fComissaoPaga" class="input" onchange="filtrarBackend()">
+                            <option value="">Todos</option>
+                            <option value="sim">Sim</option>
+                            <option value="nao">Não</option>
+                        </select>
+                    </div>
                 </div>
             </section>
 
@@ -503,11 +511,12 @@
                                 <th style="min-width: 180px;">Dados</th>
                                 <th style="min-width: 150px;">Valores</th>
                                 <th style="min-width: 150px;">Status do Pedido</th>
+                                <th style="min-width: 120px;">Comissão paga</th>
                                 <th style="min-width: 100px;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tbodyBackend">
-                            <tr><td colspan="6" class="text-center p-4">Carregando...</td></tr>
+                            <tr><td colspan="7" class="text-center p-4">Carregando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -797,7 +806,7 @@
             } catch (error) {
                 console.error(error);
                 document.getElementById('tbodyBackend').innerHTML = 
-                    '<tr><td colspan="6" class="text-center p-4 text-red-600">Erro ao carregar dados do backend.</td></tr>';
+                    '<tr><td colspan="7" class="text-center p-4 text-red-600">Erro ao carregar dados do backend.</td></tr>';
             }
         }
 
@@ -839,13 +848,14 @@
                 return String(item.infoTexto || '-') || '-';
             };
 
-            const headers = ['Informações', 'ID/ P2B / Radar', 'Dados', 'Valores', 'Status do Pedido'];
+            const headers = ['Informações', 'ID/ P2B / Radar', 'Dados', 'Valores', 'Status do Pedido', 'Comissão paga'];
             const rows = data.map(item => [
                 buildInfo(item),
                 buildIds(item),
                 buildDatas(item),
                 buildValores(item),
-                item.statusPedido || ''
+                item.statusPedido || '',
+                item.comissao_paga ? 'SIM' : 'NÃO'
             ]);
 
             const csvContent = [
@@ -1010,11 +1020,18 @@
             const c = String(cor || '').trim() || '#6B7280';
             return `<span style="display:inline-block; padding:0.12rem 0.45rem; border-radius:999px; font-weight:700; font-size:0.75rem; border:1px solid ${c}55; background:${c}22; color:${c};">${txt}</span>`;
         }
+        function comissaoPagaChip(v) {
+            const ok = !!v;
+            const bg = ok ? 'var(--success-bg)' : 'var(--warning-bg)';
+            const color = ok ? 'var(--success-text)' : 'var(--warning-text)';
+            const label = ok ? 'SIM' : 'NÃO';
+            return `<span class="chip" style="background:${bg}; color:${color}; font-weight:800;">${label}</span>`;
+        }
 
         function renderBackendTable(data) {
             const tbody = document.getElementById('tbodyBackend');
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">Nenhum pedido concluído encontrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4">Nenhum pedido concluído encontrado.</td></tr>';
                 return;
             }
             tbody.innerHTML = data.map(item => `
@@ -1045,6 +1062,7 @@
                         }
                     </td>
                     <td><span class="${getStatusClass(item.statusPedido )}">${item.statusPedido  || '-'}</span></td>
+                    <td>${comissaoPagaChip(item.comissao_paga)}</td>
                     <td class="col-actions">
                         <div class="table-actions">
                             <div class="dropdown">
@@ -1263,6 +1281,7 @@
             const radar = String(document.getElementById('fRadar') ? document.getElementById('fRadar').value : '').trim();
             const dataCampo = document.getElementById('fDataCampo').value;
             const status = String(document.getElementById('fStatusPedido') ? document.getElementById('fStatusPedido').value : '').trim();
+            const comissaoPaga = String(document.getElementById('fComissaoPaga') ? document.getElementById('fComissaoPaga').value : '').trim();
 
             const filtered = (backendData || []).filter(item => {
                 const itemRazao = normalizeText(item.razaoSocial || item.cliente || '');
@@ -1273,6 +1292,7 @@
                 const itemP2B = String(item.numP2B || '');
                 const itemRadar = String(item.numRadar || '');
                 const itemStatus = String(item.statusPedido || '');
+                const itemComissaoPaga = item.comissao_paga ? 'sim' : 'nao';
                 
                 // Filtro de Período
                 if (startDate && endDate) {
@@ -1290,13 +1310,14 @@
                 if (p2b && !itemP2B.includes(p2b)) return false;
                 if (radar && !itemRadar.includes(radar)) return false;
                 if (status && itemStatus !== status) return false;
+                if (comissaoPaga && itemComissaoPaga !== comissaoPaga) return false;
 
                 if (busca) {
                     const searchStr = normalizeText(
                         [
                             item.razaoSocial, item.cliente, item.cnpj, item.consultor,
                             item.etiqueta, item.negotiation_id, item.numP2B, item.numRadar,
-                            item.statusPedido, item.infoTexto
+                            item.statusPedido, item.infoTexto, (item.comissao_paga ? 'sim' : 'nao')
                         ].filter(Boolean).join(' ')
                     );
                     if (!searchStr.includes(busca)) return false;
@@ -1319,6 +1340,8 @@
             try {
                 const detalhes = await api(`/pedidos-venda/${id}/detalhes`);
                 __currentPedidoId = id;
+                const paidEl = document.getElementById('vEditComissaoPaga');
+                if (paidEl) paidEl.checked = !!(detalhes && detalhes.comissao_paga);
                 
                 if (detalhes.linhas && detalhes.linhas.length > 0) {
                     vendas = detalhes.linhas.map((linha, index) => {
@@ -1632,7 +1655,11 @@
                         num_radar: v.numRadar || undefined,
                         data_entrada: v.dataEntrada || undefined,
                         data_input: v.dataInput || undefined,
-                        data_ativacao: v.dataAtivacao || undefined
+                        data_ativacao: v.dataAtivacao || undefined,
+                        comissao_paga: (() => {
+                            const el = document.getElementById('vEditComissaoPaga');
+                            return el ? !!el.checked : undefined;
+                        })()
                     };
                     await api(`/pedidos-venda/${__currentPedidoId}`, {
                         method: 'PUT',
@@ -1940,6 +1967,16 @@
                         <div>
                             <div class="label">Status do Pedido</div>
                             <select id="vEditStatus" class="select"></select>
+                        </div>
+                        <div>
+                            <div class="label">Comissão paga</div>
+                            <div style="display:flex; align-items:center; gap:0.75rem; height: 38px;">
+                                <label class="switch">
+                                    <input type="checkbox" id="vEditComissaoPaga">
+                                    <span class="slider"></span>
+                                </label>
+                                <span style="font-weight:700;">Pago</span>
+                            </div>
                         </div>
                         <div>
                             <div class="label">Data Entrada</div>
