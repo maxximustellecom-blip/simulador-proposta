@@ -608,6 +608,7 @@
         // Close menus on click outside
         document.addEventListener('click', function() {
             document.querySelectorAll('.action-menu.show').forEach(el => el.classList.remove('show'));
+        });
         
         // Fechar menus ao rolar a página ou a tabela para evitar que o menu fixed fique órfão
         window.addEventListener('scroll', () => {
