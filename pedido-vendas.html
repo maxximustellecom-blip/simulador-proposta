@@ -478,7 +478,7 @@
                         <label class="label">Radar</label>
                         <input type="text" id="fRadar" class="input" placeholder="Número Radar" oninput="filtrarBackend()">
                     </div>
-                    <div style="flex: 1; width: 50px !important;">
+                    <div style="flex: 0 0 120px; min-width: 120px; max-width: 120px;">
                         <label class="label">Filtrar por</label>
                         <select id="fDataCampo" class="input" onchange="filtrarBackend()">
                             <option value="dataEntrada">Entrada</option>
@@ -486,7 +486,7 @@
                             <option value="dataAtivacao">Ativação</option>
                         </select>
                     </div>
-                    <div class="filter-group">
+                    <div class="filter-group" style="flex: 1.1; min-width: 340px;">
                         <label class="label">Mês</label>
                         <div class="date-picker-wrapper">
                             <select id="fMes" class="input" style="width: 130px; padding: 0 10px; height: 38px; border: none; background: transparent; font-weight: 500;" onchange="setMonthRange(this.value)">
