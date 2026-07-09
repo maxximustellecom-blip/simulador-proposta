@@ -1327,11 +1327,17 @@
             previewBadgeEl.style.color = contrast;
             previewTextEl.textContent = texto;
         }
+        function getEtiquetaComposerText() {
+            const previewTextEl = document.getElementById('etiquetaStatusText');
+            if (!previewTextEl) return '';
+            return String(previewTextEl.innerText || previewTextEl.textContent || '')
+                .replace(/\r/g, '')
+                .trim();
+        }
         function syncEtiquetaTextFromPreview() {
             const nomeEl = document.getElementById('etiquetaNome');
-            const previewTextEl = document.getElementById('etiquetaStatusText');
-            if (!nomeEl || !previewTextEl) return;
-            nomeEl.value = previewTextEl.textContent || '';
+            if (!nomeEl) return;
+            nomeEl.value = getEtiquetaComposerText();
         }
         function selectEtiquetaColor(color) {
             const corEl = document.getElementById('etiquetaCor');
@@ -1363,7 +1369,7 @@
         }
         function openEtiquetaInfoModal(button) {
             const texto = button && button.dataset ? String(button.dataset.etiqueta || '').trim() : '';
-            const cor = button && button.dataset ? String(button.dataset.color || '#6B7280').trim() : '#6B7280';
+            const cor = button && button.dataset ? String(button.dataset.cor || '#6B7280').trim() : '#6B7280';
             const textoEl = document.getElementById('etiquetaInfoTexto');
             const previewEl = document.getElementById('etiquetaInfoPreview');
             const badgeEl = document.getElementById('etiquetaInfoBadge');
@@ -1391,7 +1397,7 @@
             const nomeEl = document.getElementById('etiquetaNome');
             const corEl = document.getElementById('etiquetaCor');
             syncEtiquetaTextFromPreview();
-            const etiqueta = nomeEl ? String(nomeEl.value || '').trim() : '';
+            const etiqueta = nomeEl ? String(nomeEl.value || getEtiquetaComposerText() || '').trim() : getEtiquetaComposerText();
             const etiqueta_cor = corEl ? String(corEl.value || '').trim() : '';
             try {
                 await api(`/pedidos-venda/${__currentEtiquetaPedidoId}`, {
