@@ -101,13 +101,13 @@
             background: var(--surface-strong);
             border-radius: 12px;
             padding: 0.65rem 0.7rem;
-            cursor: grab;
+            cursor: default;
             user-select: none;
         }
         .deal.is-open {
             background: var(--surface);
         }
-        .deal:active { cursor: grabbing; }
+        .deal:active { cursor: default; }
         .deal-expanded { display: none; margin-top: 0.55rem; }
         .deal.is-open .deal-expanded { display: block; }
         .deal-chevron { width: 16px; height: 16px; color: var(--muted); transition: transform 0.15s ease; }
@@ -440,7 +440,7 @@
             const pedidoEtiquetaCor = d.pedido_venda_etiqueta_cor || '';
             const etiquetaBadge = pedidoEtiqueta ? etiquetaHtml(pedidoEtiqueta, pedidoEtiquetaCor) : '';
             return `
-                <div class="deal stage-${d.funil_stage}" draggable="true" data-id="${d.id}">
+                <div class="deal stage-${d.funil_stage}" draggable="false" data-id="${d.id}">
                     <div class="deal-top">
                         <div>
                             <div class="deal-title">${title}</div>
@@ -578,6 +578,7 @@
         }
 
         function bindDrag() {
+            return;
             document.querySelectorAll('.deal[draggable="true"]').forEach(el => {
                 el.addEventListener('dragstart', (e) => {
                     __isDragging = true;
