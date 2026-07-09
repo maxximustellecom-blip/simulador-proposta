@@ -248,8 +248,8 @@
                                     <th>Valor</th>
                                     <th>Data</th>
                                     <th>Consultor</th>
-                                    <th class="col-actions" style="min-width:160px;">Ações</th>
                                     <th>Situação</th>
+                                    <th class="col-actions" style="min-width:160px;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="negocTbody">
@@ -434,6 +434,7 @@
                     <td>${(n.valor !== undefined && n.valor !== null) ? currency(n.valor) : '-'}</td>
                     <td>${n.data || '-'}</td>
                     <td>${n.creator && n.creator.name ? n.creator.name : '-'}</td>
+                    <td>${tags || '-'}</td>
                     <td class="col-actions">
                         <div style="position:relative; display:inline-block;">
                             <button type="button" class="btn btn-ghost btn-icon" title="Ações" onclick="toggleActionMenu(event, ${n.id})">
@@ -460,7 +461,6 @@
                             </div>
                         </div>
                     </td>
-                    <td>${tags || '-'}</td>
                 </tr>
             `;
             }).join('') || '<tr><td colspan="8" class="muted">Sem resultados</td></tr>';
