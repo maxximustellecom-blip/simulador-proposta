@@ -417,6 +417,95 @@
             max-width: 100%;
             word-break: break-word;
         }
+        .etiqueta-color-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 32px);
+            gap: 0.4rem;
+        }
+        .etiqueta-color-swatch {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+            box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+        }
+        .etiqueta-color-swatch:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+        .etiqueta-color-swatch.active {
+            border-color: var(--text-main);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+        }
+        .etiqueta-composer {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .etiqueta-status-preview {
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            padding: 1.1rem;
+            min-height: 180px;
+            transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+        }
+        .etiqueta-status-preview::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0));
+            pointer-events: none;
+        }
+        .etiqueta-status-meta,
+        .etiqueta-status-text {
+            position: relative;
+            z-index: 1;
+        }
+        .etiqueta-status-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.9rem;
+            font-size: 0.82rem;
+            opacity: 0.92;
+        }
+        .etiqueta-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.4rem 0.75rem;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(4px);
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+        .etiqueta-status-text {
+            font-size: 1.05rem;
+            line-height: 1.65;
+            white-space: pre-wrap;
+            word-break: break-word;
+            min-height: 86px;
+            outline: none;
+            cursor: text;
+        }
+        .etiqueta-status-text:empty::before {
+            content: attr(data-placeholder);
+            opacity: 0.78;
+        }
+        .etiqueta-helper {
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+        .etiqueta-info-preview {
+            cursor: default;
+            min-height: 150px;
+        }
     </style>
 </head>
 <body>
@@ -1191,6 +1280,65 @@
             __confirmCallback = null;
         }
 
+        const ETIQUETA_COLOR_OPTIONS = [
+            '#2563EB', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899',
+            '#06B6D4', '#84CC16', '#F97316', '#14B8A6', '#6366F1', '#6B7280'
+        ];
+        function renderEtiquetaColorPalette(selectedColor) {
+            const container = document.getElementById('etiquetaColorPalette');
+            if (!container) return;
+            const normalized = String(selectedColor || '#6B7280').trim().toUpperCase();
+            container.innerHTML = ETIQUETA_COLOR_OPTIONS.map(color => {
+                const active = color.toUpperCase() === normalized ? ' active' : '';
+                return `<button type="button" class="etiqueta-color-swatch${active}" style="background:${color};" data-color="${color}" aria-label="Selecionar cor ${color}" title="${color}" onclick="selectEtiquetaColor('${color}')"></button>`;
+            }).join('');
+        }
+        function hexToRgba(hex, alpha) {
+            const clean = String(hex || '').replace('#', '').trim();
+            if (!/^[0-9A-Fa-f]{6}$/.test(clean)) return `rgba(107, 114, 128, ${alpha})`;
+            const r = parseInt(clean.slice(0, 2), 16);
+            const g = parseInt(clean.slice(2, 4), 16);
+            const b = parseInt(clean.slice(4, 6), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+        function getEtiquetaContrastColor(hex) {
+            const clean = String(hex || '').replace('#', '').trim();
+            if (!/^[0-9A-Fa-f]{6}$/.test(clean)) return '#FFFFFF';
+            const r = parseInt(clean.slice(0, 2), 16);
+            const g = parseInt(clean.slice(2, 4), 16);
+            const b = parseInt(clean.slice(4, 6), 16);
+            const luminance = ((0.299 * r) + (0.587 * g) + (0.114 * b)) / 255;
+            return luminance > 0.66 ? '#111827' : '#FFFFFF';
+        }
+        function updateEtiquetaComposerPreview() {
+            const nomeEl = document.getElementById('etiquetaNome');
+            const corEl = document.getElementById('etiquetaCor');
+            const previewEl = document.getElementById('etiquetaStatusPreview');
+            const previewTextEl = document.getElementById('etiquetaStatusText');
+            const previewBadgeEl = document.getElementById('etiquetaStatusBadge');
+            if (!previewEl || !previewTextEl || !previewBadgeEl) return;
+            const texto = nomeEl ? String(nomeEl.value || '').trim() : '';
+            const cor = corEl ? String(corEl.value || '#6B7280').trim() : '#6B7280';
+            const contrast = getEtiquetaContrastColor(cor);
+            previewEl.style.background = `linear-gradient(135deg, ${cor} 0%, ${hexToRgba(cor, 0.82)} 100%)`;
+            previewEl.style.color = contrast;
+            previewEl.style.boxShadow = `0 18px 40px ${hexToRgba(cor, 0.24)}`;
+            previewBadgeEl.style.background = hexToRgba(contrast === '#FFFFFF' ? '#FFFFFF' : '#111827', contrast === '#FFFFFF' ? 0.16 : 0.08);
+            previewBadgeEl.style.color = contrast;
+            previewTextEl.textContent = texto;
+        }
+        function syncEtiquetaTextFromPreview() {
+            const nomeEl = document.getElementById('etiquetaNome');
+            const previewTextEl = document.getElementById('etiquetaStatusText');
+            if (!nomeEl || !previewTextEl) return;
+            nomeEl.value = previewTextEl.textContent || '';
+        }
+        function selectEtiquetaColor(color) {
+            const corEl = document.getElementById('etiquetaCor');
+            if (corEl) corEl.value = String(color || '#6B7280').trim();
+            renderEtiquetaColorPalette(corEl ? corEl.value : color);
+            updateEtiquetaComposerPreview();
+        }
         let __currentEtiquetaPedidoId = null;
         function openEtiquetaModal(id) {
             const item = backendData.find(i => String(i.id) === String(id));
@@ -1200,6 +1348,10 @@
             const corEl = document.getElementById('etiquetaCor');
             if (nomeEl) nomeEl.value = item.etiqueta || '';
             if (corEl) corEl.value = item.etiqueta_cor || '#6B7280';
+            renderEtiquetaColorPalette(corEl ? corEl.value : '#6B7280');
+            updateEtiquetaComposerPreview();
+            const previewTextEl = document.getElementById('etiquetaStatusText');
+            if (previewTextEl) previewTextEl.focus();
             const m = document.getElementById('etiquetaModal');
             if (m) m.classList.add('show');
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
@@ -1211,9 +1363,20 @@
         }
         function openEtiquetaInfoModal(button) {
             const texto = button && button.dataset ? String(button.dataset.etiqueta || '').trim() : '';
+            const cor = button && button.dataset ? String(button.dataset.color || '#6B7280').trim() : '#6B7280';
             const textoEl = document.getElementById('etiquetaInfoTexto');
+            const previewEl = document.getElementById('etiquetaInfoPreview');
+            const badgeEl = document.getElementById('etiquetaInfoBadge');
             if (textoEl) {
                 textoEl.textContent = texto || 'Sem etiqueta';
+            }
+            if (previewEl && badgeEl) {
+                const contrast = getEtiquetaContrastColor(cor);
+                previewEl.style.background = `linear-gradient(135deg, ${cor} 0%, ${hexToRgba(cor, 0.82)} 100%)`;
+                previewEl.style.color = contrast;
+                previewEl.style.boxShadow = `0 18px 40px ${hexToRgba(cor, 0.24)}`;
+                badgeEl.style.background = hexToRgba(contrast === '#FFFFFF' ? '#FFFFFF' : '#111827', contrast === '#FFFFFF' ? 0.16 : 0.08);
+                badgeEl.style.color = contrast;
             }
             const modal = document.getElementById('etiquetaInfoModal');
             if (modal) modal.classList.add('show');
@@ -1227,6 +1390,7 @@
             if (!__currentEtiquetaPedidoId) return;
             const nomeEl = document.getElementById('etiquetaNome');
             const corEl = document.getElementById('etiquetaCor');
+            syncEtiquetaTextFromPreview();
             const etiqueta = nomeEl ? String(nomeEl.value || '').trim() : '';
             const etiqueta_cor = corEl ? String(corEl.value || '').trim() : '';
             try {
@@ -2133,20 +2297,27 @@
         </div>
     </div>
     <div id="etiquetaModal" class="modal">
-        <div class="modal-card" style="max-width: 480px; width: 95%;">
+        <div class="modal-card" style="max-width: 560px; width: 95%;">
             <div class="modal-head">
                 <div>Etiqueta</div>
                 <button class="btn btn-ghost btn-icon" onclick="closeEtiquetaModal()"><i data-lucide="x"></i></button>
             </div>
             <div class="modal-body">
-                <div class="grid-2">
-                    <div>
-                        <div class="label">Nome</div>
-                        <input id="etiquetaNome" type="text" class="input" placeholder="Ex: Urgente">
+                <div class="etiqueta-composer">
+                    <div id="etiquetaStatusPreview" class="etiqueta-status-preview">
+                        <div class="etiqueta-status-meta">
+                            <span id="etiquetaStatusBadge" class="etiqueta-status-badge">Status da Etiqueta</span>
+                            <span>Agora</span>
+                        </div>
+                        <div id="etiquetaStatusText" class="etiqueta-status-text" contenteditable="true" spellcheck="false" data-placeholder="Escreva sua etiqueta diretamente aqui..." oninput="syncEtiquetaTextFromPreview()"></div>
                     </div>
+                </div>
+                <div class="grid-1" style="margin-top: 1rem;">
                     <div>
-                        <div class="label">Cor</div>
-                        <input id="etiquetaCor" type="color" class="input" style="height: 40px; padding: 0.2rem;">
+                        <div class="label">Tema da etiqueta</div>
+                        <input id="etiquetaCor" type="hidden" value="#6B7280">
+                        <div id="etiquetaColorPalette" class="etiqueta-color-grid" style="width: 100%;"></div>
+                        <div class="etiqueta-helper" style="margin-top: 0.55rem;">Escolha uma cor base da etiqueta.</div>
                     </div>
                 </div>
             </div>
@@ -2157,14 +2328,19 @@
         </div>
     </div>
     <div id="etiquetaInfoModal" class="modal">
-        <div class="modal-card" style="max-width: 420px; width: 95%;">
+        <div class="modal-card" style="max-width: 520px; width: 95%;">
             <div class="modal-head">
                 <div>Etiqueta</div>
                 <button class="btn btn-ghost btn-icon" onclick="closeEtiquetaInfoModal()"><i data-lucide="x"></i></button>
             </div>
             <div class="modal-body">
-                <div class="label" style="margin-bottom: 0.5rem;">Texto da etiqueta</div>
-                <div id="etiquetaInfoTexto" class="etiqueta-preview"></div>
+                <div id="etiquetaInfoPreview" class="etiqueta-status-preview etiqueta-info-preview">
+                    <div class="etiqueta-status-meta">
+                        <span id="etiquetaInfoBadge" class="etiqueta-status-badge">Etiqueta</span>
+                        <span>Visualização</span>
+                    </div>
+                    <div id="etiquetaInfoTexto" class="etiqueta-status-text"></div>
+                </div>
             </div>
             <div class="modal-actions">
                 <button class="btn btn-primary" type="button" onclick="closeEtiquetaInfoModal()"><span>Fechar</span></button>
