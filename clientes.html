@@ -570,7 +570,14 @@
                     </td>
                     <td>
                         <div style="display:flex; flex-direction:column; gap:4px;">
-                            <div class="muted">Criação: ${((c && (c.created_at || c.createdAt)) ? new Date(c.created_at || c.createdAt).toLocaleDateString('pt-BR') : '-')}</div>
+                            ${(() => {
+                                const createdRaw = (c && (c.created_at || c.createdAt)) ? new Date(c.created_at || c.createdAt) : null;
+                                if (!createdRaw || Number.isNaN(createdRaw.getTime())) return '<div class="muted">Criação: -</div>';
+                                const dataCriacao = createdRaw.toLocaleDateString('pt-BR');
+                                const horaCriacao = createdRaw.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                                const temHora = createdRaw.getHours() !== 0 || createdRaw.getMinutes() !== 0 || createdRaw.getSeconds() !== 0;
+                                return `<div class="muted">Criação: ${dataCriacao}</div>${temHora ? `<div class="muted">Hora: ${horaCriacao}</div>` : ''}`;
+                            })()}
                         </div>
                     </td>
                     <td class="col-actions">
