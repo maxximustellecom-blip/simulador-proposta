@@ -1317,7 +1317,7 @@
             const previewTextEl = document.getElementById('etiquetaStatusText');
             const previewBadgeEl = document.getElementById('etiquetaStatusBadge');
             if (!previewEl || !previewTextEl || !previewBadgeEl) return;
-            const texto = nomeEl ? String(nomeEl.value || '').trim() : '';
+            const texto = nomeEl ? String(nomeEl.value || '').trim() : getEtiquetaComposerText();
             const cor = corEl ? String(corEl.value || '#6B7280').trim() : '#6B7280';
             const contrast = getEtiquetaContrastColor(cor);
             previewEl.style.background = `linear-gradient(135deg, ${cor} 0%, ${hexToRgba(cor, 0.82)} 100%)`;
@@ -2321,6 +2321,7 @@
                             <span id="etiquetaStatusBadge" class="etiqueta-status-badge">Status da Etiqueta</span>
                             <span>Agora</span>
                         </div>
+                        <input id="etiquetaNome" type="hidden" value="">
                         <div id="etiquetaStatusText" class="etiqueta-status-text" contenteditable="true" spellcheck="false" data-placeholder="Escreva sua etiqueta diretamente aqui..." oninput="syncEtiquetaTextFromPreview()"></div>
                     </div>
                 </div>
