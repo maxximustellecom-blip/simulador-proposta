@@ -249,7 +249,7 @@
                                     <th>Valor</th>
                                     <th>Data</th>
                                     <th>Consultor</th>
-                                    <th>Situação</th>
+                                    <th>Fila</th>
                                     <th class="col-actions" style="min-width:160px;">Ações</th>
                                 </tr>
                             </thead>
@@ -419,9 +419,9 @@
                 
                 let tags = '';
                 if (isConcluida) {
-                    tags = '<span class="chip" style="background: var(--success-bg); color: var(--success-text); font-size: 0.7rem; margin-left: 5px;">PEDIDO DE VENDA</span>';
+                    tags = '<span class="chip" style="border: 0; color: white; font-size: 0.7rem; margin-left: 5px;">VENDAS</span>';
                 } else if (Number(n.cadastro || 0) === 1) {
-                    tags = '<span class="chip" style="background: var(--warning-bg); color: var(--warning-text); font-size: 0.7rem; margin-left: 5px;">CADASTRO</span>';
+                    tags = '<span class="chip" style="border: 0; color: white; font-size: 0.7rem; margin-left: 5px;">CADASTRO</span>';
                 }
 
                 return `
