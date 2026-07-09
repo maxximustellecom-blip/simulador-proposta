@@ -249,10 +249,11 @@
                                     <th>Data</th>
                                     <th>Consultor</th>
                                     <th class="col-actions" style="min-width:160px;">Ações</th>
+                                    <th>Situação</th>
                                 </tr>
                             </thead>
                             <tbody id="negocTbody">
-                                <tr><td colspan="7">
+                                <tr><td colspan="8">
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
                                     <div class="skeleton skel-row"></div>
@@ -425,10 +426,7 @@
                 return `
                 <tr${rowStyle} data-id="${n.id}">
                     <td>
-                        <div style="display:flex; align-items:center;">
-                            <div style="font-weight:600;">${n.razaoSocial || '-'}</div>
-                            ${tags}
-                        </div>
+                        <div style="font-weight:600;">${n.razaoSocial || '-'}</div>
                         <div class="muted" style="font-size:0.8rem; margin-top:2px;">${formatCnpj(n.cnpj || '')}</div>
                     </td>
                     <td><span class="ellipsis">${n.proposta === "PROPOSTA PADRÃO" ? "PADRÃO" : "CUSTOMIZADA" || '-'}</span></td>
@@ -462,9 +460,10 @@
                             </div>
                         </div>
                     </td>
+                    <td>${tags || '-'}</td>
                 </tr>
             `;
-            }).join('') || '<tr><td colspan="7" class="muted">Sem resultados</td></tr>';
+            }).join('') || '<tr><td colspan="8" class="muted">Sem resultados</td></tr>';
             Array.from(tbody.querySelectorAll('tr[data-id]')).forEach(tr => {
                 tr.addEventListener('dblclick', (e) => {
                     const t = e && e.target;
