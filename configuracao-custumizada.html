@@ -3406,25 +3406,43 @@
         }
 
         async function handleFileUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+            const files = Array.from((e.target && e.target.files) || []);
+            if (!files.length) return;
 
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('fileName', file.name);
-            formData.append('fileType', file.type);
+            let successCount = 0;
+            let errorCount = 0;
 
             try {
-                await api(`/negotiations/${__negociacaoId}/custom-attachments`, {
-                    method: 'POST',
-                    body: formData
-                });
-                toast('Anexo enviado com sucesso', 'success');
-                loadAttachments();
-            } catch {
-                toast('Erro ao enviar anexo', 'error');
+                for (const file of files) {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('fileName', file.name);
+                    formData.append('fileType', file.type);
+
+                    try {
+                        await api(`/negotiations/${__negociacaoId}/custom-attachments`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        successCount += 1;
+                    } catch {
+                        errorCount += 1;
+                    }
+                }
+
+                if (successCount > 0) {
+                    loadAttachments();
+                }
+
+                if (successCount > 0 && errorCount === 0) {
+                    toast(successCount === 1 ? 'Anexo enviado com sucesso' : `${successCount} anexos enviados com sucesso`, 'success');
+                } else if (successCount > 0 && errorCount > 0) {
+                    toast(`${successCount} anexos enviados e ${errorCount} com erro`, 'success');
+                } else {
+                    toast('Erro ao enviar anexos', 'error');
+                }
             } finally {
-                e.target.value = '';
+                if (e.target) e.target.value = '';
             }
         }
 
@@ -3972,7 +3990,7 @@
                     <div id="attachmentsList" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;"></div>
                     <label class="btn btn-ghost" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.5rem;">
                         <i data-lucide="paperclip"></i><span>Adicionar anexo extra</span>
-                        <input type="file" id="fileInput" style="display:none;">
+                        <input type="file" id="fileInput" style="display:none;" multiple>
                     </label>
                 </div>
             </div>

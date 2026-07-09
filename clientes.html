@@ -1191,6 +1191,7 @@
                         const gCpfEl = document.getElementById('mGestorCpf');
                         const gRgEl = document.getElementById('mGestorRg');
                         const gTel1El = document.getElementById('mGestorTel1');
+                        const gEmailEl = document.getElementById('mGestorEmail');
                         const rNomeEl = document.getElementById('mRepNome');
                         const rCpfEl = document.getElementById('mRepCpf');
                         const rRgEl = document.getElementById('mRepRg');
@@ -1200,7 +1201,7 @@
                         if (gCpfEl && rCpfEl) rCpfEl.value = gCpfEl.value || '';
                         if (gRgEl && rRgEl) rRgEl.value = gRgEl.value || '';
                         if (gTel1El && rTel1El) rTel1El.value = gTel1El.value || '';
-                        if (rEmailEl) rEmailEl.value = rEmailEl.value || '';
+                        if (gEmailEl && rEmailEl) rEmailEl.value = gEmailEl.value || '';
                     });
                 }
             }
