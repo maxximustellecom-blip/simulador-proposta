@@ -857,26 +857,27 @@
                 if (config) {
                     config.docs.forEach(docName => {
                         const categoryKey = `${config.type} - ${docName}`;
-                        const existing = safeList.find(a => a.category === categoryKey);
+                        const existingList = safeList.filter(a => a.category === categoryKey);
+                        const hasExisting = existingList.length > 0;
                         
                         const card = document.createElement('div');
                         card.className = 'card';
                         card.style.padding = '1rem';
                         card.style.marginBottom = '0.5rem';
-                        card.style.border = existing ? '1px solid var(--pill-border)' : '1px solid var(--border)';
-                        card.style.background = existing ? 'var(--pill-bg)' : 'var(--surface)';
+                        card.style.border = hasExisting ? '1px solid var(--pill-border)' : '1px solid var(--border)';
+                        card.style.background = hasExisting ? 'var(--pill-bg)' : 'var(--surface)';
                         card.style.display = 'flex';
-                        card.style.alignItems = 'center';
+                        card.style.alignItems = 'flex-start';
                         card.style.justifyContent = 'space-between';
                         
                         const leftDiv = document.createElement('div');
                         leftDiv.style.display = 'flex';
-                        leftDiv.style.alignItems = 'center';
+                        leftDiv.style.alignItems = 'flex-start';
                         leftDiv.style.gap = '0.75rem';
 
                         // Icon
                         const iconDiv = document.createElement('div');
-                        if (existing) {
+                        if (hasExisting) {
                             iconDiv.innerHTML = `<i data-lucide="check-circle" style="color: var(--pill-text); width:20px; height:20px;"></i>`;
                         } else {
                             iconDiv.innerHTML = `<i data-lucide="file-warning" style="color: var(--muted); width:20px; height:20px;"></i>`;
@@ -891,9 +892,11 @@
                         
                         const sub = document.createElement('div');
                         sub.style.fontSize = '0.8rem';
-                        sub.style.color = existing ? 'var(--pill-text)' : 'var(--muted)';
-                        if (existing) {
-                            sub.innerHTML = `Anexado: <strong>${existing.file_name}</strong>`;
+                        sub.style.color = hasExisting ? 'var(--pill-text)' : 'var(--muted)';
+                        if (hasExisting) {
+                            sub.textContent = existingList.length === 1
+                                ? '1 documento anexado'
+                                : `${existingList.length} documentos anexados`;
                         } else {
                             sub.textContent = 'Documento pendente';
                         }
@@ -904,45 +907,70 @@
                         leftDiv.appendChild(infoDiv);
 
                         const rightDiv = document.createElement('div');
+                        rightDiv.style.display = 'flex';
+                        rightDiv.style.flexDirection = 'column';
+                        rightDiv.style.alignItems = 'flex-end';
+                        rightDiv.style.gap = '0.5rem';
                         
-                        if (existing) {
-                            // View Button
-                            const btnView = document.createElement('a');
-                            btnView.href = `${API_BASE}/negotiations/${__negociacaoId}/attachments/${existing.id}/content`;
-                            btnView.target = '_blank';
-                            btnView.className = 'btn btn-ghost btn-sm';
-                            btnView.style.textDecoration = 'none';
-                            btnView.style.marginRight = '0.5rem';
-                            btnView.innerHTML = `<i data-lucide="eye" style="width:16px; margin-right:4px;"></i> Ver`;
-                            rightDiv.appendChild(btnView);
+                        if (hasExisting) {
+                            const filesList = document.createElement('div');
+                            filesList.style.display = 'flex';
+                            filesList.style.flexDirection = 'column';
+                            filesList.style.alignItems = 'stretch';
+                            filesList.style.gap = '0.35rem';
+                            filesList.style.width = '100%';
+                            filesList.style.minWidth = '260px';
 
-                            // Delete button
-                            const btnDel = document.createElement('button');
-                            btnDel.className = 'btn btn-ghost btn-icon';
-                            btnDel.style.color = 'var(--danger)';
-                            btnDel.innerHTML = `<i data-lucide="trash-2" style="width:18px; height:18px;"></i>`;
-                            btnDel.title = 'Remover anexo';
-                            btnDel.onclick = () => deleteAttachment(existing.id);
-                            rightDiv.appendChild(btnDel);
-                        } else {
-                            // Upload button
-                            const lbl = document.createElement('label');
-                            lbl.className = 'btn btn-sm btn-primary';
-                            lbl.style.cursor = 'pointer';
-                            lbl.innerHTML = `<i data-lucide="upload" style="width:14px; height:14px; margin-right:4px;"></i> Anexar`;
-                            
-                            const inp = document.createElement('input');
-                            inp.type = 'file';
-                            inp.style.display = 'none';
-                            inp.onchange = (e) => {
-                                if (e.target.files && e.target.files[0]) {
-                                    handleCategoryUpload(e.target.files[0], categoryKey);
-                                }
-                            };
-                            
-                            lbl.appendChild(inp);
-                            rightDiv.appendChild(lbl);
+                            existingList.forEach(existing => {
+                                const fileRow = document.createElement('div');
+                                fileRow.style.display = 'flex';
+                                fileRow.style.alignItems = 'center';
+                                fileRow.style.justifyContent = 'space-between';
+                                fileRow.style.gap = '0.5rem';
+
+                                const btnView = document.createElement('a');
+                                btnView.href = `${API_BASE}/negotiations/${__negociacaoId}/attachments/${existing.id}/content`;
+                                btnView.target = '_blank';
+                                btnView.className = 'btn btn-ghost btn-sm';
+                                btnView.style.textDecoration = 'none';
+                                btnView.style.maxWidth = '220px';
+                                btnView.style.overflow = 'hidden';
+                                btnView.style.textOverflow = 'ellipsis';
+                                btnView.style.whiteSpace = 'nowrap';
+                                btnView.innerHTML = `<i data-lucide="eye" style="width:16px; margin-right:4px;"></i>${existing.file_name}`;
+
+                                const btnDel = document.createElement('button');
+                                btnDel.className = 'btn btn-ghost btn-icon';
+                                btnDel.style.color = 'var(--danger)';
+                                btnDel.innerHTML = `<i data-lucide="trash-2" style="width:18px; height:18px;"></i>`;
+                                btnDel.title = 'Remover anexo';
+                                btnDel.onclick = () => deleteAttachment(existing.id);
+
+                                fileRow.appendChild(btnView);
+                                fileRow.appendChild(btnDel);
+                                filesList.appendChild(fileRow);
+                            });
+
+                            rightDiv.appendChild(filesList);
                         }
+
+                        const lbl = document.createElement('label');
+                        lbl.className = 'btn btn-sm btn-primary';
+                        lbl.style.cursor = 'pointer';
+                        lbl.innerHTML = `<i data-lucide="upload" style="width:14px; height:14px; margin-right:4px;"></i> Anexar`;
+                        
+                        const inp = document.createElement('input');
+                        inp.type = 'file';
+                        inp.multiple = true;
+                        inp.style.display = 'none';
+                        inp.onchange = (e) => {
+                            if (e.target.files && e.target.files.length) {
+                                handleCategoryUpload(e.target.files, categoryKey);
+                            }
+                        };
+                        
+                        lbl.appendChild(inp);
+                        rightDiv.appendChild(lbl);
 
                         card.appendChild(leftDiv);
                         card.appendChild(rightDiv);
@@ -1003,26 +1031,41 @@
             return 'file';
         }
 
-        async function handleCategoryUpload(file, category) {
-            if (!file) return;
+        async function handleCategoryUpload(filesInput, category) {
+            const files = Array.from(filesInput || []);
+            if (!files.length) return;
 
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('fileName', file.name);
-            formData.append('fileType', file.type);
-            formData.append('category', category);
+            let successCount = 0;
+            let errorCount = 0;
 
-            try {
-                await api(`/negotiations/${__negociacaoId}/attachments`, {
-                    method: 'POST',
-                    body: formData
-                });
-                toast('Anexo enviado com sucesso', 'success');
+            for (const file of files) {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('fileName', file.name);
+                formData.append('fileType', file.type);
+                formData.append('category', category);
+
+                try {
+                    await api(`/negotiations/${__negociacaoId}/attachments`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    successCount += 1;
+                } catch {
+                    errorCount += 1;
+                }
+            }
+
+            if (successCount > 0) {
                 loadAttachments();
-            } catch {
-                toast('Erro ao enviar anexo', 'error');
-            } finally {
-                // No input to clear here since we created it dynamically
+            }
+
+            if (successCount > 0 && errorCount === 0) {
+                toast(successCount === 1 ? 'Anexo enviado com sucesso' : `${successCount} anexos enviados com sucesso`, 'success');
+            } else if (successCount > 0 && errorCount > 0) {
+                toast(`${successCount} anexos enviados e ${errorCount} com erro`, 'success');
+            } else {
+                toast('Erro ao enviar anexos', 'error');
             }
         }
 
