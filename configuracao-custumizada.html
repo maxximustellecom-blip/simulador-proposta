@@ -1920,7 +1920,7 @@
                 if (!linhas.length) adicionarLinha(); else { renderTable(); renderResumo(); validarProposta(); }
             } catch { adicionarLinha(); }
         }
-        async function salvarProposta(skipValidation = false) {
+        async function salvarProposta(skipValidation = false, shouldRedirect = false) {
             //if (!skipValidation) {
                 const erros = validarProposta();
                 if (erros.length) {
@@ -1953,7 +1953,11 @@
                     __negociacaoInfo.valor = totalProposto;
                     if (updateData.funil_stage) __negociacaoInfo.funil_stage = updateData.funil_stage;
                 }
-                toast('Salvando...', 'success');
+                toast('Proposta salva', 'success');
+                if (shouldRedirect) {
+                    window.location.href = 'negociar.html';
+                    return;
+                }
             } catch { toast('Erro ao salvar proposta', 'error'); }
         }
         async function atualizarStatusNegociacao() {
@@ -3642,7 +3646,7 @@
                     __isLocked = (role !== 'admin' && status === 'Concluída');
                 } catch { __isLocked = false; }
                 if (addLinhaBtn) addLinhaBtn.addEventListener('click', adicionarLinha);
-                if (salvarBtn) salvarBtn.addEventListener('click', salvarProposta);
+                if (salvarBtn) salvarBtn.addEventListener('click', () => salvarProposta(false, true));
                 if (copiarBtn) copiarBtn.addEventListener('click', copiarProposta);
                 if (relatorioBtn) relatorioBtn.addEventListener('click', gerarRelatorioPdf);
                 const wrap = document.getElementById('propostaDropdownWrap');

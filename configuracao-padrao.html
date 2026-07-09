@@ -1749,7 +1749,7 @@
                 renderResumo();
                 salvarProposta(null, false);
             });
-            if (salvarBtn) salvarBtn.addEventListener('click', salvarProposta);
+            if (salvarBtn) salvarBtn.addEventListener('click', () => salvarProposta(null, true, false, true));
             if (copiarBtn) copiarBtn.addEventListener('click', copiarProposta);
             if (relatorioBtn) relatorioBtn.addEventListener('click', gerarRelatorioPdf);
             if (novaBtn) {
@@ -3929,7 +3929,7 @@
                 toast('Erro ao gerar imagem da proposta', 'error');
             }
         }
-        function salvarProposta(evt, shouldReload = true, skipValidation = false) {
+        function salvarProposta(evt, shouldReload = true, skipValidation = false, shouldRedirect = false) {
             if (!skipValidation) {
                 const erros = validar();
                 if (erros.length) {
@@ -3974,6 +3974,10 @@
                     }
 
                     toast('Proposta salva', 'success');
+                    if (shouldRedirect) {
+                        window.location.href = 'negociar.html';
+                        return;
+                    }
                     if (shouldReload) {
                         await carregarPropostaSalva();
                         renderTabela();

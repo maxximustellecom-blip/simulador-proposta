@@ -208,6 +208,15 @@
                             </select>
                         </div>
                         <div style="flex: 1; min-width: 200px;">
+                            <div class="label">Fila</div>
+                            <select id="fFila" class="select" onchange="buscar()">
+                                <option value="">Todos</option>
+                                <option value="cadastro">Cadastro</option>
+                                <option value="vendas">Vendas</option>
+                                <option value="sem-fila">Sem fila</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 200px;">
                             <div class="label">Período</div>
                             <div class="date-picker-wrapper">
                                 <select id="fMes" class="input" style="width: 130px; padding: 0 10px; height: 38px; border: none; background: transparent; font-weight: 500;" onchange="setMonthRange(this.value)">
@@ -781,6 +790,7 @@
                 const razao = document.getElementById('fRazao').value;
                 const vendedor = document.getElementById('fVendedor') ? document.getElementById('fVendedor').value : '';
                 const tipoProposta = document.getElementById('fTipoProposta') ? document.getElementById('fTipoProposta').value : '';
+                const fila = document.getElementById('fFila') ? document.getElementById('fFila').value : '';
                 const params = [];
                 if (cnpj) params.push('cnpj=' + encodeURIComponent(cnpj));
                 if (startDate) params.push('startDate=' + encodeURIComponent(startDate));
@@ -790,7 +800,18 @@
                 if (tipoProposta && tipoProposta !== 'Todos') params.push('tipo_proposta=' + encodeURIComponent(tipoProposta));
                 const qs = params.length ? ('?' + params.join('&')) : '';
                 const list = await api('/negotiations' + qs, { method: 'GET' }).catch(() => []);
-                __negociacoes = Array.isArray(list) ? list : [];
+                let arr = Array.isArray(list) ? list : [];
+                if (fila) {
+                    arr = arr.filter(n => {
+                        const isConcluida = String(n.status || '').toLowerCase().includes('conclu');
+                        const isCadastro = Number(n.cadastro || 0) === 1 && !isConcluida;
+                        if (fila === 'vendas') return isConcluida;
+                        if (fila === 'cadastro') return isCadastro;
+                        if (fila === 'sem-fila') return !isConcluida && !isCadastro;
+                        return true;
+                    });
+                }
+                __negociacoes = arr;
                 renderNegociacoesTable(__negociacoes);
             } catch {
                 renderNegociacoesTable([]);
