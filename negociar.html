@@ -414,14 +414,17 @@
             document.getElementById('countLabel').textContent = arr.length + ' ' + (arr.length === 1 ? 'item' : 'itens');
             tbody.innerHTML = arr.map(n => {
                 const isConcluida = String(n.status || '').toLowerCase().includes('conclu');
-                const rowStyle = isConcluida ? ' style="background: var(--pill-bg);"' : '';
+                const isCadastro = Number(n.cadastro || 0) === 1 && !isConcluida;
+                const rowStyle = isConcluida
+                    ? ' style="background: var(--pill-bg);"'
+                    : (isCadastro ? ' style="background: rgba(251, 191, 36, 0.18);"' : '');
                 const isDisabled = (__userRole !== 'admin' && String(n.status) === 'Concluída') ? 'disabled' : '';
                 
                 let tags = '';
                 if (isConcluida) {
-                    tags = '<span class="chip" style="border: 0; color: black !important; font-size: 0.7rem; margin-left: 5px;">VENDAS</span>';
+                    tags = '<span class="chip" style="border: 0; color: black !important; font-size: 13px; margin-left: 5px;">VENDAS</span>';
                 } else if (Number(n.cadastro || 0) === 1) {
-                    tags = '<span class="chip" style="border: 0; color: black !important; font-size: 0.7rem; margin-left: 5px;">CADASTRO</span>';
+                    tags = '<span class="chip" style="border: 0; color: black !important; font-size: 13px; margin-left: 5px;">CADASTRO</span>';
                 }
 
                 return `
