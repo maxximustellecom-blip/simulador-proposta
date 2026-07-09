@@ -1334,6 +1334,13 @@
                 .replace(/\r/g, '')
                 .trim();
         }
+        function setEtiquetaComposerText(texto) {
+            const valor = String(texto || '');
+            const nomeEl = document.getElementById('etiquetaNome');
+            const previewTextEl = document.getElementById('etiquetaStatusText');
+            if (nomeEl) nomeEl.value = valor;
+            if (previewTextEl) previewTextEl.textContent = valor;
+        }
         function syncEtiquetaTextFromPreview() {
             const nomeEl = document.getElementById('etiquetaNome');
             if (!nomeEl) return;
@@ -1350,9 +1357,8 @@
             const item = backendData.find(i => String(i.id) === String(id));
             if (!item) { toast('Pedido não encontrado', 'error'); return; }
             __currentEtiquetaPedidoId = String(id);
-            const nomeEl = document.getElementById('etiquetaNome');
             const corEl = document.getElementById('etiquetaCor');
-            if (nomeEl) nomeEl.value = item.etiqueta || '';
+            setEtiquetaComposerText(item.etiqueta || '');
             if (corEl) corEl.value = item.etiqueta_cor || '#6B7280';
             renderEtiquetaColorPalette(corEl ? corEl.value : '#6B7280');
             updateEtiquetaComposerPreview();
