@@ -389,6 +389,38 @@
         .action-menu.active {
             display: flex;
         }
+        .etiqueta-icon-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.9rem;
+            height: 1.9rem;
+            border-radius: 999px;
+            border: 1px solid currentColor;
+            background: transparent;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+        }
+        .etiqueta-icon-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+        .etiqueta-icon-btn i {
+            width: 0.95rem;
+            height: 0.95rem;
+            stroke-width: 2.4px;
+        }
+        .etiqueta-preview {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.55rem 0.8rem;
+            border-radius: 999px;
+            font-weight: 700;
+            border: 1px solid transparent;
+            max-width: 100%;
+            word-break: break-word;
+        }
     </style>
 </head>
 <body>
@@ -1014,11 +1046,31 @@
             const s = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
             return s.replace(/\s/g, '');
         }
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
         function etiquetaHtml(etiqueta, cor) {
             const txt = String(etiqueta || '').trim();
             if (!txt) return '';
             const c = String(cor || '').trim() || '#6B7280';
-            return `<span style="display:inline-block; padding:0.12rem 0.45rem; border-radius:999px; font-weight:700; font-size:0.75rem; border:1px solid ${c}55; background:${c}22; color:${c};">${txt}</span>`;
+            return `
+                <button
+                    type="button"
+                    class="etiqueta-icon-btn"
+                    style="color:${c}; background:${c}22;"
+                    title="Ver etiqueta"
+                    aria-label="Ver etiqueta ${escapeHtml(txt)}"
+                    data-etiqueta="${escapeHtml(txt)}"
+                    data-cor="${escapeHtml(c)}"
+                    onclick="openEtiquetaInfoModal(this)">
+                    <i data-lucide="tag"></i>
+                </button>
+            `;
         }
         function comissaoPagaChip(v) {
             const ok = !!v;
@@ -1160,6 +1212,24 @@
             const m = document.getElementById('etiquetaModal');
             if (m) m.classList.remove('show');
             __currentEtiquetaPedidoId = null;
+        }
+        function openEtiquetaInfoModal(button) {
+            const texto = button && button.dataset ? String(button.dataset.etiqueta || '').trim() : '';
+            const cor = button && button.dataset ? String(button.dataset.cor || '').trim() : '#6B7280';
+            const textoEl = document.getElementById('etiquetaInfoTexto');
+            if (textoEl) {
+                textoEl.textContent = texto || 'Sem etiqueta';
+                textoEl.style.color = cor;
+                textoEl.style.background = `${cor}22`;
+                textoEl.style.borderColor = `${cor}55`;
+            }
+            const modal = document.getElementById('etiquetaInfoModal');
+            if (modal) modal.classList.add('show');
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        }
+        function closeEtiquetaInfoModal() {
+            const modal = document.getElementById('etiquetaInfoModal');
+            if (modal) modal.classList.remove('show');
         }
         async function saveEtiquetaModal() {
             if (!__currentEtiquetaPedidoId) return;
@@ -2091,6 +2161,21 @@
             <div class="modal-actions">
                 <button class="btn btn-ghost" type="button" onclick="closeEtiquetaModal()"><span>Cancelar</span></button>
                 <button class="btn btn-primary" type="button" onclick="saveEtiquetaModal()"><span>Salvar</span></button>
+            </div>
+        </div>
+    </div>
+    <div id="etiquetaInfoModal" class="modal">
+        <div class="modal-card" style="max-width: 420px; width: 95%;">
+            <div class="modal-head">
+                <div>Etiqueta</div>
+                <button class="btn btn-ghost btn-icon" onclick="closeEtiquetaInfoModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="label" style="margin-bottom: 0.5rem;">Texto da etiqueta</div>
+                <div id="etiquetaInfoTexto" class="etiqueta-preview"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" type="button" onclick="closeEtiquetaInfoModal()"><span>Fechar</span></button>
             </div>
         </div>
     </div>
