@@ -177,7 +177,8 @@
                     <span>Propostas</span>&nbsp;
                     <span class="chip">Painel de propostas</span>
                 </div>
-                <div class="muted">
+                <div class="muted" style="display:flex; gap:0.5rem; align-items:center;">
+                    <button id="exportNegociacoesBtn" class="btn btn-ghost" type="button"><i data-lucide="download"></i><span>Exportar</span></button>
                     <button id="novaNegociacaoBtn" class="btn btn-primary" type="button"><i data-lucide="plus"></i><span>Nova proposta</span></button>
                 </div>
             </div>
@@ -444,6 +445,18 @@
                                 <button type="button" class="action-item" onclick="configurarNegociacao(${n.id})">
                                     <i data-lucide="edit-3"></i> Editar
                                 </button>
+                                <button type="button" class="action-item" onclick="abrirGerarProposta(${n.id})">
+                                    <i data-lucide="file-text"></i> Gerar Proposta
+                                </button>
+                                <button type="button" class="action-item" onclick="abrirAtalhoConfiguracao(${n.id}, 'mask')">
+                                    <i data-lucide="copy"></i> Máscara
+                                </button>
+                                <button type="button" class="action-item" onclick="abrirAtalhoConfiguracao(${n.id}, 'client-data')">
+                                    <i data-lucide="user-round-pen"></i> Completar Dados de Cliente
+                                </button>
+                                <button type="button" class="action-item" onclick="abrirAtalhoConfiguracao(${n.id}, 'attachments')">
+                                    <i data-lucide="paperclip"></i> Documentações
+                                </button>
                                 ${__userRole === 'admin' ? `
                                 <button type="button" class="action-item" onclick="abrirAlterarVendedor(${n.id})">
                                     <i data-lucide="user-plus"></i> Alterar Vendedor
@@ -479,6 +492,57 @@
             });
             if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         }
+        function exportarNegociacoes() {
+            const rows = Array.isArray(__negociacoes) ? __negociacoes : [];
+            if (!rows.length) {
+                toast('Não há propostas para exportar');
+                return;
+            }
+            const headers = ['Razão Social', 'CNPJ', 'Proposta', 'Nº Acessos', 'Valor', 'Data', 'Consultor', 'Situação'];
+            const data = rows.map(n => {
+                let situacao = '';
+                if (String(n.status || '').toLowerCase().includes('conclu')) situacao = 'PEDIDO DE VENDA';
+                else if (Number(n.cadastro || 0) === 1) situacao = 'CADASTRO';
+                return [
+                    n.razaoSocial || '',
+                    formatCnpj(n.cnpj || ''),
+                    n.proposta === 'PROPOSTA PADRÃO' ? 'PADRÃO' : 'CUSTOMIZADA',
+                    n.totalAcessos || 0,
+                    (n.valor !== undefined && n.valor !== null) ? currency(n.valor) : '',
+                    n.data || '',
+                    (n.creator && n.creator.name) ? n.creator.name : '',
+                    situacao
+                ];
+            });
+            const csv = [headers.join(';')]
+                .concat(data.map(row => row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(';')))
+                .join('\n');
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `negociacoes_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => { try { URL.revokeObjectURL(url); } catch {} }, 0);
+            toast('Propostas exportadas com sucesso', 'success');
+        }
+        function isCustomPropostaValue(value) {
+            const proposta = String(value || '').toUpperCase();
+            return proposta.includes('CUSTOMIZADA') ||
+                proposta.includes('COSTUMIZADA') ||
+                proposta === 'PROPOSTA CUSTOMIZADA' ||
+                proposta === 'PROPOSTA COSTUMIZADA';
+        }
+        function getNegociacaoTargetPage(negociacao) {
+            return isCustomPropostaValue(negociacao && negociacao.proposta)
+                ? 'configuracao-custumizada.html'
+                : 'configuracao-padrao.html';
+        }
+        function closeAllActionMenus() {
+            document.querySelectorAll('.action-menu.show').forEach(el => el.classList.remove('show'));
+        }
 
         window.toggleActionMenu = function(e, id) {
             e.stopPropagation();
@@ -503,11 +567,47 @@
                 }
             }
         };
+        let __gerarPropostaNegId = null;
+        window.abrirGerarProposta = function(id) {
+            try {
+                const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
+                if (!n) return;
+                __gerarPropostaNegId = Number(id);
+                closeAllActionMenus();
+                const info = document.getElementById('gerarPropostaInfo');
+                if (info) info.textContent = `${n.razaoSocial || '-'} • ${formatCnpj(n.cnpj || '')} • ${n.proposta || '-'}`;
+                const modal = document.getElementById('gerarPropostaModal');
+                if (modal) modal.classList.add('show');
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+            } catch {}
+        };
+        function closeGerarPropostaModal() {
+            const modal = document.getElementById('gerarPropostaModal');
+            if (modal) modal.classList.remove('show');
+            __gerarPropostaNegId = null;
+        }
+        function executarGerarPropostaShortcut(mode) {
+            const id = Number(__gerarPropostaNegId || 0);
+            if (!id) return;
+            const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
+            if (!n) return;
+            const target = getNegociacaoTargetPage(n);
+            closeGerarPropostaModal();
+            window.location.href = `${target}?id=${id}&autoGenerate=${encodeURIComponent(mode)}`;
+        }
+        window.abrirAtalhoConfiguracao = function(id, action) {
+            try {
+                const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
+                if (!n) return;
+                closeAllActionMenus();
+                const target = getNegociacaoTargetPage(n);
+                window.location.href = `${target}?id=${id}&shortcutAction=${encodeURIComponent(action || '')}`;
+            } catch {}
+        };
 
         // Close menus on click outside
         document.addEventListener('click', function() {
             document.querySelectorAll('.action-menu.show').forEach(el => el.classList.remove('show'));
-        });
         
         // Fechar menus ao rolar a página ou a tabela para evitar que o menu fixed fique órfão
         window.addEventListener('scroll', () => {
@@ -744,13 +844,7 @@
         window.configurarNegociacao = function(id) {
             try {
                 const n = (__negociacoes || []).find(x => Number(x.id) === Number(id));
-                const proposta = String(n && n.proposta ? n.proposta : '').toUpperCase();
-                const isCustom =
-                    proposta.includes('CUSTOMIZADA') ||
-                    proposta.includes('COSTUMIZADA') ||
-                    proposta === 'PROPOSTA CUSTOMIZADA' ||
-                    proposta === 'PROPOSTA COSTUMIZADA';
-                const target = isCustom ? 'configuracao-custumizada.html' : 'configuracao-padrao.html';
+                const target = getNegociacaoTargetPage(n);
                 window.location.href = target + '?id=' + String(id);
             } catch {}
         };
@@ -829,13 +923,7 @@
                 }
                 const savedId = (res && res.id) ? res.id : (__editingNegId || null);
                 if (savedId && !__editingNegId) {
-                    const propStr = String(proposta || '').toUpperCase();
-                    const isCustom =
-                        propStr.includes('CUSTOMIZADA') ||
-                        propStr.includes('COSTUMIZADA') ||
-                        propStr === 'PROPOSTA CUSTOMIZADA' ||
-                        propStr === 'PROPOSTA COSTUMIZADA';
-                    const target = isCustom ? 'configuracao-custumizada.html' : 'configuracao-padrao.html';
+                    const target = getNegociacaoTargetPage({ proposta });
                     window.location.href = target + '?id=' + String(savedId);
                     return;
                 }
@@ -938,6 +1026,17 @@
                     }
                 }
             } catch {}
+            document.getElementById('exportNegociacoesBtn').addEventListener('click', exportarNegociacoes);
+            const gerarClose = document.getElementById('gerarPropostaClose');
+            const gerarCancel = document.getElementById('gerarPropostaCancel');
+            const gerarCompleta = document.getElementById('gerarPropostaCompleta');
+            const gerarResumida = document.getElementById('gerarPropostaResumida');
+            const gerarImagem = document.getElementById('gerarPropostaImagem');
+            if (gerarClose) gerarClose.addEventListener('click', closeGerarPropostaModal);
+            if (gerarCancel) gerarCancel.addEventListener('click', closeGerarPropostaModal);
+            if (gerarCompleta) gerarCompleta.addEventListener('click', () => executarGerarPropostaShortcut('complete'));
+            if (gerarResumida) gerarResumida.addEventListener('click', () => executarGerarPropostaShortcut('summary-pdf'));
+            if (gerarImagem) gerarImagem.addEventListener('click', () => executarGerarPropostaShortcut('image'));
             document.getElementById('novaNegociacaoBtn').addEventListener('click', () => {
                 __editingNegId = null;
                 setClienteSelected('');
@@ -1304,6 +1403,21 @@
             <div class="modal-actions">
                 <button id="confirmCadastroCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
                 <button id="confirmCadastroConfirm" class="btn btn-primary" type="button"><i data-lucide="check"></i><span>Confirmar</span></button>
+            </div>
+        </div>
+    </div>
+    <div id="gerarPropostaModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head"><div>Gerar Proposta</div><button id="gerarPropostaClose" class="btn btn-ghost btn-icon"><i data-lucide="x"></i></button></div>
+            <div class="modal-body">
+                <div class="label">Escolha o formato da proposta</div>
+                <div id="gerarPropostaInfo" class="muted" style="margin-top:0.5rem;"></div>
+            </div>
+            <div class="modal-actions" style="justify-content:flex-start; flex-wrap:wrap;">
+                <button id="gerarPropostaCompleta" class="btn btn-primary" type="button"><i data-lucide="file-text"></i><span>Completa</span></button>
+                <button id="gerarPropostaResumida" class="btn btn-ghost" type="button"><i data-lucide="file-text"></i><span>Resumida</span></button>
+                <button id="gerarPropostaImagem" class="btn btn-ghost" type="button"><i data-lucide="image"></i><span>Imagem</span></button>
+                <button id="gerarPropostaCancel" class="btn btn-ghost" type="button"><i data-lucide="x"></i><span>Cancelar</span></button>
             </div>
         </div>
     </div>

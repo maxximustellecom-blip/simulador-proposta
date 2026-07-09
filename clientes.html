@@ -191,7 +191,8 @@
                     <span>Clientes</span>&nbsp;
                     <span class="chip" id="roleChip">Leitura para todos • Edição admin</span>
                 </div>
-                <div class="muted">
+                <div class="muted" style="display:flex; gap:0.5rem; align-items:center;">
+                    <button id="exportClientesBtn" class="btn btn-ghost" type="button"><i data-lucide="download"></i><span>Exportar</span></button>
                     <button id="openModalBtn" class="btn btn-primary" type="button"><i data-lucide="user-plus"></i><span>Novo Cliente</span></button>
                 </div>
             </div>
@@ -779,6 +780,7 @@
             if (adminSection) adminSection.style.display = 'block';
             const modal = document.getElementById('clienteModal');
             const openBtn = document.getElementById('openModalBtn');
+            const exportBtn = document.getElementById('exportClientesBtn');
             const closeBtn = document.getElementById('closeModalBtn');
             const salvarBtn = document.getElementById('mSalvar');
             const modalTitle = document.getElementById('modalTitle');
@@ -797,6 +799,42 @@
             function closeModal() { modal.classList.remove('show'); }
             function openConfirm() { confirmModal.classList.add('show'); }
             function closeConfirm() { confirmModal.classList.remove('show'); }
+            function exportarClientes() {
+                const rows = Array.isArray(window.__clientsCache) ? window.__clientsCache : [];
+                if (!rows.length) {
+                    toast('Não há clientes para exportar', 'error');
+                    return;
+                }
+                const fmtPhone = (s) => {
+                    const p = String(s || '').replace(/\D/g, '');
+                    if (p.length >= 11) return `(${p.slice(0,2)}) ${p.slice(2,7)}-${p.slice(7,11)}`;
+                    if (p.length >= 10) return `(${p.slice(0,2)}) ${p.slice(2,6)}-${p.slice(6,10)}`;
+                    return p;
+                };
+                const fmtDate = (raw) => raw ? new Date(raw).toLocaleDateString('pt-BR') : '';
+                const headers = ['Razão Social', 'CNPJ', 'Contato', 'Telefone', 'Email', 'Criação'];
+                const data = rows.map(c => [
+                    c.name || '',
+                    c.cnpj || '',
+                    c.gestor_nome || c.fantasy_name || '',
+                    fmtPhone(c.gestor_tel1 || c.phone || ''),
+                    c.gestor_email || c.email || '',
+                    fmtDate(c.created_at || c.createdAt)
+                ]);
+                const csv = [headers.join(';')]
+                    .concat(data.map(row => row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(';')))
+                    .join('\n');
+                const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `clientes_${new Date().toISOString().slice(0, 10)}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => { try { URL.revokeObjectURL(url); } catch {} }, 0);
+                toast('Clientes exportados com sucesso', 'success');
+            }
             
             window.verObservacao = function(id) {
                 if (!window.__clientsCache) return;
@@ -1058,6 +1096,7 @@
                 openModal();
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             });
+            if (exportBtn) exportBtn.addEventListener('click', exportarClientes);
             if (closeBtn) closeBtn.addEventListener('click', closeModal);
             if (salvarBtn) salvarBtn.addEventListener('click', salvarClienteModal);
             const mascaraBtn = document.getElementById('mMascara');

@@ -1163,11 +1163,71 @@
             }
         }
 
+        function consumeAutoGenerateMode() {
+            try {
+                const url = new URL(window.location.href);
+                const mode = String(url.searchParams.get('autoGenerate') || '').trim();
+                if (!mode) return '';
+                url.searchParams.delete('autoGenerate');
+                const newQs = url.searchParams.toString();
+                const newUrl = url.pathname + (newQs ? ('?' + newQs) : '') + url.hash;
+                window.history.replaceState({}, document.title, newUrl);
+                return mode;
+            } catch {
+                return '';
+            }
+        }
+        function consumeShortcutAction() {
+            try {
+                const url = new URL(window.location.href);
+                const action = String(url.searchParams.get('shortcutAction') || '').trim();
+                if (!action) return '';
+                url.searchParams.delete('shortcutAction');
+                const newQs = url.searchParams.toString();
+                const newUrl = url.pathname + (newQs ? ('?' + newQs) : '') + url.hash;
+                window.history.replaceState({}, document.title, newUrl);
+                return action;
+            } catch {
+                return '';
+            }
+        }
+        async function runAutoGenerateMode(mode) {
+            if (!mode) return;
+            if (mode === 'complete') {
+                await gerarPropostaComercialPdf();
+                return;
+            }
+            if (mode === 'summary-pdf') {
+                await gerarPropostaComercialPdfResumido();
+                return;
+            }
+            if (mode === 'image') {
+                await gerarPropostaComercialImagem();
+            }
+        }
+        function runShortcutAction(action) {
+            if (!action) return;
+            if (action === 'mask') {
+                copiarProposta();
+                return;
+            }
+            if (action === 'client-data') {
+                const btn = document.getElementById('openClienteDataBtn');
+                if (btn) btn.click();
+                return;
+            }
+            if (action === 'attachments') {
+                const btn = document.getElementById('openAttachmentsModalBtn');
+                if (btn) btn.click();
+            }
+        }
         document.addEventListener('DOMContentLoaded', async () => {
             const auth = localStorage.getItem('authUser');
             if (!auth) { window.location.href = 'login.html'; return; }
             try {
                 const params = new URLSearchParams(window.location.search || '');
+                const autoGenerateMode = consumeAutoGenerateMode();
+                const shortcutAction = consumeShortcutAction();
                 const idParam = Number(params.get('id') || 0);
                 if (!idParam) { window.location.href = 'negociar.html'; return; }
                 const list = await api('/negotiations', { method: 'GET' }).catch(() => []);
@@ -1180,6 +1240,12 @@
                 await initConfiguracao();
                 const fileInput = document.getElementById('fileInput');
                 if (fileInput) fileInput.addEventListener('change', handleFileUpload);
+                if (autoGenerateMode) {
+                    setTimeout(() => { runAutoGenerateMode(autoGenerateMode); }, 150);
+                }
+                if (shortcutAction) {
+                    setTimeout(() => { runShortcutAction(shortcutAction); }, 150);
+                }
             } catch (e) {
                 console.error(e);
                 toast('Erro ao carregar negociação: ' + e.message, 'error');
