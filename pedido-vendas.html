@@ -411,13 +411,9 @@
             stroke-width: 2.4px;
         }
         .etiqueta-preview {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.55rem 0.8rem;
-            border-radius: 999px;
-            font-weight: 700;
-            border: 1px solid transparent;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: var(--text-main);
             max-width: 100%;
             word-break: break-word;
         }
@@ -1215,13 +1211,9 @@
         }
         function openEtiquetaInfoModal(button) {
             const texto = button && button.dataset ? String(button.dataset.etiqueta || '').trim() : '';
-            const cor = button && button.dataset ? String(button.dataset.cor || '').trim() : '#6B7280';
             const textoEl = document.getElementById('etiquetaInfoTexto');
             if (textoEl) {
                 textoEl.textContent = texto || 'Sem etiqueta';
-                textoEl.style.color = cor;
-                textoEl.style.background = `${cor}22`;
-                textoEl.style.borderColor = `${cor}55`;
             }
             const modal = document.getElementById('etiquetaInfoModal');
             if (modal) modal.classList.add('show');
