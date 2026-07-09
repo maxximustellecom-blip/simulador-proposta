@@ -478,8 +478,8 @@
                         <label class="label">Radar</label>
                         <input type="text" id="fRadar" class="input" placeholder="Número Radar" oninput="filtrarBackend()">
                     </div>
-                    <div class="filter-group">
-                        <label class="label">Filtrar por data</label>
+                    <div style="flex: 1; width: 50px !important;">
+                        <label class="label">Filtrar por</label>
                         <select id="fDataCampo" class="input" onchange="filtrarBackend()">
                             <option value="dataEntrada">Entrada</option>
                             <option value="dataInput">Input</option>
@@ -487,7 +487,7 @@
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label class="label">Período</label>
+                        <label class="label">Mês</label>
                         <div class="date-picker-wrapper">
                             <select id="fMes" class="input" style="width: 130px; padding: 0 10px; height: 38px; border: none; background: transparent; font-weight: 500;" onchange="setMonthRange(this.value)">
                                 <option value="all">Todos</option>
@@ -507,7 +507,7 @@
                             </select>
                             <div class="date-range-container" id="dateRangePickerContainer">
                                 <i data-lucide="calendar"></i>
-                                <input type="text" id="dateRangeInput" placeholder="Selecione o período">
+                                <input type="text" id="dateRangeInput" placeholder="Periodo...">
                             </div>
                         </div>
                     </div>
